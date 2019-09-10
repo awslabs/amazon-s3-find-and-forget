@@ -1,0 +1,47 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: TODO (uksb-TODO)
+
+Parameters:
+
+  ProvisionedDynamoDBReadCapacityUnits:
+    Description: The DynamoDB Capacity Units allocated for reading the indexes. When this property or ProvisionedDynamoDBWriteCapacityUnits are set to 0, the billing mode is set to on-demand.
+    Type: Number
+    Default: 0
+
+  ProvisionedDynamoDBWriteCapacityUnits:
+    Description: The DynamoDB Capacity Units allocated for reading the indexes. When this property or ProvisionedDynamoDBReadCapacityUnits are set to 0, the billing mode is set to on-demand.
+    Type: Number
+    Default: 0
+
+Conditions:
+  DynamoDBOnDemand: !Or [!Equals [ !Ref ProvisionedDynamoDBReadCapacityUnits, 0 ] , !Equals [ !Ref ProvisionedDynamoDBWriteCapacityUnits, 0 ]]
+
+Resources:
+
+  MatchesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: S3FindReplace_Matches
+      AttributeDefinitions: 
+        - 
+          AttributeName: MatchId
+          AttributeType: S
+        - 
+          AttributeName: FilePath
+          AttributeType: S
+      KeySchema: 
+        - 
+          AttributeName: MatchId
+          KeyType: HASH
+        -
+          AttributeName: FilePath
+          KeyType: RANGE
+      BillingMode: !If [ DynamoDBOnDemand, PAY_PER_REQUEST, PROVISIONED ]
+      ProvisionedThroughput:
+        !If
+          - DynamoDBOnDemand
+          - !Ref AWS::NoValue
+          - 
+            ReadCapacityUnits : !Ref ProvisionedDynamoDBReadCapacityUnits
+            WriteCapacityUnits : !Ref ProvisionedDynamoDBWriteCapacityUnits
+        
