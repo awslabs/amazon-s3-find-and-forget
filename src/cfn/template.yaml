@@ -13,6 +13,11 @@ Parameters:
     Type: Number
     Default: 0
 
+  DynamoDBTablePrefix:
+    Description: The prefix usesed to name the DynamoDB tables on creation
+    Type: String
+    Default: S3FindReplace
+
 Conditions:
   DynamoDBOnDemand: !Or [!Equals [ !Ref ProvisionedDynamoDBReadCapacityUnits, 0 ] , !Equals [ !Ref ProvisionedDynamoDBWriteCapacityUnits, 0 ]]
 
@@ -21,7 +26,7 @@ Resources:
   ConfigurationTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: S3FindReplace_Configuration
+      TableName: !Sub ${DynamoDBTablePrefix}_Configuration
       AttributeDefinitions: 
         - 
           AttributeName: ConfigurationId
@@ -35,7 +40,7 @@ Resources:
   MatchesTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: S3FindReplace_Matches
+      TableName: !Sub ${DynamoDBTablePrefix}_Matches
       AttributeDefinitions: 
         - 
           AttributeName: MatchId
@@ -62,7 +67,7 @@ Resources:
   ObjectsStateTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: S3FindReplace_ObjectsState
+      TableName: !Sub ${DynamoDBTablePrefix}_ObjectsState
       AttributeDefinitions:
         -
           AttributeName: ObjectPath
