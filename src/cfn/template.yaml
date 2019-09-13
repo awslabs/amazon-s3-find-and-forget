@@ -18,6 +18,20 @@ Conditions:
 
 Resources:
 
+  ConfigurationTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: S3FindReplace_Configuration
+      AttributeDefinitions: 
+        - 
+          AttributeName: ConfigurationId
+          AttributeType: S
+      KeySchema: 
+        - 
+          AttributeName: ConfigurationId
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
   MatchesTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -45,7 +59,7 @@ Resources:
             ReadCapacityUnits : !Ref ProvisionedDynamoDBReadCapacityUnits
             WriteCapacityUnits : !Ref ProvisionedDynamoDBWriteCapacityUnits
         
-  ObejectsStateTable:
+  ObjectsStateTable:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: S3FindReplace_ObjectsState
