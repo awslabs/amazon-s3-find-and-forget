@@ -27,14 +27,14 @@ Resources:
           AttributeName: MatchId
           AttributeType: S
         - 
-          AttributeName: FilePath
+          AttributeName: ObjectPath
           AttributeType: S
       KeySchema: 
         - 
           AttributeName: MatchId
           KeyType: HASH
         -
-          AttributeName: FilePath
+          AttributeName: ObjectPath
           KeyType: RANGE
       BillingMode: !If [ DynamoDBOnDemand, PAY_PER_REQUEST, PROVISIONED ]
       ProvisionedThroughput:
@@ -44,4 +44,18 @@ Resources:
           - 
             ReadCapacityUnits : !Ref ProvisionedDynamoDBReadCapacityUnits
             WriteCapacityUnits : !Ref ProvisionedDynamoDBWriteCapacityUnits
+        
+  ObejectsStateTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: S3FindReplace_ObjectsState
+      AttributeDefinitions:
+        -
+          AttributeName: ObjectPath
+          AttributeType: S
+      KeySchema: 
+        - 
+          AttributeName: ObjectPath
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
         
