@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: TODO (uksb-TODO)
+Description: Jane Doe (uksb-1q2j8beb0)
 
 Parameters:
 
@@ -16,7 +16,7 @@ Parameters:
   DynamoDBTablePrefix:
     Description: The prefix usesed to name the DynamoDB tables on creation
     Type: String
-    Default: S3FindReplace
+    Default: JaneDoe
 
 Conditions:
   DynamoDBOnDemand: !Or [!Equals [ !Ref ProvisionedDynamoDBReadCapacityUnits, 0 ] , !Equals [ !Ref ProvisionedDynamoDBWriteCapacityUnits, 0 ]]
@@ -29,11 +29,11 @@ Resources:
       TableName: !Sub ${DynamoDBTablePrefix}_Configuration
       AttributeDefinitions: 
         - 
-          AttributeName: ConfigurationId
+          AttributeName: S3Uri
           AttributeType: S
       KeySchema: 
         - 
-          AttributeName: ConfigurationId
+          AttributeName: S3Uri
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
 
@@ -46,14 +46,14 @@ Resources:
           AttributeName: MatchId
           AttributeType: S
         - 
-          AttributeName: ObjectPath
+          AttributeName: S3Uri
           AttributeType: S
       KeySchema: 
         - 
           AttributeName: MatchId
           KeyType: HASH
         -
-          AttributeName: ObjectPath
+          AttributeName: S3Uri
           KeyType: RANGE
       BillingMode: !If [ DynamoDBOnDemand, PAY_PER_REQUEST, PROVISIONED ]
       ProvisionedThroughput:
@@ -70,11 +70,11 @@ Resources:
       TableName: !Sub ${DynamoDBTablePrefix}_ObjectsState
       AttributeDefinitions:
         -
-          AttributeName: ObjectPath
+          AttributeName: S3Uri
           AttributeType: S
       KeySchema: 
         - 
-          AttributeName: ObjectPath
+          AttributeName: S3Uri
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
         
