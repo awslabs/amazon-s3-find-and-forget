@@ -1,0 +1,206 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Jane Doe API
+
+Globals:
+  Function:
+    Runtime: python3.7
+    Timeout: 180
+    AutoPublishAlias: live
+    Layers:
+      - !Ref AWSSDKLayer
+    Environment:
+      Variables:
+        CONFIGURATION_TABLE_NAME: !Ref ConfigurationTableName
+        OBJECT_STATE_TABLE_NAME: !Ref ObjectsStateTableName
+        MATCHES_TABLE_NAME: !Ref MatchesTableName
+  Api:
+    EndpointConfiguration: REGIONAL
+    Cors: "'*'"
+    Auth:
+      DefaultAuthorizer: CognitoAuthorizer
+      Authorizers:
+        CognitoAuthorizer:
+          UserPoolArn: !GetAtt CognitoUserPool.Arn
+
+Parameters:
+  ConfigurationTableName:
+    Description: Table name for Configuration Table
+    Type: String
+  ObjectsStateTableName:
+    Description: Table name for Objects State Table
+    Type: String
+  MatchesTableName:
+    Description: Table name for Matches Table
+    Type: String
+  CognitoUserPoolName:
+    Type: String
+    Default: JaneDoePool
+  CognitoUserPoolClientName:
+    Type: String
+    Default: JaneDoePoolClient
+
+Resources:
+  # Cognito
+  CognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Ref CognitoUserPoolName
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+      UsernameAttributes:
+        - email
+      Schema:
+        - AttributeDataType: String
+          Name: email
+          Required: false
+  
+  CognitoUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref CognitoUserPool
+      ClientName: !Ref CognitoUserPoolClientName
+      GenerateSecret: false
+  
+  # Functions
+  ## Indexing
+  TriggerIndex:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers.trigger_handler
+      CodeUri: ../lambdas/src/index/
+      Events:
+        Post:
+          Type: Api
+          Properties:
+            Path: /index
+            Method: post
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ConfigurationTableName
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ObjectsStateTableName
+        - DynamoDBCrudPolicy:
+            TableName: !Ref MatchesTableName
+  IndexPlan:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers.plan_handler
+      CodeUri: ../lambdas/src/index/
+      Events:
+        Get:
+          Type: Api
+          Properties:
+            Path: /index/plan
+            Method: get
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ConfigurationTableName
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ObjectsStateTableName
+        - DynamoDBCrudPolicy:
+            TableName: !Ref MatchesTableName
+  ## Queue
+  EnqueueDeletion:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers.enqueue_handler
+      CodeUri: ../lambdas/src/queue/
+      Events:
+        Get:
+          Type: Api
+          Properties:
+            Path: /queue
+            Method: PATCH
+  DeletionPlan:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers.plan_handler
+      CodeUri: ../lambdas/src/queue/
+      Events:
+        Get:
+          Type: Api
+          Properties:
+            Path: /queue
+            Method: get
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref MatchesTableName
+  ProcessQueue:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers.process_handler
+      CodeUri: ../lambdas/src/queue/
+      Events:
+        Get:
+          Type: Api
+          Properties:
+            Path: /queue
+            Method: DELETE
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref MatchesTableName
+  ## Configuration
+  GetConfigurations:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers.retrieve_handler
+      CodeUri: ../lambdas/src/configuration/
+      Events:
+        Get:
+          Type: Api
+          Properties:
+            Path: /index/configurations
+            Method: get
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ConfigurationTableName
+  CreateConfiguration:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers.create_handler
+      CodeUri: ../lambdas/src/configuration/
+      Events:
+        Get:
+          Type: Api
+          Properties:
+            Path: /index/configurations
+            Method: post
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ConfigurationTableName
+  DeleteConfiguration:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers.delete_handler
+      CodeUri: ../lambdas/src/configuration/
+      Events:
+        Get:
+          Type: Api
+          Properties:
+            Path: /index/configurations
+            Method: delete
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ConfigurationTableName
+  # Layers
+  AWSSDKLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: AWSSDK
+      Description: Latest confirmed compatible AWS SDK
+      ContentUri: ../lambdas/layers/aws_sdk/
+      CompatibleRuntimes:
+        - python3.7
+
+Outputs:
+  ApiUrl:
+    Description: "API endpoint URL for Prod environment"
+    Value: !Sub 'https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/'
+  CognitoUserPoolId:
+    Description: "Cognito User Pool Id"
+    Value: !Ref CognitoUserPool
+  CognitoUserPoolClientId:
+    Description: "Cognito User Pool Client Id"
+    Value: !Ref CognitoUserPoolClient

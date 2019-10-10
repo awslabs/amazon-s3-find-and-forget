@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Jane Doe (uksb-1q2j8beb0)
+Description: Jane Doe DDB Tables
 
 Parameters:
 
@@ -78,3 +78,10 @@ Resources:
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
         
+Outputs:
+  ConfigurationTable:
+    Value: !Ref ConfigurationTable
+  MatchesTable:
+    Value: !Ref MatchesTable
+  ObjectsStateTable:
+    Value: !Ref ObjectsStateTable
