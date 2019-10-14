@@ -1,0 +1,17 @@
+{
+  "GetConfigurations": {
+    "CONFIGURATION_TABLE_NAME": "JaneDoe_Configuration",
+    "OBJECT_STATE_TABLE_NAME": "JaneDoe_ObjectStates",
+    "MATCHES_TABLE_NAME": "JaneDoe_Matches"
+  },
+  "CreateConfiguration": {
+    "CONFIGURATION_TABLE_NAME": "JaneDoe_Configuration",
+    "OBJECT_STATE_TABLE_NAME": "JaneDoe_ObjectStates",
+    "MATCHES_TABLE_NAME": "JaneDoe_Matches"
+  },
+  "DeleteConfiguration": {
+    "CONFIGURATION_TABLE_NAME": "JaneDoe_Configuration",
+    "OBJECT_STATE_TABLE_NAME": "JaneDoe_ObjectStates",
+    "MATCHES_TABLE_NAME": "JaneDoe_Matches"
+  }
+}

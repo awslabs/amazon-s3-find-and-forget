@@ -125,3 +125,4 @@ dmypy.json
 .vscode/
 packaged.yaml
 lambdas/layers/aws_sdk/python
+.idea/

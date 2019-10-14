@@ -9,6 +9,7 @@ Globals:
     AutoPublishAlias: live
     Layers:
       - !Ref AWSSDKLayer
+      - !Ref BotoFactory
     Environment:
       Variables:
         CONFIGURATION_TABLE_NAME: !Ref ConfigurationTableName
@@ -191,6 +192,14 @@ Resources:
       LayerName: AWSSDK
       Description: Latest confirmed compatible AWS SDK
       ContentUri: ../lambdas/layers/aws_sdk/
+      CompatibleRuntimes:
+        - python3.7
+  BotoFactory:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: BotoManager
+      Description: Boto3 Client and Resource factory
+      ContentUri: ../lambdas/layers/boto_factory/
       CompatibleRuntimes:
         - python3.7
 
