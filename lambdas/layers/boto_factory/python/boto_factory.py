@@ -6,8 +6,14 @@ import os
 
 import boto3
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+try:
+    from aws_xray_sdk.core import patch
+    patch(['boto3'])
+except ImportError as e:
+    pass
+
+logger = logging.getLogger(__name__)
+logger.setLevel(os.getenv("LogLevel", logging.INFO))
 
 # Supported mock services
 service_map = {

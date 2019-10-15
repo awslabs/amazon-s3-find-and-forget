@@ -7,16 +7,20 @@ Globals:
     Runtime: python3.7
     Timeout: 180
     AutoPublishAlias: live
+    Tracing: Active
     Layers:
       - !Ref AWSSDKLayer
       - !Ref BotoFactory
+      - !Ref Decorators
     Environment:
       Variables:
         CONFIGURATION_TABLE_NAME: !Ref ConfigurationTableName
         OBJECT_STATE_TABLE_NAME: !Ref ObjectsStateTableName
         MATCHES_TABLE_NAME: !Ref MatchesTableName
+        LogLevel: !Ref LogLevel
   Api:
     EndpointConfiguration: REGIONAL
+    TracingEnabled: true
     Cors: "'*'"
     Auth:
       DefaultAuthorizer: CognitoAuthorizer
@@ -40,6 +44,17 @@ Parameters:
   CognitoUserPoolClientName:
     Type: String
     Default: JaneDoePoolClient
+  LogLevel:
+    Type: String
+    Default: INFO
+    AllowedValues:
+      - CRITICAL
+      - FATAL
+      - ERROR
+      - WARNING
+      - INFO
+      - DEBUG
+      - NOTSET
 
 Resources:
   # Cognito
@@ -200,6 +215,14 @@ Resources:
       LayerName: BotoManager
       Description: Boto3 Client and Resource factory
       ContentUri: ../lambdas/layers/boto_factory/
+      CompatibleRuntimes:
+        - python3.7
+  Decorators:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: Decorators
+      Description: Helpful function decorators
+      ContentUri: ../lambdas/layers/decorators/
       CompatibleRuntimes:
         - python3.7
 
