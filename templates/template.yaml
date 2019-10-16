@@ -26,7 +26,7 @@ Resources:
     Properties: 
       TemplateURL: ./api.yaml
       Parameters: 
-        DeletionQueueTable: !GetAtt DDBStack.Outputs.DeletionQueueTable
+        DeletionQueueTableName: !GetAtt DDBStack.Outputs.DeletionQueueTable
         CognitoUserPoolName: !Ref CognitoUserPoolName
         CognitoUserPoolClientName: !Ref CognitoUserPoolClientName
 
