@@ -1,17 +1,17 @@
 {
-  "GetConfigurations": {
-    "ConfigurationTable": "JaneDoe_Configuration",
-    "ObjectsStateTable": "JaneDoe_ObjectStates",
-    "MatchesTable": "JaneDoe_Matches"
+  "EnqueueDeletion": {
+    "DeletionQueueTable": "JaneDoe_DeletionQueue"
   },
-  "CreateConfiguration": {
-    "ConfigurationTable": "JaneDoe_Configuration",
-    "ObjectsStateTable": "JaneDoe_ObjectStates",
-    "MatchesTable": "JaneDoe_Matches"
+  "GetDeletionQueue": {
+    "DeletionQueueTable": "JaneDoe_DeletionQueue"
   },
-  "DeleteConfiguration": {
-    "ConfigurationTable": "JaneDoe_Configuration",
-    "ObjectsStateTable": "JaneDoe_ObjectStates",
-    "MatchesTable": "JaneDoe_Matches"
+  "CancelDeletion": {
+    "DeletionQueueTable": "JaneDoe_DeletionQueue"
+  },
+  "ProcessQueue": {
+    "DeletionQueueTable": "JaneDoe_DeletionQueue"
+  },
+  "GetJob": {
+    "DeletionQueueTable": "JaneDoe_DeletionQueue"
   }
 }

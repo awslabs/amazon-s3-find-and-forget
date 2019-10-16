@@ -3,21 +3,10 @@ Transform: AWS::Serverless-2016-10-31
 Description: Jane Doe (uksb-1q2j8beb0)
 
 Parameters:
-  ProvisionedDynamoDBReadCapacityUnits:
-    Description: The DynamoDB Capacity Units allocated for reading the indexes. When this property or ProvisionedDynamoDBWriteCapacityUnits are set to 0, the billing mode is set to on-demand.
-    Type: Number
-    Default: 0
-
-  ProvisionedDynamoDBWriteCapacityUnits:
-    Description: The DynamoDB Capacity Units allocated for reading the indexes. When this property or ProvisionedDynamoDBReadCapacityUnits are set to 0, the billing mode is set to on-demand.
-    Type: Number
-    Default: 0
-
   DynamoDBTablePrefix:
     Description: The prefix usesed to name the DynamoDB tables on creation
     Type: String
     Default: JaneDoe
-
   CognitoUserPoolName:
     Type: String
     Default: JaneDoePool
@@ -30,18 +19,14 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Properties: 
       TemplateURL: ./ddb.yaml
-      Parameters: 
-        ProvisionedDynamoDBReadCapacityUnits: !Ref ProvisionedDynamoDBReadCapacityUnits
-        ProvisionedDynamoDBWriteCapacityUnits: !Ref ProvisionedDynamoDBWriteCapacityUnits
+      Parameters:
         DynamoDBTablePrefix: !Ref DynamoDBTablePrefix
   APIStack: 
     Type: AWS::CloudFormation::Stack
     Properties: 
       TemplateURL: ./api.yaml
       Parameters: 
-        ConfigurationTableName: !GetAtt DDBStack.Outputs.ConfigurationTable
-        ObjectsStateTableName: !GetAtt DDBStack.Outputs.ObjectsStateTable
-        MatchesTableName: !GetAtt DDBStack.Outputs.MatchesTable
+        DeletionQueueTable: !GetAtt DDBStack.Outputs.DeletionQueueTable
         CognitoUserPoolName: !Ref CognitoUserPoolName
         CognitoUserPoolClientName: !Ref CognitoUserPoolClientName
 
@@ -50,9 +35,5 @@ Outputs:
     Value: !Ref DDBStack
   APIStack:
     Value: !Ref APIStack
-  ConfigurationTable:
-    Value: !GetAtt DDBStack.Outputs.ConfigurationTable
-  MatchesTable:
-    Value: !GetAtt DDBStack.Outputs.MatchesTable
-  ObjectsStateTable:
-    Value: !GetAtt DDBStack.Outputs.ObjectsStateTable
+  DeletionQueueTable:
+    Value: !GetAtt DDBStack.Outputs.DeletionQueueTable

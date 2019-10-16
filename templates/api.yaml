@@ -14,9 +14,7 @@ Globals:
       - !Ref Decorators
     Environment:
       Variables:
-        ConfigurationTable: !Ref ConfigurationTableName
-        MatchesTable: !Ref ObjectsStateTableName
-        ObjectsStateTable: !Ref MatchesTableName
+        DeletionQueueTable: !Ref DeletionQueueTableName
         LogLevel: !Ref LogLevel
   Api:
     EndpointConfiguration: REGIONAL
@@ -29,14 +27,8 @@ Globals:
           UserPoolArn: !GetAtt CognitoUserPool.Arn
 
 Parameters:
-  ConfigurationTableName:
-    Description: Table name for Configuration Table
-    Type: String
-  ObjectsStateTableName:
-    Description: Table name for Objects State Table
-    Type: String
-  MatchesTableName:
-    Description: Table name for Matches Table
+  DeletionQueueTableName:
+    Description: Table name for Deletion Queue Table
     Type: String
   CognitoUserPoolName:
     Type: String
@@ -80,43 +72,6 @@ Resources:
       GenerateSecret: false
   
   # Functions
-  ## Indexing
-  TriggerIndex:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: handlers.trigger_handler
-      CodeUri: ../lambdas/src/index/
-      Events:
-        Post:
-          Type: Api
-          Properties:
-            Path: /index
-            Method: post
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Ref ConfigurationTableName
-        - DynamoDBCrudPolicy:
-            TableName: !Ref ObjectsStateTableName
-        - DynamoDBCrudPolicy:
-            TableName: !Ref MatchesTableName
-  IndexPlan:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: handlers.plan_handler
-      CodeUri: ../lambdas/src/index/
-      Events:
-        Get:
-          Type: Api
-          Properties:
-            Path: /index/plan
-            Method: get
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Ref ConfigurationTableName
-        - DynamoDBCrudPolicy:
-            TableName: !Ref ObjectsStateTableName
-        - DynamoDBCrudPolicy:
-            TableName: !Ref MatchesTableName
   ## Queue
   EnqueueDeletion:
     Type: AWS::Serverless::Function
@@ -129,10 +84,13 @@ Resources:
           Properties:
             Path: /queue
             Method: PATCH
-  DeletionPlan:
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref DeletionQueueTableName
+  GetDeletionQueue:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: handlers.plan_handler
+      Handler: handlers.get_handler
       CodeUri: ../lambdas/src/queue/
       Events:
         Get:
@@ -142,7 +100,21 @@ Resources:
             Method: get
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: !Ref MatchesTableName
+            TableName: !Ref DeletionQueueTableName
+  CancelDeletion:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers.cancel_handler
+      CodeUri: ../lambdas/src/queue/
+      Events:
+        Get:
+          Type: Api
+          Properties:
+            Path: /queue/{match_id}
+            Method: delete
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DeletionQueueTableName
   ProcessQueue:
     Type: AWS::Serverless::Function
     Properties:
@@ -156,50 +128,23 @@ Resources:
             Method: DELETE
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: !Ref MatchesTableName
-  ## Configuration
-  GetConfigurations:
+            TableName: !Ref DeletionQueueTableName
+  # Jobs
+  GetJob:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: handlers.retrieve_handler
-      CodeUri: ../lambdas/src/configuration/
+      Handler: handlers.get_job_handler
+      CodeUri: ../lambdas/src/jobs/
       Events:
         Get:
           Type: Api
           Properties:
-            Path: /index/configurations
+            Path: /jobs/{job_id}
             Method: get
       Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Ref ConfigurationTableName
-  CreateConfiguration:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: handlers.create_handler
-      CodeUri: ../lambdas/src/configuration/
-      Events:
-        Get:
-          Type: Api
-          Properties:
-            Path: /index/configurations
-            Method: post
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Ref ConfigurationTableName
-  DeleteConfiguration:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: handlers.delete_handler
-      CodeUri: ../lambdas/src/configuration/
-      Events:
-        Get:
-          Type: Api
-          Properties:
-            Path: /index/configurations
-            Method: delete
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Ref ConfigurationTableName
+      - DynamoDBCrudPolicy:
+          TableName: !Ref DeletionQueueTableName
+
   # Layers
   AWSSDKLayer:
     Type: AWS::Serverless::LayerVersion
