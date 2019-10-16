@@ -14,9 +14,9 @@ Globals:
       - !Ref Decorators
     Environment:
       Variables:
-        CONFIGURATION_TABLE_NAME: !Ref ConfigurationTableName
-        OBJECT_STATE_TABLE_NAME: !Ref ObjectsStateTableName
-        MATCHES_TABLE_NAME: !Ref MatchesTableName
+        ConfigurationTable: !Ref ConfigurationTableName
+        MatchesTable: !Ref ObjectsStateTableName
+        ObjectsStateTable: !Ref MatchesTableName
         LogLevel: !Ref LogLevel
   Api:
     EndpointConfiguration: REGIONAL

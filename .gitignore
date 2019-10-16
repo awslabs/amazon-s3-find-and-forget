@@ -126,3 +126,4 @@ dmypy.json
 packaged.yaml
 lambdas/layers/aws_sdk/python
 .idea/
+.env

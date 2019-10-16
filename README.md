@@ -27,7 +27,42 @@ aws cloudformation deploy --template-file ./packaged.yaml --stack-name jane-doe 
 
 ## Testing
 
+### Unit Tests
+Unit tests can be ran by using the pytest mark `unit` i.e.
+```
+pytest -m unit --log-cli-level info
+```
+
 ### Acceptance Tests
+
+#### Using AWS
+Some acceptance tests require the full AWS stack to be deployed. To run the
+full acceptance test suite, you'll need to setup a `.env` file containing
+the following info:
+```
+ApiUrl=APIGW_URL_FROM_STACK_OUTPUTS
+TablePrefix=TABLE_PREFIX_USED_WHEN_DEPLOYING_STACK
+ClientId=COGNITO_CLIENT_ID_FROM_STACK_OUTPUTS
+UserPoolId=COGNITO_USER_POOL_ID_FROM_STACK_OUTPUTS
+```
+
+Then run the acceptance tests:
+```
+export AWS_PROFILE=default
+pytest -m acceptance --log-cli-level info
+```
+
+All tests which rely on AWS not being mocked should be marked using the `needs_aws`
+marker. e.g.:
+```python
+import pytest
+
+@pytest.mark.needs_aws
+def test_something():
+    pass
+```
+
+#### Using SAM Local
 To run end to end tests using SAM local and DDB local, you first need to 
 have SAM local and DDB local running on a local docker network: 
 ```
@@ -35,7 +70,7 @@ docker network create lambda-local
 docker run -p 8000:8000 --name dynamodb --network=lambda-local amazon/dynamodb-local -jar DynamoDBLocal.jar -inMemory -sharedDb
 sam local start-lambda --template templates/api.yaml --docker-network lambda-local --env-vars tests/acceptance/env_vars.json
 ```
-To run the tests:
+Then run the tests not marked as requiring AWS:
 ```
-pytest --log-cli-level info
+ApiUrl=http://127.0.0.1 RunningLocal=true pytest -m acceptance -m "not needs_aws" --log-cli-level info
 ```

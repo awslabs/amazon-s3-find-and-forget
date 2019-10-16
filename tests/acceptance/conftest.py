@@ -1,166 +1,207 @@
+"""
+PyTest Setup and Fixtures
+1. Tests not marked as requiring AWS should run against both AWS and local with no changes to the test logic at all
+2. Tests marked as requiring AWS should fail when running local resources due to things in AWS not being found
+3. The local stack or AWS stack setup should be done outside the test runner as pre-requisite for running tests
+4. All setup for running local should be contained in this file.
+"""
 import json
 import logging
+from functools import partial
 from os import path, getenv
+from urllib.parse import urljoin
 
 import boto3
-import botocore
 import pytest
-from cfn_flip import load
+from aws_xray_sdk import global_sdk_config
+from requests import Session
+
+from . import load_env, DDBLocalManager, get_schema_from_template, load_template
 
 logger = logging.getLogger()
+
 # ENV SETUP
-running_local_resources = getenv("RUN_LOCAL", True)
-CONFIGURATION_TABLE_NAME = getenv("CONFIGURATION_TABLE_NAME", "JaneDoe_Configuration")
-MATCHES_TABLE_NAME = getenv("MATCHES_TABLE_NAME", "JaneDoe_Matches")
-OBJECT_STATE_TABLE_NAME = getenv("OBJECT_STATE_TABLE_NAME", "JaneDoe_ObjectStates")
-LAMBDA_ENDPOINT = getenv("LAMBDA_ENDPOINT", "http://127.0.0.1:3001")
-DDB_ENDPOINT = getenv("DDB_ENDPOINT", "http://127.0.0.1:8000")
-REGION = "eu-west-1"
-PROJECT_ROOT = path.dirname(path.dirname(path.dirname(__file__)))
-# LOAD DEFINITIONS
-with open(path.join(PROJECT_ROOT, "templates", "ddb.yaml")) as f:
-    ddb_template = load(f.read())[0]
-
-# Setup DDB local
-kwargs = {}
-if running_local_resources:
-    session = boto3.Session(
-        aws_access_key_id="test",
-        aws_secret_access_key="test",
-        region_name=REGION,
-    )
-    kwargs["endpoint_url"] = DDB_ENDPOINT
-else:
-    session = boto3.Session()
-
-ddb = session.resource('dynamodb', **kwargs)
+running_local_resources = getenv("RunningLocal", False)
 
 
-def create_table(table_name, hash_key, hash_key_type='S', range_key=None, range_key_type='S', attributes=[]):
-    """
-    Creates a DDB table for testing
-    """
-    key_schema = [{
-        'AttributeName': hash_key,
-        'KeyType': 'HASH'
-    }, ]
-    attr_definitions = [
-        {
-            'AttributeName': hash_key,
-            'AttributeType': hash_key_type
-        },
-    ]
-    if range_key:
-        key_schema.append({
-            'AttributeName': range_key,
-            'KeyType': 'RANGE'
-        })
-        attr_definitions.append({
-            'AttributeName': range_key,
-            'AttributeType': range_key_type
-        })
-    attr_definitions = attr_definitions + attributes
-    t = ddb.create_table(
-        AttributeDefinitions=attr_definitions,
-        TableName=table_name,
-        KeySchema=key_schema,
-        BillingMode='PAY_PER_REQUEST',
-    )
-    logger.info("Table %s: %s", table_name, t.table_status)
-
-
-def delete_table(table_name):
-    """
-    Deletes a DDB table for testing
-    """
-    table = ddb.Table(table_name)
-    table.delete()
-
-
-def get_schema_from_template(logical_identifier):
-    resource = ddb_template["Resources"].get(logical_identifier)
-    if not resource:
-        raise KeyError("Unable to find resource with identifier %s", logical_identifier)
-
-    return {
-        k["KeyType"]: k["AttributeName"] for k in resource["Properties"]["KeySchema"]
-    }
-
+#########
+# HOOKS #
+#########
 
 def pytest_configure(config):
     """
     Initial test env setup
     """
-    logger.info("Starting acceptance tests")
+    global_sdk_config.set_sdk_enabled(False)
+    load_env()
     if running_local_resources:
-        logger.info("Setting up DynamoDB tables...")
-        config_schema = get_schema_from_template("ConfigurationTable")
-        matches_schema = get_schema_from_template("MatchesTable")
-        object_state_table = get_schema_from_template("ObjectsStateTable")
-        create_table(CONFIGURATION_TABLE_NAME, hash_key=config_schema["HASH"])
-        create_table(MATCHES_TABLE_NAME, hash_key=matches_schema["HASH"], range_key=matches_schema["RANGE"])
-        create_table(OBJECT_STATE_TABLE_NAME, hash_key=object_state_table["HASH"])
-        logger.info("DynamoDB tables ready!")
+        logger.info("Running in local mode")
 
 
 def pytest_unconfigure(config):
     """
     Teardown actions
     """
+    pass
+
+
+############
+# FIXTURES #
+############
+
+@pytest.fixture(scope="session")
+def ddb_resource():
+    # Setup DDB local resource
+    kwargs = {}
     if running_local_resources:
+        ddb_endpoint = getenv("DdbEndpoint", "http://127.0.0.1:8000")
+        session = boto3.Session(
+            aws_access_key_id="test",
+            aws_secret_access_key="test",
+            region_name=getenv("Region", "eu-west-1"),
+        )
+        kwargs["endpoint_url"] = ddb_endpoint
+    else:
+        session = boto3.Session(profile_name=getenv("AWS_PROFILE", "default"))
+
+    return session.resource('dynamodb', **kwargs)
+
+
+@pytest.fixture(scope="session")
+def get_table_name():
+    def func(prefix, name):
+        return "{}_{}".format(prefix, name)
+
+    return partial(func, getenv("TablePrefix"))
+
+
+@pytest.fixture(scope="session", autouse=running_local_resources)
+def local_db(ddb_resource, get_table_name):
+    """
+    Setups a local DynamoDB database
+    """
+    if running_local_resources:
+        ddb_local_manager = DDBLocalManager(ddb_resource)
         try:
-            logger.info("Clearing down DynamoDB tables...")
-            delete_table(CONFIGURATION_TABLE_NAME)
-            delete_table(MATCHES_TABLE_NAME)
-            delete_table(OBJECT_STATE_TABLE_NAME)
-            logger.info("DynamoDB tables cleared!")
-        except Exception as e:
-            logger.error(str(e))
-            logger.warning("Unable to clear DynamoDB tables. Remove them before next run if not using -inMemory")
+            # Load template
+            ddb_template = load_template("ddb.yaml")
+            tables = ["Configuration", "Matches", "ObjectsState"]
+            for table in tables:
+                schema = get_schema_from_template(ddb_template, "{}Table".format(table))
+                ddb_local_manager.create_table(get_table_name(table), hash_key=schema["HASH"],
+                                               range_key=schema.get("RANGE"))
+            yield
+        finally:
+            ddb_local_manager.delete_tables()
 
 
-@pytest.fixture
-def lambda_client():
-    """
-    Creates a Lambda client for use locally
-    """
+@pytest.fixture(scope="session", autouse=not running_local_resources)
+def cognito_token():
     if running_local_resources:
-        client_config = botocore.client.Config(
-            signature_version=botocore.UNSIGNED, retries={'max_attempts': 0}, )
+        yield
+    else:
+        # Generate User in Cognito
+        user_pool_id = getenv("UserPoolId")
+        client_id = getenv("ClientId")
+        username = "aws-uk-sa-builders@amazon.com"
+        pwd = "acceptance-tests-password"
+        auth_data = {'USERNAME': username, 'PASSWORD': pwd}
+        provider_client = boto3.client('cognito-idp')
+        # Create the User
+        provider_client.admin_create_user(
+            UserPoolId=user_pool_id,
+            Username=username,
+            TemporaryPassword=pwd,
+            MessageAction='SUPPRESS',
+        )
+        provider_client.admin_set_user_password(
+            UserPoolId=user_pool_id,
+            Username=username,
+            Password=pwd,
+            Permanent=True
+        )
+        # Allow admin login
+        provider_client.update_user_pool_client(
+            UserPoolId=user_pool_id,
+            ClientId=client_id,
+            ExplicitAuthFlows=[
+                'ADMIN_NO_SRP_AUTH',
+            ],
+        )
+        # Get JWT token for the dummy user
+        resp = provider_client.admin_initiate_auth(UserPoolId=user_pool_id, AuthFlow='ADMIN_NO_SRP_AUTH',
+                                                   AuthParameters=auth_data, ClientId=client_id)
+        yield resp['AuthenticationResult']['IdToken']
+        provider_client.admin_delete_user(
+            UserPoolId=user_pool_id,
+            Username=username
+        )
 
-        return boto3.client('lambda', endpoint_url=LAMBDA_ENDPOINT, verify=False, config=client_config)
-    return boto3.client('lambda')
+
+@pytest.fixture(scope="session")
+def api_client(cognito_token):
+    class ApiGwSession(Session):
+        def __init__(self, base_url=None, default_headers=None):
+            if default_headers is None:
+                default_headers = {}
+            self.base_url = base_url
+            self.default_headers = default_headers
+            super(ApiGwSession, self).__init__()
+
+        def request(self, method, url, data=None, params=None, headers=None, *args, **kwargs):
+            url = urljoin(self.base_url, url)
+            if isinstance(headers, dict):
+                self.default_headers.update(headers)
+            return super(ApiGwSession, self).request(
+                method, url, data, params, headers=self.default_headers, *args, **kwargs
+            )
+
+    hds = {
+        "Content-Type": "application/json"
+    }
+    if cognito_token:
+        hds.update({
+            "Authorization": "Bearer {}".format(cognito_token)
+        })
+
+    return ApiGwSession(getenv("ApiUrl"), hds)
+
+
+@pytest.fixture(scope="module")
+def configuration_endpoint():
+    return "index/configurations"
+
+
+@pytest.fixture(scope="module")
+def config_table(ddb_resource, get_table_name):
+    return ddb_resource.Table(get_table_name("Configuration"))
 
 
 @pytest.fixture
-def dynamodb_resource():
-    """
-    Creates a DDB resource for use locally
-    """
-    return ddb
-
-
-@pytest.fixture
-def index_config(s3_uri="s3://test_bucket/test_path/", object_types="parquet", columns=["user_id"], s3_trigger=True):
+def index_config(config_table, s3_uri="s3://test_bucket/test_path/", object_types=["parquet"],
+                 columns=["user_id"], s3_trigger=True):
     """
     Generates a sample index config in the db which is cleaned up after the test
     """
-    table = ddb.Table(CONFIGURATION_TABLE_NAME)
     item = {
         "S3Uri": s3_uri,
         "S3Trigger": s3_trigger,
         "Columns": columns,
         "ObjectTypes": object_types
     }
-    table.put_item(Item=item)
+    config_table.put_item(Item=item)
     yield item
-    table.delete_item(Key={
+    config_table.delete_item(Key={
         "S3Uri": s3_uri
     })
 
 
 @pytest.fixture
 def event_generator():
+    """
+    Event generator function. See the events folder
+    """
+
     def load_file(event_type, key_overrides={}):
         events_path = path.join(path.dirname(__file__), 'events')
         file_path = path.join(events_path, event_type + ".json")

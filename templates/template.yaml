@@ -44,3 +44,15 @@ Resources:
         MatchesTableName: !GetAtt DDBStack.Outputs.MatchesTable
         CognitoUserPoolName: !Ref CognitoUserPoolName
         CognitoUserPoolClientName: !Ref CognitoUserPoolClientName
+
+Outputs:
+  DDBStack:
+    Value: !Ref DDBStack
+  APIStack:
+    Value: !Ref APIStack
+  ConfigurationTable:
+    Value: !GetAtt DDBStack.Outputs.ConfigurationTable
+  MatchesTable:
+    Value: !GetAtt DDBStack.Outputs.MatchesTable
+  ObjectsStateTable:
+    Value: !GetAtt DDBStack.Outputs.ObjectsStateTable
