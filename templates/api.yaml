@@ -134,7 +134,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: handlers.get_job_handler
-      CodeUri: ../lambdas/src/jobs/
+      CodeUri: ../lambdas/src/job/
       Events:
         Get:
           Type: Api
