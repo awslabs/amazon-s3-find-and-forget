@@ -4,14 +4,21 @@ Queue handlers
 import json
 
 
-def plan_handler(event, context):
+def enqueue_handler(event, context):
     return {
         "statusCode": 200,
         "body": json.dumps({"hello": "world"})
     }
 
 
-def enqueue_handler(event, context):
+def get_handler(event, context):
+    return {
+        "statusCode": 200,
+        "body": json.dumps({"hello": "world"})
+    }
+
+
+def cancel_handler(event, context):
     return {
         "statusCode": 200,
         "body": json.dumps({"hello": "world"})

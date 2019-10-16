@@ -1,5 +1,6 @@
 """
 Configuration handlers
+Deprecated: To be refactored into queue code
 """
 import json
 import os

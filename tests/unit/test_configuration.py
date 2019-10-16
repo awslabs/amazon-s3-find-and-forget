@@ -6,7 +6,7 @@ from mock import patch
 
 from lambdas.src import configuration
 
-pytestmark = [pytest.mark.unit, pytest.mark.configuration]
+pytestmark = [pytest.mark.unit, pytest.mark.configuration, pytest.mark.skip]
 
 
 @patch("lambdas.src.configuration.handlers.table")

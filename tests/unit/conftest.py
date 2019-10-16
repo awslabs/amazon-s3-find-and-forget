@@ -8,9 +8,7 @@ from aws_xray_sdk.core import xray_recorder
 
 @pytest.fixture(autouse=True)
 def mock_env(monkeypatch):
-    monkeypatch.setenv("ConfigurationTable", "TestConfiguration")
-    monkeypatch.setenv("ObjectsStateTable", "TestObjectStates")
-    monkeypatch.setenv("MatchesTable", "TestMatches")
+    monkeypatch.setenv("DeletionQueueTable", "TestDeletionQueue")
 
 
 def pytest_configure(config):

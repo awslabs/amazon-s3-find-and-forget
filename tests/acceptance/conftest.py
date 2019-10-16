@@ -85,7 +85,7 @@ def local_db(ddb_resource, get_table_name):
         try:
             # Load template
             ddb_template = load_template("ddb.yaml")
-            tables = ["Configuration", "Matches", "ObjectsState"]
+            tables = ["DeletionQueue"]
             for table in tables:
                 schema = get_schema_from_template(ddb_template, "{}Table".format(table))
                 ddb_local_manager.create_table(get_table_name(table), hash_key=schema["HASH"],
@@ -165,16 +165,6 @@ def api_client(cognito_token):
         })
 
     return ApiGwSession(getenv("ApiUrl"), hds)
-
-
-@pytest.fixture(scope="module")
-def configuration_endpoint():
-    return "index/configurations"
-
-
-@pytest.fixture(scope="module")
-def config_table(ddb_resource, get_table_name):
-    return ddb_resource.Table(get_table_name("Configuration"))
 
 
 @pytest.fixture

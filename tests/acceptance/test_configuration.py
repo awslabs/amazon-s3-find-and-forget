@@ -1,10 +1,7 @@
-import json
-from os import getenv
-
 import pytest
 from boto3.dynamodb.conditions import Key
 
-pytestmark = [pytest.mark.acceptance, pytest.mark.configuration]
+pytestmark = [pytest.mark.acceptance, pytest.mark.configuration, pytest.mark.skip]
 
 
 def test_it_gets_configurations(api_client, configuration_endpoint, index_config):
