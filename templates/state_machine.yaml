@@ -1,0 +1,53 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Jane Doe State Machine
+
+Parameters:
+  StateMachinePrefix:
+    Default: JaneDoe
+    Type: String
+
+Resources:
+  StatesExecutionRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: "Allow"
+          Principal:
+            Service:
+            - !Sub states.${AWS::Region}.amazonaws.com
+          Action: "sts:AssumeRole"
+      Path: "/"
+      Policies:
+      - PolicyName: StatesExecutionPolicy
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+          - Effect: Allow
+            Action:
+            - "lambda:InvokeFunction"
+            Resource: "*"
+
+  StateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: !Sub ${StateMachinePrefix}-StateMachine
+      DefinitionString: |-
+        {
+          "StartAt": "Pass",
+          "States": {
+            "Pass": {
+              "Type": "Pass",
+              "End": true
+            }
+          }
+        }
+      RoleArn: !GetAtt StatesExecutionRole.Arn
+
+Outputs:
+  StateMachineArn:
+    Value: !Ref StateMachine
+  StateMachineRoleArn:
+    Value: !GetAtt StatesExecutionRole.Arn

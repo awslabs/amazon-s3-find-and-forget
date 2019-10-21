@@ -1,14 +1,9 @@
-from os import path
+from os import path, environ
 
 import pytest
 import sys
 from aws_xray_sdk import global_sdk_config
 from aws_xray_sdk.core import xray_recorder
-
-
-@pytest.fixture(autouse=True)
-def mock_env(monkeypatch):
-    monkeypatch.setenv("DeletionQueueTable", "TestDeletionQueue")
 
 
 def pytest_configure(config):

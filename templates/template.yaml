@@ -3,8 +3,8 @@ Transform: AWS::Serverless-2016-10-31
 Description: Jane Doe (uksb-1q2j8beb0)
 
 Parameters:
-  DynamoDBTablePrefix:
-    Description: The prefix usesed to name the DynamoDB tables on creation
+  ResourcePrefix:
+    Description: The prefix used in DynamoDB table and state machine names
     Type: String
     Default: JaneDoe
   CognitoUserPoolName:
@@ -20,15 +20,22 @@ Resources:
     Properties: 
       TemplateURL: ./ddb.yaml
       Parameters:
-        DynamoDBTablePrefix: !Ref DynamoDBTablePrefix
+        DynamoDBTablePrefix: !Ref ResourcePrefix
   APIStack: 
     Type: AWS::CloudFormation::Stack
     Properties: 
       TemplateURL: ./api.yaml
       Parameters: 
         DeletionQueueTableName: !GetAtt DDBStack.Outputs.DeletionQueueTable
+        StateMachineArn: !GetAtt StateMachineStack.Outputs.StateMachineArn
         CognitoUserPoolName: !Ref CognitoUserPoolName
         CognitoUserPoolClientName: !Ref CognitoUserPoolClientName
+  StateMachineStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ./state_machine.yaml
+      Parameters:
+        StateMachinePrefix: !Ref ResourcePrefix
 
 Outputs:
   DDBStack:

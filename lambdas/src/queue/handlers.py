@@ -6,10 +6,11 @@ import os
 
 from aws_xray_sdk.core import xray_recorder
 
-from boto_factory import get_resource
+from boto_factory import get_resource, get_client
 from decorators import with_logger
 
 
+sfn_client = get_client("stepfunctions")
 dynamodb_resource = get_resource("dynamodb")
 table = dynamodb_resource.Table(os.getenv("DeletionQueueTable"))
 
@@ -56,8 +57,15 @@ def cancel_handler(event, context):
     }
 
 
+@with_logger
+@xray_recorder.capture('ProcessDeletionHandler')
 def process_handler(event, context):
+    response = sfn_client.start_execution(
+        stateMachineArn=os.getenv("StateMachineArn")
+    )
     return {
-        "statusCode": 204,
-        "body": json.dumps({})
+        "statusCode": 202,
+        "body": json.dumps({
+            "JobId": response["executionArn"].rsplit(":", 1)[-1]
+        })
     }

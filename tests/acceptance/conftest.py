@@ -72,7 +72,7 @@ def sf_client():
     # Setup DDB local resource
     kwargs = {}
     if running_local_resources:
-        endpoint = getenv("SFEndpoint", "http://127.0.0.1:8083")
+        endpoint = getenv("StepFunctionsEndpoint", "http://127.0.0.1:8083")
         session = boto3.Session(
             aws_access_key_id="test",
             aws_secret_access_key="test",
@@ -206,6 +206,33 @@ def del_queue_item(queue_table, match_id="testId", columns=[]):
     queue_table.delete_item(Key={
         "MatchId": match_id
     })
+
+
+@pytest.fixture
+def state_machine(sf_client):
+    if running_local_resources:
+        state_machine = sf_client.create_state_machine(
+            name="DummyMachine",
+            roleArn=getenv("StepFunctionsRoleArn", "arn:aws:iam::012345678901:role/DummyRole"),
+            definition=json.dumps({
+                "Comment": "A dummy state machine",
+                "StartAt": "Start",
+                "States": {
+                    "Start": {
+                        "Type": "Pass",
+                        "End": True
+                    }
+                }
+            })
+        )
+        arn = state_machine["stateMachineArn"]
+        logger.info("State Machine Ready: {}".format(arn))
+        yield state_machine
+        sf_client.delete_state_machine(stateMachineArn=arn)
+    else:
+        yield {
+            "stateMachineArn": getenv("StateMachineArn")
+        }
 
 
 @pytest.fixture

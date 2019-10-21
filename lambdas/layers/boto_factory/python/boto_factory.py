@@ -18,6 +18,7 @@ logger.setLevel(os.getenv("LogLevel", logging.INFO))
 # Supported mock services
 service_map = {
     "dynamodb": "{proto}://{host}:8000",
+    "stepfunctions": "{proto}://{host}:8083",
 }
 
 
@@ -40,7 +41,7 @@ def get_client(service, **kwargs):
         return boto3.client(service,
                             endpoint_url=_get_local_service_endpoint(service),
                             aws_access_key_id="test", aws_secret_access_key="test", **kwargs)
-    return boto3.resource(service, **kwargs)
+    return boto3.client(service, **kwargs)
 
 
 def get_resource(service, **kwargs):

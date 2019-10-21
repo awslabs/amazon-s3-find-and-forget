@@ -30,6 +30,9 @@ Parameters:
   DeletionQueueTableName:
     Description: Table name for Deletion Queue Table
     Type: String
+  StateMachineArn:
+    Description: State Machine to invoke to process the deletion queue
+    Type: String
   CognitoUserPoolName:
     Type: String
     Default: JaneDoePool
@@ -120,6 +123,9 @@ Resources:
     Properties:
       Handler: handlers.process_handler
       CodeUri: ../lambdas/src/queue/
+      Environment:
+        Variables:
+          StateMachineArn: !Ref StateMachineArn
       Events:
         Get:
           Type: Api
@@ -129,6 +135,13 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref DeletionQueueTableName
+        - Statement:
+          - Action:
+            - "states:ListStateMachines"
+            - "states:DescribeStateMachine"
+            - "states:StartExecution"
+            Effect: "Allow"
+            Resource: !Ref StateMachineArn
   # Jobs
   GetJob:
     Type: AWS::Serverless::Function

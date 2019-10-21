@@ -9,7 +9,7 @@
     "DeletionQueueTable": "JaneDoe_DeletionQueue"
   },
   "ProcessQueue": {
-    "DeletionQueueTable": "JaneDoe_DeletionQueue"
+    "StateMachineArn": "arn:aws:states:eu-west-1:123456789012:stateMachine:DummyMachine"
   },
   "GetJob": {
     "DeletionQueueTable": "JaneDoe_DeletionQueue"

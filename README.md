@@ -33,7 +33,7 @@ Unit tests can be ran by using the pytest mark `unit` i.e.
 pytest -m unit --log-cli-level info
 ```
 
-### Acceptance Tests
+### API Acceptance Tests
 
 #### Using AWS
 Some acceptance tests require the full AWS stack to be deployed. To run the
@@ -44,6 +44,7 @@ ApiUrl=APIGW_URL_FROM_STACK_OUTPUTS
 TablePrefix=TABLE_PREFIX_USED_WHEN_DEPLOYING_STACK
 ClientId=COGNITO_CLIENT_ID_FROM_STACK_OUTPUTS
 UserPoolId=COGNITO_USER_POOL_ID_FROM_STACK_OUTPUTS
+StepFunctionsRoleArn=ROLE_ARN_FOR_STEP_FUNCTIONS
 ```
 
 Then run the acceptance tests:
@@ -63,14 +64,15 @@ def test_something():
 ```
 
 #### Using SAM Local
-To run end to end tests using SAM local and DDB local, you first need to 
-have SAM local and DDB local running on a local docker network: 
+To run end to end tests using SAM local, DDB local and Step Functions local, you first need to 
+have SAM local and DDB local running. The easiest way to do this is using Docker: 
 ```
 docker network create lambda-local
 docker run -p 8000:8000 --name dynamodb --network=lambda-local amazon/dynamodb-local -jar DynamoDBLocal.jar -inMemory -sharedDb
-sam local start-lambda --template templates/api.yaml --docker-network lambda-local --env-vars tests/acceptance/env_vars.json
+docker run -p 8083:8083 --name stepfunctions --network=lambda-local -e AWS_DEFAULT_REGION=eu-west-1 amazon/aws-stepfunctions-local
+sam local start-api --template templates/api.yaml --docker-network lambda-local --env-vars tests/acceptance/env_vars.json
 ```
 Then run the tests not marked as requiring AWS:
 ```
-ApiUrl=http://127.0.0.1 RunningLocal=true pytest -m acceptance -m "not needs_aws" --log-cli-level info
+RunningLocal=true pytest -m acceptance -m "not needs_aws" --log-cli-level info
 ```

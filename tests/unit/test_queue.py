@@ -1,10 +1,12 @@
 import json
+import os
 from types import SimpleNamespace
 
 import pytest
 from mock import patch
 
-from lambdas.src.queue import handlers
+with patch.dict(os.environ, {"DeletionQueueTable": "DeletionQueueTable"}):
+    from lambdas.src.queue import handlers
 
 pytestmark = [pytest.mark.unit, pytest.mark.queue]
 
@@ -59,4 +61,21 @@ def test_it_cancels_deletions(table):
     }, SimpleNamespace())
     assert {
         "statusCode": 204
+    } == response
+
+
+@patch("lambdas.src.queue.handlers.sfn_client")
+def test_it_process_queue(sfn_client):
+    sfn_client.start_execution.return_value = {
+        "executionArn": "arn:aws:states:eu-west-1:123456789012:execution:HelloWorld:e723c10b-9be4-46ca-90b8-8b94a7105b44",
+        "startDate": 1571321214.368
+    }
+    response = handlers.process_handler({
+        "body": ""
+    }, SimpleNamespace())
+    assert {
+        "statusCode": 202,
+        "body": json.dumps({
+            "JobId": "e723c10b-9be4-46ca-90b8-8b94a7105b44"
+        })
     } == response

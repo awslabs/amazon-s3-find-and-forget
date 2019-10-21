@@ -47,17 +47,18 @@ def test_it_cancels_deletion(api_client, del_queue_item, queue_base_endpoint, qu
     assert 0 == len(query_result["Items"])
 
 
-@pytest.mark.skip
-def test_it_processes_queue(api_client, del_queue_item, queue_base_endpoint, sf_client):
+def test_it_processes_queue(api_client, del_queue_item, queue_base_endpoint, sf_client, state_machine):
     # Arrange
     # Act
     response = api_client.delete(queue_base_endpoint)
     response_body = response.json()
     # Assert
-    assert 204 == response.status_code
+    assert 202 == response.status_code
     # Check the execution started
-    assert del_queue_item in response_body["JobId"]
+    assert "JobId" in response_body
     job = sf_client.describe_execution(
-        executionArn=response_body["JobId"]
+        executionArn="{}:{}".format(state_machine["stateMachineArn"].replace("stateMachine", "execution"),
+                                    response_body["JobId"])
     )
+    # Verify the job started
     assert job["status"] in ["SUCCEEDED", "RUNNING"]
