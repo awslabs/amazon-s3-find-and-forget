@@ -16,7 +16,7 @@ import pytest
 from aws_xray_sdk import global_sdk_config
 from requests import Session
 
-from . import load_env, DDBLocalManager, get_schema_from_template, load_template
+from . import load_env, DDBLocalManager, get_schema_from_template, load_template, get_resources_from_template
 
 logger = logging.getLogger()
 
@@ -68,6 +68,24 @@ def ddb_resource():
 
 
 @pytest.fixture(scope="session")
+def sf_client():
+    # Setup DDB local resource
+    kwargs = {}
+    if running_local_resources:
+        endpoint = getenv("SFEndpoint", "http://127.0.0.1:8083")
+        session = boto3.Session(
+            aws_access_key_id="test",
+            aws_secret_access_key="test",
+            region_name=getenv("Region", "eu-west-1"),
+        )
+        kwargs["endpoint_url"] = endpoint
+    else:
+        session = boto3.Session(profile_name=getenv("AWS_PROFILE", "default"))
+
+    return session.client('stepfunctions', **kwargs)
+
+
+@pytest.fixture(scope="session")
 def get_table_name():
     def func(prefix, name):
         return "{}_{}".format(prefix, name)
@@ -85,10 +103,10 @@ def local_db(ddb_resource, get_table_name):
         try:
             # Load template
             ddb_template = load_template("ddb.yaml")
-            tables = ["DeletionQueue"]
+            tables = list(get_resources_from_template(ddb_template, "AWS::DynamoDB::Table").keys())
             for table in tables:
-                schema = get_schema_from_template(ddb_template, "{}Table".format(table))
-                ddb_local_manager.create_table(get_table_name(table), hash_key=schema["HASH"],
+                schema = get_schema_from_template(ddb_template, table)
+                ddb_local_manager.create_table(get_table_name(table.replace("Table", "")), hash_key=schema["HASH"],
                                                range_key=schema.get("RANGE"))
             yield
         finally:
@@ -167,22 +185,26 @@ def api_client(cognito_token):
     return ApiGwSession(getenv("ApiUrl"), hds)
 
 
+@pytest.fixture(scope="module")
+def queue_base_endpoint():
+    return "queue"
+
+
+@pytest.fixture(scope="module")
+def queue_table(ddb_resource, get_table_name):
+    return ddb_resource.Table(get_table_name("DeletionQueue"))
+
+
 @pytest.fixture
-def index_config(config_table, s3_uri="s3://test_bucket/test_path/", object_types=["parquet"],
-                 columns=["user_id"], s3_trigger=True):
-    """
-    Generates a sample index config in the db which is cleaned up after the test
-    """
+def del_queue_item(queue_table, match_id="testId", columns=[]):
     item = {
-        "S3Uri": s3_uri,
-        "S3Trigger": s3_trigger,
+        "MatchId": match_id,
         "Columns": columns,
-        "ObjectTypes": object_types
     }
-    config_table.put_item(Item=item)
+    queue_table.put_item(Item=item)
     yield item
-    config_table.delete_item(Key={
-        "S3Uri": s3_uri
+    queue_table.delete_item(Key={
+        "MatchId": match_id
     })
 
 

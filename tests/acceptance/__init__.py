@@ -34,6 +34,14 @@ def load_template(template_name):
         return load(f.read())[0]
 
 
+def get_resources_from_template(template, resource_type=None):
+    resources = template["Resources"]
+    if not resource_type:
+        return resources
+
+    return {k: v for k, v in resources.items() if v["Type"] == resource_type}
+
+
 def get_schema_from_template(ddb_template, logical_identifier):
     resource = ddb_template["Resources"].get(logical_identifier)
     if not resource:
