@@ -14,6 +14,7 @@ from urllib.parse import urljoin
 import boto3
 import pytest
 from aws_xray_sdk import global_sdk_config
+from botocore.exceptions import ClientError
 from requests import Session
 
 from . import load_env, DDBLocalManager, get_schema_from_template, load_template, get_resources_from_template
@@ -208,6 +209,11 @@ def del_queue_item(queue_table, match_id="testId", columns=[]):
     })
 
 
+@pytest.fixture(scope="module")
+def jobs_endpoint():
+    return "jobs"
+
+
 @pytest.fixture
 def state_machine(sf_client):
     if running_local_resources:
@@ -236,12 +242,18 @@ def state_machine(sf_client):
 
 
 @pytest.fixture
-def job(sf_client):
+def execution(sf_client, state_machine):
     """
     Generates a sample index config in the db which is cleaned up after the test
     """
-    job = sf_client.start_exection(stateMachineArn=getenv("StateMachineArn"))
-    yield job
+    response = sf_client.start_execution(
+        stateMachineArn=state_machine["stateMachineArn"]
+    )
+    yield response
+    try:
+        sf_client.stop_execution(executionArn=response["executionArn"])
+    except ClientError as e:
+        logger.warning("Error stopping state machine: %s", str(e))
 
 
 @pytest.fixture

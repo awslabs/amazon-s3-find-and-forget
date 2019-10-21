@@ -147,7 +147,10 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: handlers.get_job_handler
-      CodeUri: ../lambdas/src/job/
+      CodeUri: ../lambdas/src/jobs/
+      Environment:
+        Variables:
+          StateMachineArn: !Ref StateMachineArn
       Events:
         Get:
           Type: Api
@@ -155,8 +158,13 @@ Resources:
             Path: /jobs/{job_id}
             Method: get
       Policies:
-      - DynamoDBCrudPolicy:
-          TableName: !Ref DeletionQueueTableName
+        - Statement:
+          - Action:
+            - "states:ListStateMachines"
+            - "states:ListExecutions"
+            - "states:DescribeExecution"
+            Effect: "Allow"
+            Resource: "*"
 
   # Layers
   AWSSDKLayer:
