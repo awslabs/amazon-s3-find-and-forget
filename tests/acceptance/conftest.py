@@ -236,6 +236,15 @@ def state_machine(sf_client):
 
 
 @pytest.fixture
+def job(sf_client):
+    """
+    Generates a sample index config in the db which is cleaned up after the test
+    """
+    job = sf_client.start_exection(stateMachineArn=getenv("StateMachineArn"))
+    yield job
+
+
+@pytest.fixture
 def event_generator():
     """
     Event generator function. See the events folder
