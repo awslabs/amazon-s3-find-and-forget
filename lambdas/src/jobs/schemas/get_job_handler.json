@@ -1,0 +1,12 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "title": "GetJobPathParameters",
+    "type": "object",
+    "properties": {
+        "job_id": {
+            "type": "string"
+        }
+    },
+    "required": ["job_id"]
+}
+

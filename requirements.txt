@@ -4,3 +4,4 @@ aws-sam-cli==0.22.0
 boto3==1.9.237
 cfn-flip==1.2.1
 requests==2.22.0
+jsonschema==3.1.1

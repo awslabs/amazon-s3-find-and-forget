@@ -24,6 +24,11 @@ def test_it_adds_to_queue(api_client, queue_base_endpoint, queue_table):
     assert config == query_result["Items"][0]
 
 
+def test_it_rejects_invalid_add_to_queue(api_client, queue_base_endpoint):
+    response = api_client.patch(queue_base_endpoint, json={"INVALID": "PAYLOAD"})
+    assert 422 == response.status_code
+
+
 def test_it_gets_queue(api_client, queue_base_endpoint, del_queue_item):
     # Arrange
     # Act
@@ -36,6 +41,18 @@ def test_it_gets_queue(api_client, queue_base_endpoint, del_queue_item):
 
 
 def test_it_cancels_deletion(api_client, del_queue_item, queue_base_endpoint, queue_table):
+    # Arrange
+    key = del_queue_item["MatchId"]
+    # Act
+    response = api_client.delete("{}/matches/{}".format(queue_base_endpoint, key))
+    # Assert
+    assert 204 == response.status_code
+    # Check the item doesn't exist in the DDB Table
+    query_result = queue_table.query(KeyConditionExpression=Key("MatchId").eq(key))
+    assert 0 == len(query_result["Items"])
+
+
+def test_it_handles_not_found(api_client, del_queue_item, queue_base_endpoint, queue_table):
     # Arrange
     key = del_queue_item["MatchId"]
     # Act

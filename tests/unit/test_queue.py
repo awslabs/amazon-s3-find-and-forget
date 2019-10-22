@@ -5,6 +5,7 @@ from types import SimpleNamespace
 import pytest
 from mock import patch
 
+
 with patch.dict(os.environ, {"DeletionQueueTable": "DeletionQueueTable"}):
     from lambdas.src.queue import handlers
 
