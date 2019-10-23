@@ -2,10 +2,38 @@ AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: Jane Doe State Machine
 
+Globals:
+  Function:
+    Runtime: python3.7
+    Timeout: 180
+    AutoPublishAlias: live
+    Tracing: Active
+    Layers: !Ref CommonLayers
+    Environment:
+      Variables:
+        LogLevel: !Ref LogLevel
+
 Parameters:
   StateMachinePrefix:
     Default: JaneDoe
     Type: String
+  DeletionQueueTableName:
+    Description: Table name for Deletion Queue Table
+    Type: String
+  CommonLayers:
+    Type: CommaDelimitedList
+    Description: Common layers supplied to all functions
+  LogLevel:
+    Type: String
+    Default: INFO
+    AllowedValues:
+    - CRITICAL
+    - FATAL
+    - ERROR
+    - WARNING
+    - INFO
+    - DEBUG
+    - NOTSET
 
 Resources:
   StatesExecutionRole:
@@ -29,11 +57,23 @@ Resources:
             Action:
             - "lambda:InvokeFunction"
             Resource: "*"
+          - Effect: Allow
+            Action:
+            - "ecs:RunTask"
+            - "ecs:StopTask"
+            - "ecs:DescribeTasks"
+            Resource: "*"
+          - Effect: Allow
+            Action:
+            - "events:PutTargets"
+            - "events:PutRule"
+            - "events:DescribeRule"
+            Resource: "*"
 
-  StateMachine:
+  StateMachineStub:
     Type: AWS::StepFunctions::StateMachine
     Properties:
-      StateMachineName: !Sub ${StateMachinePrefix}-StateMachine
+      StateMachineName: !Sub ${StateMachinePrefix}-StateMachineStub
       DefinitionString: |-
         {
           "StartAt": "Pass",
@@ -46,8 +86,177 @@ Resources:
         }
       RoleArn: !GetAtt StatesExecutionRole.Arn
 
+  # Not exposed yet
+  StateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: !Sub ${StateMachinePrefix}-StateMachine
+      DefinitionString: !Sub |-
+        {
+          "Comment": "State machine for processing the Jane Doe deletion queue.",
+          "StartAt": "Check is Oldest Execution",
+          "States": {
+            "Check is Oldest Execution": {
+              "Comment": "Queries the Step Functions API to check if the current executions is the oldest",
+              "Type": "Task",
+              "Resource": "${TaskStub.Arn}",
+              "Parameters": {
+                "Task.$": "$.task",
+                "ExecutionId.$": "$$.Execution.Id"
+              },
+              "ResultPath": "$.IsOldestExecution",
+              "Next": "Should Start?"
+            },
+            "Wait": {
+              "Comment": "Waits before checking again whether this is the current execution",
+              "Type": "Wait",
+              "Seconds": 120,
+              "Next": "Check is Oldest Execution"
+            },
+            "Should Start?": {
+              "Comment": "Check if this execution is the oldest running execution and proceed if so.",
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.IsOldestExecution",
+                  "BooleanEquals": true,
+                  "Next": "Query Deletion Queue"
+                },
+                {
+                  "Variable": "$.IsOldestExecution",
+                  "BooleanEquals": false,
+                  "Next": "Wait"
+                }
+              ],
+              "Default": "CatchAllFallback"
+            },
+            "Query Deletion Queue": {
+              "Comment": "Scan the deletion queue table to obtain all users to be deleted ",
+              "Type": "Task",
+              "Resource": "${TaskStub.Arn}",
+              "ResultPath": "$.DeletionQueue",
+              "Next": "Users in queue?"
+            },
+            "Users in queue?": {
+              "Comment": "If the deletion queue is empty, exit gracefully. Otherwise, proceed to processing the queue.",
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.DeletionQueue.Length",
+                  "NumericGreaterThan": 0,
+                  "Next": "Yes"
+                },
+                {
+                  "Variable": "$.DeletionQueue.Length",
+                  "NumericEquals": 0,
+                  "Next": "No"
+                }
+              ],
+              "Default": "No"
+            },
+            "No": {
+              "Comment": "No work to be done.",
+              "Type": "Succeed"
+            },
+            "Yes": {
+              "Comment": "Continue.",
+              "Type": "Pass",
+              "Next": "Generate Queries"
+            },
+            "Generate Queries": {
+              "Comment": "Generates a list of queries which need to be executed by Lambda",
+              "Type": "Task",
+              "Resource": "${TaskStub.Arn}",
+              "ResultPath": "$.Queries",
+              "Next": "Execute Queries"
+            },
+            "Execute Queries": {
+              "Comment": "Executes the generated list of queries in parallel",
+              "Type": "Map",
+              "Next": "Generate file list",
+              "ItemsPath": "$.Queries",
+              "ResultPath": "$.QueryResults",
+              "MaxConcurrency": 10,
+              "Iterator": {
+                "StartAt": "Execute Query",
+                "States": {
+                  "Execute Query": {
+                    "Type": "Task",
+                    "Resource": "${AthenaRunnerActivity}",
+                    "End": true
+                  }
+                }
+              }
+            },
+            "Generate file list": {
+              "Comment": "Generates a list of files which will be edited",
+              "Type": "Task",
+              "Resource": "${TaskStub.Arn}",
+              "ResultPath": "$.Files",
+              "InputPath": "$.QueryResults",
+              "Next": "Perform Deletions"
+            },
+            "Perform Deletions": {
+              "Comment": "Schedule Fargate tasks to perform the file amendments in parallel",
+              "Type": "Map",
+              "Next": "Delete Query Results",
+              "ItemsPath": "$.Files",
+              "ResultPath": "$.DeletionJobResults",
+              "Iterator": {
+                "StartAt": "Perform Deletion for File",
+                "States": {
+                  "Perform Deletion for File": {
+                    "Type": "Task",
+                    "Resource": "arn:aws:states:::ecs:runTask.sync",
+                    "Parameters": {
+                      "LaunchType": "FARGATE",
+                      "Cluster": "arn:${AWS::Partition}:ecs:${AWS::Region}:${AWS::AccountId}:cluster/${ECSCluster}",
+                      "TaskDefinition": "JaneDoeS3Editor"
+                    },
+                    "End": true
+                  }
+                }
+              }
+            },
+            "Delete Query Results": {
+              "Comment": "Deletes query results from the ",
+              "Type": "Task",
+              "Parameters": {
+                "Task.$": "$.task",
+                "ExecutionId.$": "$$.Execution.Id"
+              },
+              "Resource": "${TaskStub.Arn}",
+              "InputPath": "$.QueryResults",
+              "End": true
+            },
+            "CatchAllFallback": {
+               "Type": "Pass",
+               "Result": "This is a fallback from any error code",
+               "End": true
+            }
+          }
+        }
+      RoleArn: !GetAtt StatesExecutionRole.Arn
+
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+
+  QueryResultBucket:
+    Type: AWS::S3::Bucket
+
+  TaskStub:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers.process_handler
+      CodeUri: ../lambdas/src/tasks/
+
+  AthenaRunnerActivity:
+    Type: "AWS::StepFunctions::Activity"
+    Properties:
+      Name: AthenaRunnerActivity
+
 Outputs:
   StateMachineArn:
-    Value: !Ref StateMachine
+    Value: !Ref StateMachineStub
   StateMachineRoleArn:
     Value: !GetAtt StatesExecutionRole.Arn

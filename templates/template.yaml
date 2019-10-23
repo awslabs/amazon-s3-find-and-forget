@@ -15,9 +15,13 @@ Parameters:
     Default: JaneDoePoolClient
 
 Resources:
-  DDBStack: 
+  LayersStack:
     Type: AWS::CloudFormation::Stack
     Properties: 
+      TemplateURL: ./layers.yaml
+  DDBStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
       TemplateURL: ./ddb.yaml
       Parameters:
         DynamoDBTablePrefix: !Ref ResourcePrefix
@@ -30,12 +34,23 @@ Resources:
         StateMachineArn: !GetAtt StateMachineStack.Outputs.StateMachineArn
         CognitoUserPoolName: !Ref CognitoUserPoolName
         CognitoUserPoolClientName: !Ref CognitoUserPoolClientName
+        CommonLayers: !Join
+          - ","
+          - - !GetAtt LayersStack.Outputs.AWSSDKLayer
+            - !GetAtt LayersStack.Outputs.BotoFactory
+            - !GetAtt LayersStack.Outputs.Decorators
   StateMachineStack:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: ./state_machine.yaml
       Parameters:
+        DeletionQueueTableName: !GetAtt DDBStack.Outputs.DeletionQueueTable
         StateMachinePrefix: !Ref ResourcePrefix
+        CommonLayers: !Join
+          - ","
+          - - !GetAtt LayersStack.Outputs.AWSSDKLayer
+            - !GetAtt LayersStack.Outputs.BotoFactory
+            - !GetAtt LayersStack.Outputs.Decorators
 
 Outputs:
   DDBStack:
