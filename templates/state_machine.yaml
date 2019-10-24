@@ -246,7 +246,7 @@ Resources:
   TaskStub:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: tastk_stub.handler
+      Handler: task_stub.handler
       CodeUri: ../lambdas/src/tasks/
 
   OldestExecutionCheck:
@@ -263,6 +263,18 @@ Resources:
           - "states:ListExecutions"
           Effect: "Allow"
           Resource: !Sub arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${StateMachinePrefix}*
+
+  QueryDeletionQueue:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: query_deletion_queue.handler
+      CodeUri: ../lambdas/src/tasks/
+      Environment:
+        Variables:
+          DeletionQueueTableName: !Ref DeletionQueueTableName
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName: !Ref DeletionQueueTableName
 
   AthenaRunnerActivity:
     Type: "AWS::StepFunctions::Activity"
