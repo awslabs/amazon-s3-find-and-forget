@@ -2,10 +2,10 @@ import os
 from types import SimpleNamespace
 
 import pytest
-from mock import patch, Mock
+from mock import patch
 
 with patch.dict(os.environ, {"StateMachineArn": "test"}):
-    from lambdas.src.tasks.oldest_execution import handler, paginate
+    from lambdas.src.tasks.oldest_execution import handler
 
 pytestmark = [pytest.mark.unit, pytest.mark.task]
 

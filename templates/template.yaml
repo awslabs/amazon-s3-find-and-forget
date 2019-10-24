@@ -38,6 +38,7 @@ Resources:
           - ","
           - - !GetAtt LayersStack.Outputs.AWSSDKLayer
             - !GetAtt LayersStack.Outputs.Decorators
+            - !GetAtt LayersStack.Outputs.BotoUtils
   StateMachineStack:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -49,6 +50,7 @@ Resources:
           - ","
           - - !GetAtt LayersStack.Outputs.AWSSDKLayer
             - !GetAtt LayersStack.Outputs.Decorators
+            - !GetAtt LayersStack.Outputs.BotoUtils
 
 Outputs:
   DDBStack:

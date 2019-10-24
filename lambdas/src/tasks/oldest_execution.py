@@ -6,21 +6,15 @@ from collections import deque
 
 import boto3
 
+from boto_utils import paginate
 from decorators import with_logger
 
 sf_client = boto3.client("stepfunctions")
 
 
-def paginate(client, method, **kwargs):
-    paginator = client.get_paginator(method.__name__)
-    for page in paginator.paginate(**kwargs).result_key_iters():
-        for result in page:
-            yield result
-
-
 @with_logger
 def handler(event, context):
-    executions = paginate(sf_client, sf_client.list_executions, **{
+    executions = paginate(sf_client, sf_client.list_executions, "executions", **{
         "stateMachineArn": os.getenv("StateMachineArn"),
         "statusFilter": "RUNNING"
     })

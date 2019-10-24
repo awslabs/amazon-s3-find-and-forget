@@ -19,6 +19,14 @@ Resources:
       ContentUri: ../lambdas/layers/decorators/
       CompatibleRuntimes:
         - python3.7
+  BotoUtils:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: BotoUtils
+      Description: Helpful boto3 utils
+      ContentUri: ../lambdas/layers/boto_utils/
+      CompatibleRuntimes:
+        - python3.7
 
 Outputs:
   AWSSDKLayer:
@@ -27,3 +35,6 @@ Outputs:
   Decorators:
     Description: "Decorators Layer"
     Value: !Ref Decorators
+  BotoUtils:
+    Description: "Boto Utils Layer"
+    Value: !Ref BotoUtils
