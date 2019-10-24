@@ -101,7 +101,6 @@ Resources:
               "Type": "Task",
               "Resource": "${OldestExecutionCheck.Arn}",
               "Parameters": {
-                "Task.$": "$.task",
                 "ExecutionId.$": "$$.Execution.Id"
               },
               "ResultPath": "$.IsOldestExecution",
@@ -247,14 +246,17 @@ Resources:
   TaskStub:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: handlers.process_handler
+      Handler: tastk_stub.handler
       CodeUri: ../lambdas/src/tasks/
 
   OldestExecutionCheck:
     Type: AWS::Serverless::Function
     Properties:
       Handler: oldest_execution.handler
-      CodeUri: ../lambdas/src/tasks/oldest_execution.py
+      CodeUri: ../lambdas/src/tasks/
+      Environment:
+        Variables:
+          StateMachineArn: !Sub arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${StateMachinePrefix}-StateMachine
       Policies:
       - Statement:
         - Action:
