@@ -4,12 +4,12 @@ Job handlers
 import json
 import os
 
+import boto3
 from aws_xray_sdk.core import xray_recorder
 
-from boto_factory import get_client
 from decorators import with_logger, request_validator, catch_errors, load_schema
 
-sf_client = get_client("stepfunctions")
+sf_client = boto3.client("stepfunctions")
 
 
 @with_logger

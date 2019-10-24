@@ -11,14 +11,6 @@ Resources:
       ContentUri: ../lambdas/layers/aws_sdk/
       CompatibleRuntimes:
         - python3.7
-  BotoFactory:
-    Type: AWS::Serverless::LayerVersion
-    Properties:
-      LayerName: BotoManager
-      Description: Boto3 Client and Resource factory
-      ContentUri: ../lambdas/layers/boto_factory/
-      CompatibleRuntimes:
-        - python3.7
   Decorators:
     Type: AWS::Serverless::LayerVersion
     Properties:
@@ -32,9 +24,6 @@ Outputs:
   AWSSDKLayer:
     Description: "AWS SDK Layer"
     Value: !Ref AWSSDKLayer
-  BotoFactory:
-    Description: "Boto3 Factory Layer"
-    Value: !Ref BotoFactory
   Decorators:
     Description: "Decorators Layer"
     Value: !Ref Decorators

@@ -4,13 +4,13 @@ Queue handlers
 import json
 import os
 
+import boto3
 from aws_xray_sdk.core import xray_recorder
 
-from boto_factory import get_resource, get_client
 from decorators import with_logger, request_validator, catch_errors, load_schema
 
-sfn_client = get_client("stepfunctions")
-dynamodb_resource = get_resource("dynamodb")
+sfn_client = boto3.client("stepfunctions")
+dynamodb_resource = boto3.resource("dynamodb")
 table = dynamodb_resource.Table(os.getenv("DeletionQueueTable"))
 
 

@@ -37,7 +37,6 @@ Resources:
         CommonLayers: !Join
           - ","
           - - !GetAtt LayersStack.Outputs.AWSSDKLayer
-            - !GetAtt LayersStack.Outputs.BotoFactory
             - !GetAtt LayersStack.Outputs.Decorators
   StateMachineStack:
     Type: AWS::CloudFormation::Stack
@@ -49,7 +48,6 @@ Resources:
         CommonLayers: !Join
           - ","
           - - !GetAtt LayersStack.Outputs.AWSSDKLayer
-            - !GetAtt LayersStack.Outputs.BotoFactory
             - !GetAtt LayersStack.Outputs.Decorators
 
 Outputs:
