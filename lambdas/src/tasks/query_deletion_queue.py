@@ -19,4 +19,10 @@ def handler(event, context):
         "TableName": os.getenv("DeletionQueueTableName")
     })
 
-    return [deserializer.deserialize(result) for result in results]
+    return [deserialize_item(result) for result in results]
+
+
+def deserialize_item(item):
+    return {
+        k: deserializer.deserialize(v) for k, v in item.items()
+    }
