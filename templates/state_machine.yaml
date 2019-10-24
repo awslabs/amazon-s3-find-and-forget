@@ -132,7 +132,7 @@ Resources:
             "Query Deletion Queue": {
               "Comment": "Scan the deletion queue table to obtain all users to be deleted ",
               "Type": "Task",
-              "Resource": "${TaskStub.Arn}",
+              "Resource": "${QueryDeletionQueue.Arn}",
               "ResultPath": "$.DeletionQueue",
               "Next": "Users in queue?"
             },
