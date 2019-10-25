@@ -64,7 +64,7 @@ def test_it_handles_not_found(api_client, del_queue_item, queue_base_endpoint, q
     assert 0 == len(query_result["Items"])
 
 
-def test_it_processes_queue(api_client, del_queue_item, queue_base_endpoint, sf_client, state_machine):
+def test_it_processes_queue(api_client, queue_base_endpoint, sf_client, state_machine):
     # Arrange
     # Act
     response = api_client.delete(queue_base_endpoint)
