@@ -69,13 +69,18 @@ def test_it_processes_queue(api_client, queue_base_endpoint, sf_client, state_ma
     # Act
     response = api_client.delete(queue_base_endpoint)
     response_body = response.json()
-    # Assert
-    assert 202 == response.status_code
-    # Check the execution started
-    assert "JobId" in response_body
-    job = sf_client.describe_execution(
-        executionArn="{}:{}".format(state_machine["stateMachineArn"].replace("stateMachine", "execution"),
-                                    response_body["JobId"])
-    )
-    # Verify the job started
-    assert job["status"] in ["SUCCEEDED", "RUNNING"]
+    execution_arn = "{}:{}".format(state_machine["stateMachineArn"].replace("stateMachine", "execution"),
+                                   response_body["JobId"])
+
+    try:
+        # Assert
+        assert 202 == response.status_code
+        # Check the execution started
+        assert "JobId" in response_body
+        job = sf_client.describe_execution(
+            executionArn=execution_arn
+        )
+        # Verify the job started
+        assert job["status"] in ["SUCCEEDED", "RUNNING"]
+    finally:
+        sf_client.stop_execution(executionArn=execution_arn)

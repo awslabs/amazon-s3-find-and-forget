@@ -14,6 +14,7 @@ import boto3
 import pytest
 from aws_xray_sdk import global_sdk_config
 from botocore.exceptions import ClientError
+from botocore.waiter import WaiterModel, create_waiter_with_client
 from requests import Session
 
 from . import load_env
@@ -146,6 +147,18 @@ def queue_table(ddb_resource, get_table_name):
     return ddb_resource.Table(get_table_name("DeletionQueue"))
 
 
+@pytest.fixture(scope="module")
+def empty_queue(queue_table):
+    items = queue_table.scan()["Items"]
+    with queue_table.batch_writer() as batch:
+        for item in items:
+            batch.delete_item(
+                Key={
+                    'MatchId': item['MatchId'],
+                }
+            )
+
+
 @pytest.fixture
 def del_queue_item(queue_table, match_id="testId", configurations=[]):
     item = {
@@ -171,7 +184,56 @@ def state_machine(sf_client):
     }
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
+def execution_waiter(sf_client):
+    config = {
+        "version": 2,
+        "waiters": {
+            "ExecutionComplete": {
+                "delay": 20,
+                "operation": "DescribeExecution",
+                "maxAttempts": 5,
+                "acceptors": [
+                    {
+                        "matcher": "path",
+                        "expected": "SUCCEEDED",
+                        "argument": "status",
+                        "state": "success"
+                    },
+                    {
+                        "matcher": "path",
+                        "expected": "RUNNING",
+                        "argument": "status",
+                        "state": "retry"
+                    },
+                    {
+                        "matcher": "path",
+                        "expected": "FAILED",
+                        "argument": "status",
+                        "state": "failure"
+                    },
+                    {
+                        "matcher": "path",
+                        "expected": "TIMED_OUT",
+                        "argument": "status",
+                        "state": "failure"
+                    },
+                    {
+                        "matcher": "path",
+                        "expected": "ABORTED",
+                        "argument": "status",
+                        "state": "failure"
+                    }
+                ]
+            }
+        }
+    }
+
+    waiter_model = WaiterModel(config)
+    return create_waiter_with_client("ExecutionComplete", waiter_model, sf_client)
+
+
+@pytest.fixture(scope="function")
 def execution(sf_client, state_machine):
     """
     Generates a sample index config in the db which is cleaned up after the test
