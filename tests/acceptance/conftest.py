@@ -147,10 +147,10 @@ def queue_table(ddb_resource, get_table_name):
 
 
 @pytest.fixture
-def del_queue_item(queue_table, match_id="testId", columns=[]):
+def del_queue_item(queue_table, match_id="testId", configurations=[]):
     item = {
         "MatchId": match_id,
-        "Columns": columns,
+        "Configurations": configurations,
     }
     queue_table.put_item(Item=item)
     yield item

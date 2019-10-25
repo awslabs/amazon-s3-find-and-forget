@@ -27,19 +27,19 @@ def test_it_add_to_queue(table):
     response = handlers.enqueue_handler({
         "body": json.dumps({
             "MatchId": "test",
-            "Columns": ["a"],
+            "Configurations": ["a"],
         })
     }, SimpleNamespace())
 
     assert 201 == response["statusCode"]
     assert {
         "MatchId": "test",
-        "Columns": ["a"],
+        "Configurations": ["a"],
     } == json.loads(response["body"])
 
 
 @patch("lambdas.src.queue.handlers.table")
-def test_it_provides_default_columns(table):
+def test_it_provides_default_configurations(table):
     response = handlers.enqueue_handler({
         "body": json.dumps({
             "MatchId": "test"
@@ -49,7 +49,7 @@ def test_it_provides_default_columns(table):
     assert 201 == response["statusCode"]
     assert {
         "MatchId": "test",
-        "Columns": [],
+        "Configurations": [],
     } == json.loads(response["body"])
 
 

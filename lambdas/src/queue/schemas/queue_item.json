@@ -6,7 +6,7 @@
         "MatchId": {
             "type": "string"
         },
-        "Columns": {
+        "Configurations": {
             "type": "array",
             "items": {
                 "type": "string"

@@ -9,7 +9,7 @@ def test_it_adds_to_queue(api_client, queue_base_endpoint, queue_table):
     key = "test"
     config = {
         "MatchId": key,
-        "Columns": ["a", "b"],
+        "Configurations": ["a", "b"],
     }
     # Act
     response = api_client.patch(queue_base_endpoint, json=config)
