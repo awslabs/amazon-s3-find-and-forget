@@ -218,13 +218,13 @@ Resources:
               }
             },
             "Delete Query Results": {
-              "Comment": "Deletes query results from the ",
+              "Comment": "Deletes query results from the query result bucket",
               "Type": "Task",
               "Parameters": {
-                "Task.$": "$.task",
                 "ExecutionId.$": "$$.Execution.Id"
               },
-              "Resource": "${TaskStub.Arn}",
+              "ResultPath": "$.DeletedFiles",
+              "Resource": "${DeleteQueryResults.Arn}",
               "InputPath": "$.QueryResults",
               "End": true
             },
@@ -275,6 +275,18 @@ Resources:
       Policies:
       - DynamoDBReadPolicy:
           TableName: !Ref DeletionQueueTableName
+
+  DeleteQueryResults:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: delete_query_results.handler
+      CodeUri: ../lambdas/src/tasks/
+      Environment:
+        Variables:
+          BucketName: !Ref QueryResultBucket
+      Policies:
+      - S3CrudPolicy:
+          BucketName: !Ref QueryResultBucket
 
   AthenaRunnerActivity:
     Type: "AWS::StepFunctions::Activity"
