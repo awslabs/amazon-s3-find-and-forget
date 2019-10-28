@@ -11,7 +11,7 @@ def pytest_configure(config):
     Initial test env setup
     """
     global_sdk_config.set_sdk_enabled(False)
-    sys.path.append(path.join("lambdas", "layers", "boto_factory", "python"))
+    sys.path.append(path.join("lambdas", "layers", "boto_utils", "python"))
     sys.path.append(path.join("lambdas", "layers", "decorators", "python"))
 
 
