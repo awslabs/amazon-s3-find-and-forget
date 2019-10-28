@@ -18,6 +18,7 @@ from aws_xray_sdk import global_sdk_config
 from botocore.exceptions import ClientError
 from botocore.waiter import WaiterModel, create_waiter_with_client
 from requests import Session
+from uuid import uuid4
 
 from . import load_env
 
@@ -47,19 +48,25 @@ def pytest_unconfigure(config):
 # FIXTURES #
 ############
 
+
 @pytest.fixture(scope="session")
 def ddb_resource():
-    # Setup DDB local resource
-    session = boto3.Session(profile_name=getenv("AWS_PROFILE", "default"))
+    return boto3.resource("dynamodb")
 
-    return session.resource('dynamodb')
+
+@pytest.fixture(scope="session")
+def s3_resource():
+    return boto3.resource("s3")
 
 
 @pytest.fixture(scope="session")
 def sf_client():
-    session = boto3.Session(profile_name=getenv("AWS_PROFILE", "default"))
+    return boto3.client("stepfunctions")
 
-    return session.client('stepfunctions')
+
+@pytest.fixture(scope="session")
+def glue_client():
+    return boto3.client("glue")
 
 
 @pytest.fixture(scope="session")
@@ -77,14 +84,14 @@ def cognito_token():
     client_id = getenv("ClientId")
     username = "aws-uk-sa-builders@amazon.com"
     pwd = "acceptance-tests-password"
-    auth_data = {'USERNAME': username, 'PASSWORD': pwd}
-    provider_client = boto3.client('cognito-idp')
+    auth_data = {"USERNAME": username, "PASSWORD": pwd}
+    provider_client = boto3.client("cognito-idp")
     # Create the User
     provider_client.admin_create_user(
         UserPoolId=user_pool_id,
         Username=username,
         TemporaryPassword=pwd,
-        MessageAction='SUPPRESS',
+        MessageAction="SUPPRESS",
     )
     provider_client.admin_set_user_password(
         UserPoolId=user_pool_id,
@@ -97,13 +104,13 @@ def cognito_token():
         UserPoolId=user_pool_id,
         ClientId=client_id,
         ExplicitAuthFlows=[
-            'ADMIN_NO_SRP_AUTH',
+            "ADMIN_NO_SRP_AUTH",
         ],
     )
     # Get JWT token for the dummy user
-    resp = provider_client.admin_initiate_auth(UserPoolId=user_pool_id, AuthFlow='ADMIN_NO_SRP_AUTH',
+    resp = provider_client.admin_initiate_auth(UserPoolId=user_pool_id, AuthFlow="ADMIN_NO_SRP_AUTH",
                                                AuthParameters=auth_data, ClientId=client_id)
-    yield resp['AuthenticationResult']['IdToken']
+    yield resp["AuthenticationResult"]["IdToken"]
     provider_client.admin_delete_user(
         UserPoolId=user_pool_id,
         Username=username
@@ -156,7 +163,7 @@ def empty_queue(queue_table):
         for item in items:
             batch.delete_item(
                 Key={
-                    'MatchId': item['MatchId'],
+                    "MatchId": item["MatchId"],
                 }
             )
 
@@ -209,3 +216,75 @@ def execution(sf_client, state_machine):
         sf_client.stop_execution(executionArn=response["executionArn"])
     except ClientError as e:
         logger.warning("Error stopping state machine: %s", str(e))
+
+
+@pytest.fixture(scope="module")
+def empty_lake(dummy_lake):
+    dummy_lake["bucket"].objects.delete()
+
+
+@pytest.fixture(scope="session")
+def dummy_lake(s3_resource, glue_client):
+    # Lake Config
+    bucket_name = "test-" + str(uuid4())
+    db_name = getenv("DatabaseName")
+    table_name = "AcceptanceTests"
+    prefix = str(uuid4())
+    # Create the bucket and Glue table
+    bucket = s3_resource.Bucket(bucket_name)
+    bucket.create(CreateBucketConfiguration={
+        "LocationConstraint": getenv("AWS_DEFAULT_REGION", "eu-west-1")
+    },)
+    bucket.wait_until_exists()
+    glue_client.create_table(
+        DatabaseName=db_name,
+        TableInput={
+            "Name": table_name,
+            "StorageDescriptor": {
+                "Columns": [{
+                    'Name': 'customer_id',
+                    'Type': 'string',
+                }],
+                "Location": "s3://{bucket}/{prefix}/".format(bucket=dummy_lake["bucket_name"], prefix=prefix),
+                "InputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
+                "OutputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
+                "Compressed": False,
+                "NumberOfBuckets": -1,
+                "SerdeInfo": {
+                    "SerializationLibrary": "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
+                    "Parameters": {
+                        "serialization.format": "1"
+                    }
+                },
+                "BucketColumns": [],
+                "SortColumns": [],
+                "Parameters": {},
+                "SkewedInfo": {
+                    "SkewedColumnNames": [],
+                    "SkewedColumnValues": [],
+                    "SkewedColumnValueLocationMaps": {}
+                },
+                "StoredAsSubDirectories": False
+            },
+            "Parameters": {
+                "EXTERNAL": "TRUE",
+            }
+        }
+    )
+
+    yield {
+        "bucket_name": bucket_name,
+        "prefix": prefix,
+        "bucket": bucket,
+        "table_name": table_name,
+    }
+
+    # Cleanup
+    glue_client.delete_table(
+        DatabaseName=db_name,
+        Name=table_name
+    )
+    bucket.objects.delete()
+    bucket.delete()
+    bucket.wait_until_not_exists()
+

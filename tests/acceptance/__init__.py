@@ -33,3 +33,8 @@ def get_schema_from_template(ddb_template, logical_identifier):
     return {
         k["KeyType"]: k["AttributeName"] for k in resource["Properties"]["KeySchema"]
     }
+
+
+def generate_parquet(rows):
+    # TODO: Apache Arrow stuff
+    pass

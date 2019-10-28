@@ -187,7 +187,7 @@ Resources:
                   "Execute Query": {
                     "Comment": "Returns a list of JSON objects, 1 per file, detailing the required deletions",
                     "Type": "Task",
-                    "Resource": "${AthenaRunnerActivity}",
+                    "Resource": "${TaskStub.Arn}",
                     "End": true
                   }
                 }
@@ -257,6 +257,15 @@ Resources:
   QueryResultBucket:
     Type: AWS::S3::Bucket
 
+  GlueDB:
+    Type: AWS::Glue::Database
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseInput:
+        Name: janedoe
+        Description: JaneDoe database for holding configurations
+
+  # Tasks
   TaskStub:
     Type: AWS::Serverless::Function
     Properties:
@@ -302,11 +311,6 @@ Resources:
       - S3CrudPolicy:
           BucketName: !Ref QueryResultBucket
 
-  AthenaRunnerActivity:
-    Type: "AWS::StepFunctions::Activity"
-    Properties:
-      Name: AthenaRunnerActivity
-
 Outputs:
   DeleteTaskIAMRoleArn:
     Value: DeletionFlowStack.Outputs.DeleteTaskIAMRoleArn
@@ -314,3 +318,9 @@ Outputs:
     Value: !Ref StateMachineStub
   StateMachineRoleArn:
     Value: !GetAtt StatesExecutionRole.Arn
+  GlueDB:
+    Value: !Ref GlueDB
+  ECSCluster:
+    Value: !Ref ECSCluster
+  QueryResultBucket:
+    Value: !Ref QueryResultBucket
