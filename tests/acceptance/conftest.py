@@ -5,9 +5,11 @@ PyTest Setup and Fixtures
 3. The local stack or AWS stack setup should be done outside the test runner as pre-requisite for running tests
 4. All setup for running local should be contained in this file.
 """
+import json
 import logging
 from functools import partial
 from os import getenv
+from pathlib import Path
 from urllib.parse import urljoin
 
 import boto3
@@ -186,48 +188,9 @@ def state_machine(sf_client):
 
 @pytest.fixture(scope="session")
 def execution_waiter(sf_client):
-    config = {
-        "version": 2,
-        "waiters": {
-            "ExecutionComplete": {
-                "delay": 20,
-                "operation": "DescribeExecution",
-                "maxAttempts": 5,
-                "acceptors": [
-                    {
-                        "matcher": "path",
-                        "expected": "SUCCEEDED",
-                        "argument": "status",
-                        "state": "success"
-                    },
-                    {
-                        "matcher": "path",
-                        "expected": "RUNNING",
-                        "argument": "status",
-                        "state": "retry"
-                    },
-                    {
-                        "matcher": "path",
-                        "expected": "FAILED",
-                        "argument": "status",
-                        "state": "failure"
-                    },
-                    {
-                        "matcher": "path",
-                        "expected": "TIMED_OUT",
-                        "argument": "status",
-                        "state": "failure"
-                    },
-                    {
-                        "matcher": "path",
-                        "expected": "ABORTED",
-                        "argument": "status",
-                        "state": "failure"
-                    }
-                ]
-            }
-        }
-    }
+    waiter_dir = Path(__file__).parent.parent.joinpath("waiters")
+    with open(waiter_dir.joinpath("stepfunctions.json")) as f:
+        config = json.load(f)
 
     waiter_model = WaiterModel(config)
     return create_waiter_with_client("ExecutionComplete", waiter_model, sf_client)

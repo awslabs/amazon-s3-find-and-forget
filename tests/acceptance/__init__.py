@@ -1,5 +1,5 @@
 import logging
-from os import path
+from pathlib import Path
 
 from cfn_flip import load
 from dotenv import load_dotenv
@@ -12,8 +12,8 @@ def load_env():
 
 
 def load_template(template_name):
-    project_root = path.dirname(path.dirname(path.dirname(__file__)))
-    with open(path.join(project_root, "templates", template_name)) as f:
+    project_root = Path(__file__).parent.parent.absolute()
+    with open(project_root.joinpath("templates", template_name)) as f:
         return load(f.read())[0]
 
 
