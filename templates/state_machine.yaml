@@ -141,12 +141,12 @@ Resources:
               "Type": "Choice",
               "Choices": [
                 {
-                  "Variable": "$.DeletionQueue.Length",
+                  "Variable": "$.DeletionQueue.Count",
                   "NumericGreaterThan": 0,
                   "Next": "Yes"
                 },
                 {
-                  "Variable": "$.DeletionQueue.Length",
+                  "Variable": "$.DeletionQueue.Count",
                   "NumericEquals": 0,
                   "Next": "No"
                 }

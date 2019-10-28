@@ -26,7 +26,10 @@ def test_it_returns_all_results(deserialize_item_mock, paginate_mock):
     deserialize_item_mock.return_value = {"MatchId": "test", "Configurations": ["test"]}
 
     resp = handler({}, SimpleNamespace())
-    assert [{"MatchId": "test", "Configurations": ["test"]}] == resp
+    assert {
+       "Items": [{"MatchId": "test", "Configurations": ["test"]}],
+       "Count": 1
+    } == resp
 
 
 def test_it_deserializes_items():
