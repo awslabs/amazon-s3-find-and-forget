@@ -35,6 +35,10 @@ def get_schema_from_template(ddb_template, logical_identifier):
     }
 
 
-def generate_parquet(rows):
+def generate_parquet(columns, rows):
     # TODO: Apache Arrow stuff
+    pass
+
+
+def query_parquet_data(data, column, val):
     pass

@@ -245,7 +245,7 @@ def dummy_lake(s3_resource, glue_client):
                     'Name': 'customer_id',
                     'Type': 'string',
                 }],
-                "Location": "s3://{bucket}/{prefix}/".format(bucket=dummy_lake["bucket_name"], prefix=prefix),
+                "Location": "s3://{bucket}/{prefix}/".format(bucket=bucket_name, prefix=prefix),
                 "InputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
                 "OutputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
                 "Compressed": False,

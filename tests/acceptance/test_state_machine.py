@@ -4,7 +4,7 @@ import time
 import pytest
 from botocore.exceptions import WaiterError, ClientError
 
-from . import generate_parquet
+from . import generate_parquet, query_parquet_data
 
 logger = logging.getLogger()
 
@@ -12,23 +12,27 @@ pytestmark = [pytest.mark.acceptance, pytest.mark.state_machine, pytest.mark.use
               pytest.mark.usefixtures("empty_lake")]
 
 
-def test_it_executes_successfully_for_deletion_queue(execution, execution_waiter, dummy_lake):
+@pytest.mark.parametrize('del_queue_item', [["12345", []]], indirect=True)
+def test_it_executes_successfully_for_deletion_queue(del_queue_item, dummy_lake, execution_waiter, execution):
+    # Generate a parquet file and add it to the lake
     object_key = "{}/2019/08/20/test.parquet".format(dummy_lake["prefix"])
-    parquet_data = generate_parquet([
-        12345,
-        23456,
-        34567,
+    parquet_data = generate_parquet(["customer_id"], [
+        "12345",
+        "23456",
+        "34567",
     ])
     bucket = dummy_lake["bucket"]
     bucket.upload_fileobj(parquet_data, object_key)
+    # Act
     try:
         execution_waiter.wait(executionArn=execution["executionArn"])
     except WaiterError as e:
         pytest.fail("Error waiting for execution to enter success state: {}".format(str(e)))
 
+    # Assert
     file_stream = io.StringIO()
     result_data = bucket.download_fileobj(object_key, file_stream)
-    # TODO: assert user is no longer in the result_data
+    assert 0 == len(query_parquet_data(result_data, "customer_id", 12345))
 
 
 def test_it_skips_empty_deletion_queue(sf_client, execution, execution_waiter):
@@ -64,16 +68,3 @@ def test_it_only_permits_single_executions(state_machine, sf_client):
     finally:
         assert did_wait, "Did not enter the wait state associated with concurrent executions"
 
-
-def test_it_errors_for_non_existent_configuration(execution, execution_waiter):
-    # TODO: Create queue with misconfiguration
-    with pytest.raises(WaiterError):
-        execution_waiter.wait(executionArn=execution["executionArn"])
-    # TODO: Assert fails at query generation state
-
-
-def test_it_errors_for_invalid_configuration_schema(execution, execution_waiter):
-    # TODO: Create lake with JSON data in
-    with pytest.raises(WaiterError):
-        execution_waiter.wait(executionArn=execution["executionArn"])
-    # TODO: Assert fails at query execution state
