@@ -271,6 +271,7 @@ def dummy_lake(s3_resource, glue_client):
             }
         }
     )
+    # TODO: Partition
 
     yield {
         "bucket_name": bucket_name,
