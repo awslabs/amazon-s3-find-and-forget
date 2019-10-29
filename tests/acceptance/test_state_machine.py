@@ -1,28 +1,28 @@
-import io
 import logging
+import tempfile
 import time
 import pytest
 from botocore.exceptions import WaiterError, ClientError
 
-from . import generate_parquet, query_parquet_data
+from . import generate_parquet_file, query_parquet_file
 
 logger = logging.getLogger()
 
 pytestmark = [pytest.mark.acceptance, pytest.mark.state_machine, pytest.mark.usefixtures("empty_queue"),
-              pytest.mark.usefixtures("empty_lake")]
+              pytest.mark.usefixtures("empty_lake"), pytest.mark.skip]
 
 
 @pytest.mark.parametrize('del_queue_item', [["12345", []]], indirect=True)
 def test_it_executes_successfully_for_deletion_queue(del_queue_item, dummy_lake, execution_waiter, execution):
     # Generate a parquet file and add it to the lake
     object_key = "{}/2019/08/20/test.parquet".format(dummy_lake["prefix"])
-    parquet_data = generate_parquet(["customer_id"], [
-        "12345",
-        "23456",
-        "34567",
+    parquet_file = generate_parquet_file(["customer_id"], [
+        ["12345"],
+        ["23456"],
+        ["34567"],
     ])
     bucket = dummy_lake["bucket"]
-    bucket.upload_fileobj(parquet_data, object_key)
+    bucket.upload_fileobj(parquet_file, object_key)
     # Act
     try:
         execution_waiter.wait(executionArn=execution["executionArn"])
@@ -30,9 +30,9 @@ def test_it_executes_successfully_for_deletion_queue(del_queue_item, dummy_lake,
         pytest.fail("Error waiting for execution to enter success state: {}".format(str(e)))
 
     # Assert
-    file_stream = io.StringIO()
-    result_data = bucket.download_fileobj(object_key, file_stream)
-    assert 0 == len(query_parquet_data(result_data, "customer_id", 12345))
+    tmp = tempfile.NamedTemporaryFile()
+    bucket.download_fileobj(object_key, tmp)
+    assert 0 == len(query_parquet_file(tmp, "customer_id", "12345"))
 
 
 def test_it_skips_empty_deletion_queue(sf_client, execution, execution_waiter):

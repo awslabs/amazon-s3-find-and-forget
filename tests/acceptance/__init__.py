@@ -1,6 +1,11 @@
+import io
 import logging
+import tempfile
 from pathlib import Path
 
+import pyarrow.parquet as pq
+import pandas as pd
+import pyarrow as pa
 from cfn_flip import load
 from dotenv import load_dotenv
 
@@ -35,10 +40,17 @@ def get_schema_from_template(ddb_template, logical_identifier):
     }
 
 
-def generate_parquet(columns, rows):
-    # TODO: Apache Arrow stuff
-    pass
+def generate_parquet_file(columns, rows):
+    data = {
+        column: [row[i] for row in rows] for i, column in enumerate(columns)
+    }
+    df = pd.DataFrame(data)
+    table = pa.Table.from_pandas(df)
+    tmp = tempfile.TemporaryFile()
+    pq.write_table(table, tmp)
+    return tmp
 
 
-def query_parquet_data(data, column, val):
-    pass
+def query_parquet_file(f, column, val):
+    table = pq.read_table(f)
+    return [i for i in table.column(column)[0] if i == val]
