@@ -9,7 +9,7 @@ from . import generate_parquet_file, query_parquet_file
 logger = logging.getLogger()
 
 pytestmark = [pytest.mark.acceptance, pytest.mark.state_machine, pytest.mark.usefixtures("empty_queue"),
-              pytest.mark.usefixtures("empty_lake"),]
+              pytest.mark.usefixtures("empty_lake"), pytest.mark.skip]
 
 
 @pytest.mark.parametrize('del_queue_item', [["12345", []]], indirect=True)
