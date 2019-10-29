@@ -257,14 +257,6 @@ Resources:
   QueryResultBucket:
     Type: AWS::S3::Bucket
 
-  GlueDB:
-    Type: AWS::Glue::Database
-    Properties:
-      CatalogId: !Ref AWS::AccountId
-      DatabaseInput:
-        Name: janedoe
-        Description: JaneDoe database for holding configurations
-
   # Tasks
   TaskStub:
     Type: AWS::Serverless::Function
@@ -318,8 +310,6 @@ Outputs:
     Value: !Ref StateMachineStub
   StateMachineRoleArn:
     Value: !GetAtt StatesExecutionRole.Arn
-  GlueDB:
-    Value: !Ref GlueDB
   ECSCluster:
     Value: !Ref ECSCluster
   QueryResultBucket:
