@@ -24,6 +24,8 @@ Parameters:
     Type: String
   DeletionTaskMemory:
     Type: String
+  QueueUrl:
+    Type: String
   LogLevel:
     Type: String
     Default: INFO
@@ -137,9 +139,9 @@ Resources:
               "Type": "Task",
               "Resource": "${QueryDeletionQueue.Arn}",
               "ResultPath": "$.DeletionQueue",
-              "Next": "Users in queue?"
+              "Next": "Users in Queue?"
             },
-            "Users in queue?": {
+            "Users in Queue?": {
               "Comment": "If the deletion queue is empty, exit gracefully. Otherwise, proceed to processing the queue.",
               "Type": "Choice",
               "Choices": [
@@ -173,9 +175,9 @@ Resources:
               "Next": "Execute Queries"
             },
             "Execute Queries": {
-              "Comment": "Executes the generated list of queries in parallel",
+              "Comment": "Executes the generated list of queries in parallel. Returns a list of lists",
               "Type": "Map",
-              "Next": "Generate file list",
+              "Next": "Flatten Query Results",
               "ItemsPath": "$.Queries",
               "ResultPath": "$.QueryResults",
               "MaxConcurrency": 10,
@@ -183,6 +185,7 @@ Resources:
                 "StartAt": "Execute Query",
                 "States": {
                   "Execute Query": {
+                    "Comment": "Returns a list of JSON objects, 1 per file, detailing the required deletions",
                     "Type": "Task",
                     "Resource": "${AthenaRunnerActivity}",
                     "End": true
@@ -190,30 +193,41 @@ Resources:
                 }
               }
             },
-            "Generate file list": {
-              "Comment": "Generates a list of files which will be edited",
-              "Type": "Task",
-              "Resource": "${TaskStub.Arn}",
-              "ResultPath": "$.Files",
-              "InputPath": "$.QueryResults",
-              "Next": "Perform Deletions"
+            "Flatten Query Results": {
+              "Comment": "Flattens the query result lists into a flat list",
+              "Type": "Pass",
+              "InputPath": "$.QueryResults[*][*]",
+              "ResultPath": "$.QueryResults",
+              "Next": "Aggregate and Depduplicate Results"
             },
-            "Perform Deletions": {
-              "Comment": "Schedule Fargate tasks to perform the file amendments in parallel",
+            "Aggregate and Depduplicate Results": {
+              "Comment": "Aggregates the results and deduplicates",
+              "Type": "Task",
+              "InputPath": "$.QueryResults",
+              "ResultPath": "$.QueryResults",
+              "Resource": "${TaskStub.Arn}",
+              "Next": "Populate Queue"
+            },
+            "Populate Queue": {
+              "Comment": "Creates queue items for every file",
               "Type": "Map",
               "Next": "Delete Query Results",
-              "ItemsPath": "$.Files",
-              "ResultPath": "$.DeletionJobResults",
+              "ItemsPath": "$.QueryResults",
+              "ResultPath": "$.DeletionResults",
               "Iterator": {
-                "StartAt": "Perform Deletion for File",
+                "StartAt": "Send Message",
                 "States": {
-                  "Perform Deletion for File": {
+                  "Send Message": {
                     "Type": "Task",
-                    "Resource": "arn:aws:states:::ecs:runTask.sync",
+                    "Resource": "arn:aws:states:::sqs:sendMessage.waitForTaskToken",
+                    "HeartbeatSeconds": 3600,
                     "Parameters": {
-                      "LaunchType": "FARGATE",
-                      "Cluster": "${DeletionFlowStack.Outputs.ECSClusterArn}",
-                      "TaskDefinition": "${DeletionFlowStack.Outputs.DeleteTaskDefinitionArn}"
+                      "QueueUrl": "${QueueUrl}",
+                      "MessageGroupId.$": "$$.Execution.Id",
+                      "MessageBody": {
+                        "Input.$": "$",
+                        "TaskToken.$": "$$.Task.Token"
+                      }
                     },
                     "End": true
                   }
@@ -292,15 +306,6 @@ Resources:
     Type: "AWS::StepFunctions::Activity"
     Properties:
       Name: AthenaRunnerActivity
-
-  DeletionFlowStack: 
-    Type: AWS::CloudFormation::Stack
-    Properties: 
-      TemplateURL: ./deletion_flow.yaml
-      Parameters:
-        DeletionTaskCPU: !Ref DeletionTaskCPU
-        DeletionTaskMemory: !Ref DeletionTaskMemory
-        ResourcePrefix: !Ref StateMachinePrefix
 
 Outputs:
   DeleteTaskIAMRoleArn:

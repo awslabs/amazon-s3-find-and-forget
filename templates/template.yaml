@@ -70,6 +70,7 @@ Resources:
         DeletionTaskCPU: !Ref DeletionTaskCPU
         DeletionTaskMemory: !Ref DeletionTaskMemory
         StateMachinePrefix: !Ref ResourcePrefix
+        QueueUrl: !GetAtt DeletionFlowStack.Outputs.DeleteObjectsQueueUrl
   VpcStack:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -77,6 +78,14 @@ Resources:
       Parameters:
         PublicSubnetIpBlocks: !Ref PublicSubnetIpBlocks
         VpcIpBlock: !Ref VpcIpBlock
+  DeletionFlowStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ./deletion_flow.yaml
+      Parameters:
+        DeletionTaskCPU: !Ref DeletionTaskCPU
+        DeletionTaskMemory: !Ref DeletionTaskMemory
+        ResourcePrefix: !Ref ResourcePrefix
 
 Outputs:
   APIStack:
