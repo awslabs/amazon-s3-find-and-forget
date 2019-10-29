@@ -171,12 +171,8 @@ Resources:
       NetworkAclId: !Ref PublicNetworkAcl
 
 Outputs:
-  Subnet1:
-    Value: !Ref PublicSubnet1
-  Subnet2:
-    Value: !Ref PublicSubnet2
-  Subnet3:
+  Subnets:
     Value: !If
       - HasThreeAZs
-      - !Ref PublicSubnet3
-      - false
+      - !Sub ${PublicSubnet1},${PublicSubnet2},${PublicSubnet3}
+      - !Sub ${PublicSubnet1},${PublicSubnet2}

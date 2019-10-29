@@ -20,10 +20,6 @@ Parameters:
   DeletionQueueTableName:
     Description: Table name for Deletion Queue Table
     Type: String
-  DeletionTaskCPU:
-    Type: String
-  DeletionTaskMemory:
-    Type: String
   QueueUrl:
     Type: String
   LogLevel:

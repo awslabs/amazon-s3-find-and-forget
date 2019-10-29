@@ -67,10 +67,8 @@ Resources:
             - !GetAtt LayersStack.Outputs.Decorators
             - !GetAtt LayersStack.Outputs.BotoUtils
         DeletionQueueTableName: !GetAtt DDBStack.Outputs.DeletionQueueTable
-        DeletionTaskCPU: !Ref DeletionTaskCPU
-        DeletionTaskMemory: !Ref DeletionTaskMemory
-        StateMachinePrefix: !Ref ResourcePrefix
         QueueUrl: !GetAtt DeletionFlowStack.Outputs.DeleteObjectsQueueUrl
+        StateMachinePrefix: !Ref ResourcePrefix
   VpcStack:
     Type: AWS::CloudFormation::Stack
     Properties:
