@@ -1,10 +1,3 @@
-"""
-PyTest Setup and Fixtures
-1. Tests not marked as requiring AWS should run against both AWS and local with no changes to the test logic at all
-2. Tests marked as requiring AWS should fail when running local resources due to things in AWS not being found
-3. The local stack or AWS stack setup should be done outside the test runner as pre-requisite for running tests
-4. All setup for running local should be contained in this file.
-"""
 import json
 import logging
 from functools import partial

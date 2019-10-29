@@ -1,11 +1,10 @@
-import io
 import logging
 import tempfile
 from pathlib import Path
 
-import pyarrow.parquet as pq
 import pandas as pd
 import pyarrow as pa
+import pyarrow.parquet as pq
 from cfn_flip import load
 from dotenv import load_dotenv
 
