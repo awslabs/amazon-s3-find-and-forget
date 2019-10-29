@@ -17,10 +17,19 @@ Parameters:
     Description: The memory to be allocated to the Deletion Fargate Task
     Type: String
     Default: '30720'
+  PublicSubnetIpBlocks:
+    Description: Comma-delimited list of CIDR blocks for the public subnets
+    Type: CommaDelimitedList
+    Default: "10.0.12.0/22, 10.0.16.0/22, 10.0.20.0/22"
   ResourcePrefix:
     Description: The prefix used in DynamoDB table and state machine names
     Type: String
     Default: JaneDoe
+  VpcIpBlock:
+    Description: CIDR block for the VPC
+    Type: String
+    Default: 10.0.0.0/16
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
 
 Resources:
   LayersStack:
@@ -61,6 +70,13 @@ Resources:
         DeletionTaskCPU: !Ref DeletionTaskCPU
         DeletionTaskMemory: !Ref DeletionTaskMemory
         StateMachinePrefix: !Ref ResourcePrefix
+  VpcStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ./vpc.yaml
+      Parameters:
+        PublicSubnetIpBlocks: !Ref PublicSubnetIpBlocks
+        VpcIpBlock: !Ref VpcIpBlock
 
 Outputs:
   APIStack:
