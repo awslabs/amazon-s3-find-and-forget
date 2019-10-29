@@ -14,15 +14,16 @@ Globals:
         LogLevel: !Ref LogLevel
 
 Parameters:
-  StateMachinePrefix:
-    Default: JaneDoe
-    Type: String
-  DeletionQueueTableName:
-    Description: Table name for Deletion Queue Table
-    Type: String
   CommonLayers:
     Type: CommaDelimitedList
     Description: Common layers supplied to all functions
+  DeletionQueueTableName:
+    Description: Table name for Deletion Queue Table
+    Type: String
+  DeletionTaskCPU:
+    Type: String
+  DeletionTaskMemory:
+    Type: String
   LogLevel:
     Type: String
     Default: INFO
@@ -34,6 +35,8 @@ Parameters:
     - INFO
     - DEBUG
     - NOTSET
+  StateMachinePrefix:
+    Type: String
 
 Resources:
   StatesExecutionRole:
@@ -209,8 +212,8 @@ Resources:
                     "Resource": "arn:aws:states:::ecs:runTask.sync",
                     "Parameters": {
                       "LaunchType": "FARGATE",
-                      "Cluster": "arn:${AWS::Partition}:ecs:${AWS::Region}:${AWS::AccountId}:cluster/${ECSCluster}",
-                      "TaskDefinition": "JaneDoeS3Editor"
+                      "Cluster": "${DeletionFlowStack.Outputs.ECSClusterArn}",
+                      "TaskDefinition": "${DeletionFlowStack.Outputs.DeleteTaskDefinitionArn}"
                     },
                     "End": true
                   }
@@ -236,9 +239,6 @@ Resources:
           }
         }
       RoleArn: !GetAtt StatesExecutionRole.Arn
-
-  ECSCluster:
-    Type: AWS::ECS::Cluster
 
   QueryResultBucket:
     Type: AWS::S3::Bucket
@@ -293,7 +293,18 @@ Resources:
     Properties:
       Name: AthenaRunnerActivity
 
+  DeletionFlowStack: 
+    Type: AWS::CloudFormation::Stack
+    Properties: 
+      TemplateURL: ./deletion_flow.yaml
+      Parameters:
+        DeletionTaskCPU: !Ref DeletionTaskCPU
+        DeletionTaskMemory: !Ref DeletionTaskMemory
+        ResourcePrefix: !Ref StateMachinePrefix
+
 Outputs:
+  DeleteTaskIAMRoleArn:
+    Value: DeletionFlowStack.Outputs.DeleteTaskIAMRoleArn
   StateMachineArn:
     Value: !Ref StateMachineStub
   StateMachineRoleArn:

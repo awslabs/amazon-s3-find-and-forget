@@ -1,0 +1,112 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Jane Doe Deletion Flow
+
+Parameters:
+  DeletionTaskCPU:
+    Type: String
+  DeletionTaskMemory:
+    Type: String
+  LogRetentionInDays:
+    Type: Number
+    Default: 7
+  ResourcePrefix:
+    Type: String
+
+Resources:
+
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+
+  ECRRepository:
+    Type: AWS::ECR::Repository
+
+  ECSTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+
+  DeleteObjectsQueue:
+    Type: AWS::SQS::Queue
+    Properties: 
+      ContentBasedDeduplication: true
+      FifoQueue: true
+      QueueName: !Sub ${ResourcePrefix}_DeleteObjectsQueue.fifo
+      ReceiveMessageWaitTimeSeconds: 0
+      VisibilityTimeout: 43200
+
+  DeleteTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      TaskRoleArn: !Ref DeleteTaskIAMRole
+      ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
+      NetworkMode: awsvpc
+      Memory: !Ref DeletionTaskMemory
+      Cpu: !Ref DeletionTaskCPU
+      Family: !Sub ${ResourcePrefix}_DeleteTask
+      RequiresCompatibilities:
+        - FARGATE
+      ContainerDefinitions:
+        - Name: !Sub ${ResourcePrefix}_DeleteTask
+          Essential: true
+          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECRRepository}:latest
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref DeleteTaskLogGroup
+              awslogs-region: !Ref 'AWS::Region'
+              awslogs-stream-prefix: !Ref 'AWS::StackName'
+          Environment:
+            - Name: DELETE_OBJECTS_QUEUE
+              Value: !Ref DeleteObjectsQueue
+
+  DeleteTaskIAMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+      Policies:
+      - PolicyName: SqsExecutionPolicy
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+          - Action: 
+            - sqs:ChangeMessageVisibiliy
+            - sqs:ChangeMessageVisibilityBatch 
+            - sqs:DeleteMessage 
+            - sqs:DeleteMessageBatch 
+            - sqs:GetQueueAttributes 
+            - sqs:ReceiveMessage
+            Effect: Allow 
+            Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${DeleteObjectsQueue.QueueName}
+
+  DeleteTaskLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /ecs/${ResourcePrefix}_DeleteTask
+      RetentionInDays: !Ref LogRetentionInDays
+
+Outputs:
+  DeleteObjectsQueueUrl:
+    Value: !Ref DeleteObjectsQueue
+  DeleteTaskDefinitionArn:
+    Value: !Ref DeleteTaskDefinition
+  DeleteTaskIAMRoleArn:
+    Value: !GetAtt DeleteTaskIAMRole.Arn
+  ECSClusterArn:
+    Value: !GetAtt ECSCluster.Arn

@@ -3,16 +3,24 @@ Transform: AWS::Serverless-2016-10-31
 Description: Jane Doe (uksb-1q2j8beb0)
 
 Parameters:
-  ResourcePrefix:
-    Description: The prefix used in DynamoDB table and state machine names
-    Type: String
-    Default: JaneDoe
   CognitoUserPoolName:
     Type: String
     Default: JaneDoePool
   CognitoUserPoolClientName:
     Type: String
     Default: JaneDoePoolClient
+  DeletionTaskCPU:
+    Description: The CPU to be allocated to the Deletion Fargate Task
+    Type: String
+    Default: '4096'
+  DeletionTaskMemory:
+    Description: The memory to be allocated to the Deletion Fargate Task
+    Type: String
+    Default: '30720'
+  ResourcePrefix:
+    Description: The prefix used in DynamoDB table and state machine names
+    Type: String
+    Default: JaneDoe
 
 Resources:
   LayersStack:
@@ -30,32 +38,36 @@ Resources:
     Properties: 
       TemplateURL: ./api.yaml
       Parameters: 
-        DeletionQueueTableName: !GetAtt DDBStack.Outputs.DeletionQueueTable
-        StateMachineArn: !GetAtt StateMachineStack.Outputs.StateMachineArn
-        CognitoUserPoolName: !Ref CognitoUserPoolName
         CognitoUserPoolClientName: !Ref CognitoUserPoolClientName
+        CognitoUserPoolName: !Ref CognitoUserPoolName
         CommonLayers: !Join
           - ","
           - - !GetAtt LayersStack.Outputs.AWSSDKLayer
             - !GetAtt LayersStack.Outputs.Decorators
             - !GetAtt LayersStack.Outputs.BotoUtils
+        DeletionQueueTableName: !GetAtt DDBStack.Outputs.DeletionQueueTable
+        StateMachineArn: !GetAtt StateMachineStack.Outputs.StateMachineArn
   StateMachineStack:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: ./state_machine.yaml
       Parameters:
-        DeletionQueueTableName: !GetAtt DDBStack.Outputs.DeletionQueueTable
-        StateMachinePrefix: !Ref ResourcePrefix
         CommonLayers: !Join
           - ","
           - - !GetAtt LayersStack.Outputs.AWSSDKLayer
             - !GetAtt LayersStack.Outputs.Decorators
             - !GetAtt LayersStack.Outputs.BotoUtils
+        DeletionQueueTableName: !GetAtt DDBStack.Outputs.DeletionQueueTable
+        DeletionTaskCPU: !Ref DeletionTaskCPU
+        DeletionTaskMemory: !Ref DeletionTaskMemory
+        StateMachinePrefix: !Ref ResourcePrefix
 
 Outputs:
-  DDBStack:
-    Value: !Ref DDBStack
   APIStack:
     Value: !Ref APIStack
+  DDBStack:
+    Value: !Ref DDBStack
+  DeleteTaskIAMRoleArn:
+    Value: !GetAtt StateMachineStack.Outputs.DeleteTaskIAMRoleArn
   DeletionQueueTable:
     Value: !GetAtt DDBStack.Outputs.DeletionQueueTable
