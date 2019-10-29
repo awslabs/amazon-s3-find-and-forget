@@ -41,7 +41,6 @@ Resources:
     Properties: 
       ContentBasedDeduplication: true
       FifoQueue: true
-      QueueName: !Sub ${ResourcePrefix}_DeleteObjectsQueue.fifo
       ReceiveMessageWaitTimeSeconds: 0
       VisibilityTimeout: 43200
 
@@ -53,7 +52,6 @@ Resources:
       NetworkMode: awsvpc
       Memory: !Ref DeletionTaskMemory
       Cpu: !Ref DeletionTaskCPU
-      Family: !Sub ${ResourcePrefix}_DeleteTask
       RequiresCompatibilities:
         - FARGATE
       ContainerDefinitions:
@@ -98,7 +96,6 @@ Resources:
   DeleteTaskLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub /ecs/${ResourcePrefix}_DeleteTask
       RetentionInDays: !Ref LogRetentionInDays
 
 Outputs:
