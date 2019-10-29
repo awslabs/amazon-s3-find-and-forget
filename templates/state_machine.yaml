@@ -173,7 +173,7 @@ Resources:
               "Next": "Execute Queries"
             },
             "Execute Queries": {
-              "Comment": "Executes the generated list of queries in parallel",
+              "Comment": "Executes the generated list of queries in parallel, returning a list of paths to be amended",
               "Type": "Map",
               "Next": "Generate file list",
               "ItemsPath": "$.Queries",
@@ -191,12 +191,37 @@ Resources:
               }
             },
             "Generate file list": {
-              "Comment": "Generates a list of files which will be edited",
-              "Type": "Task",
-              "Resource": "${TaskStub.Arn}",
-              "ResultPath": "$.Files",
-              "InputPath": "$.QueryResults",
-              "Next": "Perform Deletions"
+              "Comment": "Flattens the query result lists into a flat list",
+              "Type": "Pass",
+              "InputPath": "$.QueryResults[*][*]",
+              "ResultPath": "$.QueryResults",
+              "Next": "Populate queue"
+            },
+            "Populate queue": {
+              "Comment": "Creates queue items for every file",
+              "Type": "Map",
+              "Next": "Perform Deletions",
+              "ItemsPath": "$.QueryResults",
+              "ResultPath": "$.DeletionResults",
+              "Iterator": {
+                "StartAt": "Send Message",
+                "States": {
+                  "Send Message": {
+                    "Type": "Task",
+                    "Resource": "arn:aws:states:::sqs:sendMessage.waitForTaskToken",
+                    "HeartbeatSeconds": 3600,
+                    "Parameters": {
+                      "QueueUrl": "https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/{StateMachinePrefix}_DeleteObjectsQueue.fifo",
+                      "MessageGroupId.$": "$$.Execution.Id",
+                      "MessageBody": {
+                        "Input.$": "$",
+                        "TaskToken.$": "$$.Task.Token"
+                      }
+                    },
+                    "End": true
+                  }
+                }
+              }
             },
             "Perform Deletions": {
               "Comment": "Schedule Fargate tasks to perform the file amendments in parallel",
