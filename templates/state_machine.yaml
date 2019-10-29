@@ -175,7 +175,7 @@ Resources:
               "Next": "Execute Queries"
             },
             "Execute Queries": {
-              "Comment": "Executes the generated list of queries in parallel, returning a list of paths to be amended",
+              "Comment": "Executes the generated list of queries in parallel. Returns a list of lists",
               "Type": "Map",
               "Next": "Flatten Query Results",
               "ItemsPath": "$.Queries",
@@ -185,6 +185,7 @@ Resources:
                 "StartAt": "Execute Query",
                 "States": {
                   "Execute Query": {
+                    "Comment": "Returns a list of JSON objects, 1 per file, detailing the required deletions",
                     "Type": "Task",
                     "Resource": "${AthenaRunnerActivity}",
                     "End": true
