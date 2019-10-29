@@ -39,11 +39,8 @@ def get_schema_from_template(ddb_template, logical_identifier):
     }
 
 
-def generate_parquet_file(columns, rows):
-    data = {
-        column: [row[i] for row in rows] for i, column in enumerate(columns)
-    }
-    df = pd.DataFrame(data)
+def generate_parquet_file(items, columns):
+    df = pd.DataFrame(items, columns=columns)
     table = pa.Table.from_pandas(df)
     tmp = tempfile.TemporaryFile()
     pq.write_table(table, tmp)
@@ -52,4 +49,4 @@ def generate_parquet_file(columns, rows):
 
 def query_parquet_file(f, column, val):
     table = pq.read_table(f)
-    return [i for i in table.column(column)[0] if i == val]
+    return [i for i in table.column(column) if i == val]

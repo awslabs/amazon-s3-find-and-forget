@@ -9,18 +9,18 @@ from . import generate_parquet_file, query_parquet_file
 logger = logging.getLogger()
 
 pytestmark = [pytest.mark.acceptance, pytest.mark.state_machine, pytest.mark.usefixtures("empty_queue"),
-              pytest.mark.usefixtures("empty_lake"), pytest.mark.skip]
+              pytest.mark.usefixtures("empty_lake"),]
 
 
 @pytest.mark.parametrize('del_queue_item', [["12345", []]], indirect=True)
 def test_it_executes_successfully_for_deletion_queue(del_queue_item, dummy_lake, execution_waiter, execution):
     # Generate a parquet file and add it to the lake
     object_key = "{}/2019/08/20/test.parquet".format(dummy_lake["prefix"])
-    parquet_file = generate_parquet_file(["customer_id"], [
-        ["12345"],
-        ["23456"],
-        ["34567"],
-    ])
+    parquet_file = generate_parquet_file([
+        {"customer_id": "12345"},
+        {"customer_id": "23456"},
+        {"customer_id": "34567"},
+    ], ["customer_id"])
     bucket = dummy_lake["bucket"]
     bucket.upload_fileobj(parquet_file, object_key)
     # Act
