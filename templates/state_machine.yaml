@@ -185,10 +185,72 @@ Resources:
                 "StartAt": "Execute Query",
                 "States": {
                   "Execute Query": {
-                    "Comment": "Returns a list of JSON objects, 1 per file, detailing the required deletions",
+                    "Comment": "Start an Athena query asynchronously",
                     "Type": "Task",
-                    "Resource": "${TaskStub.Arn}",
+                    "Parameters": {
+                      "Query.$": "$.Query",
+                      "Bucket": "${QueryResultBucket}",
+                      "Prefix.$": "$$.Execution.Id"
+                    },
+                    "Resource": "${ExecuteQuery.Arn}",
+                    "ResultPath": "$.QueryId",
+                    "Next": "Get Query Status"
+                  },
+                  "Wait for Query": {
+                    "Comment": "Waits before checking again whether Athena is done",
+                    "Type": "Wait",
+                    "Seconds": 30,
+                    "Next": "Get Query Status"
+                  },
+                  "Get Query Status": {
+                    "Comment": "Gets the status of the given Athena query",
+                    "Type": "Task",
+                    "Resource": "${CheckQueryStatus.Arn}",
+                    "InputPath": "$.QueryId",
+                    "ResultPath": "$.QueryStatus",
+                    "Next": "Query Complete?"
+                  },
+                  "Query Complete?": {
+                    "Comment": "Check if the Athena query is still running",
+                    "Type": "Choice",
+                    "Choices": [
+                    {
+                      "Variable": "$.QueryStatus.State",
+                      "StringEquals": "SUCCEEDED",
+                      "Next": "Query Succeeded"
+                    },
+                    {
+                      "Or": [
+                        {
+                          "Variable": "$.QueryStatus.State",
+                          "StringEquals": "FAILED"
+                        },
+                        {
+                          "Variable": "$.QueryStatus.State",
+                          "StringEquals": "CANCELLED"
+                        }
+                      ],
+                      "Next": "Query Failed"
+                    }
+                    ],
+                    "Default": "Wait for Query"
+                  },
+                  "Query Succeeded": {
+                    "Comment": "The query was successful",
+                    "Type": "Pass",
+                    "Next": "Get Query Results"
+                  },
+                  "Get Query Results": {
+                    "Comment": "Obtain the query results from S3, formatting as a JSON object",
+                    "Type": "Task",
+                    "Resource": "${GetQueryResults.Arn}",
+                    "InputPath": "$.QueryId",
+                    "ResultPath": "$.Paths",
                     "End": true
+                  },
+                  "Query Failed": {
+                    "Comment": "The query was unsuccessful",
+                    "Type": "Fail"
                   }
                 }
               }
@@ -302,6 +364,54 @@ Resources:
       Policies:
       - S3CrudPolicy:
           BucketName: !Ref QueryResultBucket
+
+  ExecuteQuery:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: execute_query.handler
+      CodeUri: ../lambdas/src/tasks/
+      Policies:
+      - S3CrudPolicy:
+          BucketName: !Ref QueryResultBucket
+      - Statement:
+        - Action:
+          - "athena:StartQueryExecution"
+          - "glue:GetDatabase"
+          - "glue:GetTable"
+          - "glue:GetPartition*"
+          Effect: "Allow"
+          Resource: "*"
+      - Statement:
+        - Action:
+          - "s3:*"
+          Effect: "Allow"
+          Resource: "*"
+
+  CheckQueryStatus:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: check_query_status.handler
+      CodeUri: ../lambdas/src/tasks/
+      Policies:
+      - Statement:
+        - Action:
+          - "athena:GetQueryExecution"
+          Effect: "Allow"
+          Resource: "*"
+
+  GetQueryResults:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: get_query_results.handler
+      CodeUri: ../lambdas/src/tasks/
+      Policies:
+      - S3ReadPolicy:
+          BucketName: !Ref QueryResultBucket
+      - Statement:
+        - Action:
+          - "athena:GetQueryResults"
+          Effect: "Allow"
+          Resource: "*"
 
 Outputs:
   DeleteTaskIAMRoleArn:
