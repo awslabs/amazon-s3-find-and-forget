@@ -177,7 +177,7 @@ Resources:
             "Execute Queries": {
               "Comment": "Executes the generated list of queries in parallel. Returns a list of lists",
               "Type": "Map",
-              "Next": "Flatten Query Results",
+              "Next": "Aggregate and Depduplicate Results",
               "ItemsPath": "$.Queries",
               "ResultPath": "$.QueryResults",
               "MaxConcurrency": 10,
@@ -254,13 +254,6 @@ Resources:
                   }
                 }
               }
-            },
-            "Flatten Query Results": {
-              "Comment": "Flattens the query result lists into a flat list",
-              "Type": "Pass",
-              "InputPath": "$.QueryResults[*][*]",
-              "ResultPath": "$.QueryResults",
-              "Next": "Aggregate and Depduplicate Results"
             },
             "Aggregate and Depduplicate Results": {
               "Comment": "Aggregates the results and deduplicates",
