@@ -381,11 +381,6 @@ Resources:
           - "glue:GetPartition*"
           Effect: "Allow"
           Resource: "*"
-      - Statement:
-        - Action:
-          - "s3:*"
-          Effect: "Allow"
-          Resource: "*"
 
   CheckQueryStatus:
     Type: AWS::Serverless::Function
