@@ -188,7 +188,7 @@ Resources:
                     "Comment": "Start an Athena query asynchronously",
                     "Type": "Task",
                     "Parameters": {
-                      "Query.$": "$.Query",
+                      "QueryData.$": "$.QueryData",
                       "Bucket": "${QueryResultBucket}",
                       "Prefix.$": "$$.Execution.Id"
                     },
