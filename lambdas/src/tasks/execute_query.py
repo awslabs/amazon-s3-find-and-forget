@@ -23,6 +23,14 @@ def make_query(query_data):
     SELECT $path
     FROM "db"."table"
     WHERE col1 in (matchid1, matchid2) OR col1 in (matchid1, matchid2) AND partition_key = value"
+
+    :param query_data: a dict which looks like
+    {
+      "Database":"db",
+      "Table": "table",
+      "Columns": [{"Column": "col, "MatchIds": ["match"]}],
+      "Partition":{"Key":"k", "Value":"val"}
+    }
     """
     template = '''
     SELECT DISTINCT "$path"
@@ -40,7 +48,7 @@ def make_query(query_data):
         if i > 0:
             column_filters = column_filters + " OR "
         column_filters = column_filters + '{} in ({})'.format(
-            escape_column(col["Column"]), ', '.join("{0}".format(escape_item(u)) for u in col["Users"]))
+            escape_column(col["Column"]), ', '.join("{0}".format(escape_item(m)) for m in col["MatchIds"]))
     if partition:
         template = template + ' AND {key} = {value} '.format(key=escape_column(partition["Key"]), value=escape_item(
             partition["Value"]))

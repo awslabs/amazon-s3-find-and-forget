@@ -28,7 +28,7 @@ def test_it_generates_query_with_partition():
     resp = make_query({
         "Database": "amazonreviews",
         "Table": "amazon_reviews_parquet",
-        "Columns": [{"Column": "customer_id", "Users": ["123456", "456789"]}],
+        "Columns": [{"Column": "customer_id", "MatchIds": ["123456", "456789"]}],
         "Partition": {"Key": "product_category", "Value": "Books"}
     })
 
@@ -42,7 +42,7 @@ def test_it_generates_query_without_partition():
     resp = make_query({
         "Database": "amazonreviews",
         "Table": "amazon_reviews_parquet",
-        "Columns": [{"Column": "customer_id", "Users": ["123456", "456789"]}]
+        "Columns": [{"Column": "customer_id", "MatchIds": ["123456", "456789"]}]
     })
 
     assert "SELECT DISTINCT \"$path\" " \
@@ -55,8 +55,8 @@ def test_it_generates_query_with_multiple_columns():
         "Database": "amazonreviews",
         "Table": "amazon_reviews_parquet",
         "Columns": [
-            {"Column": "a", "Users": ["a123456", "b123456"]},
-            {"Column": "b", "Users": ["a456789", "b456789"]},
+            {"Column": "a", "MatchIds": ["a123456", "b123456"]},
+            {"Column": "b", "MatchIds": ["a456789", "b456789"]},
         ]
     })
 
