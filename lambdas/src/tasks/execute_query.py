@@ -29,7 +29,7 @@ def make_query(query_data):
       "Database":"db",
       "Table": "table",
       "Columns": [{"Column": "col, "MatchIds": ["match"]}],
-      "Partition":{"Key":"k", "Value":"val"}
+      "Partitions": [{"Key":"k", "Value":"val"}]
     }
     """
     template = '''
@@ -41,7 +41,7 @@ def make_query(query_data):
     db = query_data["Database"]
     table = query_data["Table"]
     columns = query_data["Columns"]
-    partition = query_data.get("Partition")
+    partitions = query_data.get("Partitions", [])
 
     column_filters = ""
     for i, col in enumerate(columns):
@@ -49,7 +49,7 @@ def make_query(query_data):
             column_filters = column_filters + " OR "
         column_filters = column_filters + '{} in ({})'.format(
             escape_column(col["Column"]), ', '.join("{0}".format(escape_item(m)) for m in col["MatchIds"]))
-    if partition:
+    for partition in partitions:
         template = template + ' AND {key} = {value} '.format(key=escape_column(partition["Key"]), value=escape_item(
             partition["Value"]))
     return template.format(db=db, table=table, column_filters=column_filters)

@@ -29,13 +29,28 @@ def test_it_generates_query_with_partition():
         "Database": "amazonreviews",
         "Table": "amazon_reviews_parquet",
         "Columns": [{"Column": "customer_id", "MatchIds": ["123456", "456789"]}],
-        "Partition": {"Key": "product_category", "Value": "Books"}
+        "Partitions": [{"Key": "product_category", "Value": "Books"}]
     })
 
     assert "SELECT DISTINCT \"$path\" " \
            "FROM \"amazonreviews\".\"amazon_reviews_parquet\" " \
            "WHERE (\"customer_id\" in ('123456', '456789')) " \
            "AND \"product_category\" = 'Books'" == re.sub("[\x00-\x20]+", " ", resp.strip())
+
+
+def test_it_generates_query_with_multiple_partitions():
+    resp = make_query({
+        "Database": "amazonreviews",
+        "Table": "amazon_reviews_parquet",
+        "Columns": [{"Column": "customer_id", "MatchIds": ["123456", "456789"]}],
+        "Partitions": [{"Key": "product_category", "Value": "Books"}, {"Key": "published", "Value": "2019"}]
+    })
+
+    assert "SELECT DISTINCT \"$path\" " \
+           "FROM \"amazonreviews\".\"amazon_reviews_parquet\" " \
+           "WHERE (\"customer_id\" in ('123456', '456789')) " \
+           "AND \"product_category\" = 'Books' " \
+           "AND \"published\" = '2019'" == re.sub("[\x00-\x20]+", " ", resp.strip())
 
 
 def test_it_generates_query_without_partition():
