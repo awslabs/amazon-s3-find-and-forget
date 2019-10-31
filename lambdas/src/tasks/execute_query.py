@@ -40,7 +40,27 @@ def make_query(query_data):
         if i > 0:
             column_filters = column_filters + " OR "
         column_filters = column_filters + "{} in ({})".format(
-            col["Column"], ', '.join("'{0}'".format(u) for u in col["Users"]))
+            escape_item(col["Column"]), ', '.join("{0}".format(escape_item(u)) for u in col["Users"]))
     if partition:
-        template = template + " AND {key} = '{value}' ".format(key=partition["Key"], value=partition["Value"])
+        template = template + " AND {key} = {value} ".format(key=escape_item(partition["Key"]), value=escape_item(
+            partition["Value"]))
     return template.format(db=db, table=table, column_filters=column_filters)
+
+
+def escape_item(item):
+    if item is None:
+        return 'NULL'
+    elif isinstance(item, (int, float)):
+        return escape_number(item)
+    elif isinstance(item, str):
+        return escape_string(item)
+    else:
+        raise ValueError("Unable to process supplied value: {}".format(item))
+
+
+def escape_number(item):
+    return item
+
+
+def escape_string(item):
+    return "'{}'".format(item.replace("'", "''"))

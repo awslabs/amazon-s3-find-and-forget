@@ -4,7 +4,7 @@ from types import SimpleNamespace
 import pytest
 from mock import patch
 
-from lambdas.src.tasks.execute_query import handler, make_query
+from lambdas.src.tasks.execute_query import handler, make_query, escape_item
 
 pytestmark = [pytest.mark.unit, pytest.mark.task]
 
@@ -34,8 +34,8 @@ def test_it_generates_query_with_partition():
 
     assert "SELECT DISTINCT \"$path\" " \
            "FROM \"amazonreviews\".\"amazon_reviews_parquet\" " \
-           "WHERE (customer_id in ('123456', '456789')) " \
-           "AND product_category = 'Books'" == re.sub("[\x00-\x20]+", " ", resp.strip())
+           "WHERE ('customer_id' in ('123456', '456789')) " \
+           "AND 'product_category' = 'Books'" == re.sub("[\x00-\x20]+", " ", resp.strip())
 
 
 def test_it_generates_query_without_partition():
@@ -47,7 +47,7 @@ def test_it_generates_query_without_partition():
 
     assert "SELECT DISTINCT \"$path\" " \
            "FROM \"amazonreviews\".\"amazon_reviews_parquet\" " \
-           "WHERE (customer_id in ('123456', '456789'))" == re.sub("[\x00-\x20]+", " ", resp.strip())
+           "WHERE ('customer_id' in ('123456', '456789'))" == re.sub("[\x00-\x20]+", " ", resp.strip())
 
 
 def test_it_generates_query_with_multiple_columns():
@@ -62,5 +62,26 @@ def test_it_generates_query_with_multiple_columns():
 
     assert "SELECT DISTINCT \"$path\" " \
            "FROM \"amazonreviews\".\"amazon_reviews_parquet\" " \
-           "WHERE (a in ('a123456', 'b123456') OR b in ('a456789', 'b456789'))" == re.sub("[\x00-\x20]+", " ",
-                                                                                        resp.strip())
+           "WHERE ('a' in ('a123456', 'b123456') OR 'b' in ('a456789', 'b456789'))" == re.sub("[\x00-\x20]+", " ",
+                                                                                              resp.strip())
+
+
+def test_it_escapes_strings():
+    assert "''' OR 1=1'" == escape_item("' OR 1=1")
+
+
+def test_it_escapes_ints():
+    assert 2 == escape_item(2)
+
+
+def test_it_escapes_floats():
+    assert float(2) == escape_item(float(2))
+
+
+def test_it_escapes_none():
+    assert 'NULL' == escape_item(None)
+
+
+def test_it_raises_for_unsupported_type():
+    with pytest.raises(ValueError):
+        escape_item(["val"])
