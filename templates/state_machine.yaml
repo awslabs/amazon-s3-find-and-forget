@@ -375,8 +375,6 @@ Resources:
           Effect: "Allow"
           Resource: "*"
 
-  ExecuteQueryPermission:
-
   CheckQueryStatus:
     Type: AWS::Serverless::Function
     Properties:
