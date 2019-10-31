@@ -39,12 +39,16 @@ def make_query(query_data):
     for i, col in enumerate(columns):
         if i > 0:
             column_filters = column_filters + " OR "
-        column_filters = column_filters + "{} in ({})".format(
-            escape_item(col["Column"]), ', '.join("{0}".format(escape_item(u)) for u in col["Users"]))
+        column_filters = column_filters + '{} in ({})'.format(
+            escape_column(col["Column"]), ', '.join("{0}".format(escape_item(u)) for u in col["Users"]))
     if partition:
-        template = template + " AND {key} = {value} ".format(key=escape_item(partition["Key"]), value=escape_item(
+        template = template + ' AND {key} = {value} '.format(key=escape_column(partition["Key"]), value=escape_item(
             partition["Value"]))
     return template.format(db=db, table=table, column_filters=column_filters)
+
+
+def escape_column(item):
+    return '"{}"'.format(item.replace('"', '""'))
 
 
 def escape_item(item):
