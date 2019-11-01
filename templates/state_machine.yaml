@@ -260,7 +260,7 @@ Resources:
               "Type": "Task",
               "InputPath": "$.QueryResults",
               "ResultPath": "$.QueryResults",
-              "Resource": "${TaskStub.Arn}",
+              "Resource": "${AggregateResults.Arn}",
               "Next": "Populate Queue"
             },
             "Populate Queue": {
@@ -400,6 +400,12 @@ Resources:
           - "athena:GetQueryResults"
           Effect: "Allow"
           Resource: "*"
+
+  AggregateResults:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: aggregate_results.handler
+      CodeUri: ../lambdas/src/tasks/
 
 Outputs:
   DeleteTaskIAMRoleArn:
