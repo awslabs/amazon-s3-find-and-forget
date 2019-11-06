@@ -21,10 +21,10 @@ table = dynamodb_resource.Table(os.getenv("DeletionQueueTable"))
 def enqueue_handler(event, context):
     body = json.loads(event["body"])
     match_id = body["MatchId"]
-    configurations = body.get("Configurations", [])
+    data_mappers = body.get("DataMappers", [])
     item = {
         "MatchId": match_id,
-        "Configurations": configurations,
+        "DataMappers": data_mappers,
     }
     table.put_item(Item=item)
 

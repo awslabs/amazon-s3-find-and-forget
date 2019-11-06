@@ -1,0 +1,45 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "DataMapperModel",
+    "type": "object",
+    "definitions": {
+        "GlueDataSourceParameters": {
+            "type": "object",
+            "properties": {
+                "Database": {"type": "string"},
+                "Table": {"type": "string"}
+            },
+            "required": ["Database", "Table"]
+        }
+    },
+    "properties": {
+        "DataSource": {
+            "type": "string",
+            "enum": ["glue"]
+        },
+        "Columns": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "minItems": 1
+        },
+        "Format": {
+            "type": "string",
+            "enum": ["parquet"]
+        }
+    },
+    "if": {
+        "properties": { "DataSource": { "const": "glue" } }
+    },
+    "then": {
+        "properties": {
+            "DataSourceParameters": {
+                "$ref": "#/definitions/GlueDataSourceParameters"
+            }
+        },
+        "required": ["DataSourceParameters"]
+    },
+    "required": ["Columns", "DataSource"]
+}
+

@@ -7,21 +7,21 @@ pytestmark = [pytest.mark.acceptance, pytest.mark.queue]
 def test_it_adds_to_queue(api_client, queue_base_endpoint, queue_table):
     # Arrange
     key = "test"
-    config = {
+    item = {
         "MatchId": key,
-        "Configurations": ["a", "b"],
+        "DataMappers": ["a", "b"],
     }
     # Act
-    response = api_client.patch(queue_base_endpoint, json=config)
+    response = api_client.patch(queue_base_endpoint, json=item)
     response_body = response.json()
     # Assert
     # Check the response is ok
     assert 201 == response.status_code
-    assert config == response_body
+    assert item == response_body
     # Check the item exists in the DDB Table
     query_result = queue_table.query(KeyConditionExpression=Key("MatchId").eq(key))
     assert 1 == len(query_result["Items"])
-    assert config == query_result["Items"][0]
+    assert item == query_result["Items"][0]
 
 
 def test_it_rejects_invalid_add_to_queue(api_client, queue_base_endpoint):
