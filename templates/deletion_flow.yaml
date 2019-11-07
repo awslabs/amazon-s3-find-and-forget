@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
-Description: Jane Doe Deletion Flow
+Description: S3 Find and Forget Deletion Flow
 
 Parameters:
   DeletionTaskCPU:

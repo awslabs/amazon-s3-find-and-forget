@@ -1,12 +1,12 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Jane Doe DDB Tables
+Description: S3 Find and Forget DDB Tables
 
 Parameters:
 
   DynamoDBTablePrefix:
     Description: The prefix usesed to name the DynamoDB tables on creation
     Type: String
-    Default: JaneDoe
+    Default: S3FindAndForget
 
 Resources:
 

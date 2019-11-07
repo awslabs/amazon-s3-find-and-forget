@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
-Description: Jane Doe State Machine
+Description: S3 Find and Forget State Machine
 
 Globals:
   Function:
@@ -94,7 +94,7 @@ Resources:
       StateMachineName: !Sub ${StateMachinePrefix}-StateMachine
       DefinitionString: !Sub |-
         {
-          "Comment": "State machine for processing the Jane Doe deletion queue.",
+          "Comment": "State machine for processing the S3 Find and Forget deletion queue.",
           "StartAt": "Check is Oldest Execution",
           "States": {
             "Check is Oldest Execution": {

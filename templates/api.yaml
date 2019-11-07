@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
-Description: Jane Doe API
+Description: S3 Find and Forget API
 
 Globals:
   Function:
@@ -36,10 +36,10 @@ Parameters:
     Type: String
   CognitoUserPoolName:
     Type: String
-    Default: JaneDoePool
+    Default: S3FindAndForgetPool
   CognitoUserPoolClientName:
     Type: String
-    Default: JaneDoePoolClient
+    Default: S3FindAndForgetPoolClient
   CommonLayers:
     Type: CommaDelimitedList
     Description: Common layers supplied to all functions
