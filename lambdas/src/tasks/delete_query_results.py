@@ -20,5 +20,4 @@ def handler(event, context):
     if len(errors) > 0:
         context.logger.error("Responses from S3 contain errors: %s", responses)
         raise RuntimeError("Failed to delete some objects: %s", errors)
-
     return deleted

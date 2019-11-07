@@ -136,7 +136,7 @@ Resources:
                     "Parameters": {
                       "QueryData.$": "$",
                       "Bucket": "${QueryResultBucket}",
-                      "Prefix.$": "$$.Execution.Id"
+                      "Prefix.$": "$$.Execution.Name"
                     },
                     "Resource": "${ExecuteQuery.Arn}",
                     "ResultPath": "$.QueryId",
@@ -376,11 +376,10 @@ Resources:
               "Comment": "Deletes query results from the query result bucket",
               "Type": "Task",
               "Parameters": {
-                "ExecutionId.$": "$$.Execution.Id"
+                "ExecutionName.$": "$$.Execution.Name"
               },
-              "ResultPath": "$.DeletedFiles",
+              "ResultPath": null,
               "Resource": "${DeleteQueryResults.Arn}",
-              "InputPath": "$.QueryResults",
               "End": true
             },
             "CatchAllFallback": {
