@@ -1,14 +1,14 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
-Description: Jane Doe (uksb-1q2j8beb0)
+Description: S3 Find and Forget (uksb-1q2j8beb0)
 
 Parameters:
   CognitoUserPoolName:
     Type: String
-    Default: JaneDoePool
+    Default: S3FindAndForgetPool
   CognitoUserPoolClientName:
     Type: String
-    Default: JaneDoePoolClient
+    Default: S3FindAndForgetPoolClient
   DeletionTaskCPU:
     Description: The CPU to be allocated to the Deletion Fargate Task
     Type: String
@@ -20,7 +20,7 @@ Parameters:
   ResourcePrefix:
     Description: The prefix used in DynamoDB table and state machine names
     Type: String
-    Default: JaneDoe
+    Default: S3FindAndForget
 
 Resources:
   LayersStack:
