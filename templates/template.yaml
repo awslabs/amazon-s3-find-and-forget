@@ -46,6 +46,7 @@ Resources:
             - !GetAtt LayersStack.Outputs.Decorators
             - !GetAtt LayersStack.Outputs.BotoUtils
         DeletionQueueTableName: !GetAtt DDBStack.Outputs.DeletionQueueTable
+        DataMapperTableName: !GetAtt DDBStack.Outputs.DataMapperTable
         StateMachineArn: !GetAtt StateMachineStack.Outputs.StateMachineArn
   StateMachineStack:
     Type: AWS::CloudFormation::Stack
@@ -81,3 +82,5 @@ Outputs:
     Value: !GetAtt StateMachineStack.Outputs.DeleteTaskIAMRoleArn
   DeletionQueueTable:
     Value: !GetAtt DDBStack.Outputs.DeletionQueueTable
+  DataMapperTable:
+    Value: !GetAtt DDBStack.Outputs.DataMapperTable

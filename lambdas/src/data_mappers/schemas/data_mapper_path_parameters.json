@@ -1,0 +1,13 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "title": "DataMapperPathParamsModel",
+    "type": "object",
+    "properties": {
+        "data_mapper_id": {
+            "type": "string",
+            "pattern": "^([A-Za-z0-9])+$"
+        }
+    },
+    "required": ["data_mapper_id"]
+}
+

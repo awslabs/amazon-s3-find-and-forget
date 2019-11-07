@@ -162,15 +162,46 @@ def empty_queue(queue_table):
 
 
 @pytest.fixture
-def del_queue_item(queue_table, match_id="testId", configurations=[]):
+def del_queue_item(queue_table, match_id="testId", data_mappers=[]):
     item = {
         "MatchId": match_id,
-        "Configurations": configurations,
+        "DataMappers": data_mappers,
     }
     queue_table.put_item(Item=item)
     yield item
     queue_table.delete_item(Key={
         "MatchId": match_id
+    })
+
+
+@pytest.fixture(scope="module")
+def data_mapper_base_endpoint():
+    return "data_mappers"
+
+
+@pytest.fixture(scope="module")
+def data_mapper_table(ddb_resource, get_table_name):
+    return ddb_resource.Table(get_table_name("DataMappers"))
+
+
+@pytest.fixture()
+def glue_data_mapper_item(data_mapper_table, data_mapper_id="test", columns=["test"], fmt="parquet"):
+    item = {
+        "DataMapperId": data_mapper_id,
+        "Columns": columns,
+        "DataSource": {
+            "Type": "glue",
+            "Parameters": {
+                "Database": "acceptancetestsdb",
+                "Table": "acceptancetests"
+            }
+        },
+        "Format": fmt,
+    }
+    data_mapper_table.put_item(Item=item)
+    yield item
+    data_mapper_table.delete_item(Key={
+        "DataMapperId": data_mapper_id
     })
 
 
@@ -218,6 +249,7 @@ def empty_lake(dummy_lake):
 
 @pytest.fixture(scope="session")
 def dummy_lake(s3_resource, glue_client):
+    # TODO: Only supports setting up a glue catalogued database
     # Lake Config
     bucket_name = "test-" + str(uuid4())
     db_name = "acceptancetestsdb"
