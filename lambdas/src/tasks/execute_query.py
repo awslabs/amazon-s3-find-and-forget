@@ -29,11 +29,11 @@ def make_query(query_data):
       "Database":"db",
       "Table": "table",
       "Columns": [{"Column": "col, "MatchIds": ["match"]}],
-      "Partitions": [{"Key":"k", "Value":"val"}]
+      "PartitionKeys": [{"Key":"k", "Value":"val"}]
     }
     """
     template = '''
-    SELECT DISTINCT "$path"
+    SELECT "$path"
     FROM "{db}"."{table}"
     WHERE
         ({column_filters})
@@ -41,7 +41,7 @@ def make_query(query_data):
     db = query_data["Database"]
     table = query_data["Table"]
     columns = query_data["Columns"]
-    partitions = query_data.get("Partitions", [])
+    partitions = query_data.get("PartitionKeys", [])
 
     column_filters = ""
     for i, col in enumerate(columns):

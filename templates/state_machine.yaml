@@ -20,6 +20,9 @@ Parameters:
   DeletionQueueTableName:
     Description: Table name for Deletion Queue Table
     Type: String
+  DataMapperTableName:
+    Description: Table name for Data Mapper Table
+    Type: String
   DeletionTaskCPU:
     Type: String
   DeletionTaskMemory:
@@ -64,6 +67,10 @@ Resources:
             Resource: "*"
           - Effect: Allow
             Action:
+            - "sqs:SendMessage"
+            Resource: "*"
+          - Effect: Allow
+            Action:
             - "ecs:RunTask"
             - "ecs:StopTask"
             - "ecs:DescribeTasks"
@@ -73,6 +80,12 @@ Resources:
             - "events:PutTargets"
             - "events:PutRule"
             - "events:DescribeRule"
+            Resource: "*"
+          - Effect: Allow
+            Action:
+            - "states:StartExecution"
+            - "states:List*"
+            - "states:Describe*"
             Resource: "*"
 
   StateMachineStub:
@@ -91,95 +104,28 @@ Resources:
         }
       RoleArn: !GetAtt StatesExecutionRole.Arn
 
-  # Not exposed yet
-  StateMachine:
+  AthenaStateMachine:
     Type: AWS::StepFunctions::StateMachine
     Properties:
-      StateMachineName: !Sub ${StateMachinePrefix}-StateMachine
+      StateMachineName: !Sub ${StateMachinePrefix}-AthenaStateMachine
+      RoleArn: !GetAtt StatesExecutionRole.Arn
       DefinitionString: !Sub |-
         {
-          "Comment": "State machine for processing the S3 Find and Forget deletion queue.",
-          "StartAt": "Check is Oldest Execution",
+          "StartAt": "Generate Queries",
           "States": {
-            "Check is Oldest Execution": {
-              "Comment": "Queries the Step Functions API to check if the current executions is the oldest",
-              "Type": "Task",
-              "Resource": "${OldestExecutionCheck.Arn}",
-              "Parameters": {
-                "ExecutionId.$": "$$.Execution.Id"
-              },
-              "ResultPath": "$.IsOldestExecution",
-              "Next": "Should Start?"
-            },
-            "Wait": {
-              "Comment": "Waits before checking again whether this is the current execution",
-              "Type": "Wait",
-              "Seconds": 120,
-              "Next": "Check is Oldest Execution"
-            },
-            "Should Start?": {
-              "Comment": "Check if this execution is the oldest running execution and proceed if so.",
-              "Type": "Choice",
-              "Choices": [
-                {
-                  "Variable": "$.IsOldestExecution",
-                  "BooleanEquals": true,
-                  "Next": "Query Deletion Queue"
-                },
-                {
-                  "Variable": "$.IsOldestExecution",
-                  "BooleanEquals": false,
-                  "Next": "Wait"
-                }
-              ],
-              "Default": "CatchAllFallback"
-            },
-            "Query Deletion Queue": {
-              "Comment": "Scan the deletion queue table to obtain all users to be deleted ",
-              "Type": "Task",
-              "Resource": "${QueryDeletionQueue.Arn}",
-              "ResultPath": "$.DeletionQueue",
-              "Next": "Users in Queue?"
-            },
-            "Users in Queue?": {
-              "Comment": "If the deletion queue is empty, exit gracefully. Otherwise, proceed to processing the queue.",
-              "Type": "Choice",
-              "Choices": [
-                {
-                  "Variable": "$.DeletionQueue.Count",
-                  "NumericGreaterThan": 0,
-                  "Next": "Yes"
-                },
-                {
-                  "Variable": "$.DeletionQueue.Count",
-                  "NumericEquals": 0,
-                  "Next": "No"
-                }
-              ],
-              "Default": "No"
-            },
-            "No": {
-              "Comment": "No work to be done.",
-              "Type": "Succeed"
-            },
-            "Yes": {
-              "Comment": "Continue.",
-              "Type": "Pass",
-              "Next": "Generate Queries"
-            },
             "Generate Queries": {
               "Comment": "Generates a list of queries which need to be executed by Lambda",
               "Type": "Task",
-              "Resource": "${TaskStub.Arn}",
+              "Resource": "${GenerateQueries.Arn}",
               "ResultPath": "$.Queries",
               "Next": "Execute Queries"
             },
             "Execute Queries": {
               "Comment": "Executes the generated list of queries in parallel. Returns a list of lists",
               "Type": "Map",
-              "Next": "Aggregate and Depduplicate Results",
+              "End": true,
               "ItemsPath": "$.Queries",
-              "ResultPath": "$.QueryResults",
+              "ResultPath": "$",
               "MaxConcurrency": 10,
               "Iterator": {
                 "StartAt": "Execute Query",
@@ -188,7 +134,7 @@ Resources:
                     "Comment": "Start an Athena query asynchronously",
                     "Type": "Task",
                     "Parameters": {
-                      "QueryData.$": "$.QueryData",
+                      "QueryData.$": "$",
                       "Bucket": "${QueryResultBucket}",
                       "Prefix.$": "$$.Execution.Id"
                     },
@@ -254,6 +200,143 @@ Resources:
                   }
                 }
               }
+            }
+          }
+        }
+
+  # Not exposed yet
+  StateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: !Sub ${StateMachinePrefix}-StateMachine
+      DefinitionString: !Sub |-
+        {
+          "Comment": "State machine for processing the S3 Find and Forget deletion queue.",
+          "StartAt": "Check is Oldest Execution",
+          "States": {
+            "Check is Oldest Execution": {
+              "Comment": "Queries the Step Functions API to check if the current executions is the oldest",
+              "Type": "Task",
+              "Resource": "${OldestExecutionCheck.Arn}",
+              "Parameters": {
+                "ExecutionId.$": "$$.Execution.Id"
+              },
+              "ResultPath": "$.IsOldestExecution",
+              "Next": "Should Start?"
+            },
+            "Wait": {
+              "Comment": "Waits before checking again whether this is the current execution",
+              "Type": "Wait",
+              "Seconds": 120,
+              "Next": "Check is Oldest Execution"
+            },
+            "Should Start?": {
+              "Comment": "Check if this execution is the oldest running execution and proceed if so.",
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.IsOldestExecution",
+                  "BooleanEquals": true,
+                  "Next": "Query Deletion Queue"
+                },
+                {
+                  "Variable": "$.IsOldestExecution",
+                  "BooleanEquals": false,
+                  "Next": "Wait"
+                }
+              ],
+              "Default": "CatchAllFallback"
+            },
+            "Query Deletion Queue": {
+              "Comment": "Scan the deletion queue table to obtain all users to be deleted ",
+              "Type": "Task",
+              "Resource": "${ScanTable.Arn}",
+              "Parameters": {
+                "TableName": "${DeletionQueueTableName}"
+              },
+              "ResultPath": "$.DeletionQueue",
+              "Next": "Users in Queue?"
+            },
+            "Users in Queue?": {
+              "Comment": "If the deletion queue is empty, exit gracefully. Otherwise, proceed to processing the queue.",
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.DeletionQueue.Count",
+                  "NumericGreaterThan": 0,
+                  "Next": "Yes"
+                },
+                {
+                  "Variable": "$.DeletionQueue.Count",
+                  "NumericEquals": 0,
+                  "Next": "No"
+                }
+              ],
+              "Default": "No"
+            },
+            "No": {
+              "Comment": "No work to be done.",
+              "Type": "Succeed"
+            },
+            "Yes": {
+              "Comment": "Continue.",
+              "Type": "Pass",
+              "Next": "Get Data Mappers"
+            },
+            "Get Data Mappers": {
+              "Comment": "Gets the list of data mappers",
+              "Type": "Task",
+              "Parameters": {
+                "TableName": "${DataMapperTableName}"
+              },
+              "Resource": "${ScanTable.Arn}",
+              "ResultPath": "$.DataMappers",
+              "Next": "Discover Files"
+            },
+            "Discover Files": {
+              "Type": "Parallel",
+              "Next": "Flatten Results",
+              "ResultPath": "$.QueryResults",
+              "Branches": [
+                {
+                  "StartAt": "Filter Glue Data Mappers",
+                  "States": {
+                    "Filter Glue Data Mappers": {
+                      "Parameters": {
+                        "DataMappers.$": "$.DataMappers.Items[?(@.DataSource=='glue')]",
+                        "DeletionQueue.$": "$.DeletionQueue.Items"
+                      },
+                      "Comment": "Process Data Sources with type glue",
+                      "Type": "Pass",
+                      "Next": "Query Glue Catalogs"
+                    },
+                    "Query Glue Catalogs": {
+                      "Type":"Task",
+                      "Resource":"arn:aws:states:::states:startExecution.sync",
+                      "Parameters":{
+                        "Input.$": "$",
+                        "StateMachineArn": "${AthenaStateMachine}",
+                        "Name.$":"$$.Execution.Name"
+                      },
+                      "OutputPath": "$.Output",
+                      "Next": "Parse State Machine Results"
+                    },
+                    "Parse State Machine Results": {
+                      "Comment": "Parses the output from the state machine",
+                      "Type": "Task",
+                      "Resource": "${ParseStateMachineOutput.Arn}",
+                      "End": true
+                    }
+                  }
+                }
+              ]
+            },
+            "Flatten Results": {
+              "Comment": "Parses and flattens the result of all branches",
+              "Type": "Pass",
+              "InputPath": "$.QueryResults[*][*]",
+              "ResultPath": "$.QueryResults",
+              "Next": "Aggregate and Depduplicate Results"
             },
             "Aggregate and Depduplicate Results": {
               "Comment": "Aggregates the results and deduplicates",
@@ -309,6 +392,7 @@ Resources:
         }
       RoleArn: !GetAtt StatesExecutionRole.Arn
 
+  # Supporting Resources
   QueryResultBucket:
     Type: AWS::S3::Bucket
 
@@ -334,17 +418,22 @@ Resources:
           Effect: "Allow"
           Resource: !Sub arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${StateMachinePrefix}*
 
-  QueryDeletionQueue:
+  ScanTable:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: query_deletion_queue.handler
+      Handler: scan_table.handler
       CodeUri: ../lambdas/src/tasks/
-      Environment:
-        Variables:
-          DeletionQueueTableName: !Ref DeletionQueueTableName
       Policies:
       - DynamoDBReadPolicy:
           TableName: !Ref DeletionQueueTableName
+      - DynamoDBReadPolicy:
+          TableName: !Ref DataMapperTableName
+
+  ParseStateMachineOutput:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: parse_output.handler
+      CodeUri: ../lambdas/src/tasks/
 
   DeleteQueryResults:
     Type: AWS::Serverless::Function
@@ -398,6 +487,20 @@ Resources:
       - Statement:
         - Action:
           - "athena:GetQueryResults"
+          Effect: "Allow"
+          Resource: "*"
+
+  GenerateQueries:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: generate_queries.handler
+      CodeUri: ../lambdas/src/tasks/
+      Policies:
+      - Statement:
+        - Action:
+          - "glue:GetDatabase"
+          - "glue:GetTable*"
+          - "glue:GetPartition*"
           Effect: "Allow"
           Resource: "*"
 

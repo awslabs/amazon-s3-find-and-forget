@@ -7,9 +7,9 @@ client = boto3.client("athena")
 
 
 @with_logger
-def handler(event, context):
+def handler(query_id, context):
     results = paginate(client, client.get_query_results, ["ResultSet", "Rows"], **{
-        "QueryExecutionId": event["QueryId"]
+        "QueryExecutionId": query_id
     })
     rows = [result for result in results]
     header_row = rows.pop(0)

@@ -1,8 +1,6 @@
 """
-Task to scan the DynamoDB deletion queue table
+Task to scan a DynamoDB table
 """
-import os
-
 import boto3
 from boto3.dynamodb.types import TypeDeserializer
 
@@ -16,7 +14,7 @@ deserializer = TypeDeserializer()
 @with_logger
 def handler(event, context):
     results = paginate(ddb_client, ddb_client.scan, "Items", **{
-        "TableName": os.getenv("DeletionQueueTableName")
+        "TableName": event["TableName"]
     })
 
     items = [deserialize_item(result) for result in results]

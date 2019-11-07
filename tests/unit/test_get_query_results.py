@@ -34,7 +34,7 @@ def test_it_returns_only_paths(paginate_mock):
         },
     ])
 
-    resp = handler({"QueryId": "123"}, SimpleNamespace())
+    resp = handler("123", SimpleNamespace())
     assert [
         "s3://mybucket/mykey1",
         "s3://mybucket/mykey2",

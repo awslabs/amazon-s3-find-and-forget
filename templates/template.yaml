@@ -59,6 +59,7 @@ Resources:
             - !GetAtt LayersStack.Outputs.Decorators
             - !GetAtt LayersStack.Outputs.BotoUtils
         DeletionQueueTableName: !GetAtt DDBStack.Outputs.DeletionQueueTable
+        DataMapperTableName: !GetAtt DDBStack.Outputs.DataMapperTable
         DeletionTaskCPU: !Ref DeletionTaskCPU
         DeletionTaskMemory: !Ref DeletionTaskMemory
         StateMachinePrefix: !Ref ResourcePrefix
