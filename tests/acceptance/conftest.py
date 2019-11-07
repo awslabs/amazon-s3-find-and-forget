@@ -266,7 +266,7 @@ def dummy_lake(s3_resource, glue_client):
             },
             "Parameters": {
                 "EXTERNAL": "TRUE",
-                "JaneDoeColumns": "customer_id"
+                "S3FindAndForgetColumns": "customer_id"
             }
         }
     )
