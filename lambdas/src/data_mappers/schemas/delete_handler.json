@@ -1,0 +1,12 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "title": "DeleteDataMapperPathParameters",
+    "type": "object",
+    "properties": {
+        "data_mapper_id": {
+            "type": "string"
+        }
+    },
+    "required": ["data_mapper_id"]
+}
+

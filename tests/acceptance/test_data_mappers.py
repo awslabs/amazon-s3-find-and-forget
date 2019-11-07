@@ -1,0 +1,59 @@
+import pytest
+from boto3.dynamodb.conditions import Key
+
+pytestmark = [pytest.mark.acceptance, pytest.mark.data_mappers]
+
+
+def test_it_creates_data_mapper(api_client, data_mapper_base_endpoint, data_mapper_table):
+    # Arrange
+    key = "test"
+    data_mapper = {
+        "DataMapperId": key,
+        "Columns": ["a"],
+        "DataSource": "glue",
+        "DataSourceParameters": {
+            "Database": "test",
+            "Table": "test"
+        },
+        "Format": "parquet",
+    }
+    # Act
+    response = api_client.put("{}/{}".format(data_mapper_base_endpoint, key), json=data_mapper)
+    response_body = response.json()
+    # Assert
+    # Check the response is ok
+    assert 201 == response.status_code
+    assert data_mapper == response_body
+    # Check the item exists in the DDB Table
+    query_result = data_mapper_table.query(KeyConditionExpression=Key("DataMapperId").eq(key))
+    assert 1 == len(query_result["Items"])
+    assert data_mapper == query_result["Items"][0]
+
+
+def test_it_rejects_invalid_data_mapper(api_client, data_mapper_base_endpoint):
+    key = "test"
+    response = api_client.put("{}/{}".format(data_mapper_base_endpoint, key), json={"INVALID": "PAYLOAD"})
+    assert 422 == response.status_code
+
+
+def test_it_gets_all_data_mappers(api_client, data_mapper_base_endpoint, glue_data_mapper_item):
+    # Arrange
+    # Act
+    response = api_client.get(data_mapper_base_endpoint)
+    response_body = response.json()
+    # Assert
+    assert response.status_code == 200
+    assert isinstance(response_body.get("DataMappers"), list)
+    assert glue_data_mapper_item in response_body["DataMappers"]
+
+
+def test_it_deletes_data_mapper(api_client, glue_data_mapper_item, data_mapper_base_endpoint, data_mapper_table):
+    # Arrange
+    key = glue_data_mapper_item["DataMapperId"]
+    # Act
+    response = api_client.delete("{}/{}".format(data_mapper_base_endpoint, key))
+    # Assert
+    assert 204 == response.status_code
+    # Check the item doesn't exist in the DDB Table
+    query_result = data_mapper_table.query(KeyConditionExpression=Key("DataMapperId").eq(key))
+    assert 0 == len(query_result["Items"])

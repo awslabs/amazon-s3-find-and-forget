@@ -6,7 +6,7 @@
         "MatchId": {
             "type": "string"
         },
-        "Configurations": {
+        "DataMappers": {
             "type": "array",
             "items": {
                 "type": "string"

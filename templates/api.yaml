@@ -12,6 +12,7 @@ Globals:
     Environment:
       Variables:
         DeletionQueueTable: !Ref DeletionQueueTableName
+        DataMapperTable: !Ref DataMapperTableName
         LogLevel: !Ref LogLevel
   Api:
     EndpointConfiguration: REGIONAL
@@ -26,6 +27,9 @@ Globals:
 Parameters:
   DeletionQueueTableName:
     Description: Table name for Deletion Queue Table
+    Type: String
+  DataMapperTableName:
+    Description: Table name for DataMapper Table
     Type: String
   StateMachineArn:
     Description: State Machine to invoke to process the deletion queue
@@ -142,6 +146,49 @@ Resources:
             - "states:StartExecution"
             Effect: "Allow"
             Resource: !Ref StateMachineArn
+  # DataMappers
+  CreateDataMapper:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers.create_data_mapper_handler
+      CodeUri: ../lambdas/src/data_mappers/
+      Events:
+        Get:
+          Type: Api
+          Properties:
+            Path: /data_mappers/{data_mapper_id}
+            Method: PUT
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref DataMapperTableName
+  GetDataMappers:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers.get_data_mappers_handler
+      CodeUri: ../lambdas/src/data_mappers/
+      Events:
+        Get:
+          Type: Api
+          Properties:
+            Path: /data_mappers
+            Method: get
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DataMapperTableName
+  DeleteDataMapper:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers.delete_data_mapper_handler
+      CodeUri: ../lambdas/src/data_mappers/
+      Events:
+        Get:
+          Type: Api
+          Properties:
+            Path: /data_mappers/{data_mapper_id}
+            Method: delete
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DataMapperTableName
   # Jobs
   GetJob:
     Type: AWS::Serverless::Function
