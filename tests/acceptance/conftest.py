@@ -252,7 +252,7 @@ def dummy_lake(s3_resource, glue_client):
     # TODO: Only supports setting up a glue catalogued database
     # Lake Config
     bucket_name = "test-" + str(uuid4())
-    db_name = "acceptancetestsdb"
+    db_name = getenv("DatabaseName")
     table_name = "acceptancetests"
     prefix = str(uuid4())
     # Create the bucket and Glue table
@@ -261,11 +261,6 @@ def dummy_lake(s3_resource, glue_client):
         "LocationConstraint": getenv("AWS_DEFAULT_REGION", "eu-west-1")
     },)
     bucket.wait_until_exists()
-    glue_client.create_database(
-        DatabaseInput={
-            'Name': db_name
-        }
-    )
     glue_client.create_table(
         DatabaseName=db_name,
         TableInput={
@@ -315,9 +310,6 @@ def dummy_lake(s3_resource, glue_client):
     glue_client.delete_table(
         DatabaseName=db_name,
         Name=table_name
-    )
-    glue_client.delete_database(
-        Name=db_name
     )
     bucket.objects.delete()
     bucket.delete()

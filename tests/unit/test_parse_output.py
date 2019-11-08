@@ -1,0 +1,15 @@
+import json
+from types import SimpleNamespace
+
+import pytest
+
+from lambdas.src.tasks.parse_output import handler
+
+pytestmark = [pytest.mark.unit, pytest.mark.task]
+
+
+def test_it_flattens_results():
+    result = handler(json.dumps([{"Test": "Result"}]), SimpleNamespace())
+    assert [
+        {"Test": "Result"},
+    ] == result
