@@ -24,7 +24,7 @@ pip install -r lambdas/layers/decorators/requirements.txt -t lambdas/layers/deco
 3. Deploy using the CLI
 ```bash
 aws cloudformation package --template-file templates/template.yaml --s3-bucket your-temp-bucket --output-template-file packaged.yaml
-aws cloudformation deploy --template-file ./packaged.yaml --stack-name amazon-s3-find-and-forget --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND
+aws cloudformation deploy --template-file ./packaged.yaml --stack-name s3f2 --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND
 ```
 
 ## Testing

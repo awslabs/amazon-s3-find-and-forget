@@ -36,9 +36,9 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
 
-  DeleteObjectsQueue:
+  DelObjQ:
     Type: AWS::SQS::Queue
-    Properties: 
+    Properties:
       ContentBasedDeduplication: true
       FifoQueue: true
       ReceiveMessageWaitTimeSeconds: 0
@@ -66,7 +66,7 @@ Resources:
               awslogs-stream-prefix: !Ref 'AWS::StackName'
           Environment:
             - Name: DELETE_OBJECTS_QUEUE
-              Value: !Ref DeleteObjectsQueue
+              Value: !Ref DelObjQ
 
   DeleteTaskIAMRole:
     Type: AWS::IAM::Role
@@ -91,7 +91,7 @@ Resources:
             - sqs:GetQueueAttributes 
             - sqs:ReceiveMessage
             Effect: Allow 
-            Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${DeleteObjectsQueue.QueueName}
+            Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${DelObjQ.QueueName}
 
   DeleteTaskLogGroup:
     Type: AWS::Logs::LogGroup
@@ -100,7 +100,7 @@ Resources:
 
 Outputs:
   DeleteObjectsQueueUrl:
-    Value: !Ref DeleteObjectsQueue
+    Value: !Ref DelObjQ
   DeleteTaskDefinitionArn:
     Value: !Ref DeleteTaskDefinition
   DeleteTaskIAMRoleArn:

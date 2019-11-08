@@ -404,8 +404,6 @@ Resources:
       CodeUri: ../lambdas/src/tasks/
 
 Outputs:
-  DeleteTaskIAMRoleArn:
-    Value: DeletionFlowStack.Outputs.DeleteTaskIAMRoleArn
   StateMachineArn:
     Value: !Ref StateMachineStub
   StateMachineRoleArn:

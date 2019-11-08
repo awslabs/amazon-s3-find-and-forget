@@ -3,7 +3,7 @@ Transform: AWS::Serverless-2016-10-31
 Description: S3 Find And Forget VPC
 
 Parameters:
-  PublicSubnetIpBlocks:
+  PrivateSubnetIpBlocks:
     Type: CommaDelimitedList
   VpcIpBlock:
     Type: String
@@ -51,128 +51,200 @@ Resources:
         - Key: Name
           Value: !Sub ${AWS::StackName} VPC
 
-  InternetGateway:
-    Type: AWS::EC2::InternetGateway
-
-  GatewayToInternet:
-    Type: AWS::EC2::VPCGatewayAttachment
-    Properties:
-      VpcId: !Ref VPC
-      InternetGatewayId: !Ref InternetGateway
-
-  PublicNetworkAcl:
+  PrivateNetworkAcl:
     Type: AWS::EC2::NetworkAcl
     Properties:
       VpcId: !Ref VPC
 
-  PublicNetworkAclEntryInAllowAll:
+  PrivateNetworkAclEntryInAllowVPC:
     Type: AWS::EC2::NetworkAclEntry
     Properties:
-      NetworkAclId: !Ref PublicNetworkAcl
+      NetworkAclId: !Ref PrivateNetworkAcl
       RuleNumber: 99
       Protocol: -1
       RuleAction: allow
       Egress: false
       CidrBlock: 0.0.0.0/0
 
-  PublicNetworkAclEntryOutAllowAll:
+  PrivateNetworkAclEntryOutAllowVPC:
     Type: AWS::EC2::NetworkAclEntry
     Properties:
-      NetworkAclId: !Ref PublicNetworkAcl
+      NetworkAclId: !Ref PrivateNetworkAcl
       RuleNumber: 99
       Protocol: -1
       RuleAction: allow
       Egress: true
       CidrBlock: 0.0.0.0/0
 
-  PublicRoute:
-    Type: AWS::EC2::Route
-    DependsOn: GatewayToInternet
-    Properties:
-      RouteTableId: !Ref PublicRouteTable
-      DestinationCidrBlock: 0.0.0.0/0
-      GatewayId: !Ref InternetGateway
-
-  PublicRouteTable:
+  PrivateRouteTable1:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
 
-  PublicRouteTableAssociation1:
+  PrivateRouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+
+  PrivateRouteTable3:
+    Type: AWS::EC2::RouteTable
+    Condition: HasThreeAZs
+    Properties:
+      VpcId: !Ref VPC
+
+  PrivateRouteTableAssociation1:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      SubnetId: !Ref PublicSubnet1
-      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PrivateSubnet1
+      RouteTableId: !Ref PrivateRouteTable1
 
-  PublicRouteTableAssociation2:
+  PrivateRouteTableAssociation2:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      SubnetId: !Ref PublicSubnet2
-      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PrivateSubnet2
+      RouteTableId: !Ref PrivateRouteTable2
 
-  PublicRouteTableAssociation3:
+  PrivateRouteTableAssociation3:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Condition: HasThreeAZs
     Properties:
-      SubnetId: !Ref PublicSubnet3
-      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PrivateSubnet3
+      RouteTableId: !Ref PrivateRouteTable3
 
-  PublicSubnet1:
+  PrivateSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      CidrBlock: !Select [0, !Ref PublicSubnetIpBlocks]
+      CidrBlock: !Select [0, !Ref PrivateSubnetIpBlocks]
       AvailabilityZone: !Select [0, !GetAZs '']
-      MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: !Sub ${AWS::StackName} Public Subnet 1
+          Value: !Sub ${AWS::StackName} Private Subnet 1
 
-  PublicSubnet2:
+  PrivateSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      CidrBlock: !Select [1, !Ref PublicSubnetIpBlocks]
+      CidrBlock: !Select [1, !Ref PrivateSubnetIpBlocks]
       AvailabilityZone: !Select [1, !GetAZs '']
-      MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: !Sub ${AWS::StackName} Public Subnet 2
+          Value: !Sub ${AWS::StackName} Private Subnet 2
 
-  PublicSubnet3:
+  PrivateSubnet3:
     Type: AWS::EC2::Subnet
     Condition: HasThreeAZs
     Properties:
       VpcId: !Ref VPC
-      CidrBlock: !Select [2, !Ref PublicSubnetIpBlocks]
+      CidrBlock: !Select [2, !Ref PrivateSubnetIpBlocks]
       AvailabilityZone: !Select [2, !GetAZs '']
-      MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: !Sub ${AWS::StackName} Public Subnet 3
+          Value: !Sub ${AWS::StackName} Private Subnet 3
 
-  PublicSubnetNetworkAclAssociation1:
+  PrivateSubnetNetworkAclAssociation1:
     Type: AWS::EC2::SubnetNetworkAclAssociation
     Properties:
-      SubnetId: !Ref PublicSubnet1
-      NetworkAclId: !Ref PublicNetworkAcl
+      SubnetId: !Ref PrivateSubnet1
+      NetworkAclId: !Ref PrivateNetworkAcl
 
-  PublicSubnetNetworkAclAssociation2:
+  PrivateSubnetNetworkAclAssociation2:
     Type: AWS::EC2::SubnetNetworkAclAssociation
     Properties:
-      SubnetId: !Ref PublicSubnet2
-      NetworkAclId: !Ref PublicNetworkAcl
+      SubnetId: !Ref PrivateSubnet2
+      NetworkAclId: !Ref PrivateNetworkAcl
 
-  PublicSubnetNetworkAclAssociation3:
+  PrivateSubnetNetworkAclAssociation3:
     Type: AWS::EC2::SubnetNetworkAclAssociation
     Condition: HasThreeAZs
     Properties:
-      SubnetId: !Ref PublicSubnet3
-      NetworkAclId: !Ref PublicNetworkAcl
+      SubnetId: !Ref PrivateSubnet3
+      NetworkAclId: !Ref PrivateNetworkAcl
+
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Ref AWS::StackName
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: !Ref VpcIpBlock
+
+  # Endpoints
+  
+  CloudWatchEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      SecurityGroupIds: [!Ref SecurityGroup]
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.monitoring'
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+        - !If [HasThreeAZs, !Ref PrivateSubnet3, !Ref 'AWS::NoValue']
+      VpcEndpointType: Interface
+      VpcId: !Ref VPC
+   
+  CloudWatchLogsEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      SecurityGroupIds: [!Ref SecurityGroup]
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.logs'
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+        - !If [HasThreeAZs, !Ref PrivateSubnet3, !Ref 'AWS::NoValue']
+      VpcEndpointType: Interface
+      VpcId: !Ref VPC
+
+  DynamoDBEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      RouteTableIds:
+        - !Ref PrivateRouteTable1
+        - !Ref PrivateRouteTable2
+        - !If [HasThreeAZs, !Ref PrivateRouteTable3, !Ref 'AWS::NoValue']
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.dynamodb'
+      VpcId: !Ref VPC
+  
+  ECREndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      SecurityGroupIds: [!Ref SecurityGroup]
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.ecr.dkr'
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+        - !If [HasThreeAZs, !Ref PrivateSubnet3, !Ref 'AWS::NoValue']
+      VpcEndpointType: Interface
+      VpcId: !Ref VPC
+
+  S3Endpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      RouteTableIds:
+        - !Ref PrivateRouteTable1
+        - !Ref PrivateRouteTable2
+        - !If [HasThreeAZs, !Ref PrivateRouteTable3, !Ref 'AWS::NoValue']
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
+      VpcId: !Ref VPC
+  
+  SQSEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      SecurityGroupIds: [!Ref SecurityGroup]
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.sqs'
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+        - !If [HasThreeAZs, !Ref PrivateSubnet3, !Ref 'AWS::NoValue']
+      VpcEndpointType: Interface
+      VpcId: !Ref VPC
 
 Outputs:
   Subnets:
     Value: !If
       - HasThreeAZs
-      - !Sub ${PublicSubnet1},${PublicSubnet2},${PublicSubnet3}
-      - !Sub ${PublicSubnet1},${PublicSubnet2}
+      - !Sub ${PrivateSubnet1},${PrivateSubnet2},${PrivateSubnet3}
+      - !Sub ${PrivateSubnet1},${PrivateSubnet2}

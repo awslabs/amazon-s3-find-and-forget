@@ -17,10 +17,10 @@ Parameters:
     Description: The memory to be allocated to the Deletion Fargate Task
     Type: String
     Default: '30720'
-  PublicSubnetIpBlocks:
-    Description: Comma-delimited list of CIDR blocks for the public subnets
+  PrivateSubnetIpBlocks:
+    Description: Comma-delimited list of CIDR blocks for the private subnets
     Type: String
-    Default: "10.0.12.0/22, 10.0.16.0/22, 10.0.20.0/22"
+    Default: "10.0.0.0/22, 10.0.4.0/22, 10.0.8.0/22"
   ResourcePrefix:
     Description: The prefix used in DynamoDB table and state machine names
     Type: String
@@ -68,16 +68,17 @@ Resources:
             - !GetAtt LayersStack.Outputs.Decorators
             - !GetAtt LayersStack.Outputs.BotoUtils
         DeletionQueueTableName: !GetAtt DDBStack.Outputs.DeletionQueueTable
-        QueueUrl: !GetAtt DeletionFlowStack.Outputs.DeleteObjectsQueueUrl
+        QueueUrl: !GetAtt DelStack.Outputs.DeleteObjectsQueueUrl
         StateMachinePrefix: !Ref ResourcePrefix
   VpcStack:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: ./vpc.yaml
       Parameters:
-        PublicSubnetIpBlocks: !Ref PublicSubnetIpBlocks
+        PrivateSubnetIpBlocks: !Ref PrivateSubnetIpBlocks
         VpcIpBlock: !Ref VpcIpBlock
-  DeletionFlowStack:
+
+  DelStack:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: ./deletion_flow.yaml
@@ -92,7 +93,7 @@ Outputs:
   DDBStack:
     Value: !Ref DDBStack
   DeleteTaskIAMRoleArn:
-    Value: !GetAtt StateMachineStack.Outputs.DeleteTaskIAMRoleArn
+    Value: !GetAtt DelStack.Outputs.DeleteTaskIAMRoleArn
   DeletionQueueTable:
     Value: !GetAtt DDBStack.Outputs.DeletionQueueTable
   DataMapperTable:
