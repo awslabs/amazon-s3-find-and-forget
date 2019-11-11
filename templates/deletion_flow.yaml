@@ -67,6 +67,8 @@ Resources:
           Environment:
             - Name: DELETE_OBJECTS_QUEUE
               Value: !Ref DelObjQ
+            - Name: REGION
+              Value: !Ref AWS::Region
 
   DeleteTaskIAMRole:
     Type: AWS::IAM::Role
