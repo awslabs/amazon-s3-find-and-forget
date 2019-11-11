@@ -44,6 +44,22 @@ Resources:
       ReceiveMessageWaitTimeSeconds: 0
       VisibilityTimeout: 43200
 
+  DelQSizeAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: S3 Find & Forget CloudWatch Alarm for DeletionQueue size, used to trigger Auto-Scaling for Deletion Fargate Tasks
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+        - Name: QueueName
+          Value: !GetAtt DelObjQ.QueueName
+
+      EvaluationPeriods: 1
+      MetricName: ApproximateNumberOfMessagesVisible
+      Namespace: AWS/SQS
+      Period: 60
+      Statistic: Sum
+      Threshold: 1.0
+
   DeleteTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
