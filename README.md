@@ -47,18 +47,24 @@ stats
 
 #### Using AWS
 Acceptance tests require the full AWS stack to be deployed. To run the
-full acceptance test suite, you'll need to setup a `.env` file containing
-the following info:
-```dotenv
-ApiUrl=APIGW_URL_FROM_STACK_OUTPUTS
-TablePrefix=TABLE_PREFIX_USED_WHEN_DEPLOYING_STACK
-ClientId=COGNITO_CLIENT_ID_FROM_STACK_OUTPUTS
-UserPoolId=COGNITO_USER_POOL_ID_FROM_STACK_OUTPUTS
-StateMachineArn=STATEMACHINE_ARN_FROM_STACK_OUTPUTS
-```
-
-Then run the acceptance tests:
+full acceptance test suite, you'll need to pass the stack name when
+running the tests:
 ```bash
 export AWS_PROFILE=default
-pytest -m acceptance --log-cli-level info
+StackName=yourstack pytest -m acceptance --log-cli-level info
 ```
+
+>**Important**: The state machine tests are quite slow as they involve
+>running end to end state machines. Therefore if you wish to skip these
+>tests, use the `-m not state_machine` marker when running the tests
+
+#### Test Data
+Available test data files:
+- `basic.parquet`:  A simple parquet file containing the following data:
+    ```json
+    [
+      {"customer_id": "12345"},
+      {"customer_id": "23456"},
+      {"customer_id": "34567"}
+    ]
+    ```

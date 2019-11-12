@@ -4,7 +4,7 @@ import pytest
 pytestmark = [pytest.mark.acceptance, pytest.mark.jobs]
 
 
-def test_it_gets_jobs(api_client, jobs_endpoint, state_machine, execution):
+def test_it_gets_jobs(api_client, jobs_endpoint, execution):
     # Arrange
     job_id = execution["executionArn"].rsplit(":", 1)[-1]
     # Act
@@ -18,7 +18,7 @@ def test_it_gets_jobs(api_client, jobs_endpoint, state_machine, execution):
     } == response_body
 
 
-def test_it_handles_unknown_jobs(api_client, jobs_endpoint, state_machine):
+def test_it_handles_unknown_jobs(api_client, jobs_endpoint):
     # Arrange
     job_id = "invalid"
     # Act

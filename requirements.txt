@@ -8,3 +8,4 @@ aws-xray-sdk==2.4.2
 python-dotenv==0.10.3
 mock==3.0.5
 pyarrow==0.15.0
+pandas==0.25.3
