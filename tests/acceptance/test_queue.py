@@ -29,8 +29,9 @@ def test_it_rejects_invalid_add_to_queue(api_client, queue_base_endpoint):
     assert 422 == response.status_code
 
 
-def test_it_gets_queue(api_client, queue_base_endpoint, del_queue_item):
+def test_it_gets_queue(api_client, queue_base_endpoint, del_queue_factory):
     # Arrange
+    del_queue_item = del_queue_factory()
     # Act
     response = api_client.get(queue_base_endpoint)
     response_body = response.json()
@@ -40,8 +41,9 @@ def test_it_gets_queue(api_client, queue_base_endpoint, del_queue_item):
     assert del_queue_item in response_body["MatchIds"]
 
 
-def test_it_cancels_deletion(api_client, del_queue_item, queue_base_endpoint, queue_table):
+def test_it_cancels_deletion(api_client, del_queue_factory, queue_base_endpoint, queue_table):
     # Arrange
+    del_queue_item = del_queue_factory()
     key = del_queue_item["MatchId"]
     # Act
     response = api_client.delete("{}/matches/{}".format(queue_base_endpoint, key))
@@ -52,8 +54,9 @@ def test_it_cancels_deletion(api_client, del_queue_item, queue_base_endpoint, qu
     assert 0 == len(query_result["Items"])
 
 
-def test_it_handles_not_found(api_client, del_queue_item, queue_base_endpoint, queue_table):
+def test_it_handles_not_found(api_client, del_queue_factory, queue_base_endpoint, queue_table):
     # Arrange
+    del_queue_item = del_queue_factory()
     key = del_queue_item["MatchId"]
     # Act
     response = api_client.delete("{}/matches/{}".format(queue_base_endpoint, key))
@@ -64,12 +67,12 @@ def test_it_handles_not_found(api_client, del_queue_item, queue_base_endpoint, q
     assert 0 == len(query_result["Items"])
 
 
-def test_it_processes_queue(api_client, queue_base_endpoint, sf_client, state_machine):
+def test_it_processes_queue(api_client, queue_base_endpoint, sf_client, stack):
     # Arrange
     # Act
     response = api_client.delete(queue_base_endpoint)
     response_body = response.json()
-    execution_arn = "{}:{}".format(state_machine["stateMachineArn"].replace("stateMachine", "execution"),
+    execution_arn = "{}:{}".format(stack["StateMachineArn"].replace("stateMachine", "execution"),
                                    response_body["JobId"])
 
     try:

@@ -4,7 +4,7 @@ import time
 import pytest
 from botocore.exceptions import WaiterError, ClientError
 
-from . import generate_parquet_file, query_parquet_file
+from . import query_parquet_file
 
 logger = logging.getLogger()
 
@@ -12,22 +12,22 @@ pytestmark = [pytest.mark.acceptance, pytest.mark.state_machine, pytest.mark.use
               pytest.mark.usefixtures("empty_lake"), pytest.mark.skip]
 
 
-@pytest.mark.parametrize('del_queue_item', [["12345", []]], indirect=True)
-def test_it_executes_successfully_for_deletion_queue(del_queue_item, dummy_lake, execution_waiter, execution):
+def test_it_executes_successfully_for_deletion_queue(del_queue_factory, dummy_lake, execution_waiter, stack, sf_client,
+                                                     glue_data_mapper_factory, data_loader):
     # Generate a parquet file and add it to the lake
-    object_key = "{}/2019/08/20/test.parquet".format(dummy_lake["prefix"])
-    parquet_file = generate_parquet_file([
-        {"customer_id": "12345"},
-        {"customer_id": "23456"},
-        {"customer_id": "34567"},
-    ], ["customer_id"])
+    glue_data_mapper_factory("test", partition_keys=["year", "month", "day"], partitions=[["2019", "08", "20"]])
+    del_queue_factory("12345")
+    object_key = "test/2019/08/20/test.parquet"
+    data_loader("basic.parquet", object_key)
     bucket = dummy_lake["bucket"]
-    bucket.upload_fileobj(parquet_file, object_key)
     # Act
+    execution_arn = sf_client.start_execution(stateMachineArn=stack["StateMachineArn"])["executionArn"]
     try:
-        execution_waiter.wait(executionArn=execution["executionArn"])
+        execution_waiter.wait(executionArn=execution_arn)
     except WaiterError as e:
         pytest.fail("Error waiting for execution to enter success state: {}".format(str(e)))
+    finally:
+        sf_client.stop_execution(executionArn=execution_arn)
 
     # Assert
     tmp = tempfile.NamedTemporaryFile()
@@ -47,10 +47,11 @@ def test_it_skips_empty_deletion_queue(sf_client, execution, execution_waiter):
     assert did_enter_success["stateEnteredEventDetails"]["name"] == "No"
 
 
-def test_it_only_permits_single_executions(state_machine, sf_client):
+def test_it_only_permits_single_executions(stack, sf_client, del_queue_factory):
     # Start 2 concurrent executions
-    first_execution = sf_client.start_execution(stateMachineArn=state_machine["stateMachineArn"])
-    second_execution = sf_client.start_execution(stateMachineArn=state_machine["stateMachineArn"])
+    del_queue_factory("12345")
+    first_execution = sf_client.start_execution(stateMachineArn=stack["StateMachineArn"])
+    second_execution = sf_client.start_execution(stateMachineArn=stack["StateMachineArn"])
 
     # Check if the second execution entered wait state. Timeout 5 seconds
     did_wait = False

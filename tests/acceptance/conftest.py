@@ -1,9 +1,9 @@
 import json
 import logging
-from functools import partial
 from os import getenv
 from pathlib import Path
 from urllib.parse import urljoin
+from uuid import uuid4
 
 import boto3
 import pytest
@@ -11,9 +11,8 @@ from aws_xray_sdk import global_sdk_config
 from botocore.exceptions import ClientError
 from botocore.waiter import WaiterModel, create_waiter_with_client
 from requests import Session
-from uuid import uuid4
 
-from . import load_env
+from . import load_env, empty_table
 
 logger = logging.getLogger()
 
@@ -41,6 +40,12 @@ def pytest_unconfigure(config):
 # FIXTURES #
 ############
 
+@pytest.fixture(scope="session")
+def stack():
+    cloudformation = boto3.resource('cloudformation')
+    stack = cloudformation.Stack(getenv("StackName", "amazon-s3-find-and-forget"))
+    return {o["OutputKey"]: o["OutputValue"] for o in stack.outputs}
+
 
 @pytest.fixture(scope="session")
 def ddb_resource():
@@ -62,19 +67,11 @@ def glue_client():
     return boto3.client("glue")
 
 
-@pytest.fixture(scope="session")
-def get_table_name():
-    def func(prefix, name):
-        return "{}_{}".format(prefix, name)
-
-    return partial(func, getenv("TablePrefix"))
-
-
 @pytest.fixture(scope="session", autouse=True)
-def cognito_token():
+def cognito_token(stack):
     # Generate User in Cognito
-    user_pool_id = getenv("UserPoolId")
-    client_id = getenv("ClientId")
+    user_pool_id = stack["CognitoUserPoolId"]
+    client_id = stack["CognitoUserPoolClientId"]
     username = "aws-uk-sa-builders@amazon.com"
     pwd = "acceptance-tests-password"
     auth_data = {"USERNAME": username, "PASSWORD": pwd}
@@ -111,7 +108,7 @@ def cognito_token():
 
 
 @pytest.fixture(scope="session")
-def api_client(cognito_token):
+def api_client(cognito_token, stack):
     class ApiGwSession(Session):
         def __init__(self, base_url=None, default_headers=None):
             if default_headers is None:
@@ -136,7 +133,7 @@ def api_client(cognito_token):
             "Authorization": "Bearer {}".format(cognito_token)
         })
 
-    return ApiGwSession(getenv("ApiUrl"), hds)
+    return ApiGwSession(stack["ApiUrl"], hds)
 
 
 @pytest.fixture(scope="module")
@@ -145,33 +142,28 @@ def queue_base_endpoint():
 
 
 @pytest.fixture(scope="module")
-def queue_table(ddb_resource, get_table_name):
-    return ddb_resource.Table(get_table_name("DeletionQueue"))
+def queue_table(ddb_resource, stack):
+    return ddb_resource.Table(stack["DeletionQueueTable"])
 
 
 @pytest.fixture(scope="module")
 def empty_queue(queue_table):
-    items = queue_table.scan()["Items"]
-    with queue_table.batch_writer() as batch:
-        for item in items:
-            batch.delete_item(
-                Key={
-                    "MatchId": item["MatchId"],
-                }
-            )
+    empty_table(queue_table, "MatchId")
 
 
 @pytest.fixture
-def del_queue_item(queue_table, match_id="testId", data_mappers=[]):
-    item = {
-        "MatchId": match_id,
-        "DataMappers": data_mappers,
-    }
-    queue_table.put_item(Item=item)
-    yield item
-    queue_table.delete_item(Key={
-        "MatchId": match_id
-    })
+def del_queue_factory(queue_table):
+    def factory(match_id="testId", data_mappers=[]):
+        item = {
+            "MatchId": match_id,
+            "DataMappers": data_mappers,
+        }
+        queue_table.put_item(Item=item)
+        return item
+
+    yield factory
+
+    empty_table(queue_table, "MatchId")
 
 
 @pytest.fixture(scope="module")
@@ -180,41 +172,113 @@ def data_mapper_base_endpoint():
 
 
 @pytest.fixture(scope="module")
-def data_mapper_table(ddb_resource, get_table_name):
-    return ddb_resource.Table(get_table_name("DataMappers"))
+def data_mapper_table(ddb_resource, stack):
+    return ddb_resource.Table(stack["DataMapperTable"])
+
+
+@pytest.fixture(scope="module")
+def empty_data_mappers(data_mapper_table):
+    empty_table(data_mapper_table, "DataMapperId")
 
 
 @pytest.fixture()
-def glue_data_mapper_item(data_mapper_table, data_mapper_id="test", columns=["test"], fmt="parquet"):
-    item = {
-        "DataMapperId": data_mapper_id,
-        "Columns": columns,
-        "DataSource": {
-            "Type": "glue",
-            "Parameters": {
-                "Database": "acceptancetestsdb",
-                "Table": "acceptancetests"
+def glue_data_mapper_factory(dummy_lake, glue_client, data_mapper_table):
+    """
+    Factory for registering a data mapper in DDB and createing a corresponding glue table
+    """
+    items = []
+    bucket_name = dummy_lake["bucket_name"]
+
+    def factory(data_mapper_id="test", columns=["customer_id"], fmt="parquet", database="acceptancetests",
+                table="acceptancetests", partition_keys=[], partitions=[]):
+        item = {
+            "DataMapperId": data_mapper_id,
+            "Columns": columns,
+            "DataSource": "glue",
+            "DataSourceParameters": {
+                "Database": database,
+                "Table": table
+            },
+            "Format": fmt,
+        }
+        data_mapper_table.put_item(Item=item)
+        glue_client.create_database(DatabaseInput={'Name': database})
+        glue_client.create_table(
+            DatabaseName=database,
+            TableInput={
+                "Name": table,
+                "StorageDescriptor": {
+                    "Columns": [{
+                        'Name': col,
+                        'Type': 'string',
+                    } for col in columns],
+                    "Location": "s3://{bucket}/{prefix}/".format(bucket=bucket_name, prefix=data_mapper_id),
+                    "InputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
+                    "OutputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
+                    "Compressed": False,
+                    "SerdeInfo": {
+                        "SerializationLibrary": "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
+                        "Parameters": {
+                            "serialization.format": "1"
+                        }
+                    },
+                    "StoredAsSubDirectories": False
+                },
+                'PartitionKeys': [
+                    {
+                        'Name': pk,
+                        'Type': 'string',
+                    } for pk in partition_keys
+                ],
+                "Parameters": {
+                    "EXTERNAL": "TRUE"
+                }
             }
-        },
-        "Format": fmt,
-    }
-    data_mapper_table.put_item(Item=item)
-    yield item
-    data_mapper_table.delete_item(Key={
-        "DataMapperId": data_mapper_id
-    })
+        )
+        for p in partitions:
+            glue_client.create_partition(
+                DatabaseName=database,
+                TableName=table,
+                PartitionInput={
+                    'Values': p,
+                    'StorageDescriptor': {
+                        "Columns": [{
+                            'Name': col,
+                            'Type': 'string',
+                        } for col in columns],
+                        'Location': "s3://{bucket}/{prefix}/{parts}/".format(bucket=bucket_name, prefix=data_mapper_id,
+                                                                             parts="/".join(p)),
+                        "InputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
+                        "OutputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
+                        "SerdeInfo": {
+                            "SerializationLibrary": "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
+                            "Parameters": {
+                                "serialization.format": "1"
+                            }
+                        },
+                    },
+                }
+            )
+
+        items.append(item)
+        return item
+
+    yield factory
+
+    empty_table(data_mapper_table, "DataMapperId")
+    for i in items:
+        db_name = i["DataSourceParameters"]["Database"]
+        table_name = i["DataSourceParameters"]["Table"]
+        glue_client.delete_table(
+            DatabaseName=db_name,
+            Name=table_name
+        )
+        glue_client.delete_database(Name=db_name)
 
 
 @pytest.fixture(scope="module")
 def jobs_endpoint():
     return "jobs"
-
-
-@pytest.fixture
-def state_machine(sf_client):
-    yield {
-        "stateMachineArn": getenv("StateMachineArn")
-    }
 
 
 @pytest.fixture(scope="session")
@@ -228,12 +292,12 @@ def execution_waiter(sf_client):
 
 
 @pytest.fixture(scope="function")
-def execution(sf_client, state_machine):
+def execution(sf_client, stack):
     """
     Generates a sample index config in the db which is cleaned up after the test
     """
     response = sf_client.start_execution(
-        stateMachineArn=state_machine["stateMachineArn"]
+        stateMachineArn=stack["StateMachineArn"]
     )
     yield response
     try:
@@ -248,70 +312,50 @@ def empty_lake(dummy_lake):
 
 
 @pytest.fixture(scope="session")
-def dummy_lake(s3_resource, glue_client):
-    # TODO: Only supports setting up a glue catalogued database
+def dummy_lake(s3_resource, stack):
     # Lake Config
     bucket_name = "test-" + str(uuid4())
-    db_name = getenv("DatabaseName")
-    table_name = "acceptancetests"
-    prefix = str(uuid4())
     # Create the bucket and Glue table
     bucket = s3_resource.Bucket(bucket_name)
+    policy = s3_resource.BucketPolicy(bucket_name)
     bucket.create(CreateBucketConfiguration={
         "LocationConstraint": getenv("AWS_DEFAULT_REGION", "eu-west-1")
-    },)
+    }, )
     bucket.wait_until_exists()
-    glue_client.create_table(
-        DatabaseName=db_name,
-        TableInput={
-            "Name": table_name,
-            "StorageDescriptor": {
-                "Columns": [{
-                    'Name': 'customer_id',
-                    'Type': 'string',
-                }],
-                "Location": "s3://{bucket}/{prefix}/".format(bucket=bucket_name, prefix=prefix),
-                "InputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
-                "OutputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
-                "Compressed": False,
-                "NumberOfBuckets": -1,
-                "SerdeInfo": {
-                    "SerializationLibrary": "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
-                    "Parameters": {
-                        "serialization.format": "1"
-                    }
+    policy.put(Policy=json.dumps({
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": {
+                    "AWS": [
+                        stack["AthenaExecutionRoleArn"]
+                    ]
                 },
-                "BucketColumns": [],
-                "SortColumns": [],
-                "Parameters": {},
-                "SkewedInfo": {
-                    "SkewedColumnNames": [],
-                    "SkewedColumnValues": [],
-                    "SkewedColumnValueLocationMaps": {}
-                },
-                "StoredAsSubDirectories": False
-            },
-            "Parameters": {
-                "EXTERNAL": "TRUE",
-                "S3FindAndForgetColumns": "customer_id"
+                "Action": "s3:*",
+                "Resource": [
+                    "arn:aws:s3:::{}".format(bucket_name),
+                    "arn:aws:s3:::{}/*".format(bucket_name),
+                ]
             }
-        }
-    )
-    # TODO: Partition
+        ]
+    }))
 
     yield {
         "bucket_name": bucket_name,
-        "prefix": prefix,
         "bucket": bucket,
-        "table_name": table_name,
     }
 
     # Cleanup
-    glue_client.delete_table(
-        DatabaseName=db_name,
-        Name=table_name
-    )
     bucket.objects.delete()
     bucket.delete()
-    bucket.wait_until_not_exists()
 
+
+@pytest.fixture(scope="session")
+def data_loader(dummy_lake):
+    def load_data(filename, object_key):
+        bucket = dummy_lake["bucket"]
+        file_path = str(Path(__file__).parent.joinpath("data").joinpath(filename))
+        bucket.upload_file(file_path, object_key)
+
+    return load_data

@@ -37,7 +37,7 @@ def handler(event, context):
         table_name = data_mapper["DataSourceParameters"]["Table"]
         table = get_table(db, table_name)
         partition_keys = [
-            p["Name"] for p in table["PartitionKeys"]
+            p["Name"] for p in table.get("PartitionKeys", [])
         ]
         columns = [c for c in data_mapper["Columns"]]
         # Handle unpartitioned data

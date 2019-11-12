@@ -93,9 +93,25 @@ Outputs:
     Value: !Ref APIStack
   DDBStack:
     Value: !Ref DDBStack
+  ApiUrl:
+    Value: !GetAtt APIStack.Outputs.ApiUrl
+  CognitoUserPoolId:
+    Value: !GetAtt APIStack.Outputs.CognitoUserPoolId
+  CognitoUserPoolClientId:
+    Value: !GetAtt APIStack.Outputs.CognitoUserPoolClientId
   DeleteTaskIAMRoleArn:
     Value: !GetAtt DelStack.Outputs.DeleteTaskIAMRoleArn
   DeletionQueueTable:
     Value: !GetAtt DDBStack.Outputs.DeletionQueueTable
   DataMapperTable:
     Value: !GetAtt DDBStack.Outputs.DataMapperTable
+  StateMachineArn:
+    Value: !GetAtt StateMachineStack.Outputs.StateMachineArn
+  StateMachineRoleArn:
+    Value: !GetAtt StateMachineStack.Outputs.StateMachineRoleArn
+  AthenaStateMachineArn:
+    Value: !GetAtt StateMachineStack.Outputs.AthenaStateMachineArn
+  AthenaExecutionRoleArn:
+    Value: !GetAtt StateMachineStack.Outputs.AthenaExecutionRoleArn
+  QueueUrl:
+    Value: !GetAtt DelStack.Outputs.DeleteObjectsQueueUrl

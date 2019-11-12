@@ -36,20 +36,22 @@ def test_it_rejects_invalid_data_mapper(api_client, data_mapper_base_endpoint):
     assert 422 == response.status_code
 
 
-def test_it_gets_all_data_mappers(api_client, data_mapper_base_endpoint, glue_data_mapper_item):
+def test_it_gets_all_data_mappers(api_client, data_mapper_base_endpoint, glue_data_mapper_factory):
     # Arrange
+    item = glue_data_mapper_factory()
     # Act
     response = api_client.get(data_mapper_base_endpoint)
     response_body = response.json()
     # Assert
     assert response.status_code == 200
     assert isinstance(response_body.get("DataMappers"), list)
-    assert glue_data_mapper_item in response_body["DataMappers"]
+    assert item in response_body["DataMappers"]
 
 
-def test_it_deletes_data_mapper(api_client, glue_data_mapper_item, data_mapper_base_endpoint, data_mapper_table):
+def test_it_deletes_data_mapper(api_client, glue_data_mapper_factory, data_mapper_base_endpoint, data_mapper_table):
     # Arrange
-    key = glue_data_mapper_item["DataMapperId"]
+    item = glue_data_mapper_factory()
+    key = item["DataMapperId"]
     # Act
     response = api_client.delete("{}/{}".format(data_mapper_base_endpoint, key))
     # Assert

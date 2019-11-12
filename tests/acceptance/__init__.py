@@ -50,3 +50,14 @@ def generate_parquet_file(items, columns):
 def query_parquet_file(f, column, val):
     table = pq.read_table(f)
     return [i for i in table.column(column) if i == val]
+
+
+def empty_table(table, key):
+    items = table.scan()["Items"]
+    with table.batch_writer() as batch:
+        for item in items:
+            batch.delete_item(
+                Key={
+                    key: item[key],
+                }
+            )
