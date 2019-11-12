@@ -7,10 +7,16 @@ Parameters:
     Type: String
   DeletionTaskMemory:
     Type: String
+  DeletionTasksMaxNumber:
+    Type: Number
   LogRetentionInDays:
     Type: Number
     Default: 7
   ResourcePrefix:
+    Type: String
+  VpcSecurityGroup:
+    Type: String
+  VpcSubnets:
     Type: String
 
 Resources:
@@ -36,6 +42,57 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
 
+  AutoScalingRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - application-autoscaling.amazonaws.com
+            Action: 
+              - "sts:AssumeRole"
+      Path: /
+      Policies:
+        - PolicyName: service-autoscaling
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - application-autoscaling:*
+                  - cloudwatch:DescribeAlarms
+                  - cloudwatch:PutMetricAlarm
+                  - ecs:DescribeServices
+                  - ecs:UpdateService
+                Resource: "*"
+  
+  AutoScalingTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MaxCapacity: !Ref DeletionTasksMaxNumber
+      MinCapacity: 0
+      ResourceId: !Sub service/${ECSCluster}/${DeleteService.Name}
+      RoleARN: !GetAtt AutoScalingRole.Arn
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+
+  ScaleInOut:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: !Sub ${DelObjQ.QueueName}-TaskScalingInOut
+      PolicyType: StepScaling
+      ScalingTargetId: !Ref AutoScalingTarget
+      StepScalingPolicyConfiguration:
+        Cooldown: 30
+        AdjustmentType: ExactCapacity
+        StepAdjustments:
+          - MetricIntervalLowerBound: 0
+            MetricIntervalUpperBound: 1
+            ScalingAdjustment: 0
+          - MetricIntervalLowerBound: 1
+            ScalingAdjustment: !Ref DeletionTasksMaxNumber
+
   DelObjQ:
     Type: AWS::SQS::Queue
     Properties:
@@ -47,18 +104,39 @@ Resources:
   DelQSizeAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
+      AlarmActions:
+        - !Ref ScaleInOut
       AlarmDescription: S3 Find & Forget CloudWatch Alarm for DeletionQueue size, used to trigger Auto-Scaling for Deletion Fargate Tasks
-      ComparisonOperator: GreaterThanOrEqualToThreshold
-      Dimensions:
-        - Name: QueueName
-          Value: !GetAtt DelObjQ.QueueName
-
+      ComparisonOperator: GreaterThanThreshold
       EvaluationPeriods: 1
-      MetricName: ApproximateNumberOfMessagesVisible
-      Namespace: AWS/SQS
-      Period: 60
-      Statistic: Sum
-      Threshold: 1.0
+      Metrics:
+        - Expression: SUM([m1, m2])
+          Id: sum1
+        - Id: m1
+          MetricStat:
+            Metric:
+              Dimensions:
+                - Name: QueueName
+                  Value: !GetAtt DelObjQ.QueueName
+              MetricName: ApproximateNumberOfMessagesVisible
+              Namespace: AWS/SQS
+            Period: 60
+            Stat: Sum
+          ReturnData: false
+        - Id: m2
+          MetricStat:
+            Metric:
+              Dimensions:
+                - Name: QueueName
+                  Value: !GetAtt DelObjQ.QueueName
+              MetricName: ApproximateNumberOfMessagesNotVisible
+              Namespace: AWS/SQS
+            Period: 60
+            Stat: Sum
+          ReturnData: false
+      OKActions:
+        - !Ref ScaleInOut
+      Threshold: 0
 
   DeleteTaskDefinition:
     Type: AWS::ECS::TaskDefinition
@@ -85,6 +163,18 @@ Resources:
               Value: !Ref DelObjQ
             - Name: REGION
               Value: !Ref AWS::Region
+
+  DeleteService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !GetAtt ECSCluster.Arn
+      DesiredCount: 0
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          SecurityGroups: [!Ref VpcSecurityGroup]
+          Subnets: !Split [",", !Ref VpcSubnets]
+      TaskDefinition: !Ref DeleteTaskDefinition
 
   DeleteTaskIAMRole:
     Type: AWS::IAM::Role
@@ -119,9 +209,5 @@ Resources:
 Outputs:
   DeleteObjectsQueueUrl:
     Value: !Ref DelObjQ
-  DeleteTaskDefinitionArn:
-    Value: !Ref DeleteTaskDefinition
   DeleteTaskIAMRoleArn:
     Value: !GetAtt DeleteTaskIAMRole.Arn
-  ECSClusterArn:
-    Value: !GetAtt ECSCluster.Arn

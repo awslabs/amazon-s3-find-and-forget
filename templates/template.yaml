@@ -13,6 +13,11 @@ Parameters:
     Description: The CPU to be allocated to the Deletion Fargate Task
     Type: String
     Default: '4096'
+  DeletionTasksMaxNumber:
+    Description: The maximum number of tasks to allocate for the Deletion Fargate job
+    Type: Number
+    Default: 3
+    MinValue: 1
   DeletionTaskMemory:
     Description: The memory to be allocated to the Deletion Fargate Task
     Type: String
@@ -78,7 +83,6 @@ Resources:
       Parameters:
         PrivateSubnetIpBlocks: !Ref PrivateSubnetIpBlocks
         VpcIpBlock: !Ref VpcIpBlock
-
   DelStack:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -86,7 +90,10 @@ Resources:
       Parameters:
         DeletionTaskCPU: !Ref DeletionTaskCPU
         DeletionTaskMemory: !Ref DeletionTaskMemory
+        DeletionTasksMaxNumber: !Ref DeletionTasksMaxNumber
         ResourcePrefix: !Ref ResourcePrefix
+        VpcSecurityGroup: !GetAtt VpcStack.Outputs.SecurityGroup
+        VpcSubnets: !GetAtt VpcStack.Outputs.Subnets
 
 Outputs:
   APIStack:

@@ -251,3 +251,5 @@ Outputs:
       - HasThreeAZs
       - !Sub ${PrivateSubnet1},${PrivateSubnet2},${PrivateSubnet3}
       - !Sub ${PrivateSubnet1},${PrivateSubnet2}
+  SecurityGroup:
+    Value: !Ref SecurityGroup
