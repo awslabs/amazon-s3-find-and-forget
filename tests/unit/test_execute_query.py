@@ -1,3 +1,4 @@
+import os
 import re
 from types import SimpleNamespace
 
@@ -21,7 +22,22 @@ def test_it_executes_queries(query_mock, client_mock):
     assert "123" == resp
     client_mock.start_query_execution.assert_called_with(QueryString="test", ResultConfiguration={
         'OutputLocation': 's3://mybucket/my_prefix/'
-    })
+    }, WorkGroup='primary')
+
+
+@patch("lambdas.src.tasks.execute_query.client")
+@patch("lambdas.src.tasks.execute_query.make_query")
+def test_it_permits_custom_workgroups(query_mock, client_mock):
+    client_mock.start_query_execution.return_value = {
+        "QueryExecutionId": "123"
+    }
+    query_mock.return_value = "test"
+    with patch.dict(os.environ, {"WorkGroup": "custom"}):
+        resp = handler({"QueryData": {}, "Bucket": "mybucket", "Prefix": "my_prefix"}, SimpleNamespace())
+    assert "123" == resp
+    client_mock.start_query_execution.assert_called_with(QueryString="test", ResultConfiguration={
+        'OutputLocation': 's3://mybucket/my_prefix/'
+    }, WorkGroup='custom')
 
 
 def test_it_generates_query_with_partition():

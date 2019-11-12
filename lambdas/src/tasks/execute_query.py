@@ -1,3 +1,5 @@
+import os
+
 import boto3
 
 from decorators import with_logger
@@ -12,6 +14,7 @@ def handler(event, context):
         ResultConfiguration={
             'OutputLocation': 's3://{bucket}/{prefix}/'.format(bucket=event["Bucket"], prefix=event["Prefix"])
         },
+        WorkGroup=os.getenv("WorkGroup", "primary")
     )
 
     return response["QueryExecutionId"]

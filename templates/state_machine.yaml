@@ -38,6 +38,10 @@ Parameters:
     - NOTSET
   StateMachinePrefix:
     Type: String
+  AthenaWorkGroup:
+    Description: WorkGroup to use for Athena queries
+    Type: String
+    Default: primary
 
 Resources:
   StatesExecutionRole:
@@ -449,6 +453,9 @@ Resources:
     Properties:
       Handler: execute_query.handler
       CodeUri: ../lambdas/src/tasks/
+      Environment:
+        Variables:
+          AthenaWorkGroup: !Ref AthenaWorkGroup
       Policies:
       - S3CrudPolicy:
           BucketName: !Ref QueryResultBucket
