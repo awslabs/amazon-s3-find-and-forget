@@ -173,7 +173,7 @@ Resources:
                     "Type": "Task",
                     "Resource": "${GetQueryResults.Arn}",
                     "InputPath": "$.QueryId",
-                    "ResultPath": "$.Paths",
+                    "ResultPath": "$.Objects",
                     "End": true
                   },
                   "Query Failed": {

@@ -39,7 +39,7 @@ def test_it_queries_unpartitioned_data(sf_client, dummy_lake, execution_waiter, 
     assert [
         {"Column": "customer_id", "MatchIds": ["12345"]}
     ] == output[0]["Columns"]
-    assert ["s3://{}/{}".format(dummy_lake["bucket_name"], object_key)] == output[0]["Paths"]
+    assert ["s3://{}/{}".format(dummy_lake["bucket_name"], object_key)] == output[0]["Objects"]
 
 
 def test_it_queries_partitioned_data(sf_client, dummy_lake, execution_waiter, stack, glue_data_mapper_factory,
@@ -73,7 +73,7 @@ def test_it_queries_partitioned_data(sf_client, dummy_lake, execution_waiter, st
     assert [
         {"Column": "customer_id", "MatchIds": ["12345"]}
     ] == output[0]["Columns"]
-    assert ["s3://{}/{}".format(dummy_lake["bucket_name"], object_key)] == output[0]["Paths"]
+    assert ["s3://{}/{}".format(dummy_lake["bucket_name"], object_key)] == output[0]["Objects"]
 
 
 def test_it_handles_multiple_mappers(sf_client, dummy_lake, execution_waiter, stack, glue_data_mapper_factory,
@@ -108,7 +108,7 @@ def test_it_handles_multiple_mappers(sf_client, dummy_lake, execution_waiter, st
     output = json.loads(sf_client.describe_execution(executionArn=execution_arn)["output"])
     # Assert
     assert len(output) == 2
-    all_paths = output[0]["Paths"] + output[1]["Paths"]
+    all_paths = output[0]["Objects"] + output[1]["Objects"]
     assert [
         "s3://{}/{}".format(dummy_lake["bucket_name"], object_key_a),
         "s3://{}/{}".format(dummy_lake["bucket_name"], object_key_b),

@@ -12,8 +12,8 @@ def handler(event, context):
     d = defaultdict(list)
     # Deduplicate paths which appear in multiple query results, concatenating Column lists for each paths
     for item in event:
-        for path in item["Paths"]:
-            d[path] = d[path] + item["Columns"]
+        for obj in item["Objects"]:
+            d[obj] = d[obj] + item["Columns"]
 
     transformed = []
     # For each path, deduplicate Columns with the same name, merging the MatchIds from each
