@@ -4,7 +4,7 @@ import mock
 import pytest
 from mock import patch
 
-from lambdas.src.tasks.generate_queries import handler, get_table, get_partitions
+from lambdas.src.tasks.generate_queries import handler, get_table, get_partitions, convert_to_col_type
 
 pytestmark = [pytest.mark.unit, pytest.mark.task]
 
@@ -22,10 +22,11 @@ def test_it_handles_single_columns(get_partitions_mock, get_table_mock):
     result = handler({
         "DataMappers": [{
             "DataMapperId": "a",
-            "DataSource": "glue",
+            "QueryExecutor": "athena",
             "Columns": columns,
             "Format": "parquet",
-            "DataSourceParameters": {
+            "QueryExecutorParameters": {
+                "DataCatalogProvider": "glue",
                 "Database": "test_db",
                 "Table": "test_table"
             }
@@ -59,10 +60,11 @@ def test_it_handles_multiple_columns(get_partitions_mock, get_table_mock):
     result = handler({
         "DataMappers": [{
             "DataMapperId": "a",
-            "DataSource": "glue",
+            "QueryExecutor": "athena",
             "Columns": columns,
             "Format": "parquet",
-            "DataSourceParameters": {
+            "QueryExecutorParameters": {
+                "DataCatalogProvider": "glue",
                 "Database": "test_db",
                 "Table": "test_table"
             }
@@ -98,10 +100,11 @@ def test_it_handles_multiple_partition_keys(get_partitions_mock, get_table_mock)
     result = handler({
         "DataMappers": [{
             "DataMapperId": "a",
-            "DataSource": "glue",
+            "QueryExecutor": "athena",
             "Columns": columns,
             "Format": "parquet",
-            "DataSourceParameters": {
+            "QueryExecutorParameters": {
+                "DataCatalogProvider": "glue",
                 "Database": "test_db",
                 "Table": "test_table"
             }
@@ -138,10 +141,11 @@ def test_it_handles_multiple_partition_values(get_partitions_mock, get_table_moc
     result = handler({
         "DataMappers": [{
             "DataMapperId": "a",
-            "DataSource": "glue",
+            "QueryExecutor": "athena",
             "Columns": columns,
             "Format": "parquet",
-            "DataSourceParameters": {
+            "QueryExecutorParameters": {
+                "DataCatalogProvider": "glue",
                 "Database": "test_db",
                 "Table": "test_table"
             }
@@ -198,20 +202,22 @@ def test_it_filters_users_from_non_applicable_tables(get_partitions_mock, get_ta
     result = handler({
         "DataMappers": [{
             "DataMapperId": "A",
-            "DataSource": "glue",
+            "QueryExecutor": "athena",
             "Columns": columns,
             "Format": "parquet",
-            "DataSourceParameters": {
+            "QueryExecutorParameters": {
+                "DataCatalogProvider": "glue",
                 "Database": "test_db",
                 "Table": "A"
             }
         },
         {
             "DataMapperId": "B",
-            "DataSource": "glue",
+            "QueryExecutor": "athena",
             "Columns": columns,
             "Format": "parquet",
-            "DataSourceParameters": {
+            "QueryExecutorParameters": {
+                "DataCatalogProvider": "glue",
                 "Database": "test_db",
                 "Table": "B"
             }
@@ -254,10 +260,11 @@ def test_it_handles_unpartitioned_data(get_partitions_mock, get_table_mock):
     result = handler({
         "DataMappers": [{
             "DataMapperId": "a",
-            "DataSource": "glue",
+            "QueryExecutor": "athena",
             "Columns": columns,
             "Format": "parquet",
-            "DataSourceParameters": {
+            "QueryExecutorParameters": {
+                "DataCatalogProvider": "glue",
                 "Database": "test_db",
                 "Table": "test_table"
             }
@@ -286,10 +293,11 @@ def test_it_removes_queries_with_no_applicable_matches(get_partitions_mock, get_
     result = handler({
         "DataMappers": [{
             "DataMapperId": "A",
-            "DataSource": "glue",
+            "QueryExecutor": "athena",
             "Columns": columns,
             "Format": "parquet",
-            "DataSourceParameters": {
+            "QueryExecutorParameters": {
+                "DataCatalogProvider": "glue",
                 "Database": "test_db",
                 "Table": "test_table"
             }
@@ -325,6 +333,62 @@ def test_it_returns_all_partitions(paginate):
             "TableName": "test_table"
         }
     )
+
+
+def test_it_converts_strings():
+    res = convert_to_col_type("mystr", "test_col", {"StorageDescriptor": {"Columns": [{
+        "Name": "test_col",
+        "Type": "string"
+    }]}})
+    assert "mystr" == res
+
+
+def test_it_converts_varchar():
+    res = convert_to_col_type("mystr", "test_col", {"StorageDescriptor": {"Columns": [{
+        "Name": "test_col",
+        "Type": "varchar"
+    }]}})
+    assert "mystr" == res
+
+
+def test_it_converts_ints():
+    res = convert_to_col_type("2", "test_col", {"StorageDescriptor": {"Columns": [{
+        "Name": "test_col",
+        "Type": "int"
+    }]}})
+    assert 2 == res
+
+
+def test_it_converts_bigints():
+    res = convert_to_col_type("1572438253", "test_col", {"StorageDescriptor": {"Columns": [{
+        "Name": "test_col",
+        "Type": "bigint"
+    }]}})
+    assert 1572438253 == res
+
+
+def test_it_throws_for_unknown_col():
+    with pytest.raises(ValueError):
+        convert_to_col_type("mystr", "doesnt_exist", {"StorageDescriptor": {"Columns": [{
+            "Name": "test_col",
+            "Type": "string"
+        }]}})
+
+
+def test_it_throws_for_unsupported_col_types():
+    with pytest.raises(ValueError):
+        convert_to_col_type("mystr", "test_col", {"StorageDescriptor": {"Columns": [{
+            "Name": "test_col",
+            "Type": "map"
+        }]}})
+
+
+def test_it_throws_for_unconvertable_matches():
+    with pytest.raises(ValueError):
+        convert_to_col_type("mystr", "test_col", {"StorageDescriptor": {"Columns": [{
+            "Name": "test_col",
+            "Type": "int"
+        }]}})
 
 
 def partition_stub(values, columns, table_name="test_table"):

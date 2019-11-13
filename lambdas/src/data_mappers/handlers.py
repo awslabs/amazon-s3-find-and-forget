@@ -37,8 +37,8 @@ def create_data_mapper_handler(event, context):
         "DataMapperId": path_params["data_mapper_id"],
         "Columns": body["Columns"],
         "Format": body.get("Format", "parquet"),
-        "DataSource": body["DataSource"],
-        "DataSourceParameters": body["DataSourceParameters"]
+        "QueryExecutor": body["QueryExecutor"],
+        "QueryExecutorParameters": body["QueryExecutorParameters"]
     }
     table.put_item(Item=item)
 

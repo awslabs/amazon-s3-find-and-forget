@@ -2,7 +2,7 @@
   "version": 2,
   "waiters": {
     "ExecutionComplete": {
-      "delay": 30,
+      "delay": 15,
       "operation": "DescribeExecution",
       "maxAttempts": 5,
       "acceptors": [
