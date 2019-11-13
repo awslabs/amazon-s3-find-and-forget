@@ -6,7 +6,6 @@ Globals:
   Function:
     Runtime: python3.7
     Timeout: 180
-    AutoPublishAlias: live
     Tracing: Active
     Layers: !Ref CommonLayers
     Environment:
