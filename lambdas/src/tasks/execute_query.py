@@ -23,7 +23,7 @@ def handler(event, context):
 def make_query(query_data):
     """
     Returns a query which will look like
-    SELECT $path
+    SELECT DISTINCT $path
     FROM "db"."table"
     WHERE col1 in (matchid1, matchid2) OR col1 in (matchid1, matchid2) AND partition_key = value"
 
@@ -36,7 +36,7 @@ def make_query(query_data):
     }
     """
     template = '''
-    SELECT "$path"
+    SELECT DISTINCT "$path"
     FROM "{db}"."{table}"
     WHERE
         ({column_filters})
