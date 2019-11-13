@@ -159,3 +159,37 @@ def test_it_escapes_match_ids_newlines_preventing_bypassing_matches(sf_client,
     # The legit match_id is propertly handled and the malicious are ignored
     assert ["s3://{}/test/basic.parquet".format(dummy_lake["bucket_name"])] == output[0]["Objects"]
     assert len(output[0]["Objects"]) == 1
+
+def test_it_handles_unicod_smuggling_preventing_bypassing_matches(sf_client,
+    dummy_lake, execution_waiter, stack, glue_data_mapper_factory, data_loader):
+    """
+    Unicode smuggling is taken care out of the box.
+    Here is a test with "ʼ", which is similar to single quote.
+    """
+
+    legit_match_id="12345"
+    malicious_match_id="fooʼ)) UNION ((select * from db2.table where column not in (ʼnope"
+    query_input = {
+        "DataMappers": [ glue_data_mapper_factory("test") ],
+        "DeletionQueue": [
+            { "MatchId": legit_match_id },
+            { "MatchId": malicious_match_id }
+        ]
+    }
+
+    try:
+        output = ArrangeAndExecute(sf_client, execution_waiter, stack, data_loader, query_input)
+    except WaiterError as e:
+        pytest.fail(FormatError(e))
+
+    # Only one table was accessed
+    assert len(output) == 1
+
+    # The malicious match_id is escaped and used as match_id
+    assert [
+        {"Column": "customer_id", "MatchIds": [legit_match_id, malicious_match_id]}
+    ] == output[0]["Columns"]
+
+    # The legit match_id is propertly handled and the malicious is ignored
+    assert ["s3://{}/test/basic.parquet".format(dummy_lake["bucket_name"])] == output[0]["Objects"]
+    assert len(output[0]["Objects"]) == 1
