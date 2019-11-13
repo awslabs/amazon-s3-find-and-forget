@@ -33,8 +33,8 @@ def handler(event, context):
     queries = []
     # For every partition combo of every table, create a query
     for data_mapper in data_mappers:
-        db = data_mapper["DataSourceParameters"]["Database"]
-        table_name = data_mapper["DataSourceParameters"]["Table"]
+        db = data_mapper["QueryExecutorParameters"]["Database"]
+        table_name = data_mapper["QueryExecutorParameters"]["Table"]
         table = get_table(db, table_name)
         partition_keys = [
             p["Name"] for p in table.get("PartitionKeys", [])

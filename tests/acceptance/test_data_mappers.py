@@ -10,8 +10,9 @@ def test_it_creates_data_mapper(api_client, data_mapper_base_endpoint, data_mapp
     data_mapper = {
         "DataMapperId": key,
         "Columns": ["a"],
-        "DataSource": "glue",
-        "DataSourceParameters": {
+        "QueryExecutor": "athena",
+        "QueryExecutorParameters": {
+            "DataCatalogProvider": "glue",
             "Database": "test",
             "Table": "test"
         },

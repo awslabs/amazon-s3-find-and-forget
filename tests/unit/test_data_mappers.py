@@ -30,8 +30,9 @@ def test_it_creates_data_mapper(table):
         },
         "body": json.dumps({
             "Columns": ["column"],
-            "DataSource": "glue",
-            "DataSourceParameters": {
+            "QueryExecutor": "athena",
+            "QueryExecutorParameters": {
+                "DataCatalogProvider": "glue",
                 "Database": "test",
                 "Table": "test"
             },
@@ -43,8 +44,9 @@ def test_it_creates_data_mapper(table):
     assert {
         "DataMapperId": "test",
         "Columns": ["column"],
-        "DataSource": "glue",
-        "DataSourceParameters": {
+        "QueryExecutor": "athena",
+        "QueryExecutorParameters": {
+            "DataCatalogProvider": "glue",
             "Database": "test",
             "Table": "test"
         },
@@ -60,8 +62,9 @@ def test_it_provides_default_format(table):
         },
         "body": json.dumps({
             "Columns": ["column"],
-            "DataSource": "glue",
-            "DataSourceParameters": {
+            "QueryExecutor": "athena",
+            "QueryExecutorParameters": {
+                "DataCatalogProvider": "glue",
                 "Database": "test",
                 "Table": "test"
             },
@@ -72,8 +75,9 @@ def test_it_provides_default_format(table):
     assert {
         "DataMapperId": "test",
         "Columns": ["column"],
-        "DataSource": "glue",
-        "DataSourceParameters": {
+        "QueryExecutor": "athena",
+        "QueryExecutorParameters": {
+            "DataCatalogProvider": "glue",
             "Database": "test",
             "Table": "test"
         },
@@ -89,8 +93,8 @@ def test_it_rejects_invalid_data_source(table):
         },
         "body": json.dumps({
             "Columns": ["column"],
-            "DataSource": "unsupported",
-            "DataSourceParameters": {},
+            "QueryExecutor": "unsupported",
+            "QueryExecutorParameters": {},
         })
     }, SimpleNamespace())
 

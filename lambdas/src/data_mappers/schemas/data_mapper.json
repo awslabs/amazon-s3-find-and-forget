@@ -3,9 +3,10 @@
     "title": "DataMapperModel",
     "type": "object",
     "definitions": {
-        "GlueDataSourceParameters": {
+        "AthenaQueryExecutorParameters": {
             "type": "object",
             "properties": {
+                "DataCatalogProvider": {"enum": ["glue"],"type": "string"},
                 "Database": {"type": "string"},
                 "Table": {"type": "string"}
             },
@@ -13,9 +14,9 @@
         }
     },
     "properties": {
-        "DataSource": {
+        "QueryExecutor": {
             "type": "string",
-            "enum": ["glue"]
+            "enum": ["athena"]
         },
         "Columns": {
             "type": "array",
@@ -30,16 +31,16 @@
         }
     },
     "if": {
-        "properties": { "DataSource": { "const": "glue" } }
+        "properties": { "QueryExecutor": { "const": "athena" } }
     },
     "then": {
         "properties": {
-            "DataSourceParameters": {
-                "$ref": "#/definitions/GlueDataSourceParameters"
+            "QueryExecutorParameters": {
+                "$ref": "#/definitions/AthenaQueryExecutorParameters"
             }
         },
-        "required": ["DataSourceParameters"]
+        "required": ["QueryExecutorParameters"]
     },
-    "required": ["Columns", "DataSource"]
+    "required": ["Columns", "QueryExecutor"]
 }
 

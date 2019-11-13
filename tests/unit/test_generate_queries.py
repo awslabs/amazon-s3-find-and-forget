@@ -22,10 +22,11 @@ def test_it_handles_single_columns(get_partitions_mock, get_table_mock):
     result = handler({
         "DataMappers": [{
             "DataMapperId": "a",
-            "DataSource": "glue",
+            "QueryExecutor": "athena",
             "Columns": columns,
             "Format": "parquet",
-            "DataSourceParameters": {
+            "QueryExecutorParameters": {
+                "DataCatalogProvider": "glue",
                 "Database": "test_db",
                 "Table": "test_table"
             }
@@ -59,10 +60,11 @@ def test_it_handles_multiple_columns(get_partitions_mock, get_table_mock):
     result = handler({
         "DataMappers": [{
             "DataMapperId": "a",
-            "DataSource": "glue",
+            "QueryExecutor": "athena",
             "Columns": columns,
             "Format": "parquet",
-            "DataSourceParameters": {
+            "QueryExecutorParameters": {
+                "DataCatalogProvider": "glue",
                 "Database": "test_db",
                 "Table": "test_table"
             }
@@ -98,10 +100,11 @@ def test_it_handles_multiple_partition_keys(get_partitions_mock, get_table_mock)
     result = handler({
         "DataMappers": [{
             "DataMapperId": "a",
-            "DataSource": "glue",
+            "QueryExecutor": "athena",
             "Columns": columns,
             "Format": "parquet",
-            "DataSourceParameters": {
+            "QueryExecutorParameters": {
+                "DataCatalogProvider": "glue",
                 "Database": "test_db",
                 "Table": "test_table"
             }
@@ -138,10 +141,11 @@ def test_it_handles_multiple_partition_values(get_partitions_mock, get_table_moc
     result = handler({
         "DataMappers": [{
             "DataMapperId": "a",
-            "DataSource": "glue",
+            "QueryExecutor": "athena",
             "Columns": columns,
             "Format": "parquet",
-            "DataSourceParameters": {
+            "QueryExecutorParameters": {
+                "DataCatalogProvider": "glue",
                 "Database": "test_db",
                 "Table": "test_table"
             }
@@ -198,20 +202,22 @@ def test_it_filters_users_from_non_applicable_tables(get_partitions_mock, get_ta
     result = handler({
         "DataMappers": [{
             "DataMapperId": "A",
-            "DataSource": "glue",
+            "QueryExecutor": "athena",
             "Columns": columns,
             "Format": "parquet",
-            "DataSourceParameters": {
+            "QueryExecutorParameters": {
+                "DataCatalogProvider": "glue",
                 "Database": "test_db",
                 "Table": "A"
             }
         },
         {
             "DataMapperId": "B",
-            "DataSource": "glue",
+            "QueryExecutor": "athena",
             "Columns": columns,
             "Format": "parquet",
-            "DataSourceParameters": {
+            "QueryExecutorParameters": {
+                "DataCatalogProvider": "glue",
                 "Database": "test_db",
                 "Table": "B"
             }
@@ -254,10 +260,11 @@ def test_it_handles_unpartitioned_data(get_partitions_mock, get_table_mock):
     result = handler({
         "DataMappers": [{
             "DataMapperId": "a",
-            "DataSource": "glue",
+            "QueryExecutor": "athena",
             "Columns": columns,
             "Format": "parquet",
-            "DataSourceParameters": {
+            "QueryExecutorParameters": {
+                "DataCatalogProvider": "glue",
                 "Database": "test_db",
                 "Table": "test_table"
             }
@@ -286,10 +293,11 @@ def test_it_removes_queries_with_no_applicable_matches(get_partitions_mock, get_
     result = handler({
         "DataMappers": [{
             "DataMapperId": "A",
-            "DataSource": "glue",
+            "QueryExecutor": "athena",
             "Columns": columns,
             "Format": "parquet",
-            "DataSourceParameters": {
+            "QueryExecutorParameters": {
+                "DataCatalogProvider": "glue",
                 "Database": "test_db",
                 "Table": "test_table"
             }

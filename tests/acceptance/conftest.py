@@ -194,8 +194,9 @@ def glue_data_mapper_factory(dummy_lake, glue_client, data_mapper_table):
         item = {
             "DataMapperId": data_mapper_id,
             "Columns": columns,
-            "DataSource": "glue",
-            "DataSourceParameters": {
+            "QueryExecutor": "athena",
+            "QueryExecutorParameters": {
+                "DataCatalogProvider": "glue",
                 "Database": database,
                 "Table": table
             },
@@ -267,8 +268,8 @@ def glue_data_mapper_factory(dummy_lake, glue_client, data_mapper_table):
 
     empty_table(data_mapper_table, "DataMapperId")
     for i in items:
-        db_name = i["DataSourceParameters"]["Database"]
-        table_name = i["DataSourceParameters"]["Table"]
+        db_name = i["QueryExecutorParameters"]["Database"]
+        table_name = i["QueryExecutorParameters"]["Table"]
         glue_client.delete_table(
             DatabaseName=db_name,
             Name=table_name
