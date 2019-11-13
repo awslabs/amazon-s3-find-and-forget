@@ -103,7 +103,7 @@ def test_it_escapes_match_ids_backslash_and_comments_preventing_bypassing_matche
     query_input = {
         "DataMappers": [ glue_data_mapper_factory("test") ],
         "DeletionQueue": [
-            { "MatchId": "\\" },
+            { "MatchId": "\'" },
             { "MatchId": ")) --" },
             { "MatchId": legit_match_id }
         ]
@@ -116,7 +116,7 @@ def test_it_escapes_match_ids_backslash_and_comments_preventing_bypassing_matche
 
     # The malicious match_ids are escaped and used as regular matches
     assert [
-        {"Column": "customer_id", "MatchIds": ["\\", ")) --", legit_match_id]}
+        {"Column": "customer_id", "MatchIds": ["\'", ")) --", legit_match_id]}
     ] == output[0]["Columns"]
 
     # The legit match_id is propertly handled and the malicious are ignored
