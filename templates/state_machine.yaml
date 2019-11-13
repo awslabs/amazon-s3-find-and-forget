@@ -127,7 +127,7 @@ Resources:
                   "Wait for Query": {
                     "Comment": "Waits before checking again whether Athena is done",
                     "Type": "Wait",
-                    "Seconds": 30,
+                    "Seconds": 15,
                     "Next": "Get Query Status"
                   },
                   "Get Query Status": {
@@ -281,14 +281,14 @@ Resources:
               "ResultPath": "$.QueryResults",
               "Branches": [
                 {
-                  "StartAt": "Filter Glue Data Mappers",
+                  "StartAt": "Filter Athena Data Mappers",
                   "States": {
-                    "Filter Glue Data Mappers": {
+                    "Filter Athena Data Mappers": {
                       "Parameters": {
-                        "DataMappers.$": "$.DataMappers.Items[?(@.DataSource=='glue')]",
+                        "DataMappers.$": "$.DataMappers.Items[?(@.QueryExecutor=='athena')]",
                         "DeletionQueue.$": "$.DeletionQueue.Items"
                       },
-                      "Comment": "Process Data Sources with type glue",
+                      "Comment": "Process Data Mappers with Athena as the query executor",
                       "Type": "Pass",
                       "Next": "Query Glue Catalogs"
                     },

@@ -129,5 +129,3 @@ lambdas/layers/decorators/python
 !lambdas/layers/decorators/python/decorators.py
 .idea/
 .env
-
-backend
