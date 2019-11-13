@@ -78,7 +78,7 @@ def handler(event, context):
             queries[i]["Columns"] = [
                 {
                     "Column": c,
-                    "MatchIds": applicable_match_ids
+                    "MatchIds": [convert_to_col_type(mid, c, table) for mid in applicable_match_ids]
                 } for c in queries[i]["Columns"]
             ]
 
@@ -94,3 +94,18 @@ def get_partitions(db, table_name):
         "DatabaseName": db,
         "TableName": table_name
     }))
+
+
+def convert_to_col_type(val, col, table):
+    column = next((i for i in table["StorageDescriptor"]["Columns"] if i["Name"] == col), None)
+    if not column:
+        raise ValueError("Column {} not found".format(col))
+
+    col_type = column["Type"]
+
+    if col_type == "string" or col_type == "varchar":
+        return str(val)
+    if col_type == "int" or col_type == "bigint":
+        return int(val)
+
+    raise ValueError("Column {} is type {} which is not a supported column type for querying")
