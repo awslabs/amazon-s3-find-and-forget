@@ -48,7 +48,7 @@ def test_it_generates_query_with_partition():
         "PartitionKeys": [{"Key": "product_category", "Value": "Books"}]
     })
 
-    assert "SELECT \"$path\" " \
+    assert "SELECT DISTINCT \"$path\" " \
            "FROM \"amazonreviews\".\"amazon_reviews_parquet\" " \
            "WHERE (\"customer_id\" in ('123456', '456789')) " \
            "AND \"product_category\" = 'Books'" == re.sub("[\x00-\x20]+", " ", resp.strip())
@@ -62,7 +62,7 @@ def test_it_generates_query_with_multiple_partitions():
         "PartitionKeys": [{"Key": "product_category", "Value": "Books"}, {"Key": "published", "Value": "2019"}]
     })
 
-    assert "SELECT \"$path\" " \
+    assert "SELECT DISTINCT \"$path\" " \
            "FROM \"amazonreviews\".\"amazon_reviews_parquet\" " \
            "WHERE (\"customer_id\" in ('123456', '456789')) " \
            "AND \"product_category\" = 'Books' " \
@@ -76,7 +76,7 @@ def test_it_generates_query_without_partition():
         "Columns": [{"Column": "customer_id", "MatchIds": ["123456", "456789"]}]
     })
 
-    assert "SELECT \"$path\" " \
+    assert "SELECT DISTINCT \"$path\" " \
            "FROM \"amazonreviews\".\"amazon_reviews_parquet\" " \
            "WHERE (\"customer_id\" in ('123456', '456789'))" == re.sub("[\x00-\x20]+", " ", resp.strip())
 
@@ -91,7 +91,7 @@ def test_it_generates_query_with_multiple_columns():
         ]
     })
 
-    assert "SELECT \"$path\" " \
+    assert "SELECT DISTINCT \"$path\" " \
            "FROM \"amazonreviews\".\"amazon_reviews_parquet\" " \
            "WHERE (\"a\" in ('a123456', 'b123456') OR \"b\" in ('a456789', 'b456789'))" == re.sub("[\x00-\x20]+", " ",
                                                                                                   resp.strip())
