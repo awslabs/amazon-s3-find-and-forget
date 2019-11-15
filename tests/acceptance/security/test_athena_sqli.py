@@ -8,7 +8,8 @@ logger = logging.getLogger()
 pytestmark = [pytest.mark.acceptance, pytest.mark.state_machine, pytest.mark.usefixtures("empty_lake")]
 
 def arrange_and_execute(sf_client, execution_waiter, stack, data_loader, query_input):
-    data_loader("basic.parquet", "test/basic.parquet")
+    create_test_parquet(data_loader, "test")
+    create_test_parquet(data_loader, "test2")
     execution_arn = sf_client.start_execution(
         stateMachineArn=stack["AthenaStateMachineArn"],
         input=json.dumps(query_input)
@@ -16,10 +17,25 @@ def arrange_and_execute(sf_client, execution_waiter, stack, data_loader, query_i
     execution_waiter.wait(executionArn=execution_arn)
     return json.loads(sf_client.describe_execution(executionArn=execution_arn)["output"])
 
+def create_test_parquet(data_loader, s3prefix):
+    return data_loader("basic.parquet", "{}/basic.parquet".format(s3prefix))
+
+def create_extra_glue_table_for_unauthorized_access(glue_data_mapper_factory):
+    return glue_data_mapper_factory("test2", database="acceptancetest2", table="acceptancetest2")
+
 def format_error(e):
     return "Error waiting for execution to enter success state: {}".format(str(e))
 
-def test_it_escapes_match_ids_single_quotes_preventing_stealing_information2(sf_client,
+def legit_match_id_is_found(dummy_lake, output):
+    return ["s3://{}/test/basic.parquet".format(dummy_lake["bucket_name"])] == output[0]["Objects"]
+
+def output_contains_one_result_only(output):
+    return len(output[0]["Objects"]) == 1
+
+def only_one_table_was_accessed(output):
+    return len(output) == 1
+
+def test_it_escapes_match_ids_single_quotes_preventing_stealing_information(sf_client,
     dummy_lake, execution_waiter, stack, glue_data_mapper_factory, data_loader):
     """
     Using single quotes as part of the match_id could be a SQL injection attack
@@ -28,8 +44,9 @@ def test_it_escapes_match_ids_single_quotes_preventing_stealing_information2(sf_
     escepes the quotes and Athena doesn't access other tables.
     """
 
+    create_extra_glue_table_for_unauthorized_access(glue_data_mapper_factory)
     legit_match_id = "12345"
-    malicious_match_id = "foo')) UNION ((select * from db2.table where column not in ('nope"
+    malicious_match_id = "foo')) UNION ((select * from acceptancetests2.acceptancetests2 where customer_id ('12345"
     query_input = {
         "DataMappers": [glue_data_mapper_factory("test")],
         "DeletionQueue": [
@@ -43,26 +60,19 @@ def test_it_escapes_match_ids_single_quotes_preventing_stealing_information2(sf_
     except WaiterError as e:
         pytest.fail(format_error(e))
 
-    # Only one table was accessed
-    assert len(output) == 1
+    assert only_one_table_was_accessed(output)
+    assert legit_match_id_is_found(dummy_lake, output)
+    assert output_contains_one_result_only(output)
 
-    # The malicious match_id is escaped and used as match_id
-    assert [
-        {"Column": "customer_id", "MatchIds": [legit_match_id, malicious_match_id]}
-    ] == output[0]["Columns"]
-
-    # The legit match_id is propertly handled and the malicious is ignored
-    assert ["s3://{}/test/basic.parquet".format(dummy_lake["bucket_name"])] == output[0]["Objects"]
-    assert len(output[0]["Objects"]) == 1
-
-def test_it_escapes_match_ids_single_quotes_preventing_stealing_information(sf_client,
+def test_it_escapes_match_ids_escaped_single_quotes_preventing_stealing_information(sf_client,
     dummy_lake, execution_waiter, stack, glue_data_mapper_factory, data_loader):
     """
     This test is similar to the previous one, but with escaped quotes
     """
 
+    create_extra_glue_table_for_unauthorized_access(glue_data_mapper_factory)
     legit_match_id = "12345"
-    malicious_match_id = "foo\')) UNION ((select * from db2.table where column not in (\'nope"
+    malicious_match_id = "foo\')) UNION ((select * from acceptancetests2.acceptancetests2 where customer_id (\'12345"
     query_input = {
         "DataMappers": [glue_data_mapper_factory("test")],
         "DeletionQueue": [
@@ -76,17 +86,36 @@ def test_it_escapes_match_ids_single_quotes_preventing_stealing_information(sf_c
     except WaiterError as e:
         pytest.fail(format_error(e))
 
-    # Only one table was accessed
-    assert len(output) == 1
+    assert only_one_table_was_accessed(output)
+    assert legit_match_id_is_found(dummy_lake, output)
+    assert output_contains_one_result_only(output)
 
-    # The malicious match_id is escaped and used as match_id
-    assert [
-        {"Column": "customer_id", "MatchIds": [legit_match_id, malicious_match_id]}
-    ] == output[0]["Columns"]
+def test_it_handles_unicod_smuggling_preventing_bypassing_matches(sf_client,
+    dummy_lake, execution_waiter, stack, glue_data_mapper_factory, data_loader):
+    """
+    Unicode smuggling is taken care out of the box.
+    Here is a test with "ʼ", which is similar to single quote.
+    """
 
-    # The legit match_id is propertly handled and the malicious is ignored
-    assert ["s3://{}/test/basic.parquet".format(dummy_lake["bucket_name"])] == output[0]["Objects"]
-    assert len(output[0]["Objects"]) == 1
+    create_extra_glue_table_for_unauthorized_access(glue_data_mapper_factory)
+    legit_match_id = "12345"
+    malicious_match_id = "fooʼ)) UNION ((select * from acceptancetests2.acceptancetests2 where customer_id (ʼ12345"
+    query_input = {
+        "DataMappers": [glue_data_mapper_factory("test")],
+        "DeletionQueue": [
+            {"MatchId": legit_match_id},
+            {"MatchId": malicious_match_id}
+        ]
+    }
+
+    try:
+        output = arrange_and_execute(sf_client, execution_waiter, stack, data_loader, query_input)
+    except WaiterError as e:
+        pytest.fail(format_error(e))
+
+    assert only_one_table_was_accessed(output)
+    assert legit_match_id_is_found(dummy_lake, output)
+    assert output_contains_one_result_only(output)
 
 def test_it_escapes_match_ids_backslash_and_comments_preventing_bypassing_matches(sf_client,
     dummy_lake, execution_waiter, stack, glue_data_mapper_factory, data_loader):
@@ -113,14 +142,8 @@ def test_it_escapes_match_ids_backslash_and_comments_preventing_bypassing_matche
     except WaiterError as e:
         pytest.fail(format_error(e))
 
-    # The malicious match_ids are escaped and used as regular matches
-    assert [
-        {"Column": "customer_id", "MatchIds": ["\'", ")) --", legit_match_id]}
-    ] == output[0]["Columns"]
-
-    # The legit match_id is propertly handled and the malicious are ignored
-    assert ["s3://{}/test/basic.parquet".format(dummy_lake["bucket_name"])] == output[0]["Objects"]
-    assert len(output[0]["Objects"]) == 1
+    assert legit_match_id_is_found(dummy_lake, output)
+    assert output_contains_one_result_only(output)
 
 def test_it_escapes_match_ids_newlines_preventing_bypassing_matches(sf_client,
     dummy_lake, execution_waiter, stack, glue_data_mapper_factory, data_loader):
@@ -150,45 +173,5 @@ def test_it_escapes_match_ids_newlines_preventing_bypassing_matches(sf_client,
     except WaiterError as e:
         pytest.fail(format_error(e))
 
-    # The malicious match_ids are escaped and used as regular matches
-    assert [
-        {"Column": "customer_id", "MatchIds": ["\n--", legit_match_id, "\n"]}
-    ] == output[0]["Columns"]
-
-    # The legit match_id is propertly handled and the malicious are ignored
-    assert ["s3://{}/test/basic.parquet".format(dummy_lake["bucket_name"])] == output[0]["Objects"]
-    assert len(output[0]["Objects"]) == 1
-
-def test_it_handles_unicod_smuggling_preventing_bypassing_matches(sf_client,
-    dummy_lake, execution_waiter, stack, glue_data_mapper_factory, data_loader):
-    """
-    Unicode smuggling is taken care out of the box.
-    Here is a test with "ʼ", which is similar to single quote.
-    """
-
-    legit_match_id = "12345"
-    malicious_match_id = "fooʼ)) UNION ((select * from db2.table where column not in (ʼnope"
-    query_input = {
-        "DataMappers": [glue_data_mapper_factory("test")],
-        "DeletionQueue": [
-            {"MatchId": legit_match_id},
-            {"MatchId": malicious_match_id}
-        ]
-    }
-
-    try:
-        output = arrange_and_execute(sf_client, execution_waiter, stack, data_loader, query_input)
-    except WaiterError as e:
-        pytest.fail(format_error(e))
-
-    # Only one table was accessed
-    assert len(output) == 1
-
-    # The malicious match_id is escaped and used as match_id
-    assert [
-        {"Column": "customer_id", "MatchIds": [legit_match_id, malicious_match_id]}
-    ] == output[0]["Columns"]
-
-    # The legit match_id is propertly handled and the malicious is ignored
-    assert ["s3://{}/test/basic.parquet".format(dummy_lake["bucket_name"])] == output[0]["Objects"]
-    assert len(output[0]["Objects"]) == 1
+    assert legit_match_id_is_found(dummy_lake, output)
+    assert output_contains_one_result_only(output)
