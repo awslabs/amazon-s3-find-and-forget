@@ -46,7 +46,7 @@ def test_it_escapes_match_ids_single_quotes_preventing_stealing_information(sf_c
 
     create_extra_glue_table_for_unauthorized_access(glue_data_mapper_factory)
     legit_match_id = "12345"
-    malicious_match_id = "foo')) UNION (select * from acceptancetests2.acceptancetests2 where (customer_id in ('12345"
+    malicious_match_id = "foo')) UNION (select * from acceptancetests2.acceptancetests2 where customer_id in ('12345"
     query_input = {
         "DataMappers": [glue_data_mapper_factory("test")],
         "DeletionQueue": [
@@ -72,7 +72,7 @@ def test_it_escapes_match_ids_escaped_single_quotes_preventing_stealing_informat
 
     create_extra_glue_table_for_unauthorized_access(glue_data_mapper_factory)
     legit_match_id = "12345"
-    malicious_match_id = "foo\')) UNION (select * from acceptancetests2.acceptancetests2 where (customer_id in (\'12345"
+    malicious_match_id = "foo\')) UNION (select * from acceptancetests2.acceptancetests2 where customer_id in (\'12345"
     query_input = {
         "DataMappers": [glue_data_mapper_factory("test")],
         "DeletionQueue": [
@@ -99,7 +99,7 @@ def test_it_handles_unicod_smuggling_preventing_bypassing_matches(sf_client,
 
     create_extra_glue_table_for_unauthorized_access(glue_data_mapper_factory)
     legit_match_id = "12345"
-    malicious_match_id = "fooʼ)) UNION (select * from acceptancetests2.acceptancetests2 where (customer_id in (ʼ12345"
+    malicious_match_id = "fooʼ)) UNION (select * from acceptancetests2.acceptancetests2 where customer_id in (ʼ12345"
     query_input = {
         "DataMappers": [glue_data_mapper_factory("test")],
         "DeletionQueue": [
