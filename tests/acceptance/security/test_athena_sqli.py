@@ -7,8 +7,7 @@ logger = logging.getLogger()
 
 pytestmark = [pytest.mark.acceptance, pytest.mark.state_machine, pytest.mark.usefixtures("empty_lake")]
 
-def ArrangeAndExecute(sf_client, execution_waiter, stack, data_loader, query_input):
-    
+def arrange_and_execute(sf_client, execution_waiter, stack, data_loader, query_input):
     data_loader("basic.parquet", "test/basic.parquet")
     execution_arn = sf_client.start_execution(
         stateMachineArn=stack["AthenaStateMachineArn"],
@@ -17,7 +16,7 @@ def ArrangeAndExecute(sf_client, execution_waiter, stack, data_loader, query_inp
     execution_waiter.wait(executionArn=execution_arn)
     return json.loads(sf_client.describe_execution(executionArn=execution_arn)["output"])
 
-def FormatError(e):
+def format_error(e):
     return "Error waiting for execution to enter success state: {}".format(str(e))
 
 def test_it_escapes_match_ids_single_quotes_preventing_stealing_information2(sf_client,
@@ -29,20 +28,20 @@ def test_it_escapes_match_ids_single_quotes_preventing_stealing_information2(sf_
     escepes the quotes and Athena doesn't access other tables.
     """
 
-    legit_match_id="12345"
-    malicious_match_id="foo')) UNION ((select * from db2.table where column not in ('nope"
+    legit_match_id = "12345"
+    malicious_match_id = "foo')) UNION ((select * from db2.table where column not in ('nope"
     query_input = {
-        "DataMappers": [ glue_data_mapper_factory("test") ],
+        "DataMappers": [glue_data_mapper_factory("test")],
         "DeletionQueue": [
-            { "MatchId": legit_match_id },
-            { "MatchId": malicious_match_id }
+            {"MatchId": legit_match_id},
+            {"MatchId": malicious_match_id}
         ]
     }
 
     try:
-        output = ArrangeAndExecute(sf_client, execution_waiter, stack, data_loader, query_input)
+        output = arrange_and_execute(sf_client, execution_waiter, stack, data_loader, query_input)
     except WaiterError as e:
-        pytest.fail(FormatError(e))
+        pytest.fail(format_error(e))
 
     # Only one table was accessed
     assert len(output) == 1
@@ -61,21 +60,21 @@ def test_it_escapes_match_ids_single_quotes_preventing_stealing_information(sf_c
     """
     This test is similar to the previous one, but with escaped quotes
     """
-    
-    legit_match_id="12345"
-    malicious_match_id="foo\')) UNION ((select * from db2.table where column not in (\'nope"
+
+    legit_match_id = "12345"
+    malicious_match_id = "foo\')) UNION ((select * from db2.table where column not in (\'nope"
     query_input = {
-        "DataMappers": [ glue_data_mapper_factory("test") ],
+        "DataMappers": [glue_data_mapper_factory("test")],
         "DeletionQueue": [
-            { "MatchId": legit_match_id },
-            { "MatchId": malicious_match_id }
+            {"MatchId": legit_match_id},
+            {"MatchId": malicious_match_id}
         ]
     }
 
     try:
-        output = ArrangeAndExecute(sf_client, execution_waiter, stack, data_loader, query_input)
+        output = arrange_and_execute(sf_client, execution_waiter, stack, data_loader, query_input)
     except WaiterError as e:
-        pytest.fail(FormatError(e))
+        pytest.fail(format_error(e))
 
     # Only one table was accessed
     assert len(output) == 1
@@ -94,25 +93,25 @@ def test_it_escapes_match_ids_backslash_and_comments_preventing_bypassing_matche
     """
     Another common SQLi attack vector consists on fragmented attacks. Tamper the
     result of the select by commenting out relevant match_ids by using "--"
-    after a successful escape. This attack wouldn't work because Athena's 
+    after a successful escape. This attack wouldn't work because Athena's
     way to escape single quotes are by doubling them rather than using backslash.
     Example: ... WHERE (user_id in ('foo', '\')) --','legit'))
     """
-    
-    legit_match_id="12345"
+
+    legit_match_id = "12345"
     query_input = {
-        "DataMappers": [ glue_data_mapper_factory("test") ],
+        "DataMappers": [glue_data_mapper_factory("test")],
         "DeletionQueue": [
-            { "MatchId": "\'" },
-            { "MatchId": ")) --" },
-            { "MatchId": legit_match_id }
+            {"MatchId": "\'"},
+            {"MatchId": ")) --"},
+            {"MatchId": legit_match_id}
         ]
     }
 
     try:
-        output = ArrangeAndExecute(sf_client, execution_waiter, stack, data_loader, query_input)
+        output = arrange_and_execute(sf_client, execution_waiter, stack, data_loader, query_input)
     except WaiterError as e:
-        pytest.fail(FormatError(e))
+        pytest.fail(format_error(e))
 
     # The malicious match_ids are escaped and used as regular matches
     assert [
@@ -136,20 +135,20 @@ def test_it_escapes_match_ids_newlines_preventing_bypassing_matches(sf_client,
     '))
     """
 
-    legit_match_id="12345"
+    legit_match_id = "12345"
     query_input = {
-        "DataMappers": [ glue_data_mapper_factory("test") ],
+        "DataMappers": [glue_data_mapper_factory("test")],
         "DeletionQueue": [
-            { "MatchId": "\n--" },
-            { "MatchId": legit_match_id },
-            { "MatchId": "\n" },
+            {"MatchId": "\n--"},
+            {"MatchId": legit_match_id},
+            {"MatchId": "\n"},
         ]
     }
 
     try:
-        output = ArrangeAndExecute(sf_client, execution_waiter, stack, data_loader, query_input)
+        output = arrange_and_execute(sf_client, execution_waiter, stack, data_loader, query_input)
     except WaiterError as e:
-        pytest.fail(FormatError(e))
+        pytest.fail(format_error(e))
 
     # The malicious match_ids are escaped and used as regular matches
     assert [
@@ -167,20 +166,20 @@ def test_it_handles_unicod_smuggling_preventing_bypassing_matches(sf_client,
     Here is a test with "ʼ", which is similar to single quote.
     """
 
-    legit_match_id="12345"
-    malicious_match_id="fooʼ)) UNION ((select * from db2.table where column not in (ʼnope"
+    legit_match_id = "12345"
+    malicious_match_id = "fooʼ)) UNION ((select * from db2.table where column not in (ʼnope"
     query_input = {
-        "DataMappers": [ glue_data_mapper_factory("test") ],
+        "DataMappers": [glue_data_mapper_factory("test")],
         "DeletionQueue": [
-            { "MatchId": legit_match_id },
-            { "MatchId": malicious_match_id }
+            {"MatchId": legit_match_id},
+            {"MatchId": malicious_match_id}
         ]
     }
 
     try:
-        output = ArrangeAndExecute(sf_client, execution_waiter, stack, data_loader, query_input)
+        output = arrange_and_execute(sf_client, execution_waiter, stack, data_loader, query_input)
     except WaiterError as e:
-        pytest.fail(FormatError(e))
+        pytest.fail(format_error(e))
 
     # Only one table was accessed
     assert len(output) == 1
