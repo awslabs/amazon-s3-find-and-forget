@@ -143,7 +143,6 @@ def test_it_escapes_match_ids_backslash_and_comments_preventing_bypassing_matche
         pytest.fail(format_error(e))
 
     assert legit_match_id_is_found(dummy_lake, output)
-    assert output_contains_one_result_only(output)
 
 def test_it_escapes_match_ids_newlines_preventing_bypassing_matches(sf_client,
     dummy_lake, execution_waiter, stack, glue_data_mapper_factory, data_loader):
@@ -174,4 +173,3 @@ def test_it_escapes_match_ids_newlines_preventing_bypassing_matches(sf_client,
         pytest.fail(format_error(e))
 
     assert legit_match_id_is_found(dummy_lake, output)
-    assert output_contains_one_result_only(output)
