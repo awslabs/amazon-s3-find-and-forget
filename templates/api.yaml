@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
-Description: S3 Find and Forget API
+Description: Amazon S3 Find and Forget API
 
 Globals:
   Function:
@@ -35,10 +35,10 @@ Parameters:
     Type: String
   CognitoUserPoolName:
     Type: String
-    Default: S3FindAndForgetPool
+    Default: S3F2Pool
   CognitoUserPoolClientName:
     Type: String
-    Default: S3FindAndForgetPoolClient
+    Default: S3F2PoolClient
   CommonLayers:
     Type: CommaDelimitedList
     Description: Common layers supplied to all functions

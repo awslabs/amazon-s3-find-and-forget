@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: S3 Find And Forget VPC
+Description: Amazon S3 Find and Forget VPC
 
 Parameters:
   PrivateSubnetIpBlocks:

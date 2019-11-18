@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
-Description: S3 Find and Forget Deletion Flow
+Description: Amazon S3 Find and Forget Deletion Flow
 
 Parameters:
   DeletionTaskCPU:
@@ -106,7 +106,7 @@ Resources:
     Properties:
       AlarmActions:
         - !Ref ScaleInOut
-      AlarmDescription: S3 Find & Forget CloudWatch Alarm for DeletionQueue size, used to trigger Auto-Scaling for Deletion Fargate Tasks
+      AlarmDescription: Amazon S3 Find and Forget CloudWatch Alarm for DeletionQueue size, used to trigger Auto-Scaling for Deletion Fargate Tasks
       ComparisonOperator: GreaterThanThreshold
       EvaluationPeriods: 1
       Metrics:

@@ -43,7 +43,7 @@ def pytest_unconfigure(config):
 @pytest.fixture(scope="session")
 def stack():
     cloudformation = boto3.resource('cloudformation')
-    stack = cloudformation.Stack(getenv("StackName", "amazon-s3-find-and-forget"))
+    stack = cloudformation.Stack(getenv("StackName", "S3F2"))
     return {o["OutputKey"]: o["OutputValue"] for o in stack.outputs}
 
 

@@ -1,14 +1,14 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
-Description: S3 Find and Forget (uksb-1q2j8beb0)
+Description: Amazon S3 Find and Forget (uksb-1q2j8beb0)
 
 Parameters:
   CognitoUserPoolName:
     Type: String
-    Default: S3FindAndForgetPool
+    Default: S3F2Pool
   CognitoUserPoolClientName:
     Type: String
-    Default: S3FindAndForgetPoolClient
+    Default: S3F2PoolClient
   DeletionTaskCPU:
     Description: The CPU to be allocated to the Deletion Fargate Task
     Type: String
@@ -29,7 +29,7 @@ Parameters:
   ResourcePrefix:
     Description: The prefix used in DynamoDB table and state machine names
     Type: String
-    Default: S3FindAndForget
+    Default: S3F2
   VpcIpBlock:
     Description: CIDR block for the VPC
     Type: String
