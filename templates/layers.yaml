@@ -8,7 +8,7 @@ Resources:
     Properties:
       LayerName: AWSSDK
       Description: Latest confirmed compatible AWS SDK
-      ContentUri: ../lambdas/layers/aws_sdk/
+      ContentUri: ../backend/lambda_layers/aws_sdk/
       CompatibleRuntimes:
         - python3.7
   Decorators:
@@ -16,7 +16,7 @@ Resources:
     Properties:
       LayerName: Decorators
       Description: Helpful function decorators
-      ContentUri: ../lambdas/layers/decorators/
+      ContentUri: ../backend/lambda_layers/decorators/
       CompatibleRuntimes:
         - python3.7
   BotoUtils:
@@ -24,7 +24,7 @@ Resources:
     Properties:
       LayerName: BotoUtils
       Description: Helpful boto3 utils
-      ContentUri: ../lambdas/layers/boto_utils/
+      ContentUri: ../backend/lambda_layers/boto_utils/
       CompatibleRuntimes:
         - python3.7
 

@@ -5,12 +5,12 @@ import pytest
 from mock import patch
 
 with patch.dict(os.environ, {"StateMachineArn": "test"}):
-    from lambdas.src.tasks.oldest_execution import handler
+    from backend.lambdas.tasks.oldest_execution import handler
 
 pytestmark = [pytest.mark.unit, pytest.mark.task]
 
 
-@patch("lambdas.src.tasks.oldest_execution.paginate")
+@patch("backend.lambdas.tasks.oldest_execution.paginate")
 def test_it_returns_true_where_is_oldest_execution(paginate_mock):
     latest_exec = {"executionArn": "arn:aws:states:eu-west-1:123456789012:execution:HelloWorld:testA"}
     oldest_exec = {"executionArn": "arn:aws:states:eu-west-1:123456789012:execution:HelloWorld:testB"}
@@ -22,7 +22,7 @@ def test_it_returns_true_where_is_oldest_execution(paginate_mock):
     assert resp is True
 
 
-@patch("lambdas.src.tasks.oldest_execution.paginate")
+@patch("backend.lambdas.tasks.oldest_execution.paginate")
 def test_it_returns_false_where_not_oldest(paginate_mock):
     latest_exec = {"executionArn": "arn:aws:states:eu-west-1:123456789012:execution:HelloWorld:testA"}
     oldest_exec = {"executionArn": "arn:aws:states:eu-west-1:123456789012:execution:HelloWorld:testB"}

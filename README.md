@@ -23,8 +23,8 @@ source venv/bin/activate
 
 2. Install the layers
 ```bash
-pip install -r lambdas/layers/aws_sdk/requirements.txt -t lambdas/layers/aws_sdk/python
-pip install -r lambdas/layers/decorators/requirements.txt -t lambdas/layers/decorators/python
+pip install -r backend/lambda_layers/aws_sdk/requirements.txt -t backend/lambda_layers/aws_sdk/python
+pip install -r backend/lambda_layers/decorators/requirements.txt -t backend/lambda_layers/decorators/python
 ```
 
 3. Deploy using the CLI

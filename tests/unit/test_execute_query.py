@@ -5,13 +5,13 @@ from types import SimpleNamespace
 import pytest
 from mock import patch
 
-from lambdas.src.tasks.execute_query import handler, make_query, escape_item
+from backend.lambdas.tasks.execute_query import handler, make_query, escape_item
 
 pytestmark = [pytest.mark.unit, pytest.mark.task]
 
 
-@patch("lambdas.src.tasks.execute_query.client")
-@patch("lambdas.src.tasks.execute_query.make_query")
+@patch("backend.lambdas.tasks.execute_query.client")
+@patch("backend.lambdas.tasks.execute_query.make_query")
 def test_it_executes_queries(query_mock, client_mock):
     client_mock.start_query_execution.return_value = {
         "QueryExecutionId": "123"
@@ -25,8 +25,8 @@ def test_it_executes_queries(query_mock, client_mock):
     }, WorkGroup='primary')
 
 
-@patch("lambdas.src.tasks.execute_query.client")
-@patch("lambdas.src.tasks.execute_query.make_query")
+@patch("backend.lambdas.tasks.execute_query.client")
+@patch("backend.lambdas.tasks.execute_query.make_query")
 def test_it_permits_custom_workgroups(query_mock, client_mock):
     client_mock.start_query_execution.return_value = {
         "QueryExecutionId": "123"

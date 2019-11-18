@@ -11,7 +11,7 @@ Unit tests can be ran by using the pytest mark `unit` i.e.
 pytest -m unit --log-cli-level info
 ```
 
-Append `--cov=lambdas.src --cov=decorators` if using `pytest-cov` to get coverage
+Append `--cov=backend.lambdas --cov=decorators` if using `pytest-cov` to get coverage
 stats
 
 ### API Acceptance Tests

@@ -5,13 +5,13 @@ from types import SimpleNamespace
 import pytest
 from mock import patch
 
-from lambdas.src.jobs import handlers
+from backend.lambdas.jobs import handlers
 
 pytestmark = [pytest.mark.unit, pytest.mark.jobs]
 
 
-@patch("lambdas.src.jobs.handlers.sf_client")
-@patch("lambdas.src.jobs.handlers.get_execution_arn")
+@patch("backend.lambdas.jobs.handlers.sf_client")
+@patch("backend.lambdas.jobs.handlers.get_execution_arn")
 def test_it_retrieves_all_items(get_execution_arn, sf_client):
     mock_exec_arn = "arn:aws:states:eu-west-1:123456789012:execution:HelloWorld:test"
     sf_client.describe_execution.return_value = {

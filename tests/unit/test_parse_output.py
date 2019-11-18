@@ -3,7 +3,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from lambdas.src.tasks.parse_output import handler
+from backend.lambdas.tasks.parse_output import handler
 
 pytestmark = [pytest.mark.unit, pytest.mark.task]
 

@@ -408,7 +408,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: oldest_execution.handler
-      CodeUri: ../lambdas/src/tasks/
+      CodeUri: ../backend/lambdas/tasks/
       Environment:
         Variables:
           StateMachineArn: !Sub arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${StateMachinePrefix}-StateMachine
@@ -423,7 +423,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: scan_table.handler
-      CodeUri: ../lambdas/src/tasks/
+      CodeUri: ../backend/lambdas/tasks/
       Policies:
       - DynamoDBReadPolicy:
           TableName: !Ref DeletionQueueTableName
@@ -434,13 +434,13 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: parse_output.handler
-      CodeUri: ../lambdas/src/tasks/
+      CodeUri: ../backend/lambdas/tasks/
 
   DeleteQueryResults:
     Type: AWS::Serverless::Function
     Properties:
       Handler: delete_query_results.handler
-      CodeUri: ../lambdas/src/tasks/
+      CodeUri: ../backend/lambdas/tasks/
       Environment:
         Variables:
           BucketName: !Ref QueryResultBucket
@@ -452,7 +452,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: execute_query.handler
-      CodeUri: ../lambdas/src/tasks/
+      CodeUri: ../backend/lambdas/tasks/
       Environment:
         Variables:
           AthenaWorkGroup: !Ref AthenaWorkGroup
@@ -472,7 +472,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: check_query_status.handler
-      CodeUri: ../lambdas/src/tasks/
+      CodeUri: ../backend/lambdas/tasks/
       Policies:
       - Statement:
         - Action:
@@ -484,7 +484,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: get_query_results.handler
-      CodeUri: ../lambdas/src/tasks/
+      CodeUri: ../backend/lambdas/tasks/
       Policies:
       - S3ReadPolicy:
           BucketName: !Ref QueryResultBucket
@@ -498,7 +498,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: generate_queries.handler
-      CodeUri: ../lambdas/src/tasks/
+      CodeUri: ../backend/lambdas/tasks/
       Policies:
       - Statement:
         - Action:
@@ -512,7 +512,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: aggregate_results.handler
-      CodeUri: ../lambdas/src/tasks/
+      CodeUri: ../backend/lambdas/tasks/
 
 Outputs:
   StateMachineArn:

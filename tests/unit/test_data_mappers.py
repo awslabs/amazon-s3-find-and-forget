@@ -7,12 +7,12 @@ from mock import patch
 
 
 with patch.dict(os.environ, {"DataMapperTable": "DataMapperTable"}):
-    from lambdas.src.data_mappers import handlers
+    from backend.lambdas.data_mappers import handlers
 
 pytestmark = [pytest.mark.unit, pytest.mark.data_mappers]
 
 
-@patch("lambdas.src.data_mappers.handlers.table")
+@patch("backend.lambdas.data_mappers.handlers.table")
 def test_it_retrieves_all_items(table):
     table.scan.return_value = {"Items": []}
     response = handlers.get_data_mappers_handler({}, SimpleNamespace())
@@ -22,7 +22,7 @@ def test_it_retrieves_all_items(table):
     } == response
 
 
-@patch("lambdas.src.data_mappers.handlers.table")
+@patch("backend.lambdas.data_mappers.handlers.table")
 def test_it_creates_data_mapper(table):
     response = handlers.create_data_mapper_handler({
         "pathParameters": {
@@ -54,7 +54,7 @@ def test_it_creates_data_mapper(table):
     } == json.loads(response["body"])
 
 
-@patch("lambdas.src.data_mappers.handlers.table")
+@patch("backend.lambdas.data_mappers.handlers.table")
 def test_it_provides_default_format(table):
     response = handlers.create_data_mapper_handler({
         "pathParameters": {
@@ -85,7 +85,7 @@ def test_it_provides_default_format(table):
     } == json.loads(response["body"])
 
 
-@patch("lambdas.src.data_mappers.handlers.table")
+@patch("backend.lambdas.data_mappers.handlers.table")
 def test_it_rejects_invalid_data_source(table):
     response = handlers.create_data_mapper_handler({
         "pathParameters": {
@@ -101,7 +101,7 @@ def test_it_rejects_invalid_data_source(table):
     assert 422 == response["statusCode"]
 
 
-@patch("lambdas.src.data_mappers.handlers.table")
+@patch("backend.lambdas.data_mappers.handlers.table")
 def test_it_cancels_deletions(table):
     response = handlers.delete_data_mapper_handler({
         "pathParameters": {

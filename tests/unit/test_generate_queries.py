@@ -4,13 +4,13 @@ import mock
 import pytest
 from mock import patch
 
-from lambdas.src.tasks.generate_queries import handler, get_table, get_partitions, convert_to_col_type
+from backend.lambdas.tasks.generate_queries import handler, get_table, get_partitions, convert_to_col_type
 
 pytestmark = [pytest.mark.unit, pytest.mark.task]
 
 
-@patch("lambdas.src.tasks.generate_queries.get_table")
-@patch("lambdas.src.tasks.generate_queries.get_partitions")
+@patch("backend.lambdas.tasks.generate_queries.get_table")
+@patch("backend.lambdas.tasks.generate_queries.get_partitions")
 def test_it_handles_single_columns(get_partitions_mock, get_table_mock):
     columns = ["customer_id"]
     partition_keys = ["product_category"]
@@ -47,8 +47,8 @@ def test_it_handles_single_columns(get_partitions_mock, get_table_mock):
     ] == result
 
 
-@patch("lambdas.src.tasks.generate_queries.get_table")
-@patch("lambdas.src.tasks.generate_queries.get_partitions")
+@patch("backend.lambdas.tasks.generate_queries.get_table")
+@patch("backend.lambdas.tasks.generate_queries.get_partitions")
 def test_it_handles_multiple_columns(get_partitions_mock, get_table_mock):
     columns = ["customer_id", "alt_customer_id"]
     partition_keys = ["product_category"]
@@ -87,8 +87,8 @@ def test_it_handles_multiple_columns(get_partitions_mock, get_table_mock):
     ] == result
 
 
-@patch("lambdas.src.tasks.generate_queries.get_table")
-@patch("lambdas.src.tasks.generate_queries.get_partitions")
+@patch("backend.lambdas.tasks.generate_queries.get_table")
+@patch("backend.lambdas.tasks.generate_queries.get_partitions")
 def test_it_handles_multiple_partition_keys(get_partitions_mock, get_table_mock):
     columns = ["customer_id"]
     partition_keys = ["year", "month"]
@@ -128,8 +128,8 @@ def test_it_handles_multiple_partition_keys(get_partitions_mock, get_table_mock)
     ] == result
 
 
-@patch("lambdas.src.tasks.generate_queries.get_table")
-@patch("lambdas.src.tasks.generate_queries.get_partitions")
+@patch("backend.lambdas.tasks.generate_queries.get_table")
+@patch("backend.lambdas.tasks.generate_queries.get_partitions")
 def test_it_handles_multiple_partition_values(get_partitions_mock, get_table_mock):
     columns = ["customer_id"]
     partition_keys = ["year", "month"]
@@ -189,8 +189,8 @@ def test_it_handles_multiple_partition_values(get_partitions_mock, get_table_moc
     ] == result
 
 
-@patch("lambdas.src.tasks.generate_queries.get_table")
-@patch("lambdas.src.tasks.generate_queries.get_partitions")
+@patch("backend.lambdas.tasks.generate_queries.get_table")
+@patch("backend.lambdas.tasks.generate_queries.get_partitions")
 def test_it_filters_users_from_non_applicable_tables(get_partitions_mock, get_table_mock):
     columns = ["customer_id"]
     partition_keys = ["product_category"]
@@ -251,8 +251,8 @@ def test_it_filters_users_from_non_applicable_tables(get_partitions_mock, get_ta
     ] == result
 
 
-@patch("lambdas.src.tasks.generate_queries.get_table")
-@patch("lambdas.src.tasks.generate_queries.get_partitions")
+@patch("backend.lambdas.tasks.generate_queries.get_table")
+@patch("backend.lambdas.tasks.generate_queries.get_partitions")
 def test_it_handles_unpartitioned_data(get_partitions_mock, get_table_mock):
     columns = ["customer_id"]
     get_table_mock.return_value = table_stub(columns, [])
@@ -284,8 +284,8 @@ def test_it_handles_unpartitioned_data(get_partitions_mock, get_table_mock):
     ] == result
 
 
-@patch("lambdas.src.tasks.generate_queries.get_table")
-@patch("lambdas.src.tasks.generate_queries.get_partitions")
+@patch("backend.lambdas.tasks.generate_queries.get_table")
+@patch("backend.lambdas.tasks.generate_queries.get_partitions")
 def test_it_removes_queries_with_no_applicable_matches(get_partitions_mock, get_table_mock):
     columns = ["customer_id"]
     get_table_mock.return_value = table_stub(columns, [])
@@ -311,7 +311,7 @@ def test_it_removes_queries_with_no_applicable_matches(get_partitions_mock, get_
     assert [] == result
 
 
-@patch("lambdas.src.tasks.generate_queries.client")
+@patch("backend.lambdas.tasks.generate_queries.client")
 def test_it_returns_table(client):
     client.get_table.return_value = {"Table": {"Name": "test"}}
     result = get_table("test_db", "test_table")
@@ -322,7 +322,7 @@ def test_it_returns_table(client):
     )
 
 
-@patch("lambdas.src.tasks.generate_queries.paginate")
+@patch("backend.lambdas.tasks.generate_queries.paginate")
 def test_it_returns_all_partitions(paginate):
     paginate.return_value = iter(["blah"])
     result = get_partitions("test_db", "test_table")

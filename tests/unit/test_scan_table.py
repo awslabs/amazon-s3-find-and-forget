@@ -3,13 +3,13 @@ from types import SimpleNamespace
 import pytest
 from mock import patch
 
-from lambdas.src.tasks.scan_table import handler, deserialize_item
+from backend.lambdas.tasks.scan_table import handler, deserialize_item
 
 pytestmark = [pytest.mark.unit, pytest.mark.task]
 
 
-@patch("lambdas.src.tasks.scan_table.paginate")
-@patch("lambdas.src.tasks.scan_table.deserialize_item")
+@patch("backend.lambdas.tasks.scan_table.paginate")
+@patch("backend.lambdas.tasks.scan_table.deserialize_item")
 def test_it_returns_all_results(deserialize_item_mock, paginate_mock):
     paginate_mock.return_value = iter([{
       "DataMappers": {

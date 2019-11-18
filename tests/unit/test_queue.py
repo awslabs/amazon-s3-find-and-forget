@@ -7,12 +7,12 @@ from mock import patch
 
 
 with patch.dict(os.environ, {"DeletionQueueTable": "DeletionQueueTable"}):
-    from lambdas.src.queue import handlers
+    from backend.lambdas.queue import handlers
 
 pytestmark = [pytest.mark.unit, pytest.mark.queue]
 
 
-@patch("lambdas.src.queue.handlers.table")
+@patch("backend.lambdas.queue.handlers.table")
 def test_it_retrieves_all_items(table):
     table.scan.return_value = {"Items": []}
     response = handlers.get_handler({}, SimpleNamespace())
@@ -22,7 +22,7 @@ def test_it_retrieves_all_items(table):
     } == response
 
 
-@patch("lambdas.src.queue.handlers.table")
+@patch("backend.lambdas.queue.handlers.table")
 def test_it_add_to_queue(table):
     response = handlers.enqueue_handler({
         "body": json.dumps({
@@ -38,7 +38,7 @@ def test_it_add_to_queue(table):
     } == json.loads(response["body"])
 
 
-@patch("lambdas.src.queue.handlers.table")
+@patch("backend.lambdas.queue.handlers.table")
 def test_it_provides_default_data_mappers(table):
     response = handlers.enqueue_handler({
         "body": json.dumps({
@@ -53,7 +53,7 @@ def test_it_provides_default_data_mappers(table):
     } == json.loads(response["body"])
 
 
-@patch("lambdas.src.queue.handlers.table")
+@patch("backend.lambdas.queue.handlers.table")
 def test_it_cancels_deletions(table):
     response = handlers.cancel_handler({
         "pathParameters": {
@@ -65,7 +65,7 @@ def test_it_cancels_deletions(table):
     } == response
 
 
-@patch("lambdas.src.queue.handlers.sfn_client")
+@patch("backend.lambdas.queue.handlers.sfn_client")
 def test_it_process_queue(sfn_client):
     sfn_client.start_execution.return_value = {
         "executionArn": "arn:aws:states:eu-west-1:123456789012:execution:HelloWorld:e723c10b-9be4-46ca-90b8-8b94a7105b44",

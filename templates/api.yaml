@@ -83,7 +83,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: handlers.enqueue_handler
-      CodeUri: ../lambdas/src/queue/
+      CodeUri: ../backend/lambdas/queue/
       Events:
         Get:
           Type: Api
@@ -97,7 +97,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: handlers.get_handler
-      CodeUri: ../lambdas/src/queue/
+      CodeUri: ../backend/lambdas/queue/
       Events:
         Get:
           Type: Api
@@ -111,7 +111,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: handlers.cancel_handler
-      CodeUri: ../lambdas/src/queue/
+      CodeUri: ../backend/lambdas/queue/
       Events:
         Get:
           Type: Api
@@ -125,7 +125,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: handlers.process_handler
-      CodeUri: ../lambdas/src/queue/
+      CodeUri: ../backend/lambdas/queue/
       Environment:
         Variables:
           StateMachineArn: !Ref StateMachineArn
@@ -150,7 +150,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: handlers.create_data_mapper_handler
-      CodeUri: ../lambdas/src/data_mappers/
+      CodeUri: ../backend/lambdas/data_mappers/
       Events:
         Get:
           Type: Api
@@ -164,7 +164,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: handlers.get_data_mappers_handler
-      CodeUri: ../lambdas/src/data_mappers/
+      CodeUri: ../backend/lambdas/data_mappers/
       Events:
         Get:
           Type: Api
@@ -178,7 +178,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: handlers.delete_data_mapper_handler
-      CodeUri: ../lambdas/src/data_mappers/
+      CodeUri: ../backend/lambdas/data_mappers/
       Events:
         Get:
           Type: Api
@@ -193,7 +193,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: handlers.get_job_handler
-      CodeUri: ../lambdas/src/jobs/
+      CodeUri: ../backend/lambdas/jobs/
       Environment:
         Variables:
           StateMachineArn: !Ref StateMachineArn

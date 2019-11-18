@@ -4,12 +4,12 @@ from types import SimpleNamespace
 import pytest
 from mock import patch
 
-from lambdas.src.tasks.check_query_status import handler
+from backend.lambdas.tasks.check_query_status import handler
 
 pytestmark = [pytest.mark.unit, pytest.mark.task]
 
 
-@patch("lambdas.src.tasks.check_query_status.client")
+@patch("backend.lambdas.tasks.check_query_status.client")
 def test_it_returns_query_status(mock_client):
     mock_client.get_query_execution.return_value = {
         'QueryExecution': {
@@ -29,7 +29,7 @@ def test_it_returns_query_status(mock_client):
     } == resp
 
 
-@patch("lambdas.src.tasks.check_query_status.client")
+@patch("backend.lambdas.tasks.check_query_status.client")
 def test_it_provides_reason_where_supplied(mock_client):
     mock_client.get_query_execution.return_value = {
         'QueryExecution': {
