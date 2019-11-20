@@ -14,21 +14,19 @@ It is designed to help customers to fulfil their GDPR’s Right To Be Forgotten 
 
 ### Deploy
 
-1. Setup a virtual environment
+Pre-requirements:
+* AWS CLI
+* Python 3.7.5 and pip
+* virtualenv
+
+1. Install all the dependencies
 
 ```bash
-virtualenv venv
-source venv/bin/activate
+make setup
 ```
 
-2. Install the layers
-```bash
-pip install -r backend/lambda_layers/aws_sdk/requirements.txt -t backend/lambda_layers/aws_sdk/python
-pip install -r backend/lambda_layers/decorators/requirements.txt -t backend/lambda_layers/decorators/python
-```
+2. Deploy
 
-3. Deploy using the CLI
 ```bash
-aws cloudformation package --template-file templates/template.yaml --s3-bucket your-temp-bucket --output-template-file packaged.yaml
-aws cloudformation deploy --template-file ./packaged.yaml --stack-name S3F2 --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND
+make deploy
 ```

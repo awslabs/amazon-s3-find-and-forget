@@ -129,3 +129,4 @@ backend/lambda_layers/decorators/python
 !backend/lambda_layers/decorators/python/decorators.py
 .idea/
 .env
+.DS_Store
