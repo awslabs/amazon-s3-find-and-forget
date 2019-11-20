@@ -117,8 +117,8 @@ Resources:
                     "Type": "Task",
                     "Parameters": {
                       "QueryData.$": "$",
-                      "Bucket": "${QueryResultBucket}",
-                      "Prefix.$": "$$.Execution.Name"
+                      "Bucket": "${ResultBucket}",
+                      "Prefix": "queries"
                     },
                     "Resource": "${ExecuteQuery.Arn}",
                     "ResultPath": "$.QueryId",
@@ -331,7 +331,7 @@ Resources:
             "Populate Queue": {
               "Comment": "Creates queue items for every file",
               "Type": "Map",
-              "Next": "Delete Query Results",
+              "Next": "Delete Queue Items",
               "ItemsPath": "$.QueryResults",
               "ResultPath": "$.DeletionResults",
               "Iterator": {
@@ -353,16 +353,6 @@ Resources:
                   }
                 }
               }
-            },
-            "Delete Query Results": {
-              "Comment": "Deletes query results from the query result bucket",
-              "Type": "Task",
-              "Parameters": {
-                "ExecutionName.$": "$$.Execution.Name"
-              },
-              "ResultPath": null,
-              "Resource": "${DeleteQueryResults.Arn}",
-              "Next": "Delete Queue Items"
             },
             "Delete Queue Items": {
               "Comment": "Deletes all items from the deletion queue",
@@ -400,8 +390,15 @@ Resources:
       RoleArn: !GetAtt StatesExecutionRole.Arn
 
   # Supporting Resources
-  QueryResultBucket:
+  ResultBucket:
     Type: AWS::S3::Bucket
+    Properties:
+      LifecycleConfiguration:
+        Rules:
+        - Id: ExpireQueryResults
+          Prefix: queries
+          Status: Enabled
+          ExpirationInDays: '1'
 
   # Tasks
   OldestExecutionCheck:
@@ -436,18 +433,6 @@ Resources:
       Handler: parse_output.handler
       CodeUri: ../backend/lambdas/tasks/
 
-  DeleteQueryResults:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: delete_query_results.handler
-      CodeUri: ../backend/lambdas/tasks/
-      Environment:
-        Variables:
-          BucketName: !Ref QueryResultBucket
-      Policies:
-      - S3CrudPolicy:
-          BucketName: !Ref QueryResultBucket
-
   ExecuteQuery:
     Type: AWS::Serverless::Function
     Properties:
@@ -458,7 +443,7 @@ Resources:
           AthenaWorkGroup: !Ref AthenaWorkGroup
       Policies:
       - S3CrudPolicy:
-          BucketName: !Ref QueryResultBucket
+          BucketName: !Ref ResultBucket
       - Statement:
         - Action:
           - "athena:StartQueryExecution"
@@ -487,7 +472,7 @@ Resources:
       CodeUri: ../backend/lambdas/tasks/
       Policies:
       - S3ReadPolicy:
-          BucketName: !Ref QueryResultBucket
+          BucketName: !Ref ResultBucket
       - Statement:
         - Action:
           - "athena:GetQueryResults"
@@ -521,7 +506,7 @@ Outputs:
     Value: !GetAtt StatesExecutionRole.Arn
   AthenaStateMachineArn:
     Value: !Ref AthenaStateMachine
-  QueryResultBucket:
-    Value: !Ref QueryResultBucket
+  ResultBucket:
+    Value: !Ref ResultBucket
   AthenaExecutionRoleArn:
     Value: !GetAtt ExecuteQueryRole.Arn
