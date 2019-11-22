@@ -1,17 +1,20 @@
+import os
 from types import SimpleNamespace
 
 import mock
 import pytest
 from mock import patch
 
-from backend.lambdas.tasks.generate_queries import handler, get_table, get_partitions, convert_to_col_type
+with patch.dict(os.environ, {"QueryQueue": "test"}):
+    from backend.lambdas.tasks.generate_queries import handler, get_table, get_partitions, convert_to_col_type
 
 pytestmark = [pytest.mark.unit, pytest.mark.task]
 
 
 @patch("backend.lambdas.tasks.generate_queries.get_table")
 @patch("backend.lambdas.tasks.generate_queries.get_partitions")
-def test_it_handles_single_columns(get_partitions_mock, get_table_mock):
+@patch("backend.lambdas.tasks.generate_queries.batch_sqs_msgs")
+def test_it_handles_single_columns(batch_sqs_msgs_mock, get_partitions_mock, get_table_mock):
     columns = ["customer_id"]
     partition_keys = ["product_category"]
     partitions = [["Books"]]
@@ -19,7 +22,7 @@ def test_it_handles_single_columns(get_partitions_mock, get_table_mock):
     get_partitions_mock.return_value = [
         partition_stub(p, columns) for p in partitions
     ]
-    result = handler({
+    handler({
         "DataMappers": [{
             "DataMapperId": "a",
             "QueryExecutor": "athena",
@@ -36,20 +39,19 @@ def test_it_handles_single_columns(get_partitions_mock, get_table_mock):
         }]
     }, SimpleNamespace())
 
-    assert [
-        {
-            "DataMapperId": "a",
-            'Database': 'test_db',
-            'Table': 'test_table',
-            'Columns': [{'Column': 'customer_id', 'MatchIds': ['hi']}],
-            'PartitionKeys': [{'Key': 'product_category', 'Value': 'Books'}]
-        }
-    ] == result
+    batch_sqs_msgs_mock.assert_called_with(mock.ANY, [{
+        "DataMapperId": "a",
+        'Database': 'test_db',
+        'Table': 'test_table',
+        'Columns': [{'Column': 'customer_id', 'MatchIds': ['hi']}],
+        'PartitionKeys': [{'Key': 'product_category', 'Value': 'Books'}]
+    }])
 
 
 @patch("backend.lambdas.tasks.generate_queries.get_table")
 @patch("backend.lambdas.tasks.generate_queries.get_partitions")
-def test_it_handles_multiple_columns(get_partitions_mock, get_table_mock):
+@patch("backend.lambdas.tasks.generate_queries.batch_sqs_msgs")
+def test_it_handles_multiple_columns(batch_sqs_msgs_mock, get_partitions_mock, get_table_mock):
     columns = ["customer_id", "alt_customer_id"]
     partition_keys = ["product_category"]
     partitions = [["Books"]]
@@ -57,7 +59,7 @@ def test_it_handles_multiple_columns(get_partitions_mock, get_table_mock):
     get_partitions_mock.return_value = [
         partition_stub(p, columns) for p in partitions
     ]
-    result = handler({
+    handler({
         "DataMappers": [{
             "DataMapperId": "a",
             "QueryExecutor": "athena",
@@ -74,7 +76,7 @@ def test_it_handles_multiple_columns(get_partitions_mock, get_table_mock):
         }]
     }, SimpleNamespace())
 
-    assert [
+    batch_sqs_msgs_mock.assert_called_with(mock.ANY, [
         {
             "DataMapperId": "a",
             'Database': 'test_db',
@@ -84,12 +86,13 @@ def test_it_handles_multiple_columns(get_partitions_mock, get_table_mock):
                 {'Column': 'alt_customer_id', 'MatchIds': ['hi']}],
             'PartitionKeys': [{'Key': 'product_category', 'Value': 'Books'}]
         }
-    ] == result
+    ])
 
 
 @patch("backend.lambdas.tasks.generate_queries.get_table")
 @patch("backend.lambdas.tasks.generate_queries.get_partitions")
-def test_it_handles_multiple_partition_keys(get_partitions_mock, get_table_mock):
+@patch("backend.lambdas.tasks.generate_queries.batch_sqs_msgs")
+def test_it_handles_multiple_partition_keys(batch_sqs_msgs_mock, get_partitions_mock, get_table_mock):
     columns = ["customer_id"]
     partition_keys = ["year", "month"]
     partitions = [["2019", "01"]]
@@ -97,7 +100,7 @@ def test_it_handles_multiple_partition_keys(get_partitions_mock, get_table_mock)
     get_partitions_mock.return_value = [
         partition_stub(p, columns) for p in partitions
     ]
-    result = handler({
+    handler({
         "DataMappers": [{
             "DataMapperId": "a",
             "QueryExecutor": "athena",
@@ -114,7 +117,7 @@ def test_it_handles_multiple_partition_keys(get_partitions_mock, get_table_mock)
         }]
     }, SimpleNamespace())
 
-    assert [
+    batch_sqs_msgs_mock.assert_called_with(mock.ANY, [
         {
             "DataMapperId": "a",
             'Database': 'test_db',
@@ -125,12 +128,13 @@ def test_it_handles_multiple_partition_keys(get_partitions_mock, get_table_mock)
                 {'Key': 'month', 'Value': '01'}
             ]
         }
-    ] == result
+    ])
 
 
 @patch("backend.lambdas.tasks.generate_queries.get_table")
 @patch("backend.lambdas.tasks.generate_queries.get_partitions")
-def test_it_handles_multiple_partition_values(get_partitions_mock, get_table_mock):
+@patch("backend.lambdas.tasks.generate_queries.batch_sqs_msgs")
+def test_it_handles_multiple_partition_values(batch_sqs_msgs_mock, get_partitions_mock, get_table_mock):
     columns = ["customer_id"]
     partition_keys = ["year", "month"]
     partitions = [["2018", "12"], ["2019", "01"], ["2019", "02"]]
@@ -138,7 +142,7 @@ def test_it_handles_multiple_partition_values(get_partitions_mock, get_table_moc
     get_partitions_mock.return_value = [
         partition_stub(p, columns) for p in partitions
     ]
-    result = handler({
+    handler({
         "DataMappers": [{
             "DataMapperId": "a",
             "QueryExecutor": "athena",
@@ -155,7 +159,7 @@ def test_it_handles_multiple_partition_values(get_partitions_mock, get_table_moc
         }]
     }, SimpleNamespace())
 
-    assert [
+    batch_sqs_msgs_mock.assert_called_with(mock.ANY, [
         {
             "DataMapperId": "a",
             'Database': 'test_db',
@@ -186,12 +190,13 @@ def test_it_handles_multiple_partition_values(get_partitions_mock, get_table_moc
                 {'Key': 'month', 'Value': '02'}
             ]
         }
-    ] == result
+    ])
 
 
 @patch("backend.lambdas.tasks.generate_queries.get_table")
 @patch("backend.lambdas.tasks.generate_queries.get_partitions")
-def test_it_filters_users_from_non_applicable_tables(get_partitions_mock, get_table_mock):
+@patch("backend.lambdas.tasks.generate_queries.batch_sqs_msgs")
+def test_it_filters_users_from_non_applicable_tables(batch_sqs_msgs_mock, get_partitions_mock, get_table_mock):
     columns = ["customer_id"]
     partition_keys = ["product_category"]
     partitions = [["Books"]]
@@ -199,7 +204,7 @@ def test_it_filters_users_from_non_applicable_tables(get_partitions_mock, get_ta
     get_partitions_mock.return_value = [
         partition_stub(p, columns) for p in partitions
     ]
-    result = handler({
+    handler({
         "DataMappers": [{
             "DataMapperId": "A",
             "QueryExecutor": "athena",
@@ -233,14 +238,16 @@ def test_it_filters_users_from_non_applicable_tables(get_partitions_mock, get_ta
         }]
     }, SimpleNamespace())
 
-    assert [
+    batch_sqs_msgs_mock.assert_any_call(mock.ANY, [
         {
             "DataMapperId": "A",
             'Database': 'test_db',
             'Table': 'A',
             'Columns': [{'Column': 'customer_id', 'MatchIds': ['123', '456']}],
             'PartitionKeys': [{'Key': 'product_category', 'Value': 'Books'}]
-        },
+        }
+    ]),
+    batch_sqs_msgs_mock.assert_any_call(mock.ANY, [
         {
             "DataMapperId": "B",
             'Database': 'test_db',
@@ -248,16 +255,17 @@ def test_it_filters_users_from_non_applicable_tables(get_partitions_mock, get_ta
             'Columns': [{'Column': 'customer_id', 'MatchIds': ['456']}],
             'PartitionKeys': [{'Key': 'product_category', 'Value': 'Books'}]
         }
-    ] == result
+    ])
 
 
 @patch("backend.lambdas.tasks.generate_queries.get_table")
 @patch("backend.lambdas.tasks.generate_queries.get_partitions")
-def test_it_handles_unpartitioned_data(get_partitions_mock, get_table_mock):
+@patch("backend.lambdas.tasks.generate_queries.batch_sqs_msgs")
+def test_it_handles_unpartitioned_data(batch_sqs_msgs_mock, get_partitions_mock, get_table_mock):
     columns = ["customer_id"]
     get_table_mock.return_value = table_stub(columns, [])
     get_partitions_mock.return_value = []
-    result = handler({
+    handler({
         "DataMappers": [{
             "DataMapperId": "a",
             "QueryExecutor": "athena",
@@ -274,23 +282,24 @@ def test_it_handles_unpartitioned_data(get_partitions_mock, get_table_mock):
         }]
     }, SimpleNamespace())
 
-    assert [
+    batch_sqs_msgs_mock.assert_called_with(mock.ANY, [
         {
             "DataMapperId": "a",
             'Database': 'test_db',
             'Table': 'test_table',
             'Columns': [{'Column': 'customer_id', 'MatchIds': ['123']}],
         },
-    ] == result
+    ])
 
 
 @patch("backend.lambdas.tasks.generate_queries.get_table")
 @patch("backend.lambdas.tasks.generate_queries.get_partitions")
-def test_it_removes_queries_with_no_applicable_matches(get_partitions_mock, get_table_mock):
+@patch("backend.lambdas.tasks.generate_queries.batch_sqs_msgs")
+def test_it_removes_queries_with_no_applicable_matches(batch_sqs_msgs_mock, get_partitions_mock, get_table_mock):
     columns = ["customer_id"]
     get_table_mock.return_value = table_stub(columns, [])
     get_partitions_mock.return_value = []
-    result = handler({
+    handler({
         "DataMappers": [{
             "DataMapperId": "A",
             "QueryExecutor": "athena",
@@ -308,10 +317,10 @@ def test_it_removes_queries_with_no_applicable_matches(get_partitions_mock, get_
         }]
     }, SimpleNamespace())
 
-    assert [] == result
+    batch_sqs_msgs_mock.assert_called_with(mock.ANY, [])
 
 
-@patch("backend.lambdas.tasks.generate_queries.client")
+@patch("backend.lambdas.tasks.generate_queries.glue_client")
 def test_it_returns_table(client):
     client.get_table.return_value = {"Table": {"Name": "test"}}
     result = get_table("test_db", "test_table")

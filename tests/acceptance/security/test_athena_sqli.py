@@ -5,9 +5,11 @@ from botocore.exceptions import WaiterError
 
 logger = logging.getLogger()
 
-pytestmark = [pytest.mark.acceptance, pytest.mark.state_machine, pytest.mark.usefixtures("empty_lake")]
+pytestmark = [pytest.mark.acceptance, pytest.mark.state_machine, pytest.mark.athena,
+              pytest.mark.usefixtures("empty_lake")]
 
-def arrange_and_execute(sf_client, execution_waiter, stack, data_loader, query_input):
+
+def arrange_and_execute(sf_client, execution_waiter, stack, data_loader, query_input, fargate_queue, queue_reader):
     create_test_parquet(data_loader, "test")
     create_test_parquet(data_loader, "test2")
     execution_arn = sf_client.start_execution(
@@ -15,28 +17,35 @@ def arrange_and_execute(sf_client, execution_waiter, stack, data_loader, query_i
         input=json.dumps(query_input)
     )["executionArn"]
     execution_waiter.wait(executionArn=execution_arn)
-    return json.loads(sf_client.describe_execution(executionArn=execution_arn)["output"])
+    messages = queue_reader(fargate_queue)
+    return [
+        json.loads(message.body)["Input"] for message in messages
+    ]
+
 
 def create_test_parquet(data_loader, s3prefix):
     return data_loader("basic.parquet", "{}/basic.parquet".format(s3prefix))
 
+
 def create_extra_glue_table_for_unauthorized_access(glue_data_mapper_factory):
     return glue_data_mapper_factory("test2", database="acceptancetest2", table="acceptancetest2")
+
 
 def format_error(e):
     return "Error waiting for execution to enter success state: {}".format(str(e))
 
-def legit_match_id_is_found(dummy_lake, output):
-    return ["s3://{}/test/basic.parquet".format(dummy_lake["bucket_name"])] == output[0]["Objects"]
 
-def output_contains_one_result_only(output):
-    return len(output[0]["Objects"]) == 1
+def legit_match_id_is_found(dummy_lake, messages):
+    return "s3://{}/test/basic.parquet".format(dummy_lake["bucket_name"]) == messages[0]["Object"]
 
-def only_one_table_was_accessed(output):
-    return len(output) == 1
 
-def test_it_escapes_match_ids_single_quotes_preventing_stealing_information(sf_client,
-    dummy_lake, execution_waiter, stack, glue_data_mapper_factory, data_loader):
+def output_contains_only_one_result_from_one_table(messages):
+    return len(messages) == 1
+
+
+def test_it_escapes_match_ids_single_quotes_preventing_stealing_information(sf_client, dummy_lake, execution_waiter,
+                                                                            stack, glue_data_mapper_factory,
+                                                                            data_loader, fargate_queue, queue_reader):
     """
     Using single quotes as part of the match_id could be a SQL injection attack
     for reading information from other tables. While this should be prevented
@@ -47,25 +56,25 @@ def test_it_escapes_match_ids_single_quotes_preventing_stealing_information(sf_c
     create_extra_glue_table_for_unauthorized_access(glue_data_mapper_factory)
     legit_match_id = "12345"
     malicious_match_id = "foo')) UNION (select * from acceptancetests2.acceptancetests2 where customer_id in ('12345"
+    mapper = glue_data_mapper_factory("test")
     query_input = {
-        "DataMappers": [glue_data_mapper_factory("test")],
-        "DeletionQueue": [
-            {"MatchId": legit_match_id},
-            {"MatchId": malicious_match_id}
-        ]
+        "Database": mapper["QueryExecutorParameters"]["Database"],
+        "Table": mapper["QueryExecutorParameters"]["Database"],
+        "Columns": [{"Column": "customer_id", "MatchIds": [legit_match_id, malicious_match_id]}],
     }
 
     try:
-        output = arrange_and_execute(sf_client, execution_waiter, stack, data_loader, query_input)
+        output = arrange_and_execute(sf_client, execution_waiter, stack, data_loader, query_input, fargate_queue, queue_reader)
+        assert legit_match_id_is_found(dummy_lake, output)
+        assert output_contains_only_one_result_from_one_table(output)
     except WaiterError as e:
         pytest.fail(format_error(e))
 
-    assert only_one_table_was_accessed(output)
-    assert legit_match_id_is_found(dummy_lake, output)
-    assert output_contains_one_result_only(output)
 
-def test_it_escapes_match_ids_escaped_single_quotes_preventing_stealing_information(sf_client,
-    dummy_lake, execution_waiter, stack, glue_data_mapper_factory, data_loader):
+def test_it_escapes_match_ids_escaped_single_quotes_preventing_stealing_information(sf_client, dummy_lake,
+                                                                                    execution_waiter, stack,
+                                                                                    glue_data_mapper_factory,
+                                                                                    data_loader, fargate_queue, queue_reader):
     """
     This test is similar to the previous one, but with escaped quotes
     """
@@ -73,25 +82,23 @@ def test_it_escapes_match_ids_escaped_single_quotes_preventing_stealing_informat
     create_extra_glue_table_for_unauthorized_access(glue_data_mapper_factory)
     legit_match_id = "12345"
     malicious_match_id = "foo\')) UNION (select * from acceptancetests2.acceptancetests2 where customer_id in (\'12345"
+    mapper = glue_data_mapper_factory("test")
     query_input = {
-        "DataMappers": [glue_data_mapper_factory("test")],
-        "DeletionQueue": [
-            {"MatchId": legit_match_id},
-            {"MatchId": malicious_match_id}
-        ]
+        "Database": mapper["QueryExecutorParameters"]["Database"],
+        "Table": mapper["QueryExecutorParameters"]["Database"],
+        "Columns": [{"Column": "customer_id", "MatchIds": [legit_match_id, malicious_match_id]}],
     }
 
     try:
-        output = arrange_and_execute(sf_client, execution_waiter, stack, data_loader, query_input)
+        output = arrange_and_execute(sf_client, execution_waiter, stack, data_loader, query_input, fargate_queue, queue_reader)
+        assert legit_match_id_is_found(dummy_lake, output)
+        assert output_contains_only_one_result_from_one_table(output)
     except WaiterError as e:
         pytest.fail(format_error(e))
 
-    assert only_one_table_was_accessed(output)
-    assert legit_match_id_is_found(dummy_lake, output)
-    assert output_contains_one_result_only(output)
 
-def test_it_handles_unicod_smuggling_preventing_bypassing_matches(sf_client,
-    dummy_lake, execution_waiter, stack, glue_data_mapper_factory, data_loader):
+def test_it_handles_unicod_smuggling_preventing_bypassing_matches(sf_client, dummy_lake, execution_waiter, stack,
+                                                                  glue_data_mapper_factory, data_loader, fargate_queue, queue_reader):
     """
     Unicode smuggling is taken care out of the box.
     Here is a test with "ʼ", which is similar to single quote.
@@ -100,25 +107,25 @@ def test_it_handles_unicod_smuggling_preventing_bypassing_matches(sf_client,
     create_extra_glue_table_for_unauthorized_access(glue_data_mapper_factory)
     legit_match_id = "12345"
     malicious_match_id = "fooʼ)) UNION (select * from acceptancetests2.acceptancetests2 where customer_id in (ʼ12345"
+    mapper = glue_data_mapper_factory("test")
     query_input = {
-        "DataMappers": [glue_data_mapper_factory("test")],
-        "DeletionQueue": [
-            {"MatchId": legit_match_id},
-            {"MatchId": malicious_match_id}
-        ]
+        "Database": mapper["QueryExecutorParameters"]["Database"],
+        "Table": mapper["QueryExecutorParameters"]["Database"],
+        "Columns": [{"Column": "customer_id", "MatchIds": [legit_match_id, malicious_match_id]}],
     }
 
     try:
-        output = arrange_and_execute(sf_client, execution_waiter, stack, data_loader, query_input)
+        output = arrange_and_execute(sf_client, execution_waiter, stack, data_loader, query_input, fargate_queue, queue_reader)
+        assert legit_match_id_is_found(dummy_lake, output)
+        assert output_contains_only_one_result_from_one_table(output)
     except WaiterError as e:
         pytest.fail(format_error(e))
 
-    assert only_one_table_was_accessed(output)
-    assert legit_match_id_is_found(dummy_lake, output)
-    assert output_contains_one_result_only(output)
 
-def test_it_escapes_match_ids_backslash_and_comments_preventing_bypassing_matches(sf_client,
-    dummy_lake, execution_waiter, stack, glue_data_mapper_factory, data_loader):
+def test_it_escapes_match_ids_backslash_and_comments_preventing_bypassing_matches(sf_client, dummy_lake,
+                                                                                  execution_waiter, stack,
+                                                                                  glue_data_mapper_factory,
+                                                                                  data_loader, fargate_queue, queue_reader):
     """
     Another common SQLi attack vector consists on fragmented attacks. Tamper the
     result of the select by commenting out relevant match_ids by using "--"
@@ -128,24 +135,23 @@ def test_it_escapes_match_ids_backslash_and_comments_preventing_bypassing_matche
     """
 
     legit_match_id = "12345"
+    mapper = glue_data_mapper_factory("test")
     query_input = {
-        "DataMappers": [glue_data_mapper_factory("test")],
-        "DeletionQueue": [
-            {"MatchId": "\'"},
-            {"MatchId": ")) --"},
-            {"MatchId": legit_match_id}
-        ]
+        "Database": mapper["QueryExecutorParameters"]["Database"],
+        "Table": mapper["QueryExecutorParameters"]["Database"],
+        "Columns": [{"Column": "customer_id", "MatchIds": ["\'", ")) --", legit_match_id]}],
     }
 
     try:
-        output = arrange_and_execute(sf_client, execution_waiter, stack, data_loader, query_input)
+        output = arrange_and_execute(sf_client, execution_waiter, stack, data_loader, query_input, fargate_queue, queue_reader)
+        assert legit_match_id_is_found(dummy_lake, output)
     except WaiterError as e:
         pytest.fail(format_error(e))
 
-    assert legit_match_id_is_found(dummy_lake, output)
 
-def test_it_escapes_match_ids_newlines_preventing_bypassing_matches(sf_client,
-    dummy_lake, execution_waiter, stack, glue_data_mapper_factory, data_loader):
+def test_it_escapes_match_ids_newlines_preventing_bypassing_matches(sf_client, dummy_lake, execution_waiter, stack,
+                                                                    glue_data_mapper_factory, data_loader,
+                                                                    fargate_queue, queue_reader):
     """
     Another common SQLi fragmented attack may consist on using multilines for
     commenting out relevant match_ids by using "--" after a successful escape.
@@ -158,18 +164,15 @@ def test_it_escapes_match_ids_newlines_preventing_bypassing_matches(sf_client,
     """
 
     legit_match_id = "12345"
+    mapper = glue_data_mapper_factory("test")
     query_input = {
-        "DataMappers": [glue_data_mapper_factory("test")],
-        "DeletionQueue": [
-            {"MatchId": "\n--"},
-            {"MatchId": legit_match_id},
-            {"MatchId": "\n"},
-        ]
+        "Database": mapper["QueryExecutorParameters"]["Database"],
+        "Table": mapper["QueryExecutorParameters"]["Database"],
+        "Columns": [{"Column": "customer_id", "MatchIds": ["\n--", legit_match_id, "\n"]}],
     }
 
     try:
-        output = arrange_and_execute(sf_client, execution_waiter, stack, data_loader, query_input)
+        output = arrange_and_execute(sf_client, execution_waiter, stack, data_loader, query_input, fargate_queue, queue_reader)
+        assert legit_match_id_is_found(dummy_lake, output)
     except WaiterError as e:
         pytest.fail(format_error(e))
-
-    assert legit_match_id_is_found(dummy_lake, output)

@@ -4,7 +4,7 @@
     "ExecutionComplete": {
       "delay": 15,
       "operation": "DescribeExecution",
-      "maxAttempts": 5,
+      "maxAttempts": 7,
       "acceptors": [
         {
           "matcher": "path",

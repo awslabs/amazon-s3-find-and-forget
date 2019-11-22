@@ -20,19 +20,21 @@ import os
 
 import boto3
 
-from boto_utils import paginate
+from boto_utils import paginate, batch_sqs_msgs
 from decorators import with_logger
 
-client = boto3.client("glue")
+glue_client = boto3.client("glue")
+sqs = boto3.resource("sqs")
+queue = sqs.Queue(os.getenv("QueryQueue"))
 
 
 @with_logger
 def handler(event, context):
     data_mappers = event["DataMappers"]
     deletion_items = event["DeletionQueue"]
-    queries = []
     # For every partition combo of every table, create a query
     for data_mapper in data_mappers:
+        queries = []
         db = data_mapper["QueryExecutorParameters"]["Database"]
         table_name = data_mapper["QueryExecutorParameters"]["Table"]
         table = get_table(db, table_name)
@@ -63,34 +65,34 @@ def handler(event, context):
                     ],
                 })
 
-    # Workout which deletion items should be included in this query
-    for i, query in enumerate(queries):
-        applicable_match_ids = [
-            item["MatchId"] for item in deletion_items
-            if query["DataMapperId"] in item.get("DataMappers", [])
-            or len(item.get("DataMappers", [])) == 0
-        ]
-
-        # Remove the query if there are no relevant matches
-        if len(applicable_match_ids) == 0:
-            del queries[i]
-        else:
-            queries[i]["Columns"] = [
-                {
-                    "Column": c,
-                    "MatchIds": [convert_to_col_type(mid, c, table) for mid in applicable_match_ids]
-                } for c in queries[i]["Columns"]
+        # Workout which deletion items should be included in this query
+        for i, query in enumerate(queries):
+            applicable_match_ids = [
+                item["MatchId"] for item in deletion_items
+                if query["DataMapperId"] in item.get("DataMappers", [])
+                or len(item.get("DataMappers", [])) == 0
             ]
 
-    return queries
+            # Remove the query if there are no relevant matches
+            if len(applicable_match_ids) == 0:
+                del queries[i]
+            else:
+                queries[i]["Columns"] = [
+                    {
+                        "Column": c,
+                        "MatchIds": [convert_to_col_type(mid, c, table) for mid in applicable_match_ids]
+                    } for c in queries[i]["Columns"]
+                ]
+
+        batch_sqs_msgs(queue, queries)
 
 
 def get_table(db, table_name):
-    return client.get_table(DatabaseName=db, Name=table_name)["Table"]
+    return glue_client.get_table(DatabaseName=db, Name=table_name)["Table"]
 
 
 def get_partitions(db, table_name):
-    return list(paginate(client, client.get_partitions, ["Partitions"], **{
+    return list(paginate(glue_client, glue_client.get_partitions, ["Partitions"], **{
         "DatabaseName": db,
         "TableName": table_name
     }))

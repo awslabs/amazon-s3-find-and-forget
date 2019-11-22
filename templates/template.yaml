@@ -82,7 +82,7 @@ Resources:
         DeletionTasksMaxNumber: !Ref DeletionTasksMaxNumber
         DataMapperTableName: !GetAtt DDBStack.Outputs.DataMapperTable
         ECSCluster: !GetAtt DelStack.Outputs.ECSCluster
-        QueueUrl: !GetAtt DelStack.Outputs.DeleteObjectsQueueUrl
+        DeleteQueueUrl: !GetAtt DelStack.Outputs.DeleteObjectsQueueUrl
         StateMachinePrefix: !Ref ResourcePrefix
   VpcStack:
     Type: AWS::CloudFormation::Stack
@@ -123,8 +123,10 @@ Outputs:
     Value: !GetAtt DDBStack.Outputs.DeletionQueueTable
   DataMapperTable:
     Value: !GetAtt DDBStack.Outputs.DataMapperTable
-  QueueUrl:
+  DeletionQueueUrl:
     Value: !GetAtt DelStack.Outputs.DeleteObjectsQueueUrl
+  QueryQueueUrl:
+    Value: !GetAtt StateMachineStack.Outputs.QueryQueueUrl
   StateMachineArn:
     Value: !GetAtt StateMachineStack.Outputs.StateMachineArn
   StateMachineRoleArn:

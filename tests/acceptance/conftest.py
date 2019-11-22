@@ -360,3 +360,32 @@ def data_loader(dummy_lake):
         bucket.upload_file(file_path, object_key)
 
     return load_data
+
+
+@pytest.fixture(scope="session")
+def query_queue(stack):
+    queue = boto3.resource("sqs").Queue(stack["QueryQueueUrl"])
+    queue.purge()
+    return queue
+
+
+@pytest.fixture(scope="session")
+def fargate_queue(stack):
+    queue = boto3.resource("sqs").Queue(stack["DeletionQueueUrl"])
+    queue.purge()
+    return queue
+
+
+@pytest.fixture
+def queue_reader(sf_client):
+    def read(queue, msgs_to_read=10):
+        messages = queue.receive_messages(WaitTimeSeconds=5, MaxNumberOfMessages=msgs_to_read)
+        for message in messages:
+            message.delete()
+            body = json.loads(message.body)
+            if body.get("TaskToken"):
+                sf_client.send_task_success(taskToken=body["TaskToken"], output=json.dumps({}))
+
+        return messages
+
+    return read

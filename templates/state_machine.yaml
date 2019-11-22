@@ -32,7 +32,7 @@ Parameters:
     Type: Number
   ECSCluster:
     Type: String
-  QueueUrl:
+  DeleteQueueUrl:
     Type: String
   LogLevel:
     Type: String
@@ -98,92 +98,101 @@ Resources:
       RoleArn: !GetAtt StatesExecutionRole.Arn
       DefinitionString: !Sub |-
         {
-          "StartAt": "Generate Queries",
+          "StartAt": "Execute Query",
           "States": {
-            "Generate Queries": {
-              "Comment": "Generates a list of queries which need to be executed by Lambda",
+            "Execute Query": {
+              "Comment": "Start an Athena query asynchronously",
               "Type": "Task",
-              "Resource": "${GenerateQueries.Arn}",
-              "ResultPath": "$.Queries",
-              "Next": "Execute Queries"
+              "Parameters": {
+                "QueryData.$": "$",
+                "Bucket": "${ResultBucket}",
+                "Prefix.$": "queries"
+              },
+              "Resource": "${ExecuteQuery.Arn}",
+              "ResultPath": "$.QueryId",
+              "Next": "Get Query Status"
             },
-            "Execute Queries": {
-              "Comment": "Executes the generated list of queries in parallel. Returns a list of lists",
+            "Wait for Query": {
+              "Comment": "Waits before checking again whether Athena is done",
+              "Type": "Wait",
+              "Seconds": 15,
+              "Next": "Get Query Status"
+            },
+            "Get Query Status": {
+              "Comment": "Gets the status of the given Athena query",
+              "Type": "Task",
+              "Resource": "${CheckQueryStatus.Arn}",
+              "InputPath": "$.QueryId",
+              "ResultPath": "$.QueryStatus",
+              "Next": "Query Complete?"
+            },
+            "Query Complete?": {
+              "Comment": "Check if the Athena query is still running",
+              "Type": "Choice",
+              "Choices": [
+              {
+                "Variable": "$.QueryStatus.State",
+                "StringEquals": "SUCCEEDED",
+                "Next": "Query Succeeded"
+              },
+              {
+                "Or": [
+                  {
+                    "Variable": "$.QueryStatus.State",
+                    "StringEquals": "FAILED"
+                  },
+                  {
+                    "Variable": "$.QueryStatus.State",
+                    "StringEquals": "CANCELLED"
+                  }
+                ],
+                "Next": "Query Failed"
+              }
+              ],
+              "Default": "Wait for Query"
+            },
+            "Query Succeeded": {
+              "Comment": "The query was successful",
+              "Type": "Pass",
+              "Next": "Get Query Results"
+            },
+            "Query Failed": {
+              "Comment": "The query was unsuccessful",
+              "Type": "Fail"
+            },
+            "Get Query Results": {
+              "Comment": "Obtain the query results from S3, formatting as a JSON object",
+              "Type": "Task",
+              "Resource": "${GetQueryResults.Arn}",
+              "InputPath": "$.QueryId",
+              "ResultPath": "$.Objects",
+              "Next": "Populate Queue"
+            },
+            "Populate Queue": {
+              "Comment": "Creates queue items for every file",
               "Type": "Map",
               "End": true,
-              "ItemsPath": "$.Queries",
-              "ResultPath": "$",
-              "MaxConcurrency": 10,
+              "ItemsPath": "$.Objects",
+              "ResultPath": null,
+              "Parameters": {
+                "Object.$": "$$.Map.Item.Value",
+                "Columns.$": "$.Columns"
+              },
               "Iterator": {
-                "StartAt": "Execute Query",
+                "StartAt": "Send Message",
                 "States": {
-                  "Execute Query": {
-                    "Comment": "Start an Athena query asynchronously",
+                  "Send Message": {
                     "Type": "Task",
+                    "Resource": "arn:aws:states:::sqs:sendMessage",
+                    "HeartbeatSeconds": 3600,
                     "Parameters": {
-                      "QueryData.$": "$",
-                      "Bucket": "${ResultBucket}",
-                      "Prefix": "queries"
+                      "QueueUrl": "${DeleteQueueUrl}",
+                      "MessageGroupId.$": "$$.Execution.Id",
+                      "MessageBody": {
+                         "Input.$": "$"
+                      }
                     },
-                    "Resource": "${ExecuteQuery.Arn}",
-                    "ResultPath": "$.QueryId",
-                    "Next": "Get Query Status"
-                  },
-                  "Wait for Query": {
-                    "Comment": "Waits before checking again whether Athena is done",
-                    "Type": "Wait",
-                    "Seconds": 15,
-                    "Next": "Get Query Status"
-                  },
-                  "Get Query Status": {
-                    "Comment": "Gets the status of the given Athena query",
-                    "Type": "Task",
-                    "Resource": "${CheckQueryStatus.Arn}",
-                    "InputPath": "$.QueryId",
-                    "ResultPath": "$.QueryStatus",
-                    "Next": "Query Complete?"
-                  },
-                  "Query Complete?": {
-                    "Comment": "Check if the Athena query is still running",
-                    "Type": "Choice",
-                    "Choices": [
-                    {
-                      "Variable": "$.QueryStatus.State",
-                      "StringEquals": "SUCCEEDED",
-                      "Next": "Query Succeeded"
-                    },
-                    {
-                      "Or": [
-                        {
-                          "Variable": "$.QueryStatus.State",
-                          "StringEquals": "FAILED"
-                        },
-                        {
-                          "Variable": "$.QueryStatus.State",
-                          "StringEquals": "CANCELLED"
-                        }
-                      ],
-                      "Next": "Query Failed"
-                    }
-                    ],
-                    "Default": "Wait for Query"
-                  },
-                  "Query Succeeded": {
-                    "Comment": "The query was successful",
-                    "Type": "Pass",
-                    "Next": "Get Query Results"
-                  },
-                  "Get Query Results": {
-                    "Comment": "Obtain the query results from S3, formatting as a JSON object",
-                    "Type": "Task",
-                    "Resource": "${GetQueryResults.Arn}",
-                    "InputPath": "$.QueryId",
-                    "ResultPath": "$.Objects",
                     "End": true
-                  },
-                  "Query Failed": {
-                    "Comment": "The query was unsuccessful",
-                    "Type": "Fail"
                   }
                 }
               }
@@ -205,7 +214,7 @@ Resources:
               "Type": "Task",
               "Resource": "${CheckQueueSize.Arn}",
               "Parameters": {
-                "QueueUrl": "${QueueUrl}"
+                "QueueUrl": "${DeleteQueueUrl}"
               },
               "ResultPath": "$.TotalMessages",
               "Next": "Adjust Deletion Service Instance Count"
@@ -251,7 +260,7 @@ Resources:
               "Type": "Task",
               "Resource": "${CheckQueueSize.Arn}",
               "Parameters": {
-                "QueueUrl": "${QueueUrl}"
+                "QueueUrl": "${DeleteQueueUrl}"
               },
               "ResultPath": "$.TotalMessages",
               "Next": "Queue is Empty?"
@@ -373,7 +382,7 @@ Resources:
             },
             "Discover Files": {
               "Type": "Parallel",
-              "Next": "Flatten Results",
+              "Next": "Delete Queue Items",
               "ResultPath": "$.QueryResults",
               "Branches": [
                 {
@@ -386,69 +395,28 @@ Resources:
                       },
                       "Comment": "Process Data Mappers with Athena as the query executor",
                       "Type": "Pass",
-                      "Next": "Query Glue Catalogs"
+                      "Next": "Generate Queries"
                     },
-                    "Query Glue Catalogs": {
-                      "Type":"Task",
-                      "Resource":"arn:aws:states:::states:startExecution.sync",
-                      "Parameters":{
-                        "Input.$": "$",
-                        "StateMachineArn": "${AthenaStateMachine}",
-                        "Name.$":"$$.Execution.Name"
-                      },
-                      "OutputPath": "$.Output",
-                      "Next": "Parse State Machine Results"
-                    },
-                    "Parse State Machine Results": {
-                      "Comment": "Parses the output from the state machine",
+                    "Generate Queries": {
+                      "Comment": "Process each of the Athena data mappers and populate the Athena query queue",
                       "Type": "Task",
-                      "Resource": "${ParseStateMachineOutput.Arn}",
+                      "Resource": "${GenerateQueries.Arn}",
+                      "ResultPath": null,
+                      "Next": "Work Query Queue"
+                    },
+                    "Work Query Queue": {
+                      "Comment": "Stars the Athena Query workflow for each item in the query queue",
+                      "Type": "Pass",
+                      "Next": "Start Fargate Workflow"
+                    },
+                    "Start Fargate Workflow": {
+                      "Comment": "Starts the Fargate deletion workflow",
+                      "Type": "Pass",
                       "End": true
                     }
                   }
                 }
               ]
-            },
-            "Flatten Results": {
-              "Comment": "Parses and flattens the result of all branches",
-              "Type": "Pass",
-              "InputPath": "$.QueryResults[*][*]",
-              "ResultPath": "$.QueryResults",
-              "Next": "Aggregate and Depduplicate Results"
-            },
-            "Aggregate and Depduplicate Results": {
-              "Comment": "Aggregates the results and deduplicates",
-              "Type": "Task",
-              "InputPath": "$.QueryResults",
-              "ResultPath": "$.QueryResults",
-              "Resource": "${AggregateResults.Arn}",
-              "Next": "Populate Queue"
-            },
-            "Populate Queue": {
-              "Comment": "Creates queue items for every file",
-              "Type": "Map",
-              "Next": "Delete Queue Items",
-              "ItemsPath": "$.QueryResults",
-              "ResultPath": "$.DeletionResults",
-              "Iterator": {
-                "StartAt": "Send Message",
-                "States": {
-                  "Send Message": {
-                    "Type": "Task",
-                    "Resource": "arn:aws:states:::sqs:sendMessage.waitForTaskToken",
-                    "HeartbeatSeconds": 3600,
-                    "Parameters": {
-                      "QueueUrl": "${QueueUrl}",
-                      "MessageGroupId.$": "$$.Execution.Id",
-                      "MessageBody": {
-                        "Input.$": "$",
-                        "TaskToken.$": "$$.Task.Token"
-                      }
-                    },
-                    "End": true
-                  }
-                }
-              }
             },
             "Delete Queue Items": {
               "Comment": "Deletes all items from the deletion queue",
@@ -495,6 +463,9 @@ Resources:
           Prefix: queries
           Status: Enabled
           ExpirationInDays: '1'
+
+  QueryQueue:
+    Type: AWS::SQS::Queue
 
   # Tasks
   OldestExecutionCheck:
@@ -592,13 +563,20 @@ Resources:
     Properties:
       Handler: generate_queries.handler
       CodeUri: ../backend/lambdas/tasks/
+      Environment:
+        Variables:
+          QueryQueue: !Ref QueryQueue
       Policies:
       - Statement:
-        - Action:
+        - Effect: "Allow"
+          Action:
           - "glue:GetDatabase"
           - "glue:GetTable*"
           - "glue:GetPartition*"
-          Effect: "Allow"
+          Resource: "*"
+        - Effect: Allow
+          Action:
+          - "sqs:SendMessage*"
           Resource: "*"
 
   OrchestrateECSServiceScaling:
@@ -620,13 +598,15 @@ Resources:
       CodeUri: ../backend/lambdas/tasks/
 
 Outputs:
+  AthenaStateMachineArn:
+    Value: !Ref AthenaStateMachine
+  AthenaExecutionRoleArn:
+    Value: !GetAtt ExecuteQueryRole.Arn
   StateMachineArn:
     Value: !Ref StateMachine
   StateMachineRoleArn:
     Value: !GetAtt StatesExecutionRole.Arn
-  AthenaStateMachineArn:
-    Value: !Ref AthenaStateMachine
+  QueryQueueUrl:
+    Value: !Ref QueryQueue
   ResultBucket:
     Value: !Ref ResultBucket
-  AthenaExecutionRoleArn:
-    Value: !GetAtt ExecuteQueryRole.Arn
