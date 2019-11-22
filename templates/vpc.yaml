@@ -199,16 +199,6 @@ Resources:
       VpcEndpointType: Interface
       VpcId: !Ref VPC
 
-  DynamoDBEndpoint:
-    Type: AWS::EC2::VPCEndpoint
-    Properties:
-      RouteTableIds:
-        - !Ref PrivateRouteTable1
-        - !Ref PrivateRouteTable2
-        - !If [HasThreeAZs, !Ref PrivateRouteTable3, !Ref 'AWS::NoValue']
-      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.dynamodb'
-      VpcId: !Ref VPC
-  
   ECREndpoint:
     Type: AWS::EC2::VPCEndpoint
     Properties:

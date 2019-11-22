@@ -71,16 +71,19 @@ Resources:
     Properties:
       TemplateURL: ./state_machine.yaml
       Parameters:
+        AthenaWorkGroup: !Ref AthenaWorkGroup
         CommonLayers: !Join
           - ","
           - - !GetAtt LayersStack.Outputs.AWSSDKLayer
             - !GetAtt LayersStack.Outputs.Decorators
             - !GetAtt LayersStack.Outputs.BotoUtils
+        DeleteServiceName: !GetAtt DelStack.Outputs.DeleteServiceName
         DeletionQueueTableName: !GetAtt DDBStack.Outputs.DeletionQueueTable
+        DeletionTasksMaxNumber: !Ref DeletionTasksMaxNumber
         DataMapperTableName: !GetAtt DDBStack.Outputs.DataMapperTable
+        ECSCluster: !GetAtt DelStack.Outputs.ECSCluster
         QueueUrl: !GetAtt DelStack.Outputs.DeleteObjectsQueueUrl
         StateMachinePrefix: !Ref ResourcePrefix
-        AthenaWorkGroup: !Ref AthenaWorkGroup
   VpcStack:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -95,7 +98,6 @@ Resources:
       Parameters:
         DeletionTaskCPU: !Ref DeletionTaskCPU
         DeletionTaskMemory: !Ref DeletionTaskMemory
-        DeletionTasksMaxNumber: !Ref DeletionTasksMaxNumber
         ResourcePrefix: !Ref ResourcePrefix
         VpcSecurityGroup: !GetAtt VpcStack.Outputs.SecurityGroup
         VpcSubnets: !GetAtt VpcStack.Outputs.Subnets
@@ -103,10 +105,14 @@ Resources:
 Outputs:
   APIStack:
     Value: !Ref APIStack
-  DDBStack:
-    Value: !Ref DDBStack
   ApiUrl:
     Value: !GetAtt APIStack.Outputs.ApiUrl
+  AthenaStateMachineArn:
+    Value: !GetAtt StateMachineStack.Outputs.AthenaStateMachineArn
+  AthenaExecutionRoleArn:
+    Value: !GetAtt StateMachineStack.Outputs.AthenaExecutionRoleArn
+  DDBStack:
+    Value: !Ref DDBStack
   CognitoUserPoolId:
     Value: !GetAtt APIStack.Outputs.CognitoUserPoolId
   CognitoUserPoolClientId:
@@ -117,13 +123,9 @@ Outputs:
     Value: !GetAtt DDBStack.Outputs.DeletionQueueTable
   DataMapperTable:
     Value: !GetAtt DDBStack.Outputs.DataMapperTable
+  QueueUrl:
+    Value: !GetAtt DelStack.Outputs.DeleteObjectsQueueUrl
   StateMachineArn:
     Value: !GetAtt StateMachineStack.Outputs.StateMachineArn
   StateMachineRoleArn:
     Value: !GetAtt StateMachineStack.Outputs.StateMachineRoleArn
-  AthenaStateMachineArn:
-    Value: !GetAtt StateMachineStack.Outputs.AthenaStateMachineArn
-  AthenaExecutionRoleArn:
-    Value: !GetAtt StateMachineStack.Outputs.AthenaExecutionRoleArn
-  QueueUrl:
-    Value: !GetAtt DelStack.Outputs.DeleteObjectsQueueUrl

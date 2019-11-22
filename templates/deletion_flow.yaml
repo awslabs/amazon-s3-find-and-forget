@@ -7,8 +7,6 @@ Parameters:
     Type: String
   DeletionTaskMemory:
     Type: String
-  DeletionTasksMaxNumber:
-    Type: Number
   LogRetentionInDays:
     Type: Number
     Default: 7
@@ -42,57 +40,6 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
 
-  AutoScalingRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - application-autoscaling.amazonaws.com
-            Action: 
-              - "sts:AssumeRole"
-      Path: /
-      Policies:
-        - PolicyName: service-autoscaling
-          PolicyDocument:
-            Statement:
-              - Effect: Allow
-                Action:
-                  - application-autoscaling:*
-                  - cloudwatch:DescribeAlarms
-                  - cloudwatch:PutMetricAlarm
-                  - ecs:DescribeServices
-                  - ecs:UpdateService
-                Resource: "*"
-  
-  AutoScalingTarget:
-    Type: AWS::ApplicationAutoScaling::ScalableTarget
-    Properties:
-      MaxCapacity: !Ref DeletionTasksMaxNumber
-      MinCapacity: 0
-      ResourceId: !Sub service/${ECSCluster}/${DeleteService.Name}
-      RoleARN: !GetAtt AutoScalingRole.Arn
-      ScalableDimension: ecs:service:DesiredCount
-      ServiceNamespace: ecs
-
-  ScaleInOut:
-    Type: AWS::ApplicationAutoScaling::ScalingPolicy
-    Properties:
-      PolicyName: !Sub ${DelObjQ.QueueName}-TaskScalingInOut
-      PolicyType: StepScaling
-      ScalingTargetId: !Ref AutoScalingTarget
-      StepScalingPolicyConfiguration:
-        Cooldown: 30
-        AdjustmentType: ExactCapacity
-        StepAdjustments:
-          - MetricIntervalLowerBound: 0
-            MetricIntervalUpperBound: 1
-            ScalingAdjustment: 0
-          - MetricIntervalLowerBound: 1
-            ScalingAdjustment: !Ref DeletionTasksMaxNumber
-
   DelObjQ:
     Type: AWS::SQS::Queue
     Properties:
@@ -100,43 +47,6 @@ Resources:
       FifoQueue: true
       ReceiveMessageWaitTimeSeconds: 0
       VisibilityTimeout: 43200
-
-  DelQSizeAlarm:
-    Type: AWS::CloudWatch::Alarm
-    Properties:
-      AlarmActions:
-        - !Ref ScaleInOut
-      AlarmDescription: Amazon S3 Find and Forget CloudWatch Alarm for DeletionQueue size, used to trigger Auto-Scaling for Deletion Fargate Tasks
-      ComparisonOperator: GreaterThanThreshold
-      EvaluationPeriods: 1
-      Metrics:
-        - Expression: SUM([m1, m2])
-          Id: sum1
-        - Id: m1
-          MetricStat:
-            Metric:
-              Dimensions:
-                - Name: QueueName
-                  Value: !GetAtt DelObjQ.QueueName
-              MetricName: ApproximateNumberOfMessagesVisible
-              Namespace: AWS/SQS
-            Period: 60
-            Stat: Sum
-          ReturnData: false
-        - Id: m2
-          MetricStat:
-            Metric:
-              Dimensions:
-                - Name: QueueName
-                  Value: !GetAtt DelObjQ.QueueName
-              MetricName: ApproximateNumberOfMessagesNotVisible
-              Namespace: AWS/SQS
-            Period: 60
-            Stat: Sum
-          ReturnData: false
-      OKActions:
-        - !Ref ScaleInOut
-      Threshold: 0
 
   DeleteTaskDefinition:
     Type: AWS::ECS::TaskDefinition
@@ -209,5 +119,9 @@ Resources:
 Outputs:
   DeleteObjectsQueueUrl:
     Value: !Ref DelObjQ
+  DeleteServiceName:
+    Value: !GetAtt DeleteService.Name
   DeleteTaskIAMRoleArn:
     Value: !GetAtt DeleteTaskIAMRole.Arn
+  ECSCluster:
+    Value: !Ref ECSCluster
