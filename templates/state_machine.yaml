@@ -106,7 +106,7 @@ Resources:
               "Parameters": {
                 "QueryData.$": "$",
                 "Bucket": "${ResultBucket}",
-                "Prefix.$": "queries"
+                "Prefix": "queries"
               },
               "Resource": "${ExecuteQuery.Arn}",
               "ResultPath": "$.QueryId",
