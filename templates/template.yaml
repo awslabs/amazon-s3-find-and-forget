@@ -3,6 +3,10 @@ Transform: AWS::Serverless-2016-10-31
 Description: Amazon S3 Find and Forget (uksb-1q2j8beb0)
 
 Parameters:
+  AthenaWorkGroup:
+    Description: WorkGroup to use for Athena queries
+    Type: String
+    Default: primary
   CognitoUserPoolName:
     Type: String
     Default: S3F2Pool
@@ -35,10 +39,6 @@ Parameters:
     Type: String
     Default: 10.0.0.0/16
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
-  AthenaWorkGroup:
-    Description: WorkGroup to use for Athena queries
-    Type: String
-    Default: primary
 
 Resources:
   LayersStack:
@@ -111,22 +111,24 @@ Outputs:
     Value: !GetAtt StateMachineStack.Outputs.AthenaStateMachineArn
   AthenaExecutionRoleArn:
     Value: !GetAtt StateMachineStack.Outputs.AthenaExecutionRoleArn
-  DDBStack:
-    Value: !Ref DDBStack
-  CognitoUserPoolId:
-    Value: !GetAtt APIStack.Outputs.CognitoUserPoolId
   CognitoUserPoolClientId:
     Value: !GetAtt APIStack.Outputs.CognitoUserPoolClientId
+  CognitoUserPoolId:
+    Value: !GetAtt APIStack.Outputs.CognitoUserPoolId
+  DataMapperTable:
+    Value: !GetAtt DDBStack.Outputs.DataMapperTable
+  DDBStack:
+    Value: !Ref DDBStack
   DeleteTaskIAMRoleArn:
     Value: !GetAtt DelStack.Outputs.DeleteTaskIAMRoleArn
   DeletionQueueTable:
     Value: !GetAtt DDBStack.Outputs.DeletionQueueTable
-  DataMapperTable:
-    Value: !GetAtt DDBStack.Outputs.DataMapperTable
+  ECRRepository:
+    Value: !GetAtt DelStack.Outputs.ECRRepository
   DeletionQueueUrl:
     Value: !GetAtt DelStack.Outputs.DeleteObjectsQueueUrl
   QueryQueueUrl:
-    Value: !GetAtt StateMachineStack.Outputs.QueryQueueUrl
+     Value: !GetAtt StateMachineStack.Outputs.QueryQueueUrl
   StateMachineArn:
     Value: !GetAtt StateMachineStack.Outputs.StateMachineArn
   StateMachineRoleArn:

@@ -125,3 +125,5 @@ Outputs:
     Value: !GetAtt DeleteTaskIAMRole.Arn
   ECSCluster:
     Value: !Ref ECSCluster
+  ECRRepository:
+    Value: !Ref ECRRepository
