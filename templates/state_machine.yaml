@@ -433,8 +433,16 @@ Resources:
               ]
             },
             "Start Fargate Workflow": {
-              "Comment": "Starts the Fargate deletion workflow",
-              "Type": "Pass",
+              "Type":"Task",
+              "Resource":"arn:aws:states:::states:startExecution.sync",
+              "Parameters":{
+                "Input":{
+                  "AWS_STEP_FUNCTIONS_STARTED_BY_EXECUTION_ID.$": "$$.Execution.Id"
+                },
+                "StateMachineArn":"${DeleteStateMachine}",
+                "Name.$": "$$.Execution.Name"
+              },
+              "ResultPath": null,
               "Next": "Delete Queue Items"
             },
             "Delete Queue Items": {
