@@ -68,16 +68,16 @@ def test_it_truncates_received_messages_once_the_desired_amount_returned():
     result = read_queue(queue, 2)
     assert 2 == len(result)
     assert 1 == queue.receive_messages.call_count
-    for m in mock_list[8:]:
-        m.change_visibility.assert_called()
 
 
 def test_it_handles_desired_number_of_msgs_greater_than_max_batch():
     queue = MagicMock()
-    queue.receive_messages.return_value = list(range(0, 10))
-    read_queue(queue, 20)
+    queue.receive_messages.side_effect = [list(range(0, 10)), list(range(0, 5))]
+    read_queue(queue, 15)
     assert 2 == queue.receive_messages.call_count
-    queue.receive_messages.assert_called_with(MaxNumberOfMessages=10, AttributeNames=['All'])
+    print(queue.receive_messages.call_args_list)
+    queue.receive_messages.assert_any_call(MaxNumberOfMessages=10, AttributeNames=['All'])
+    queue.receive_messages.assert_any_call(MaxNumberOfMessages=5, AttributeNames=['All'])
 
 
 def test_it_handles_queue_with_less_msgs_than_desired():

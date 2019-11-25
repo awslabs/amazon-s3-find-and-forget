@@ -20,7 +20,7 @@ def read_queue(queue, number_to_read=10):
     msgs = []
     while len(msgs) < number_to_read:
         received = queue.receive_messages(
-            MaxNumberOfMessages=min(number_to_read, batch_size),
+            MaxNumberOfMessages=min((number_to_read - len(msgs)), batch_size),
             AttributeNames=['All']
         )
         if len(received) == 0:
@@ -28,10 +28,6 @@ def read_queue(queue, number_to_read=10):
         remaining = number_to_read - len(msgs)
         i = min(remaining, len(received))  # take as many as allowed from the received messages
         msgs = msgs + received[:i]
-        if len(msgs) == number_to_read:  # if we have the desired amount then put the leftovers back on the queue
-            for msg in received[i:]:
-                msg.change_visibility(VisibilityTimeout=0)
-            break
     return msgs
 
 
