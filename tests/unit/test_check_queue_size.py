@@ -1,4 +1,3 @@
-from datetime import datetime
 from types import SimpleNamespace
 
 import pytest
@@ -21,4 +20,8 @@ def test_it_returns_correct_queue_size(mock_resource):
     event = {"QueueUrl": "queue_url"}
 
     resp = handler(event, SimpleNamespace())
-    assert 6 == resp
+    assert {
+        "Visible": 4,
+        "NotVisible": 2,
+        "Total": 6
+    } == resp

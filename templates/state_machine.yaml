@@ -13,6 +13,10 @@ Globals:
         LogLevel: !Ref LogLevel
 
 Parameters:
+  AthenaConcurrencyLimit:
+    Description: How many Athena queries should be scheduled concurrently
+    Type: Number
+    Default: 20
   AthenaWorkGroup:
     Description: WorkGroup to use for Athena queries
     Type: String
@@ -171,7 +175,7 @@ Resources:
             "Populate Queue": {
               "Comment": "Creates queue items for every file",
               "Type": "Map",
-              "End": true,
+              "Next": "Mark Execution as Success",
               "ItemsPath": "$.Objects",
               "ResultPath": null,
               "Parameters": {
@@ -196,6 +200,13 @@ Resources:
                   }
                 }
               }
+            },
+            "Mark Execution as Success": {
+              "Comment": "If an SQS message receipt handle was provided, it will now be deleted",
+              "Type": "Task",
+              "Resource": "${DeleteQueueMessage.Arn}",
+              "ResultPath": null,
+              "End": true
             }
           }
         }
@@ -216,7 +227,7 @@ Resources:
               "Parameters": {
                 "QueueUrl": "${DeleteQueueUrl}"
               },
-              "ResultPath": "$.TotalMessages",
+              "ResultPath": "$.Queue",
               "Next": "Adjust Deletion Service Instance Count"
             },
             "Adjust Deletion Service Instance Count": {
@@ -227,7 +238,7 @@ Resources:
                 "Cluster": "${ECSCluster}",
                 "DeleteService": "${DeleteServiceName}",
                 "DeletionTasksMaxNumber": ${DeletionTasksMaxNumber},
-                "QueueSize.$": "$.TotalMessages"
+                "QueueSize.$": "$.Queue.Total"
               },
               "ResultPath": "$.DesiredCount",
               "Next": "Items in Queue?"
@@ -262,7 +273,7 @@ Resources:
               "Parameters": {
                 "QueueUrl": "${DeleteQueueUrl}"
               },
-              "ResultPath": "$.TotalMessages",
+              "ResultPath": "$.Queue",
               "Next": "Queue is Empty?"
             },
             "Queue is Empty?": {
@@ -270,12 +281,12 @@ Resources:
               "Type": "Choice",
               "Choices": [
                 {
-                  "Variable": "$.TotalMessages",
+                  "Variable": "$.Queue.Total",
                   "NumericEquals": 0,
                   "Next": "Adjust Deletion Service Instance Count"
                 },
                 {
-                  "Variable": "$.TotalMessages",
+                  "Variable": "$.Queue.Total",
                   "NumericGreaterThan": 0,
                   "Next": "Wait"
                 }
@@ -291,7 +302,6 @@ Resources:
           }
         }
 
-  # Not exposed yet
   StateMachine:
     Type: AWS::StepFunctions::StateMachine
     Properties:
@@ -382,8 +392,8 @@ Resources:
             },
             "Discover Files": {
               "Type": "Parallel",
-              "Next": "Delete Queue Items",
-              "ResultPath": "$.QueryResults",
+              "Next": "Start Fargate Workflow",
+              "ResultPath": null,
               "Branches": [
                 {
                   "StartAt": "Filter Athena Data Mappers",
@@ -402,21 +412,60 @@ Resources:
                       "Type": "Task",
                       "Resource": "${GenerateQueries.Arn}",
                       "ResultPath": null,
-                      "Next": "Work Query Queue"
+                      "Next": "Fetch Queue Size"
                     },
-                    "Work Query Queue": {
-                      "Comment": "Stars the Athena Query workflow for each item in the query queue",
-                      "Type": "Pass",
-                      "Next": "Start Fargate Workflow"
+                    "Fetch Queue Size": {
+                      "Comment": "Checks the number of messages in the Query Queue",
+                      "Type": "Task",
+                      "Resource": "${CheckQueueSize.Arn}",
+                      "Parameters": {
+                        "QueueUrl": "${QueryQueue}"
+                      },
+                      "ResultPath": "$.QueryQueue",
+                      "Next": "Outstanding Queries?"
                     },
-                    "Start Fargate Workflow": {
-                      "Comment": "Starts the Fargate deletion workflow",
+                    "Outstanding Queries?": {
+                      "Comment": "Checks if any queries are yet to be ran or are in progress or if we need to wait for capacity",
+                      "Type": "Choice",
+                      "Choices": [
+                        {
+                          "Variable": "$.QueryQueue.Total",
+                          "NumericEquals": 0,
+                          "Next": "Done"
+                        },
+                        {
+                          "Variable": "$.QueryQueue.NotVisible",
+                          "NumericLessThan": ${AthenaConcurrencyLimit},
+                          "Next": "Work Queue"
+                        }
+                      ],
+                      "Default": "Wait for Queries"
+                    },
+                    "Work Queue": {
+                      "Comment": "Works the Object Deletion Queue by starting Athena State Machine executions",
+                      "Type": "Task",
+                      "Resource": "${WorkQueryQueue.Arn}",
+                      "ResultPath": null,
+                      "Next": "Wait for Queries"
+                    },
+                    "Wait for Queries": {
+                      "Comment": "Waits before rechecking if the Object Deletion Queue is empty",
+                      "Type": "Wait",
+                      "Seconds": 5,
+                      "Next": "Fetch Queue Size"
+                    },
+                    "Done": {
                       "Type": "Pass",
                       "End": true
                     }
                   }
                 }
               ]
+            },
+            "Start Fargate Workflow": {
+              "Comment": "Starts the Fargate deletion workflow",
+              "Type": "Pass",
+              "Next": "Delete Queue Items"
             },
             "Delete Queue Items": {
               "Comment": "Deletes all items from the deletion queue",
@@ -466,6 +515,8 @@ Resources:
 
   QueryQueue:
     Type: AWS::SQS::Queue
+    Properties:
+      VisibilityTimeout: 120
 
   # Tasks
   OldestExecutionCheck:
@@ -596,6 +647,44 @@ Resources:
     Properties:
       Handler: aggregate_results.handler
       CodeUri: ../backend/lambdas/tasks/
+
+  WorkQueryQueue:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: work_query_queue.handler
+      CodeUri: ../backend/lambdas/tasks/
+      Environment:
+        Variables:
+          AthenaConcurrencyLimit: !Ref AthenaConcurrencyLimit
+          StateMachineArn: !Ref AthenaStateMachine
+          QueueUrl: !Ref QueryQueue
+      Policies:
+      - Statement:
+        - Action:
+            - "sqs:ReceiveMessage*"
+            - "sqs:ChangeMessageVisibility"
+            - "sqs:PurgeQueue"
+          Effect: "Allow"
+          Resource: "*"
+        - Effect: Allow
+          Action:
+            - "states:StartExecution"
+          Resource: !Ref AthenaStateMachine
+
+  DeleteQueueMessage:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: delete_message.handler
+      CodeUri: ../backend/lambdas/tasks/
+      Environment:
+        Variables:
+          QueueUrl: !Ref QueryQueue
+      Policies:
+      - Statement:
+        - Action:
+            - "sqs:DeleteMessage"
+          Effect: "Allow"
+          Resource: "*"
 
 Outputs:
   AthenaStateMachineArn:

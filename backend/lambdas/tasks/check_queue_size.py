@@ -15,5 +15,10 @@ def get_attribute(q, attribute):
 @with_logger
 def handler(event, context):
     queue = sqs.Queue(event["QueueUrl"])
-    return (get_attribute(queue, "ApproximateNumberOfMessages") +
-            get_attribute(queue, "ApproximateNumberOfMessagesNotVisible"))
+    visible = get_attribute(queue, "ApproximateNumberOfMessages")
+    not_visible = get_attribute(queue, "ApproximateNumberOfMessagesNotVisible")
+    return {
+        "Visible": visible,
+        "NotVisible": not_visible,
+        "Total": visible + not_visible
+    }
