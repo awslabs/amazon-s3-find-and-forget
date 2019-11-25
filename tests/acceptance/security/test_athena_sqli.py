@@ -19,7 +19,7 @@ def arrange_and_execute(sf_client, execution_waiter, stack, data_loader, query_i
     execution_waiter.wait(executionArn=execution_arn)
     messages = queue_reader(fargate_queue)
     return [
-        json.loads(message.body)["Input"] for message in messages
+        json.loads(message.body) for message in messages
     ]
 
 

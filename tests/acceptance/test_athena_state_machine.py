@@ -36,8 +36,8 @@ def test_it_queries_unpartitioned_data(sf_client, dummy_lake, execution_waiter, 
     body = json.loads(messages[0].body)
     assert [
         {"Column": "customer_id", "MatchIds": ["12345"]}
-    ] == body["Input"]["Columns"]
-    assert "s3://{}/{}".format(dummy_lake["bucket_name"], object_key) == body["Input"]["Object"]
+    ] == body["Columns"]
+    assert "s3://{}/{}".format(dummy_lake["bucket_name"], object_key) == body["Object"]
 
 
 def test_it_queries_partitioned_data(sf_client, dummy_lake, execution_waiter, stack, glue_data_mapper_factory,
@@ -68,5 +68,5 @@ def test_it_queries_partitioned_data(sf_client, dummy_lake, execution_waiter, st
     body = json.loads(messages[0].body)
     assert [
         {"Column": "customer_id", "MatchIds": ["12345"]}
-    ] == body["Input"]["Columns"]
-    assert "s3://{}/{}".format(dummy_lake["bucket_name"], object_key) == body["Input"]["Object"]
+    ] == body["Columns"]
+    assert "s3://{}/{}".format(dummy_lake["bucket_name"], object_key) == body["Object"]

@@ -50,6 +50,17 @@ def test_it_batches_msgs():
     } for x in range(10, 15)])
 
 
+def test_it_passes_through_queue_args():
+    queue = MagicMock()
+    msgs = [1]
+    batch_sqs_msgs(queue, msgs, MessageGroupId="test")
+    queue.send_messages.assert_any_call(Entries=[{
+        "MessageGroupId": "test",
+        "Id": ANY,
+        "MessageBody": ANY
+    }])
+
+
 def test_it_truncates_received_messages_once_the_desired_amount_returned():
     queue = MagicMock()
     mock_list = [MagicMock() for i in range(0, 10)]

@@ -158,48 +158,18 @@ Resources:
             "Query Succeeded": {
               "Comment": "The query was successful",
               "Type": "Pass",
-              "Next": "Get Query Results"
+              "Next": "Submit Query Results"
             },
             "Query Failed": {
               "Comment": "The query was unsuccessful",
               "Type": "Fail"
             },
-            "Get Query Results": {
-              "Comment": "Obtain the query results from S3, formatting as a JSON object",
+            "Submit Query Results": {
+              "Comment": "Obtain the query results from S3 and send them to Fargate",
               "Type": "Task",
-              "Resource": "${GetQueryResults.Arn}",
-              "InputPath": "$.QueryId",
-              "ResultPath": "$.Objects",
-              "Next": "Populate Queue"
-            },
-            "Populate Queue": {
-              "Comment": "Creates queue items for every file",
-              "Type": "Map",
-              "Next": "Mark Execution as Success",
-              "ItemsPath": "$.Objects",
+              "Resource": "${SubmitQueryResults.Arn}",
               "ResultPath": null,
-              "Parameters": {
-                "Object.$": "$$.Map.Item.Value",
-                "Columns.$": "$.Columns"
-              },
-              "Iterator": {
-                "StartAt": "Send Message",
-                "States": {
-                  "Send Message": {
-                    "Type": "Task",
-                    "Resource": "arn:aws:states:::sqs:sendMessage",
-                    "HeartbeatSeconds": 3600,
-                    "Parameters": {
-                      "QueueUrl": "${DeleteQueueUrl}",
-                      "MessageGroupId.$": "$$.Execution.Id",
-                      "MessageBody": {
-                         "Input.$": "$"
-                      }
-                    },
-                    "End": true
-                  }
-                }
-              }
+              "Next": "Mark Execution as Success"
             },
             "Mark Execution as Success": {
               "Comment": "If an SQS message receipt handle was provided, it will now be deleted",
@@ -595,17 +565,24 @@ Resources:
           Effect: "Allow"
           Resource: "*"
 
-  GetQueryResults:
+  SubmitQueryResults:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: get_query_results.handler
+      Handler: submit_query_results.handler
       CodeUri: ../backend/lambdas/tasks/
+      Environment:
+        Variables:
+          QueueUrl: !Ref DeleteQueueUrl
       Policies:
       - S3ReadPolicy:
           BucketName: !Ref ResultBucket
       - Statement:
         - Action:
           - "athena:GetQueryResults"
+          Effect: "Allow"
+          Resource: "*"
+        - Action:
+          - "sqs:SendMessage"
           Effect: "Allow"
           Resource: "*"
 
