@@ -16,10 +16,12 @@ sf_client = boto3.client("stepfunctions")
 def handler(event, context):
     queue = sqs.Queue(queue_url)
     not_visible = int(event["QueryQueue"]["NotVisible"])
+    visible = int(event["QueryQueue"]["Visible"])
     limit = int(concurrency_limit)
-    remaining_capacity = limit - not_visible
-    if remaining_capacity > 0:
-        msgs = read_queue(queue, remaining_capacity)
+    reamining_capacity = limit - not_visible
+    to_process = min(reamining_capacity, visible)
+    if to_process > 0:
+        msgs = read_queue(queue, to_process)
         for msg in msgs:
             context.logger.debug(msg.body)
             # TODO: Handle message received multiple times
