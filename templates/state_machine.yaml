@@ -483,6 +483,7 @@ Resources:
   # Supporting Resources
   ResultBucket:
     Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
     Properties:
       LifecycleConfiguration:
         Rules:
