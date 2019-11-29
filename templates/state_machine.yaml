@@ -716,11 +716,35 @@ Resources:
           Effect: "Allow"
           Resource: "*"
 
+  LogAuditEvent:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: log_audit_event.handler
+      CodeUri: ../backend/lambdas/tasks/
+      Environment:
+        Variables:
+          LogGroupName: !Ref AuditLogGroup
+      Policies:
+      - Statement:
+        - Action:
+            - "logs:CreateLogStream"
+            - "logs:DescribeLogStreams"
+            - "logs:PutLogEvents"
+          Effect: "Allow"
+          Resource: "*"
+
+  AuditLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/s3f2/${AWS::StackName}/
+
 Outputs:
   AthenaStateMachineArn:
     Value: !Ref AthenaStateMachine
   AthenaExecutionRoleArn:
     Value: !GetAtt ExecuteQueryRole.Arn
+  AuditLogGroup:
+    Value: !Ref AuditLogGroup
   StateMachineArn:
     Value: !Ref StateMachine
   StateMachineRoleArn:

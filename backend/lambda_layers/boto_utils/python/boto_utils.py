@@ -1,4 +1,6 @@
 import json
+import os
+import time
 import uuid
 
 batch_size = 10  # SQS Max Batch Size
@@ -42,3 +44,44 @@ def batch_sqs_msgs(queue, messages, **kwargs):
             } for m in chunk
         ]
         queue.send_messages(Entries=entries)
+
+
+def log_event(client, log_stream, event_name, event_data):
+    log_group = os.getenv("LogGroupName", "/aws/s3f2/")
+    kwargs = {
+        "logGroupName": log_group,
+        "logStreamName": log_stream,
+        "logEvents": [
+            {
+                'timestamp': int(round(time.time() * 1000)),
+                'message': json.dumps({
+                    "EventName": event_name,
+                    "EventData": event_data
+                })
+            },
+        ],
+    }
+    sequence_token = create_stream_if_not_exists(client, log_group, log_stream)
+    if sequence_token:
+        kwargs["sequenceToken"] = sequence_token
+
+    client.put_log_events(**kwargs)
+
+
+def create_stream_if_not_exists(client, log_group, log_stream):
+    """
+    Creates a log stream if it doesn't already exist
+    otherwise returns the sequence token needed to
+    write to the stream
+    """
+    response = client.describe_log_streams(
+        logGroupName=log_group,
+        logStreamNamePrefix=log_stream,
+    )["logStreams"]
+    if len(response) == 0:
+        client.create_log_stream(
+            logGroupName=log_group,
+            logStreamName=log_stream
+        )
+    else:
+        return response[0].get("uploadSequenceToken")
