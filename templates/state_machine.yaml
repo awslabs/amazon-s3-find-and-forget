@@ -304,7 +304,7 @@ Resources:
                 {
                   "Variable": "$.IsOldestExecution",
                   "BooleanEquals": true,
-                  "Next": "Query Deletion Queue"
+                  "Next": "Purge Queues"
                 },
                 {
                   "Variable": "$.IsOldestExecution",
@@ -313,6 +313,38 @@ Resources:
                 }
               ],
               "Default": "CatchAllFallback"
+            },
+            "Purge Queues": {
+              "Type": "Parallel",
+              "Next": "Query Deletion Queue",
+              "ResultPath": null,
+              "Branches": [{
+                "StartAt": "Purge Query Queue",
+                "States": {
+                  "Purge Query Queue": {
+                    "Parameters": {
+                      "QueueUrl": "${QueryQueue}"
+                    },
+                    "Comment": "Purge the query queue",
+                    "Type": "Task",
+                    "Resource": "${PurgeQueue.Arn}",
+                    "End": true
+                  }
+                }
+              }, {
+               "StartAt": "Purge Deletion Queue",
+               "States": {
+                 "Purge Deletion Queue": {
+                   "Parameters": {
+                     "QueueUrl": "${DeleteQueueUrl}"
+                   },
+                   "Comment": "Purge the deletion queue",
+                   "Type": "Task",
+                   "Resource": "${PurgeQueue.Arn}",
+                   "End": true
+                 }
+               }
+             }]
             },
             "Query Deletion Queue": {
               "Comment": "Scan the deletion queue table to obtain all users to be deleted ",
@@ -669,6 +701,18 @@ Resources:
       - Statement:
         - Action:
             - "sqs:DeleteMessage"
+          Effect: "Allow"
+          Resource: "*"
+
+  PurgeQueue:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: purge_queue.handler
+      CodeUri: ../backend/lambdas/tasks/
+      Policies:
+      - Statement:
+        - Action:
+            - "sqs:PurgeQueue"
           Effect: "Allow"
           Resource: "*"
 
