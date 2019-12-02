@@ -97,10 +97,21 @@ def test_it_catches_client_errors():
     assert 404 == resp["statusCode"]
 
 
+def test_it_catches_returnable_errors():
+    expected_msg = "A message we want the caller to see"
+    @catch_errors
+    def dummy_handler(event, context):
+        raise ValueError(expected_msg)
+
+    resp = dummy_handler({}, SimpleNamespace())
+    assert 400 == resp["statusCode"]
+    assert expected_msg == resp["body"]
+
+
 def test_it_catches_unhandled_errors():
     @catch_errors
     def dummy_handler(event, context):
-        raise ValueError()
+        raise KeyError()
 
     resp = dummy_handler({}, SimpleNamespace())
     assert 400 == resp["statusCode"]

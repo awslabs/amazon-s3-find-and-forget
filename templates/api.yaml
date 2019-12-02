@@ -158,6 +158,11 @@ Resources:
             Path: /data_mappers/{data_mapper_id}
             Method: PUT
       Policies:
+      - Statement:
+        - Action:
+            - "glue:Get*"
+          Effect: "Allow"
+          Resource: "*"
       - DynamoDBCrudPolicy:
           TableName: !Ref DataMapperTableName
   GetDataMappers:
