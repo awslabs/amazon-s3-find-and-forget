@@ -130,7 +130,7 @@ Resources:
             "Wait for Query": {
               "Comment": "Waits before checking again whether Athena is done",
               "Type": "Wait",
-              "Seconds": 15,
+              "SecondsPath": "$.WaitDuration",
               "Next": "Get Query Status"
             },
             "Get Query Status": {
@@ -303,7 +303,7 @@ Resources:
             "Wait": {
               "Comment": "Waits before checking if the Object Deletion Queue is empty",
               "Type": "Wait",
-              "Seconds": 30,
+              "SecondsPath": "$.WaitDuration",
               "Next": "Fetch Queue Size again"
             },
             "Fetch Queue Size again": {
@@ -541,7 +541,8 @@ Resources:
               "Resource":"arn:aws:states:::states:startExecution.sync",
               "Parameters":{
                 "Input":{
-                  "AWS_STEP_FUNCTIONS_STARTED_BY_EXECUTION_ID.$": "$$.Execution.Id"
+                  "AWS_STEP_FUNCTIONS_STARTED_BY_EXECUTION_ID.$": "$$.Execution.Id",
+                  "WaitDuration": 30
                 },
                 "StateMachineArn":"${DeleteStateMachine}",
                 "Name.$": "$$.Execution.Name"
@@ -748,6 +749,7 @@ Resources:
           AthenaConcurrencyLimit: !Ref AthenaConcurrencyLimit
           StateMachineArn: !Ref AthenaStateMachine
           QueueUrl: !Ref QueryQueue
+          WaitDuration: 15
       Policies:
       - Statement:
         - Action:

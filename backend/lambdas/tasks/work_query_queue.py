@@ -7,6 +7,7 @@ from boto_utils import read_queue
 
 concurrency_limit = os.getenv("AthenaConcurrencyLimit", 20)
 queue_url = os.getenv("QueueUrl")
+wait_duration = os.getenv("WaitDuration", 15)
 state_machine_arn = os.getenv("StateMachineArn")
 sqs = boto3.resource("sqs")
 sf_client = boto3.client("stepfunctions")
@@ -31,4 +32,5 @@ def handler(event, context):
             body["AWS_STEP_FUNCTIONS_STARTED_BY_EXECUTION_ID"] = execution_id
             body["JobId"] = job_id
             body["ReceiptHandle"] = msg.receipt_handle
+            body["WaitDuration"] = wait_duration
             sf_client.start_execution(stateMachineArn=state_machine_arn, input=json.dumps(body))

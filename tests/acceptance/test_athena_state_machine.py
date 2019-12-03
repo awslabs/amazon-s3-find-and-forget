@@ -23,6 +23,7 @@ def test_it_queries_unpartitioned_data(sf_client, dummy_lake, execution_waiter, 
           "Database": mapper["QueryExecutorParameters"]["Database"],
           "Table": mapper["QueryExecutorParameters"]["Database"],
           "Columns": [{"Column": "customer_id", "MatchIds": ["12345"]}],
+          "WaitDuration": 2
         })
     )["executionArn"]
     try:
@@ -55,7 +56,8 @@ def test_it_queries_partitioned_data(sf_client, dummy_lake, execution_waiter, st
           "Database": mapper["QueryExecutorParameters"]["Database"],
           "Table": mapper["QueryExecutorParameters"]["Database"],
           "Columns": [{"Column": "customer_id", "MatchIds": ["12345"]}],
-          "PartitionKeys": [{"Key": "year", "Value": "2019"}]
+          "PartitionKeys": [{"Key": "year", "Value": "2019"}],
+          "WaitDuration": 2
         })
     )["executionArn"]
     try:

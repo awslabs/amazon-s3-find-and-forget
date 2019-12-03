@@ -2,9 +2,9 @@
   "version": 2,
   "waiters": {
     "ExecutionComplete": {
-      "delay": 15,
+      "delay": 2,
       "operation": "DescribeExecution",
-      "maxAttempts": 7,
+      "maxAttempts": 100,
       "acceptors": [
         {
           "matcher": "path",

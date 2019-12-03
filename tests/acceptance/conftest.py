@@ -382,17 +382,24 @@ def data_loader(dummy_lake):
     return load_data
 
 
+def fetch_total_messages(q):
+    return int(q.attributes["ApproximateNumberOfMessages"]) + \
+        int(q.attributes["ApproximateNumberOfMessagesNotVisible"])
+
+
 @pytest.fixture(scope="session")
 def query_queue(stack):
     queue = boto3.resource("sqs").Queue(stack["QueryQueueUrl"])
-    queue.purge()
+    if(fetch_total_messages(queue) > 0):
+        queue.purge()
     return queue
 
 
 @pytest.fixture(scope="session")
 def fargate_queue(stack):
     queue = boto3.resource("sqs").Queue(stack["DeletionQueueUrl"])
-    queue.purge()
+    if(fetch_total_messages(queue) > 0):
+        queue.purge()
     return queue
 
 

@@ -42,6 +42,7 @@ def test_it_adds_receipt_handle(sqs_mock, read_queue_mock, sf_client_mock):
         "AWS_STEP_FUNCTIONS_STARTED_BY_EXECUTION_ID": "1234",
         "JobId": "4231",
         "ReceiptHandle": "1234",
+        "WaitDuration": 15
     })
 
     handler({

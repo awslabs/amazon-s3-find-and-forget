@@ -62,6 +62,7 @@ def test_it_escapes_match_ids_single_quotes_preventing_stealing_information(sf_c
         "Database": mapper["QueryExecutorParameters"]["Database"],
         "Table": mapper["QueryExecutorParameters"]["Database"],
         "Columns": [{"Column": "customer_id", "MatchIds": [legit_match_id, malicious_match_id]}],
+        "WaitDuration": 2
     }
 
     try:
@@ -89,6 +90,7 @@ def test_it_escapes_match_ids_escaped_single_quotes_preventing_stealing_informat
         "Database": mapper["QueryExecutorParameters"]["Database"],
         "Table": mapper["QueryExecutorParameters"]["Database"],
         "Columns": [{"Column": "customer_id", "MatchIds": [legit_match_id, malicious_match_id]}],
+        "WaitDuration": 2
     }
 
     try:
@@ -115,6 +117,7 @@ def test_it_handles_unicod_smuggling_preventing_bypassing_matches(sf_client, dum
         "Database": mapper["QueryExecutorParameters"]["Database"],
         "Table": mapper["QueryExecutorParameters"]["Database"],
         "Columns": [{"Column": "customer_id", "MatchIds": [legit_match_id, malicious_match_id]}],
+        "WaitDuration": 2
     }
 
     try:
@@ -144,6 +147,7 @@ def test_it_escapes_match_ids_backslash_and_comments_preventing_bypassing_matche
         "Database": mapper["QueryExecutorParameters"]["Database"],
         "Table": mapper["QueryExecutorParameters"]["Database"],
         "Columns": [{"Column": "customer_id", "MatchIds": ["\'", ")) --", legit_match_id]}],
+        "WaitDuration": 2
     }
 
     try:
@@ -174,6 +178,7 @@ def test_it_escapes_match_ids_newlines_preventing_bypassing_matches(sf_client, d
         "Database": mapper["QueryExecutorParameters"]["Database"],
         "Table": mapper["QueryExecutorParameters"]["Database"],
         "Columns": [{"Column": "customer_id", "MatchIds": ["\n--", legit_match_id, "\n"]}],
+        "WaitDuration": 2
     }
 
     try:
