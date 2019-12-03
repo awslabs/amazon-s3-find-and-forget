@@ -181,28 +181,13 @@ def empty_data_mappers(data_mapper_table):
     empty_table(data_mapper_table, "DataMapperId")
 
 
-@pytest.fixture()
-def glue_data_mapper_factory(dummy_lake, glue_client, data_mapper_table):
-    """
-    Factory for registering a data mapper in DDB and createing a corresponding glue table
-    """
+@pytest.fixture
+def glue_table_factory(dummy_lake, glue_client):
     items = []
     bucket_name = dummy_lake["bucket_name"]
 
-    def factory(data_mapper_id="test", columns=["customer_id"], fmt="parquet", database="acceptancetests",
-                table="acceptancetests", partition_keys=[], partitions=[]):
-        item = {
-            "DataMapperId": data_mapper_id,
-            "Columns": columns,
-            "QueryExecutor": "athena",
-            "QueryExecutorParameters": {
-                "DataCatalogProvider": "glue",
-                "Database": database,
-                "Table": table
-            },
-            "Format": fmt,
-        }
-        data_mapper_table.put_item(Item=item)
+    def factory(columns=["customer_id"], fmt="parquet", database="acceptancetests",
+                table="acceptancetests", prefix="prefix", partition_keys=[], partitions=[]):
         glue_client.create_database(DatabaseInput={'Name': database})
         glue_client.create_table(
             DatabaseName=database,
@@ -213,7 +198,7 @@ def glue_data_mapper_factory(dummy_lake, glue_client, data_mapper_table):
                         'Name': col,
                         'Type': 'string',
                     } for col in columns],
-                    "Location": "s3://{bucket}/{prefix}/".format(bucket=bucket_name, prefix=data_mapper_id),
+                    "Location": "s3://{bucket}/{prefix}/".format(bucket=bucket_name, prefix=prefix),
                     "InputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
                     "OutputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
                     "Compressed": False,
@@ -236,6 +221,7 @@ def glue_data_mapper_factory(dummy_lake, glue_client, data_mapper_table):
                 }
             }
         )
+
         for p in partitions:
             glue_client.create_partition(
                 DatabaseName=database,
@@ -247,8 +233,8 @@ def glue_data_mapper_factory(dummy_lake, glue_client, data_mapper_table):
                             'Name': col,
                             'Type': 'string',
                         } for col in columns],
-                        'Location': "s3://{bucket}/{prefix}/{parts}/".format(bucket=bucket_name, prefix=data_mapper_id,
-                                                                             parts="/".join(p)),
+                        'Location': "s3://{bucket}/{prefix}/{parts}/".format(bucket=dummy_lake["bucket_name"],
+                                                                             prefix=prefix, parts="/".join(p)),
                         "InputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
                         "OutputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
                         "SerdeInfo": {
@@ -260,6 +246,48 @@ def glue_data_mapper_factory(dummy_lake, glue_client, data_mapper_table):
                     },
                 }
             )
+        item = {
+            "Database": database,
+            "Table": table
+        }
+        items.append(item)
+        return item
+
+    yield factory
+
+    for i in items:
+        db_name = i["Database"]
+        table_name = i["Table"]
+        glue_client.delete_table(
+            DatabaseName=db_name,
+            Name=table_name
+        )
+        glue_client.delete_database(Name=db_name)
+
+
+@pytest.fixture
+def glue_data_mapper_factory(glue_client, data_mapper_table, glue_table_factory):
+    """
+    Factory for registering a data mapper in DDB and createing a corresponding glue table
+    """
+    items = []
+
+    def factory(data_mapper_id="test", columns=["customer_id"], fmt="parquet", database="acceptancetests",
+                table="acceptancetests", partition_keys=[], partitions=[]):
+        item = {
+            "DataMapperId": data_mapper_id,
+            "Columns": columns,
+            "QueryExecutor": "athena",
+            "QueryExecutorParameters": {
+                "DataCatalogProvider": "glue",
+                "Database": database,
+                "Table": table
+            },
+            "Format": fmt,
+        }
+        data_mapper_table.put_item(Item=item)
+        glue_table_factory(prefix=data_mapper_id, columns=columns, fmt=fmt, database=database,
+                           table=table, partition_keys=partition_keys, partitions=partitions)
 
         items.append(item)
         return item
@@ -267,14 +295,6 @@ def glue_data_mapper_factory(dummy_lake, glue_client, data_mapper_table):
     yield factory
 
     empty_table(data_mapper_table, "DataMapperId")
-    for i in items:
-        db_name = i["QueryExecutorParameters"]["Database"]
-        table_name = i["QueryExecutorParameters"]["Table"]
-        glue_client.delete_table(
-            DatabaseName=db_name,
-            Name=table_name
-        )
-        glue_client.delete_database(Name=db_name)
 
 
 @pytest.fixture(scope="module")

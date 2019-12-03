@@ -4,8 +4,9 @@ from boto3.dynamodb.conditions import Key
 pytestmark = [pytest.mark.acceptance, pytest.mark.data_mappers]
 
 
-def test_it_creates_data_mapper(api_client, data_mapper_base_endpoint, data_mapper_table):
+def test_it_creates_data_mapper(api_client, data_mapper_base_endpoint, data_mapper_table, glue_table_factory):
     # Arrange
+    table = glue_table_factory()
     key = "test"
     data_mapper = {
         "DataMapperId": key,
@@ -13,8 +14,8 @@ def test_it_creates_data_mapper(api_client, data_mapper_base_endpoint, data_mapp
         "QueryExecutor": "athena",
         "QueryExecutorParameters": {
             "DataCatalogProvider": "glue",
-            "Database": "test",
-            "Table": "test"
+            "Database": table["Database"],
+            "Table": table["Table"]
         },
         "Format": "parquet",
     }
