@@ -114,7 +114,18 @@ Resources:
               },
               "Resource": "${ExecuteQuery.Arn}",
               "ResultPath": "$.QueryId",
-              "Next": "Get Query Status"
+              "Next": "Get Query Status",
+              "Retry": [ {
+                 "ErrorEquals": [ "States.ALL" ],
+                 "IntervalSeconds": 10,
+                 "BackoffRate": 10,
+                 "MaxAttempts": 2
+              }],
+              "Catch": [ {
+                  "ErrorEquals": ["States.ALL"],
+                  "ResultPath": "$.ErrorDetails",
+                  "Next": "Log Failure"
+              }]
             },
             "Wait for Query": {
               "Comment": "Waits before checking again whether Athena is done",
@@ -128,7 +139,12 @@ Resources:
               "Resource": "${CheckQueryStatus.Arn}",
               "InputPath": "$.QueryId",
               "ResultPath": "$.QueryStatus",
-              "Next": "Query Complete?"
+              "Next": "Query Complete?",
+              "Catch": [{
+                 "ErrorEquals": ["States.ALL"],
+                 "ResultPath": "$.ErrorDetails",
+                 "Next": "Log Failure"
+              }]
             },
             "Query Complete?": {
               "Comment": "Check if the Athena query is still running",
@@ -150,7 +166,7 @@ Resources:
                     "StringEquals": "CANCELLED"
                   }
                 ],
-                "Next": "Query Failed"
+                "Next": "Log Failure"
               }
               ],
               "Default": "Wait for Query"
@@ -159,6 +175,19 @@ Resources:
               "Comment": "The query was successful",
               "Type": "Pass",
               "Next": "Submit Query Results"
+            },
+            "Log Failure": {
+              "Comment": "Log the failure in the audit log",
+              "Type": "Task",
+              "Parameters": {
+                "EventName": "QueryFailure",
+                "EventData.$": "$",
+                "StreamSuffix.$": "$$.Execution.Name",
+                "JobId.$": "$.JobId"
+              },
+              "Resource": "${LogAuditEvent.Arn}",
+              "ResultPath": null,
+              "Next": "Query Failed"
             },
             "Query Failed": {
               "Comment": "The query was unsuccessful",
@@ -169,14 +198,55 @@ Resources:
               "Type": "Task",
               "Resource": "${SubmitQueryResults.Arn}",
               "ResultPath": null,
-              "Next": "Mark Execution as Success"
+              "Next": "Notify Parent of Success",
+              "Retry": [ {
+                 "ErrorEquals": [ "States.ALL" ],
+                 "IntervalSeconds": 5,
+                 "BackoffRate": 2.5,
+                 "MaxAttempts": 1
+              }],
+              "Catch": [{
+                 "ErrorEquals": ["States.ALL"],
+                 "ResultPath": "$.ErrorDetails",
+                 "Next": "Log Failure"
+              }]
             },
-            "Mark Execution as Success": {
+            "Notify Parent of Success": {
               "Comment": "If an SQS message receipt handle was provided, it will now be deleted",
               "Type": "Task",
               "Resource": "${DeleteQueueMessage.Arn}",
               "ResultPath": null,
-              "End": true
+              "Next": "Log Success",
+              "Retry": [ {
+                 "ErrorEquals": [ "States.ALL" ],
+                 "IntervalSeconds": 3,
+                 "BackoffRate": 1.5,
+                 "MaxAttempts": 1
+              }],
+              "Catch": [{
+                 "ErrorEquals": ["States.ALL"],
+                 "ResultPath": "$.ErrorDetails",
+                 "Next": "Log Failure"
+              }]
+            },
+            "Log Success": {
+              "Comment": "Log the success in the audit log",
+              "Type": "Task",
+              "Parameters": {
+                "EventName": "QuerySuccess",
+                "EventData.$": "$",
+                "StreamSuffix.$": "$$.Execution.Name",
+                "JobId.$": "$.JobId"
+              },
+              "Resource": "${LogAuditEvent.Arn}",
+              "ResultPath": null,
+              "End": true,
+              "Retry": [ {
+                 "ErrorEquals": [ "States.ALL" ],
+                 "IntervalSeconds": 3,
+                 "BackoffRate": 1.5,
+                 "MaxAttempts": 1
+              }]
             }
           }
         }
@@ -403,7 +473,9 @@ Resources:
                     "Filter Athena Data Mappers": {
                       "Parameters": {
                         "DataMappers.$": "$.DataMappers.Items[?(@.QueryExecutor=='athena')]",
-                        "DeletionQueue.$": "$.DeletionQueue.Items"
+                        "DeletionQueue.$": "$.DeletionQueue.Items",
+                        "ExecutionId.$": "$$.Execution.Id",
+                        "ExecutionName.$": "$$.Execution.Name"
                       },
                       "Comment": "Process Data Mappers with Athena as the query executor",
                       "Type": "Pass",

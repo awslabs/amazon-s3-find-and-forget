@@ -11,7 +11,10 @@ def handler(event, context):
         QueryExecutionId=event
     )["QueryExecution"]
 
-    return {
+    result = {
         "State": execution_details["Status"]["State"],
-        "Reason": execution_details["Status"].get("StateChangeReason", "n/a")
+        "Reason": execution_details["Status"].get("StateChangeReason", "n/a"),
+        "Statistics": execution_details["Statistics"]
     }
+
+    return result

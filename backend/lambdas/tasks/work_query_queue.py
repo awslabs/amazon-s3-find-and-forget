@@ -14,6 +14,8 @@ sf_client = boto3.client("stepfunctions")
 
 @with_logger
 def handler(event, context):
+    execution_id = event["ExecutionId"]
+    job_id = event["ExecutionName"]
     queue = sqs.Queue(queue_url)
     not_visible = int(event["QueryQueue"]["NotVisible"])
     visible = int(event["QueryQueue"]["Visible"])
@@ -26,5 +28,7 @@ def handler(event, context):
             context.logger.debug(msg.body)
             # TODO: Handle message received multiple times
             body = json.loads(msg.body)
+            body["AWS_STEP_FUNCTIONS_STARTED_BY_EXECUTION_ID"] = execution_id
+            body["JobId"] = job_id
             body["ReceiptHandle"] = msg.receipt_handle
             sf_client.start_execution(stateMachineArn=state_machine_arn, input=json.dumps(body))

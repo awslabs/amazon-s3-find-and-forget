@@ -15,6 +15,8 @@ def test_it_skips_with_no_remaining_capacity(sqs_mock, read_queue_mock):
     sqs_mock.Queue.return_value = sqs_mock
 
     handler({
+        "ExecutionId": "1234",
+        "ExecutionName": "4231",
         "QueryQueue": {
             "NotVisible": 20,
             "Visible": 50,
@@ -37,10 +39,14 @@ def test_it_adds_receipt_handle(sqs_mock, read_queue_mock, sf_client_mock):
     ]
     expected_call = json.dumps({
         "hello": "world",
+        "AWS_STEP_FUNCTIONS_STARTED_BY_EXECUTION_ID": "1234",
+        "JobId": "4231",
         "ReceiptHandle": "1234",
     })
 
     handler({
+        "ExecutionId": "1234",
+        "ExecutionName": "4231",
         "QueryQueue": {
             "NotVisible": 0,
             "Visible": 50,
@@ -67,6 +73,8 @@ def test_it_starts_state_machine_per_message(sqs_mock, read_queue_mock, sf_clien
     ]
 
     handler({
+        "ExecutionId": "1234",
+        "ExecutionName": "4231",
         "QueryQueue": {
             "NotVisible": 0,
             "Visible": 50,
@@ -89,6 +97,8 @@ def test_limits_calls_to_capacity(sqs_mock, read_queue_mock, sf_client_mock):
     ]
 
     handler({
+        "ExecutionId": "1234",
+        "ExecutionName": "4231",
         "QueryQueue": {
             "NotVisible": 19,
             "Visible": 50,
@@ -112,6 +122,8 @@ def test_it_only_requests_the_minimum(sqs_mock, read_queue_mock, sf_client_mock)
     ]
 
     handler({
+        "ExecutionId": "1234",
+        "ExecutionName": "4321",
         "QueryQueue": {
             "NotVisible": 0,
             "Visible": 2,

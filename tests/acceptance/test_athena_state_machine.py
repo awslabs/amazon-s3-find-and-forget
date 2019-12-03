@@ -19,6 +19,7 @@ def test_it_queries_unpartitioned_data(sf_client, dummy_lake, execution_waiter, 
     execution_arn = sf_client.start_execution(
         stateMachineArn=stack["AthenaStateMachineArn"],
         input=json.dumps({
+          "JobId": 1234,
           "Database": mapper["QueryExecutorParameters"]["Database"],
           "Table": mapper["QueryExecutorParameters"]["Database"],
           "Columns": [{"Column": "customer_id", "MatchIds": ["12345"]}],
@@ -50,6 +51,7 @@ def test_it_queries_partitioned_data(sf_client, dummy_lake, execution_waiter, st
     execution_arn = sf_client.start_execution(
         stateMachineArn=stack["AthenaStateMachineArn"],
         input=json.dumps({
+          "JobId": 1234,
           "Database": mapper["QueryExecutorParameters"]["Database"],
           "Table": mapper["QueryExecutorParameters"]["Database"],
           "Columns": [{"Column": "customer_id", "MatchIds": ["12345"]}],

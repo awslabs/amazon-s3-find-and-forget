@@ -5,7 +5,7 @@ from botocore.exceptions import WaiterError
 
 logger = logging.getLogger()
 
-pytestmark = [pytest.mark.acceptance, pytest.mark.state_machine, pytest.mark.athena,
+pytestmark = [pytest.mark.acceptance, pytest.mark.state_machine, pytest.mark.athena, pytest.mark.security,
               pytest.mark.usefixtures("empty_lake")]
 
 
