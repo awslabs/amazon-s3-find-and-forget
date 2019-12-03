@@ -66,6 +66,7 @@ def handler(event, context):
                 })
 
         # Workout which deletion items should be included in this query
+        filtered = []
         for i, query in enumerate(queries):
             applicable_match_ids = [
                 item["MatchId"] for item in deletion_items
@@ -75,16 +76,17 @@ def handler(event, context):
 
             # Remove the query if there are no relevant matches
             if len(applicable_match_ids) == 0:
-                del queries[i]
+                continue
             else:
-                queries[i]["Columns"] = [
+                query["Columns"] = [
                     {
                         "Column": c,
                         "MatchIds": [convert_to_col_type(mid, c, table) for mid in applicable_match_ids]
                     } for c in queries[i]["Columns"]
                 ]
+                filtered.append(query)
 
-        batch_sqs_msgs(queue, queries)
+        batch_sqs_msgs(queue, filtered)
 
 
 def get_table(db, table_name):

@@ -320,6 +320,39 @@ def test_it_removes_queries_with_no_applicable_matches(batch_sqs_msgs_mock, get_
     batch_sqs_msgs_mock.assert_called_with(mock.ANY, [])
 
 
+@patch("backend.lambdas.tasks.generate_queries.get_table")
+@patch("backend.lambdas.tasks.generate_queries.get_partitions")
+@patch("backend.lambdas.tasks.generate_queries.batch_sqs_msgs")
+def test_it_removes_queries_with_no_applicable_matches_for_partitioned_data(
+        batch_sqs_msgs_mock, get_partitions_mock, get_table_mock):
+    columns = ["customer_id"]
+    partition_keys = ["product_category"]
+    partitions = [["Books"], ["Beauty"]]
+    get_table_mock.return_value = table_stub(columns, partition_keys)
+    get_partitions_mock.return_value = [
+        partition_stub(p, columns) for p in partitions
+    ]
+    handler({
+        "DataMappers": [{
+            "DataMapperId": "A",
+            "QueryExecutor": "athena",
+            "Columns": columns,
+            "Format": "parquet",
+            "QueryExecutorParameters": {
+                "DataCatalogProvider": "glue",
+                "Database": "test_db",
+                "Table": "test_table"
+            }
+        }],
+        "DeletionQueue": [{
+            "MatchId": "123",
+            "DataMappers": ["C"]
+        }]
+    }, SimpleNamespace())
+
+    batch_sqs_msgs_mock.assert_called_with(mock.ANY, [])
+
+
 @patch("backend.lambdas.tasks.generate_queries.glue_client")
 def test_it_returns_table(client):
     client.get_table.return_value = {"Table": {"Name": "test"}}
