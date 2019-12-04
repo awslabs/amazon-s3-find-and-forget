@@ -30,3 +30,20 @@ make setup
 ```bash
 make deploy
 ```
+
+### Local Development
+
+#### Deletion Task
+1. Build the image locally
+```bash
+docker build -f backend/ecs_tasks/delete_files/Dockerfile -t s3f2 .
+```
+
+2. Run the container using Make
+```bash
+make run-local-container
+```
+If you wish to override the default profile being used:
+```bash
+make run-local-container AWS_PROFILE=my-profile
+```

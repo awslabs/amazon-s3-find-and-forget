@@ -26,6 +26,7 @@ def handler(event, context):
 
     paths = [row["Data"][path_field_index]["VarCharValue"] for row in rows]
     batch_sqs_msgs(queue, [{
+        "JobId": event["JobId"],
         "Object": p,
         "Columns": event["Columns"]
     } for p in paths], MessageGroupId=query_id)

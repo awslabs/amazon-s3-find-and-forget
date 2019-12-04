@@ -1,13 +1,11 @@
-from datetime import datetime
-from mock import patch, MagicMock, mock
+import os
+from mock import patch, MagicMock, mock_open, ANY
 from types import SimpleNamespace
 
 import json
-import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
-
-from backend.ecs_tasks.delete_files.delete_files import delete_and_write, execute, get_queue
+from backend.ecs_tasks.delete_files.delete_files import delete_and_write, execute, get_queue, get_container_id, log_deletion
 
 pytestmark = [pytest.mark.unit]
 
@@ -25,7 +23,9 @@ def test_it_sleeps_if_queue_empty(mock_sleep):
 @patch("backend.ecs_tasks.delete_files.delete_files.pq.ParquetWriter")
 @patch("backend.ecs_tasks.delete_files.delete_files.load_parquet")
 @patch("backend.ecs_tasks.delete_files.delete_files.delete_and_write")
-def test_happy_path_when_queue_not_empty(mock_delete_and_write, mock_load_parquet, mock_pq_writer, mock_remove):
+@patch("backend.ecs_tasks.delete_files.delete_files.log_deletion")
+def test_happy_path_when_queue_not_empty(mock_log, mock_delete_and_write, mock_load_parquet, mock_pq_writer,
+                                         mock_remove):
     object_path = "s3://bucket/path/basic.parquet"
     tmp_file = "/tmp/new.parquet"
     column = {"Column": "customer_id",
@@ -43,7 +43,7 @@ def test_happy_path_when_queue_not_empty(mock_delete_and_write, mock_load_parque
     execute(mock_queue, mock_s3)
     mock_s3.open.assert_called_with(object_path, "rb")
     mock_delete_and_write.assert_called_with(
-        mock.ANY, 0, [column], mock.ANY, mock.ANY)
+        ANY, 0, [column], ANY, ANY)
     mock_s3.put.assert_called_with(tmp_file, object_path)
     mock_remove.assert_called_with(tmp_file)
 
@@ -76,3 +76,36 @@ def test_sqs_using_vpc_compatible_endpoint(mock_getenv, mock_resource):
     mock_resource.assert_called_with(
         service_name="sqs", endpoint_url="https://sqs.eu-west-1.amazonaws.com")
     mock_queue.Queue.assert_called_with("https://url/q.fifo")
+
+
+@patch("backend.ecs_tasks.delete_files.delete_files.log_event")
+@patch("backend.ecs_tasks.delete_files.delete_files.get_container_id")
+def test_it_logs_deletions(mock_get_container, mock_log):
+    mock_get_container.return_value = "4567"
+    message_stub = {"JobId": "1234", "Object": "s3://bucket/object/"}
+    stats_stub = {"Some": "stats"}
+    log_deletion(message_stub, stats_stub)
+    mock_log.assert_called_with(ANY, "1234-4567", "ObjectUpdated", {
+        "Statistics": stats_stub,
+        **message_stub
+    })
+
+
+@patch("os.getenv", MagicMock(return_value="/some/path"))
+@patch("os.path.isfile", MagicMock(return_value=True))
+def test_it_loads_container_id_from_metadata():
+    with patch("builtins.open", mock_open(read_data="{\"ContainerId\": \"123\"}")):
+        resp = get_container_id()
+        assert "123" == resp
+
+
+@patch("backend.ecs_tasks.delete_files.delete_files.uuid4")
+def test_it_provides_default_id(mock_uuid):
+    mock_uuid.return_value = "123"
+    resp = get_container_id()
+    assert "123" == resp
+
+
+def test_it_returns_uuid_as_string():
+    resp = get_container_id()
+    assert isinstance(resp, str)

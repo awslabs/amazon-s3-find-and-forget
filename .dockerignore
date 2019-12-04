@@ -1,0 +1,7 @@
+venv/
+.idea/
+.vscode/
+tests/
+docs/
+backend/lambda_layers/
+!backend/lambda_layers/boto_utils/

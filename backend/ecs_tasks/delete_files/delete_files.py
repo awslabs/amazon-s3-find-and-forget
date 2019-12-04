@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 import boto3
 import json
 import os
@@ -5,10 +7,11 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import s3fs
 import time
+from boto_utils import log_event
 
 
 def get_queue():
-    sqs_endpoint = "https://sqs.{}.amazonaws.com".format(os.getenv("REGION"))
+    sqs_endpoint = "https://sqs.{}.amazonaws.com".format(os.getenv("AWS_DEFAULT_REGION"))
     sqs = boto3.resource(service_name='sqs', endpoint_url=sqs_endpoint)
     return sqs.Queue(os.getenv("DELETE_OBJECTS_QUEUE"))
 
@@ -46,6 +49,27 @@ def save_and_cleanup(s3, new_parquet, destination):
     print("File {} complete".format(destination))
 
 
+def get_container_id():
+    metadata_file = os.getenv("ECS_CONTAINER_METADATA_FILE")
+    if metadata_file and os.path.isfile(metadata_file):
+        with open(metadata_file) as f:
+            metadata = json.load(f)
+        return metadata.get("ContainerId")
+    else:
+        return str(uuid4())
+
+
+def log_deletion(message, stats):
+    cw_logs = boto3.client("logs")
+    job_id = message["JobId"]
+    stream_name = "{}-{}".format(job_id, get_container_id())
+    event_data = {
+        "Statistics": stats,
+        **message,
+    }
+    log_event(cw_logs, stream_name, "ObjectUpdated", event_data)
+
+
 def execute(queue, s3):
     print("Fetching messages...")
     temp_dest = "/tmp/new.parquet"
@@ -69,6 +93,7 @@ def execute(queue, s3):
                         delete_and_write(parquet_file, i, cols, writer, stats)
             save_and_cleanup(s3, temp_dest, object_path)
             message.delete()
+            log_deletion(body, stats)
 
 
 if __name__ == '__main__':

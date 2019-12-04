@@ -39,7 +39,7 @@ Resources:
               - sts:AssumeRole
       Path: /
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
 
   DelObjQ:
     Type: AWS::SQS::Queue
@@ -72,8 +72,8 @@ Resources:
           Environment:
             - Name: DELETE_OBJECTS_QUEUE
               Value: !Ref DelObjQ
-            - Name: REGION
-              Value: !Ref AWS::Region
+            - Name: ECS_ENABLE_CONTAINER_METADATA
+              Value: 'true'
 
   DeleteService:
     Type: AWS::ECS::Service
@@ -111,6 +111,12 @@ Resources:
             - sqs:ReceiveMessage
             Effect: Allow 
             Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${DelObjQ.QueueName}
+          - Action:
+            - logs:DescribeLogStreams
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            Effect: Allow
+            Resource: "arn:aws:logs:*:*:*"
 
   DeleteTaskLogGroup:
     Type: AWS::Logs::LogGroup

@@ -7,6 +7,12 @@ ifndef TEMP_BUCKET
 	$(error TEMP_BUCKET is undefined)
 endif
 
+pre-run:
+ifndef ROLE_NAME
+	$(error ROLE_NAME is undefined)
+endif
+
+
 deploy:
 	make pre-deploy
 	aws cloudformation package --template-file templates/template.yaml --s3-bucket $(TEMP_BUCKET) --output-template-file packaged.yaml
@@ -18,7 +24,7 @@ deploy-containers:
 	$(eval REGION := $(shell aws configure get region))
 	$(eval ECR_REPOSITORY := $(shell aws cloudformation describe-stacks --stack-name S3F2 --query 'Stacks[0].Outputs[?OutputKey==`ECRRepository`].OutputValue' --output text))
 	$(shell aws ecr get-login --no-include-email --region $(REGION))
-	docker build -t $(ECR_REPOSITORY) backend/ecs_tasks/delete_files/
+	docker build -t $(ECR_REPOSITORY) -f backend/ecs_tasks/delete_files/Dockerfile .
 	docker tag $(ECR_REPOSITORY):latest $(ACCOUNT_ID).dkr.ecr.$(REGION).amazonaws.com/$(ECR_REPOSITORY):latest
 	docker push $(ACCOUNT_ID).dkr.ecr.eu-west-1.amazonaws.com/$(ECR_REPOSITORY):latest
 
@@ -27,7 +33,11 @@ setup:
 	source venv/bin/activate
 	pip install -r backend/lambda_layers/aws_sdk/requirements.txt -t backend/lambda_layers/aws_sdk/python
 	pip install -r backend/lambda_layers/decorators/requirements.txt -t backend/lambda_layers/decorators/python
-	pip install -r requirements.txt 
+	pip install -r requirements.txt
+
+run-local-container:
+	make pre-run
+	./docker_run_with_creds.sh
 
 test-unit:
 	pytest -m unit --log-cli-level info

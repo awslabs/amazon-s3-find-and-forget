@@ -17,9 +17,14 @@ RUN pip3 install \
 
 FROM base
 
+ARG src_path=backend/ecs_tasks/delete_files
+ARG layers_path=backend/lambda_layers
+
 RUN mkdir /app
 COPY --from=builder /install /root/.local/lib/python3.7/site-packages/
-COPY delete_files.py /app
 WORKDIR /app
+COPY $src_path/delete_files.py \
+     $layers_path/boto_utils/python/boto_utils.py \
+     /app/
 
-CMD ["python3", "delete_files.py"]
+CMD ["python3", "-u", "delete_files.py"]
