@@ -3,6 +3,8 @@ Transform: AWS::Serverless-2016-10-31
 Description: Amazon S3 Find and Forget Deletion Flow
 
 Parameters:
+  AuditLogGroup:
+    Type: String
   DeletionTaskCPU:
     Type: String
   DeletionTaskMemory:
@@ -74,6 +76,8 @@ Resources:
               Value: !Ref DelObjQ
             - Name: ECS_ENABLE_CONTAINER_METADATA
               Value: 'true'
+            - Name: LogGroupName
+              Value: !Ref AuditLogGroup
 
   DeleteService:
     Type: AWS::ECS::Service

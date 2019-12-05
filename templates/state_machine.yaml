@@ -11,6 +11,7 @@ Globals:
     Environment:
       Variables:
         LogLevel: !Ref LogLevel
+        AuditLogGroup: !Ref AuditLogGroup
 
 Parameters:
   AthenaConcurrencyLimit:
@@ -21,6 +22,8 @@ Parameters:
     Description: WorkGroup to use for Athena queries
     Type: String
     Default: primary
+  AuditLogGroup:
+    Type: String
   CommonLayers:
     Type: CommaDelimitedList
     Description: Common layers supplied to all functions
@@ -795,9 +798,6 @@ Resources:
     Properties:
       Handler: log_audit_event.handler
       CodeUri: ../backend/lambdas/tasks/
-      Environment:
-        Variables:
-          LogGroupName: !Ref AuditLogGroup
       Policies:
       - Statement:
         - Action:
@@ -806,11 +806,6 @@ Resources:
             - "logs:PutLogEvents"
           Effect: "Allow"
           Resource: "*"
-
-  AuditLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub /aws/s3f2/${AWS::StackName}/
 
 Outputs:
   AthenaStateMachineArn:
