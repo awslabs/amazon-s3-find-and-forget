@@ -18,7 +18,7 @@ def get_queue():
 
 def load_parquet(f, stats):
     parquet_file = pq.ParquetFile(f, memory_map=False)
-    stats["total_rows"] = parquet_file.metadata.num_rows
+    stats["TotalRows"] = parquet_file.metadata.num_rows
     return parquet_file
 
 
@@ -33,10 +33,10 @@ def delete_and_write(parquet_file, row_group, columns, writer, stats):
     print("Row group {}/{}".format(str(row_group + 1), parquet_file.num_row_groups))
     df = parquet_file.read_row_group(row_group).to_pandas()
     current_rows = len(df.index)
-    stats["processed_rows"] += current_rows
-    if stats["processed_rows"] > 0:
+    stats["ProcessedRows"] += current_rows
+    if stats["ProcessedRows"] > 0:
         print("Processing {} rows ({}/{} {}% completed)...".format(
-            current_rows, stats["processed_rows"], stats["total_rows"], int((stats["processed_rows"] * 100) / stats["total_rows"])))
+            current_rows, stats["ProcessedRows"], stats["TotalRows"], int((stats["ProcessedRows"] * 100) / stats["TotalRows"])))
     tab = delete_from_dataframe(df, columns)
     writer.write_table(tab)
     print("wrote table")
@@ -79,7 +79,7 @@ def execute(queue, s3):
         time.sleep(30)
     else:
         for message in messages:
-            stats = {"processed_rows": 0}
+            stats = {"ProcessedRows": 0}
             print("Message received: {0}".format(message.body))
             body = json.loads(message.body)
             print("Opening the file")

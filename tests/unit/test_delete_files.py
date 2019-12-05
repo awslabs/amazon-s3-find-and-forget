@@ -54,7 +54,7 @@ def test_delete_correct_rows_from_dataframe(mock_pq_writer):
     mock_pq_writer.return_value = mock_writer
     column = {"Column": "customer_id",
               "MatchIds": ["12345", "23456"]}
-    stats = {"processed_rows": 0, "total_rows": 3}
+    stats = {"ProcessedRows": 0, "TotalRows": 3}
     with open('./tests/acceptance/data/basic.parquet', "rb") as f:
         parquet_file = pq.ParquetFile(f, memory_map=False)
         delete_and_write(parquet_file, 0, [column], mock_writer, stats)

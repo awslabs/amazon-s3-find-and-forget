@@ -26,7 +26,7 @@ deploy-containers:
 	$(shell aws ecr get-login --no-include-email --region $(REGION))
 	docker build -t $(ECR_REPOSITORY) -f backend/ecs_tasks/delete_files/Dockerfile .
 	docker tag $(ECR_REPOSITORY):latest $(ACCOUNT_ID).dkr.ecr.$(REGION).amazonaws.com/$(ECR_REPOSITORY):latest
-	docker push $(ACCOUNT_ID).dkr.ecr.eu-west-1.amazonaws.com/$(ECR_REPOSITORY):latest
+	docker push $(ACCOUNT_ID).dkr.ecr.$(REGION).amazonaws.com/$(ECR_REPOSITORY):latest
 
 setup:
 	virtualenv venv

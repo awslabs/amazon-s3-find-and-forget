@@ -11,7 +11,7 @@ Globals:
     Environment:
       Variables:
         LogLevel: !Ref LogLevel
-        AuditLogGroup: !Ref AuditLogGroup
+        LogGroupName: !Ref AuditLogGroup
 
 Parameters:
   AthenaConcurrencyLimit:
@@ -183,7 +183,7 @@ Resources:
               "Comment": "Log the failure in the audit log",
               "Type": "Task",
               "Parameters": {
-                "EventName": "QueryFailure",
+                "EventName": "QueryFailed",
                 "EventData.$": "$",
                 "StreamSuffix.$": "$$.Execution.Name",
                 "JobId.$": "$.JobId"
@@ -236,7 +236,7 @@ Resources:
               "Comment": "Log the success in the audit log",
               "Type": "Task",
               "Parameters": {
-                "EventName": "QuerySuccess",
+                "EventName": "QuerySucceeded",
                 "EventData.$": "$",
                 "StreamSuffix.$": "$$.Execution.Name",
                 "JobId.$": "$.JobId"
@@ -556,7 +556,7 @@ Resources:
             "Delete Queue Items": {
               "Comment": "Deletes all items from the deletion queue",
               "Type": "Map",
-              "End": true,
+              "Next": "Generate Report",
               "InputPath": "$.DeletionQueue.Items",
               "ItemsPath": "$",
               "ResultPath": null,
@@ -578,6 +578,20 @@ Resources:
                   }
                 }
               }
+            },
+            "Generate Report": {
+              "Comment": "Generates a report on the execution",
+              "Type": "Task",
+              "Parameters": {
+                "JobId.$": "$$.Execution.Name",
+                "JobStartTime.$": "$$.Execution.StartTime",
+                "JobFinishTime.$": "$$.State.EnteredTime",
+                "Bucket": "${ResultBucket}",
+                "Input.$": "$"
+              },
+              "Resource": "${GenerateReport.Arn}",
+              "ResultPath": "$.Reports",
+              "End": true
             },
             "CatchAllFallback": {
                "Type": "Pass",
@@ -667,6 +681,13 @@ Resources:
           - "glue:GetDatabase"
           - "glue:GetTable"
           - "glue:GetPartition*"
+          Effect: "Allow"
+          Resource: "*"
+        # TODO: Remove for publishing
+        - Action:
+          - "s3:PutObject"
+          - "s3:Get*"
+          - "s3:List*"
           Effect: "Allow"
           Resource: "*"
 
@@ -804,6 +825,23 @@ Resources:
             - "logs:CreateLogStream"
             - "logs:DescribeLogStreams"
             - "logs:PutLogEvents"
+          Effect: "Allow"
+          Resource: "*"
+
+  GenerateReport:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: generate_report.handler
+      CodeUri: ../backend/lambdas/tasks/
+      Policies:
+      - S3CrudPolicy:
+          BucketName: !Ref ResultBucket
+      - Statement:
+        - Action:
+          - "logs:Describe*"
+          - "logs:Filter*"
+          - "logs:Get*"
+          - "logs:List*"
           Effect: "Allow"
           Resource: "*"
 
