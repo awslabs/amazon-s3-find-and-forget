@@ -118,13 +118,13 @@ Resources:
               "Resource": "${ExecuteQuery.Arn}",
               "ResultPath": "$.QueryId",
               "Next": "Get Query Status",
-              "Retry": [ {
+              "Retry": [{
                  "ErrorEquals": [ "States.ALL" ],
                  "IntervalSeconds": 10,
                  "BackoffRate": 10,
                  "MaxAttempts": 2
               }],
-              "Catch": [ {
+              "Catch": [{
                   "ErrorEquals": ["States.ALL"],
                   "ResultPath": "$.ErrorDetails",
                   "Next": "Handle Error"
@@ -211,7 +211,7 @@ Resources:
               "Resource": "${SubmitQueryResults.Arn}",
               "ResultPath": null,
               "Next": "Notify Parent of Success",
-              "Retry": [ {
+              "Retry": [{
                  "ErrorEquals": [ "States.ALL" ],
                  "IntervalSeconds": 5,
                  "BackoffRate": 2.5,
@@ -229,7 +229,7 @@ Resources:
               "Resource": "${DeleteQueueMessage.Arn}",
               "ResultPath": null,
               "Next": "Log Success",
-              "Retry": [ {
+              "Retry": [{
                  "ErrorEquals": [ "States.ALL" ],
                  "IntervalSeconds": 3,
                  "BackoffRate": 1.5,
@@ -253,7 +253,7 @@ Resources:
               "Resource": "${LogAuditEvent.Arn}",
               "ResultPath": null,
               "End": true,
-              "Retry": [ {
+              "Retry": [{
                  "ErrorEquals": [ "States.ALL" ],
                  "IntervalSeconds": 3,
                  "BackoffRate": 1.5,
@@ -410,7 +410,12 @@ Resources:
                     "Comment": "Purge the query queue",
                     "Type": "Task",
                     "Resource": "${PurgeQueue.Arn}",
-                    "End": true
+                    "End": true,
+                    "Retry": [{
+                      "ErrorEquals": [ "States.ALL" ],
+                      "IntervalSeconds": 60,
+                      "MaxAttempts": 1
+                    }]
                   }
                 }
               }, {
@@ -423,9 +428,19 @@ Resources:
                    "Comment": "Purge the deletion queue",
                    "Type": "Task",
                    "Resource": "${PurgeQueue.Arn}",
-                   "End": true
+                   "End": true,
+                   "Retry": [{
+                     "ErrorEquals": [ "States.ALL" ],
+                     "IntervalSeconds": 60,
+                     "MaxAttempts": 1
+                   }]
                  }
                }
+             }],
+             "Catch": [{
+               "ErrorEquals": ["States.ALL"],
+               "ResultPath": "$.ErrorDetails",
+               "Next": "CatchAllFallback"
              }]
             },
             "Query Deletion Queue": {
@@ -436,7 +451,17 @@ Resources:
                 "TableName": "${DeletionQueueTableName}"
               },
               "ResultPath": "$.DeletionQueue",
-              "Next": "Users in Queue?"
+              "Next": "Users in Queue?",
+              "Retry": [{
+                "ErrorEquals": [ "States.ALL" ],
+                "IntervalSeconds": 10,
+                "MaxAttempts": 1
+              }],
+              "Catch": [{
+                "ErrorEquals": ["States.ALL"],
+                "ResultPath": "$.ErrorDetails",
+                "Next": "CatchAllFallback"
+              }]
             },
             "Users in Queue?": {
               "Comment": "If the deletion queue is empty, exit gracefully. Otherwise, proceed to processing the queue.",
@@ -473,7 +498,17 @@ Resources:
               },
               "Resource": "${ScanTable.Arn}",
               "ResultPath": "$.DataMappers",
-              "Next": "Discover Files"
+              "Next": "Discover Files",
+              "Retry": [{
+                "ErrorEquals": [ "States.ALL" ],
+                "IntervalSeconds": 10,
+                "MaxAttempts": 1
+              }],
+              "Catch": [{
+                "ErrorEquals": ["States.ALL"],
+                "ResultPath": "$.ErrorDetails",
+                "Next": "CatchAllFallback"
+              }]
             },
             "Discover Files": {
               "Type": "Parallel",
@@ -509,7 +544,12 @@ Resources:
                         "QueueUrl": "${QueryQueue}"
                       },
                       "ResultPath": "$.QueryQueue",
-                      "Next": "Outstanding Queries?"
+                      "Next": "Outstanding Queries?",
+                      "Retry": [{
+                        "ErrorEquals": [ "States.ALL" ],
+                        "IntervalSeconds": 10,
+                        "MaxAttempts": 1
+                      }]
                     },
                     "Outstanding Queries?": {
                       "Comment": "Checks if any queries are yet to be ran or are in progress or if we need to wait for capacity",
@@ -547,7 +587,12 @@ Resources:
                     }
                   }
                 }
-              ]
+              ],
+              "Catch": [{
+                "ErrorEquals": ["States.ALL"],
+                "ResultPath": "$.ErrorDetails",
+                "Next": "CatchAllFallback"
+              }]
             },
             "Start Fargate Workflow": {
               "Type":"Task",
@@ -561,7 +606,12 @@ Resources:
                 "Name.$": "$$.Execution.Name"
               },
               "ResultPath": null,
-              "Next": "Delete Queue Items"
+              "Next": "Delete Queue Items",
+              "Catch": [{
+                "ErrorEquals": ["States.ALL"],
+                "ResultPath": "$.ErrorDetails",
+                "Next": "CatchAllFallback"
+              }]
             },
             "Delete Queue Items": {
               "Comment": "Deletes all items from the deletion queue",
@@ -584,10 +634,20 @@ Resources:
                       }
                     },
                     "ResultPath": null,
-                    "End": true
+                    "End": true,
+                    "Retry": [{
+                      "ErrorEquals": [ "States.ALL" ],
+                      "IntervalSeconds": 10,
+                      "MaxAttempts": 1
+                    }]
                   }
                 }
-              }
+              },
+              "Catch": [{
+                "ErrorEquals": ["States.ALL"],
+                "ResultPath": "$.ErrorDetails",
+                "Next": "CatchAllFallback"
+              }]
             },
             "Generate Report": {
               "Comment": "Generates a report on the execution",
