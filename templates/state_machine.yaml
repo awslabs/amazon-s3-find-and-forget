@@ -280,7 +280,12 @@ Resources:
                 "QueueUrl": "${DeleteQueueUrl}"
               },
               "ResultPath": "$.Queue",
-              "Next": "Adjust Deletion Service Instance Count"
+              "Next": "Adjust Deletion Service Instance Count",
+              "Retry": [{
+                "ErrorEquals": [ "States.ALL" ],
+                "IntervalSeconds": 10,
+                "MaxAttempts": 1
+              }]
             },
             "Adjust Deletion Service Instance Count": {
               "Comment": "Sets the desired instance count based on Object Deletion Queue size",
@@ -293,7 +298,12 @@ Resources:
                 "QueueSize.$": "$.Queue.Total"
               },
               "ResultPath": "$.DesiredCount",
-              "Next": "Items in Queue?"
+              "Next": "Items in Queue?",
+              "Retry": [{
+                "ErrorEquals": [ "States.ALL" ],
+                "IntervalSeconds": 10,
+                "MaxAttempts": 1
+              }]
             },
             "Items in Queue?": {
               "Comment": "Checks if any tasks are being created/terminated",
@@ -326,7 +336,12 @@ Resources:
                 "QueueUrl": "${DeleteQueueUrl}"
               },
               "ResultPath": "$.Queue",
-              "Next": "Queue is Empty?"
+              "Next": "Queue is Empty?",
+              "Retry": [{
+                "ErrorEquals": [ "States.ALL" ],
+                "IntervalSeconds": 10,
+                "MaxAttempts": 1
+              }]
             },
             "Queue is Empty?": {
               "Comment": "Checks if the Total messages are 0",
