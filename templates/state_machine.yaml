@@ -596,7 +596,6 @@ Resources:
             },
             "CatchAllFallback": {
                "Type": "Pass",
-               "Result": "This is a fallback from any error code",
                "Next": "Log Failure"
             },
             "Log Failure": {
