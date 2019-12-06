@@ -127,7 +127,7 @@ Resources:
               "Catch": [ {
                   "ErrorEquals": ["States.ALL"],
                   "ResultPath": "$.ErrorDetails",
-                  "Next": "Log Failure"
+                  "Next": "Handle Error"
               }]
             },
             "Wait for Query": {
@@ -146,7 +146,7 @@ Resources:
               "Catch": [{
                  "ErrorEquals": ["States.ALL"],
                  "ResultPath": "$.ErrorDetails",
-                 "Next": "Log Failure"
+                 "Next": "Handle Error"
               }]
             },
             "Query Complete?": {
@@ -169,7 +169,7 @@ Resources:
                     "StringEquals": "CANCELLED"
                   }
                 ],
-                "Next": "Log Failure"
+                "Next": "Handle Error"
               }
               ],
               "Default": "Wait for Query"
@@ -179,7 +179,16 @@ Resources:
               "Type": "Pass",
               "Next": "Submit Query Results"
             },
-            "Log Failure": {
+            "Handle Error": {
+              "Type": "Pass",
+              "Parameters": {
+                "Error.$": "$.ErrorDetails.Error",
+                "Cause.$": "$.ErrorDetails.Cause",
+                "State.$": "$"
+              },
+               "Next": "Log Error"
+            },
+            "Log Error": {
               "Comment": "Log the failure in the audit log",
               "Type": "Task",
               "Parameters": {
@@ -211,7 +220,7 @@ Resources:
               "Catch": [{
                  "ErrorEquals": ["States.ALL"],
                  "ResultPath": "$.ErrorDetails",
-                 "Next": "Log Failure"
+                 "Next": "Handle Error"
               }]
             },
             "Notify Parent of Success": {
@@ -229,7 +238,7 @@ Resources:
               "Catch": [{
                  "ErrorEquals": ["States.ALL"],
                  "ResultPath": "$.ErrorDetails",
-                 "Next": "Log Failure"
+                 "Next": "Handle Error"
               }]
             },
             "Log Success": {
@@ -385,7 +394,7 @@ Resources:
                   "Next": "Wait"
                 }
               ],
-              "Default": "CatchAllFallback"
+              "Default": "Handle Error"
             },
             "Purge Queues": {
               "Type": "Parallel",
@@ -594,11 +603,16 @@ Resources:
               "ResultPath": "$.Reports",
               "End": true
             },
-            "CatchAllFallback": {
-               "Type": "Pass",
-               "Next": "Log Failure"
+            "Handle Error": {
+              "Type": "Pass",
+              "Parameters": {
+                "Error.$": "$.ErrorDetails.Error",
+                "Cause.$": "$.ErrorDetails.Cause",
+                "State.$": "$"
+              },
+               "Next": "Log Error"
             },
-            "Log Failure": {
+            "Log Error": {
               "Comment": "Log the failure in the audit log",
               "Type": "Task",
               "Parameters": {
