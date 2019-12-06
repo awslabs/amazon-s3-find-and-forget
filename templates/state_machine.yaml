@@ -448,7 +448,8 @@ Resources:
             },
             "No": {
               "Comment": "No work to be done.",
-              "Type": "Succeed"
+              "Type": "Pass",
+              "Next": "Generate Report"
             },
             "Yes": {
               "Comment": "Continue.",
@@ -596,7 +597,20 @@ Resources:
             "CatchAllFallback": {
                "Type": "Pass",
                "Result": "This is a fallback from any error code",
-               "End": true
+               "Next": "Log Failure"
+            },
+            "Log Failure": {
+              "Comment": "Log the failure in the audit log",
+              "Type": "Task",
+              "Parameters": {
+                "EventName": "Exception",
+                "EventData.$": "$",
+                "StreamSuffix.$": "$$.Execution.Name",
+                "JobId.$": "$$.Execution.Name"
+              },
+              "Resource": "${LogAuditEvent.Arn}",
+              "ResultPath": null,
+              "Next": "Generate Report"
             }
           }
         }
