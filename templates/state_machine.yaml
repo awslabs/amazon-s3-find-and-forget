@@ -455,7 +455,7 @@ Resources:
              "Catch": [{
                "ErrorEquals": ["States.ALL"],
                "ResultPath": "$.ErrorDetails",
-               "Next": "CatchAllFallback"
+               "Next": "Handle Error"
              }]
             },
             "Query Deletion Queue": {
@@ -475,7 +475,7 @@ Resources:
               "Catch": [{
                 "ErrorEquals": ["States.ALL"],
                 "ResultPath": "$.ErrorDetails",
-                "Next": "CatchAllFallback"
+                "Next": "Handle Error"
               }]
             },
             "Users in Queue?": {
@@ -522,7 +522,7 @@ Resources:
               "Catch": [{
                 "ErrorEquals": ["States.ALL"],
                 "ResultPath": "$.ErrorDetails",
-                "Next": "CatchAllFallback"
+                "Next": "Handle Error"
               }]
             },
             "Discover Files": {
@@ -606,7 +606,7 @@ Resources:
               "Catch": [{
                 "ErrorEquals": ["States.ALL"],
                 "ResultPath": "$.ErrorDetails",
-                "Next": "CatchAllFallback"
+                "Next": "Handle Error"
               }]
             },
             "Start Fargate Workflow": {
@@ -625,7 +625,7 @@ Resources:
               "Catch": [{
                 "ErrorEquals": ["States.ALL"],
                 "ResultPath": "$.ErrorDetails",
-                "Next": "CatchAllFallback"
+                "Next": "Handle Error"
               }]
             },
             "Delete Queue Items": {
@@ -661,7 +661,7 @@ Resources:
               "Catch": [{
                 "ErrorEquals": ["States.ALL"],
                 "ResultPath": "$.ErrorDetails",
-                "Next": "CatchAllFallback"
+                "Next": "Handle Error"
               }]
             },
             "Generate Report": {
@@ -685,7 +685,7 @@ Resources:
                 "Cause.$": "$.ErrorDetails.Cause",
                 "State.$": "$"
               },
-               "Next": "Log Error"
+              "Next": "Log Error"
             },
             "Log Error": {
               "Comment": "Log the failure in the audit log",
