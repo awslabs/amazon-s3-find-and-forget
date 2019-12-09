@@ -25,6 +25,7 @@ def test_it_generates_reports(mock_get_status, mock_query_stats, mock_object_sta
         "TotalQueryTimeInMillis": 10000,
         "TotalQueryScannedInBytes": 1000,
         "TotalQueryCount": 10,
+        "TotalQueryFailedCount": 0,
     }
     mock_object_stats.return_value = {
        "TotalObjectUpdatedCount": 1,
@@ -41,9 +42,9 @@ def test_it_generates_reports(mock_get_status, mock_query_stats, mock_object_sta
         "JobId": "123"
     }, SimpleNamespace())
     mock_write.assert_called_with("some_bucket", "123", {
+        "JobId": "123",
         "JobStartTime": "2019-12-05T13:38:02.858Z",
         "JobFinishTime": "2019-12-05T13:39:37.220Z",
-        "JobId": "123",
         "QuerySucceeded": [query_stub()],
         "ObjectUpdated": [object_update_stub()],
         "TotalObjectUpdatedCount": 1,
@@ -127,6 +128,7 @@ def test_it_gets_aggregated_query_stats():
         "TotalQueryTimeInMillis": 10000,
         "TotalQueryScannedInBytes": 1000,
         "TotalQueryCount": 10,
+        "TotalQueryFailedCount": 5,
     } == resp
 
 
