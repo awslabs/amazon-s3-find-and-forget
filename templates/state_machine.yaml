@@ -888,6 +888,11 @@ Resources:
           Action:
             - "states:StartExecution"
           Resource: !Ref AthenaStateMachine
+        - Action:
+          - "logs:Describe*"
+          - "logs:Filter*"
+          Effect: "Allow"
+          Resource: "*"
 
   DeleteQueueMessage:
     Type: AWS::Serverless::Function
