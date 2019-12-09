@@ -30,6 +30,10 @@ Parameters:
     Description: The memory to be allocated to the Deletion Fargate Task
     Type: String
     Default: '30720'
+  LogRetentionInDays:
+    Description: The number of days to retain raw job logs
+    Type: Number
+    Default: 7
   PrivateSubnetIpBlocks:
     Description: Comma-delimited list of CIDR blocks for the private subnets
     Type: String
@@ -113,6 +117,7 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: /aws/s3f2/
+      RetentionInDays: !Ref LogRetentionInDays
 
 Outputs:
   APIStack:
