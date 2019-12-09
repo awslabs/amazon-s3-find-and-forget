@@ -58,7 +58,7 @@ def test_it_escapes_match_ids_single_quotes_preventing_stealing_information(sf_c
     malicious_match_id = "foo')) UNION (select * from acceptancetests2.acceptancetests2 where customer_id in ('12345"
     mapper = glue_data_mapper_factory("test")
     query_input = {
-        "JobId": 1234,
+        "JobId": 1,
         "Database": mapper["QueryExecutorParameters"]["Database"],
         "Table": mapper["QueryExecutorParameters"]["Database"],
         "Columns": [{"Column": "customer_id", "MatchIds": [legit_match_id, malicious_match_id]}],
@@ -86,7 +86,7 @@ def test_it_escapes_match_ids_escaped_single_quotes_preventing_stealing_informat
     malicious_match_id = "foo\')) UNION (select * from acceptancetests2.acceptancetests2 where customer_id in (\'12345"
     mapper = glue_data_mapper_factory("test")
     query_input = {
-        "JobId": 1234,
+        "JobId": 2,
         "Database": mapper["QueryExecutorParameters"]["Database"],
         "Table": mapper["QueryExecutorParameters"]["Database"],
         "Columns": [{"Column": "customer_id", "MatchIds": [legit_match_id, malicious_match_id]}],
@@ -113,7 +113,7 @@ def test_it_handles_unicod_smuggling_preventing_bypassing_matches(sf_client, dum
     malicious_match_id = "fooʼ)) UNION (select * from acceptancetests2.acceptancetests2 where customer_id in (ʼ12345"
     mapper = glue_data_mapper_factory("test")
     query_input = {
-        "JobId": 1234,
+        "JobId": 3,
         "Database": mapper["QueryExecutorParameters"]["Database"],
         "Table": mapper["QueryExecutorParameters"]["Database"],
         "Columns": [{"Column": "customer_id", "MatchIds": [legit_match_id, malicious_match_id]}],
@@ -143,7 +143,7 @@ def test_it_escapes_match_ids_backslash_and_comments_preventing_bypassing_matche
     legit_match_id = "12345"
     mapper = glue_data_mapper_factory("test")
     query_input = {
-        "JobId": 1234,
+        "JobId": 4,
         "Database": mapper["QueryExecutorParameters"]["Database"],
         "Table": mapper["QueryExecutorParameters"]["Database"],
         "Columns": [{"Column": "customer_id", "MatchIds": ["\'", ")) --", legit_match_id]}],
@@ -174,7 +174,7 @@ def test_it_escapes_match_ids_newlines_preventing_bypassing_matches(sf_client, d
     legit_match_id = "12345"
     mapper = glue_data_mapper_factory("test")
     query_input = {
-        "JobId": 1234,
+        "JobId": 5,
         "Database": mapper["QueryExecutorParameters"]["Database"],
         "Table": mapper["QueryExecutorParameters"]["Database"],
         "Columns": [{"Column": "customer_id", "MatchIds": ["\n--", legit_match_id, "\n"]}],
