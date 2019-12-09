@@ -75,6 +75,7 @@ def get_aggregated_query_stats(report):
         "TotalQueryTimeInMillis": query_time,
         "TotalQueryScannedInBytes": query_scanned,
         "TotalQueryCount": query_count,
+        "TotalQueryFailedCount": len(report["QueryFailed"])
     }
 
 

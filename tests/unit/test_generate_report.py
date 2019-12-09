@@ -28,7 +28,7 @@ def test_it_generates_reports(mock_get_status, mock_query_stats, mock_object_sta
     }
     mock_object_stats.return_value = {
        "TotalObjectUpdatedCount": 1,
-       "TotalObjectUpdateFailedCount": 1,
+       "TotalObjectUpdateFailedCount": 0,
     }
     mock_get_logs.return_value = [
         {"message": json.dumps({"EventName": "QuerySucceeded", "EventData": query_stub()})},
@@ -48,20 +48,16 @@ def test_it_generates_reports(mock_get_status, mock_query_stats, mock_object_sta
         "ObjectUpdated": [object_update_stub()],
         "TotalObjectUpdatedCount": 1,
         "TotalObjectUpdateFailedCount": 0,
-        "TotalQueryFailedCount": 1,
         "TotalQueryTimeInMillis": 10000,
         "TotalQueryScannedInBytes": 1000,
         "TotalQueryCount": 10,
+        "TotalQueryFailedCount": 0,
         "JobStatus": "COMPLETED"
     })
-    assert [
-       "reports/123/detailed.json",
-       "reports/123/summary.json"
-    ] == resp
 
 
 @patch("backend.lambdas.tasks.generate_report.s3")
-def test_it_generates_reports(mock_s3):
+def test_it_writes_reports_to_s3(mock_s3):
     mock_object = mock.MagicMock()
     mock_s3.Object.return_value = mock_object
     detailed = report_stub(JobId="123")
