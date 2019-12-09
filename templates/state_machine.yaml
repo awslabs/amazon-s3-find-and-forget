@@ -5,7 +5,7 @@ Description: Amazon S3 Find and Forget State Machine
 Globals:
   Function:
     Runtime: python3.7
-    Timeout: 180
+    Timeout: 900
     Tracing: Active
     Layers: !Ref CommonLayers
     Environment:
