@@ -11,12 +11,17 @@ wait_duration = os.getenv("WaitDuration", 15)
 state_machine_arn = os.getenv("StateMachineArn")
 sqs = boto3.resource("sqs")
 sf_client = boto3.client("stepfunctions")
+logs = boto3.client("logs")
 
 
 @with_logger
 def handler(event, context):
     execution_id = event["ExecutionId"]
     job_id = event["ExecutionName"]
+
+    if any_query_has_failed(job_id):
+        raise RuntimeError("One or more queries failed. Abandoning execution")
+
     queue = sqs.Queue(queue_url)
     not_visible = int(event["QueryQueue"]["NotVisible"])
     visible = int(event["QueryQueue"]["Visible"])
@@ -34,3 +39,14 @@ def handler(event, context):
             body["ReceiptHandle"] = msg.receipt_handle
             body["WaitDuration"] = wait_duration
             sf_client.start_execution(stateMachineArn=state_machine_arn, input=json.dumps(body))
+
+
+def any_query_has_failed(job_id):
+    log_group = os.getenv("LogGroupName", "/aws/s3f2")
+    return len(logs.filter_log_events(
+        logGroupName=log_group,
+        logStreamNamePrefix=job_id,
+        filterPattern='QueryFailed',
+        limit=1
+    ).get('events', [])) > 0
+
