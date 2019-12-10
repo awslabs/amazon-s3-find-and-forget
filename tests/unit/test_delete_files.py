@@ -175,6 +175,42 @@ def test_it_handles_arrow_exceptions(mock_log, mock_load_parquet, mock_delete_wr
     mock_dlq.send_message.assert_called()
 
 
+@patch("os.remove")
+def test_it_validates_messages_with_missing_keys(mock_remove):
+    # Arrange
+    message_item = MagicMock()
+    message_item.body = "{}"
+    mock_queue = MagicMock()
+    mock_queue.receive_messages.return_value = [message_item]
+    mock_dlq = MagicMock()
+    mock_s3 = MagicMock()
+    parquet_file = MagicMock()
+    parquet_file.num_row_groups = 1
+    # Act
+    execute(mock_queue, mock_s3, mock_dlq)
+    # Assert
+    mock_remove.assert_called()
+    mock_dlq.send_message.assert_called()
+
+
+@patch("os.remove")
+def test_it_validates_messages_with_invalid_body(mock_remove):
+    # Arrange
+    message_item = MagicMock()
+    message_item.body = "NOT JSON"
+    mock_queue = MagicMock()
+    mock_queue.receive_messages.return_value = [message_item]
+    mock_dlq = MagicMock()
+    mock_s3 = MagicMock()
+    parquet_file = MagicMock()
+    parquet_file.num_row_groups = 1
+    # Act
+    execute(mock_queue, mock_s3, mock_dlq)
+    # Assert
+    mock_remove.assert_called()
+    mock_dlq.send_message.assert_called()
+
+
 def message_stub(**kwargs):
     return json.dumps({
         "JobId": '1234',

@@ -30,8 +30,7 @@ def load_parquet(f, stats):
 def delete_from_dataframe(df, columns):
     for column in columns:
         df = df[~df[column["Column"]].isin(column["MatchIds"])]
-    return pa.Table.from_pandas(
-        df, preserve_index=False).replace_schema_metadata()
+    return pa.Table.from_pandas(df, preserve_index=False).replace_schema_metadata()
 
 
 def delete_and_write(parquet_file, row_group, columns, writer, stats):
@@ -87,8 +86,12 @@ def log_failed_deletion(message_body, err_message):
     log_event(cw_logs, stream_name, "ObjectUpdateFailed", event_data)
 
 
-def validate_message():
-    raise ValueError("Invalid message received")
+def validate_message(message):
+    body = json.loads(message.body)
+    mandatory_keys = ["JobId", "Object", "Columns"]
+    for k in mandatory_keys:
+        if k not in body:
+            raise ValueError("Malformed message. Missing key: {}".format(k))
 
 
 def execute(queue, s3, dlq):
@@ -101,7 +104,7 @@ def execute(queue, s3, dlq):
     else:
         for message in messages:
             try:
-                validate_message()
+                validate_message(message)
                 stats = {"ProcessedRows": 0}
                 print("Message received: {0}".format(message.body))
                 body = json.loads(message.body)
@@ -119,9 +122,9 @@ def execute(queue, s3, dlq):
             except (KeyError, ArrowException) as e:
                 err_message = "Parquet processing error: {}".format(str(e))
                 print(err_message)
-                log_failed_deletion(json.loads(message.body), str(e))
+                log_failed_deletion(json.loads(message.body), err_message)
                 dlq.send_message(MessageBody=message.body)
-            except ValueError as e:
+            except (ValueError, TypeError) as e:
                 err_message = "Invalid message received: {}".format(str(e))
                 print(err_message)
                 dlq.send_message(MessageBody=message.body)
