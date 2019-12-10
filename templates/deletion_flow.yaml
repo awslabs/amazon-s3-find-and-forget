@@ -74,6 +74,8 @@ Resources:
           Environment:
             - Name: DELETE_OBJECTS_QUEUE
               Value: !Ref DelObjQ
+            - Name: DLQ
+              Value: !Ref DLQ
             - Name: ECS_ENABLE_CONTAINER_METADATA
               Value: 'true'
             - Name: LogGroupName
