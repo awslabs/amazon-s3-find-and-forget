@@ -87,6 +87,10 @@ def log_failed_deletion(message_body, err_message):
     log_event(cw_logs, stream_name, "ObjectUpdateFailed", event_data)
 
 
+def validate_message():
+    raise ValueError("Invalid message received")
+
+
 def execute(queue, s3, dlq):
     print("Fetching messages...")
     temp_dest = "/tmp/new.parquet"
@@ -97,6 +101,7 @@ def execute(queue, s3, dlq):
     else:
         for message in messages:
             try:
+                validate_message()
                 stats = {"ProcessedRows": 0}
                 print("Message received: {0}".format(message.body))
                 body = json.loads(message.body)
@@ -112,8 +117,13 @@ def execute(queue, s3, dlq):
                 save(s3, temp_dest, object_path)
                 log_deletion(body, stats)
             except (KeyError, ArrowException) as e:
-                print(e)
+                err_message = "Parquet processing error: {}".format(str(e))
+                print(err_message)
                 log_failed_deletion(json.loads(message.body), str(e))
+                dlq.send_message(MessageBody=message.body)
+            except ValueError as e:
+                err_message = "Invalid message received: {}".format(str(e))
+                print(err_message)
                 dlq.send_message(MessageBody=message.body)
             finally:
                 message.delete()
