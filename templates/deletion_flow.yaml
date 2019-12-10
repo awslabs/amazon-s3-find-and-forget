@@ -134,6 +134,9 @@ Resources:
     Properties:
       RetentionInDays: !Ref LogRetentionInDays
 
+  DLQ:
+    Type: AWS::SQS::Queue
+
 Outputs:
   DeleteObjectsQueueUrl:
     Value: !Ref DelObjQ
@@ -141,6 +144,8 @@ Outputs:
     Value: !GetAtt DeleteService.Name
   DeleteTaskIAMRoleArn:
     Value: !GetAtt DeleteTaskIAMRole.Arn
+  DLQUrl:
+    Value: !Ref DLQ
   ECSCluster:
     Value: !Ref ECSCluster
   ECRRepository:

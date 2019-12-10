@@ -142,10 +142,12 @@ Outputs:
     Value: !GetAtt DelStack.Outputs.DeleteTaskIAMRoleArn
   DeletionQueueTable:
     Value: !GetAtt DDBStack.Outputs.DeletionQueueTable
-  ECRRepository:
-    Value: !GetAtt DelStack.Outputs.ECRRepository
   DeletionQueueUrl:
     Value: !GetAtt DelStack.Outputs.DeleteObjectsQueueUrl
+  DLQUrl:
+    Value: !GetAtt DelStack.Outputs.DLQUrl
+  ECRRepository:
+    Value: !GetAtt DelStack.Outputs.ECRRepository
   QueryQueueUrl:
      Value: !GetAtt StateMachineStack.Outputs.QueryQueueUrl
   StateMachineArn:
