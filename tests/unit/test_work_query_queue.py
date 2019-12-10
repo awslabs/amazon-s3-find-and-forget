@@ -1,38 +1,43 @@
 import json
+import os
 from types import SimpleNamespace
 
 import pytest
-
-from backend.lambdas.tasks.work_query_queue import handler, any_query_has_failed
 from mock import patch, ANY, MagicMock
+
+with patch.dict(os.environ, {"QueueUrl": "someurl"}):
+    from backend.lambdas.tasks.work_query_queue import handler, load_execution, clear_completed, abandon_execution
 
 pytestmark = [pytest.mark.unit, pytest.mark.task]
 
 
 @patch("backend.lambdas.tasks.work_query_queue.read_queue")
 @patch("backend.lambdas.tasks.work_query_queue.sqs")
-@patch("backend.lambdas.tasks.work_query_queue.any_query_has_failed", MagicMock(return_value=False))
-def test_it_skips_with_no_remaining_capacity(sqs_mock, read_queue_mock):
+@patch("backend.lambdas.tasks.work_query_queue.load_execution")
+def test_it_skips_with_no_remaining_capacity(mock_load, sqs_mock, read_queue_mock):
     sqs_mock.Queue.return_value = sqs_mock
+    mock_load.return_value = execution_stub(status="RUNNING", ReceiptHandle="handle")
 
-    handler({
+    resp = handler({
         "ExecutionId": "1234",
         "ExecutionName": "4231",
-        "QueryQueue": {
-            "NotVisible": 20,
-            "Visible": 50,
+        "RunningExecutions": {
+            "Data": list(range(0, 20)),
+            "Total": 20
         }
     }, SimpleNamespace())
 
     read_queue_mock.assert_not_called()
+    assert 20 == resp["Total"]
 
 
 @patch("backend.lambdas.tasks.work_query_queue.sf_client")
 @patch("backend.lambdas.tasks.work_query_queue.read_queue")
 @patch("backend.lambdas.tasks.work_query_queue.sqs")
-@patch("backend.lambdas.tasks.work_query_queue.any_query_has_failed", MagicMock(return_value=False))
-def test_it_adds_receipt_handle(sqs_mock, read_queue_mock, sf_client_mock):
+def test_it_starts_machine_as_expected(sqs_mock, read_queue_mock, sf_client_mock):
     sqs_mock.Queue.return_value = sqs_mock
+    sf_client_mock.start_execution.return_value = execution_stub()
+
     read_queue_mock.return_value = [
         SimpleNamespace(
             body=json.dumps({"hello": "world"}),
@@ -43,28 +48,24 @@ def test_it_adds_receipt_handle(sqs_mock, read_queue_mock, sf_client_mock):
         "hello": "world",
         "AWS_STEP_FUNCTIONS_STARTED_BY_EXECUTION_ID": "1234",
         "JobId": "4231",
-        "ReceiptHandle": "1234",
         "WaitDuration": 15
     })
 
-    handler({
+    resp = handler({
         "ExecutionId": "1234",
         "ExecutionName": "4231",
-        "QueryQueue": {
-            "NotVisible": 0,
-            "Visible": 50,
-        }
     }, SimpleNamespace())
 
     sf_client_mock.start_execution.assert_called_with(stateMachineArn=ANY, input=expected_call)
+    assert 1 == resp["Total"]
 
 
 @patch("backend.lambdas.tasks.work_query_queue.sf_client")
 @patch("backend.lambdas.tasks.work_query_queue.read_queue")
 @patch("backend.lambdas.tasks.work_query_queue.sqs")
-@patch("backend.lambdas.tasks.work_query_queue.any_query_has_failed", MagicMock(return_value=False))
 def test_it_starts_state_machine_per_message(sqs_mock, read_queue_mock, sf_client_mock):
     sqs_mock.Queue.return_value = sqs_mock
+    sf_client_mock.start_execution.return_value = execution_stub()
     read_queue_mock.return_value = [
         SimpleNamespace(
             body=json.dumps({"hello": "world"}),
@@ -72,28 +73,25 @@ def test_it_starts_state_machine_per_message(sqs_mock, read_queue_mock, sf_clien
         ),
         SimpleNamespace(
             body=json.dumps({"other": "world"}),
-            receipt_handle="1234",
+            receipt_handle="4321",
         )
     ]
 
-    handler({
+    resp = handler({
         "ExecutionId": "1234",
         "ExecutionName": "4231",
-        "QueryQueue": {
-            "NotVisible": 0,
-            "Visible": 50,
-        }
     }, SimpleNamespace())
 
     assert 2 == sf_client_mock.start_execution.call_count
+    assert 2 == resp["Total"]
 
 
 @patch("backend.lambdas.tasks.work_query_queue.sf_client")
 @patch("backend.lambdas.tasks.work_query_queue.read_queue")
 @patch("backend.lambdas.tasks.work_query_queue.sqs")
-@patch("backend.lambdas.tasks.work_query_queue.any_query_has_failed", MagicMock(return_value=False))
 def test_limits_calls_to_capacity(sqs_mock, read_queue_mock, sf_client_mock):
     sqs_mock.Queue.return_value = sqs_mock
+    sf_client_mock.start_execution.return_value = execution_stub()
     read_queue_mock.return_value = [
         SimpleNamespace(
             body=json.dumps({"hello": "world"}),
@@ -104,68 +102,92 @@ def test_limits_calls_to_capacity(sqs_mock, read_queue_mock, sf_client_mock):
     handler({
         "ExecutionId": "1234",
         "ExecutionName": "4231",
-        "QueryQueue": {
-            "NotVisible": 19,
-            "Visible": 50,
-        }
     }, SimpleNamespace())
 
-    read_queue_mock.assert_called_with(ANY, 1)
-    assert 1 == sf_client_mock.start_execution.call_count
+    read_queue_mock.assert_called_with(ANY, 20)
 
 
 @patch("backend.lambdas.tasks.work_query_queue.sf_client")
 @patch("backend.lambdas.tasks.work_query_queue.read_queue")
 @patch("backend.lambdas.tasks.work_query_queue.sqs")
-@patch("backend.lambdas.tasks.work_query_queue.any_query_has_failed", MagicMock(return_value=False))
-def test_it_only_requests_the_minimum(sqs_mock, read_queue_mock, sf_client_mock):
+@patch("backend.lambdas.tasks.work_query_queue.load_execution")
+@patch("backend.lambdas.tasks.work_query_queue.clear_completed")
+def test_it_recognises_completed_executions(clear_mock, load_mock, sqs_mock, read_queue_mock, sf_client_mock):
     sqs_mock.Queue.return_value = sqs_mock
-    read_queue_mock.return_value = [
-        SimpleNamespace(
-            body=json.dumps({"hello": "world"}),
-            receipt_handle="1234",
-        ),
+    sf_client_mock.start_execution.return_value = execution_stub()
+    read_queue_mock.return_value = []
+    load_mock.side_effect = [
+        *[execution_stub(status="SUCCEEDED") for _ in range(0, 15)],
+        *[execution_stub(status="RUNNING", ReceiptHandle="handle") for _ in range(15, 20)],
     ]
 
     handler({
         "ExecutionId": "1234",
-        "ExecutionName": "4321",
-        "QueryQueue": {
-            "NotVisible": 0,
-            "Visible": 2,
+        "ExecutionName": "4231",
+        "RunningExecutions": {
+            "Data": list(range(0, 20)),
+            "Total": 20
         }
     }, SimpleNamespace())
 
-    read_queue_mock.assert_called_with(ANY, 2)
-    assert 1 == sf_client_mock.start_execution.call_count
+    read_queue_mock.assert_called_with(ANY, 15)
 
 
-@patch("backend.lambdas.tasks.work_query_queue.any_query_has_failed", MagicMock(return_value=True))
-def test_it_throws_when_any_query_fails():
+@patch("backend.lambdas.tasks.work_query_queue.load_execution")
+@patch("backend.lambdas.tasks.work_query_queue.abandon_execution")
+def test_it_abandons_when_any_query_fails(mock_abandon, mock_load):
+    mock_load.return_value = execution_stub(status="FAILED")
+    mock_abandon.side_effect = RuntimeError
     with pytest.raises(RuntimeError):
         handler({
             "ExecutionId": "1234",
             "ExecutionName": "4321",
-            "QueryQueue": {
-                "NotVisible": 0,
-                "Visible": 2,
+            "RunningExecutions": {
+                "Data": [{}],
+                "Total": 1,
             }
         }, SimpleNamespace())
 
 
-@patch("backend.lambdas.tasks.work_query_queue.logs")
-def test_it_returns_true_if_any_logs_found(mock_logs):
-    mock_logs.filter_log_events.return_value = {
-        'events': [{'message': 'blah'}]
-    }
-    resp = any_query_has_failed("123")
-    assert resp
+def test_it_throws_to_abandon():
+    with pytest.raises(RuntimeError):
+        abandon_execution([execution_stub(status="FAILED")])
 
 
-@patch("backend.lambdas.tasks.work_query_queue.logs")
-def test_it_returns_false_if_no_logs_found(mock_logs):
-    mock_logs.filter_log_events.return_value = {
-        'events': []
+@patch("backend.lambdas.tasks.work_query_queue.sf_client")
+def test_it_loads_execution_from_state(sf_mock):
+    sf_mock.describe_execution.return_value = execution_stub()
+    resp = load_execution({
+        "ExecutionArn": "arn",
+        "ReceiptHandle": "handle"
+    })
+    assert {
+        **execution_stub(),
+        "ReceiptHandle": "handle"
+    } == resp
+
+
+@patch("backend.lambdas.tasks.work_query_queue.sqs")
+@patch("backend.lambdas.tasks.work_query_queue.queue")
+def test_it_clears_completed_from_sqs(mock_queue, mock_sqs):
+    mock_message = MagicMock()
+    mock_queue.url = "someurl"
+    mock_sqs.Message.return_value = mock_message
+    clear_completed([
+        {"ReceiptHandle": "handle1"},
+        {"ReceiptHandle": "handle2"},
+    ])
+    assert 2 == mock_message.delete.call_count
+
+
+def execution_stub(**kwargs):
+    return {
+        "executionArn": "arn:aws:states:eu-west-1:123456789012:execution:S3F2-StateMachine:59923759-3016-82d8-bbc0",
+        "stateMachineArn": "arn:aws:states:eu-west-1:123456789012:stateMachine:S3F2-StateMachine",
+        "name": "59923759-3016-82d8-bbc0",
+        "status": "RUNNING",
+        "startDate": 1575900611.248,
+        "stopDate": 1575900756.716,
+        "input": "{}",
+        **kwargs
     }
-    resp = any_query_has_failed("123")
-    assert not resp

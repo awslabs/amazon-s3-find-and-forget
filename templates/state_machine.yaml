@@ -210,29 +210,11 @@ Resources:
               "Type": "Task",
               "Resource": "${SubmitQueryResults.Arn}",
               "ResultPath": null,
-              "Next": "Notify Parent of Success",
+              "Next": "Log Success",
               "Retry": [{
                  "ErrorEquals": [ "States.ALL" ],
                  "IntervalSeconds": 5,
                  "BackoffRate": 2.5,
-                 "MaxAttempts": 1
-              }],
-              "Catch": [{
-                 "ErrorEquals": ["States.ALL"],
-                 "ResultPath": "$.ErrorDetails",
-                 "Next": "Handle Error"
-              }]
-            },
-            "Notify Parent of Success": {
-              "Comment": "If an SQS message receipt handle was provided, it will now be deleted",
-              "Type": "Task",
-              "Resource": "${DeleteQueueMessage.Arn}",
-              "ResultPath": null,
-              "Next": "Log Success",
-              "Retry": [{
-                 "ErrorEquals": [ "States.ALL" ],
-                 "IntervalSeconds": 3,
-                 "BackoffRate": 1.5,
                  "MaxAttempts": 1
               }],
               "Catch": [{
@@ -549,52 +531,37 @@ Resources:
                       "Type": "Task",
                       "Resource": "${GenerateQueries.Arn}",
                       "ResultPath": null,
-                      "Next": "Fetch Queue Size"
+                      "Next": "Work Queue"
                     },
-                    "Fetch Queue Size": {
-                      "Comment": "Checks the number of messages in the Query Queue",
+                    "Work Queue": {
+                      "Comment": "Works the Object Deletion Queue by starting Athena State Machine executions",
                       "Type": "Task",
-                      "Resource": "${CheckQueueSize.Arn}",
-                      "Parameters": {
-                        "QueueUrl": "${QueryQueue}"
-                      },
-                      "ResultPath": "$.QueryQueue",
-                      "Next": "Outstanding Queries?",
-                      "Retry": [{
-                        "ErrorEquals": [ "States.ALL" ],
-                        "IntervalSeconds": 10,
-                        "MaxAttempts": 1
-                      }]
+                      "Resource": "${WorkQueryQueue.Arn}",
+                      "ResultPath": "$.RunningExecutions",
+                      "Next": "Outstanding Queries?"
                     },
                     "Outstanding Queries?": {
                       "Comment": "Checks if any queries are yet to be ran or are in progress or if we need to wait for capacity",
                       "Type": "Choice",
                       "Choices": [
                         {
-                          "Variable": "$.QueryQueue.Total",
+                          "Variable": "$.RunningExecutions.Total",
                           "NumericEquals": 0,
                           "Next": "Done"
                         },
                         {
-                          "Variable": "$.QueryQueue.NotVisible",
+                          "Variable": "$.RunningExecutions.Total",
                           "NumericLessThan": ${AthenaConcurrencyLimit},
-                          "Next": "Work Queue"
+                          "Next": "Wait for Queries"
                         }
                       ],
                       "Default": "Wait for Queries"
-                    },
-                    "Work Queue": {
-                      "Comment": "Works the Object Deletion Queue by starting Athena State Machine executions",
-                      "Type": "Task",
-                      "Resource": "${WorkQueryQueue.Arn}",
-                      "ResultPath": null,
-                      "Next": "Wait for Queries"
                     },
                     "Wait for Queries": {
                       "Comment": "Waits before rechecking if the Object Deletion Queue is empty",
                       "Type": "Wait",
                       "Seconds": 5,
-                      "Next": "Fetch Queue Size"
+                      "Next": "Work Queue"
                     },
                     "Done": {
                       "Type": "Pass",
@@ -882,6 +849,8 @@ Resources:
             - "sqs:ReceiveMessage*"
             - "sqs:ChangeMessageVisibility"
             - "sqs:PurgeQueue"
+            - "sqs:DeleteMessage"
+            - "states:DescribeExecution"
           Effect: "Allow"
           Resource: "*"
         - Effect: Allow

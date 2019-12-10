@@ -10,43 +10,65 @@ queue_url = os.getenv("QueueUrl")
 wait_duration = os.getenv("WaitDuration", 15)
 state_machine_arn = os.getenv("StateMachineArn")
 sqs = boto3.resource("sqs")
+queue = sqs.Queue(queue_url)
 sf_client = boto3.client("stepfunctions")
-logs = boto3.client("logs")
 
 
 @with_logger
 def handler(event, context):
     execution_id = event["ExecutionId"]
     job_id = event["ExecutionName"]
+    previously_started = event.get("RunningExecutions", {
+        "Data": [],
+        "Total": 0
+    })
+    executions = [load_execution(execution) for execution in previously_started["Data"]]
+    succeeded = [execution for execution in executions if execution["status"] == "SUCCEEDED"]
+    still_running = [execution for execution in executions if execution["status"] == "RUNNING"]
+    failed = [execution for execution in executions if execution["status"] not in ["SUCCEEDED", "RUNNING"]]
+    clear_completed(succeeded)
+    if len(failed) > 0:
+        abandon_execution(failed)
 
-    if any_query_has_failed(job_id):
-        raise RuntimeError("One or more queries failed. Abandoning execution")
-
-    queue = sqs.Queue(queue_url)
-    not_visible = int(event["QueryQueue"]["NotVisible"])
-    visible = int(event["QueryQueue"]["Visible"])
-    limit = int(concurrency_limit)
-    reamining_capacity = limit - not_visible
-    to_process = min(reamining_capacity, visible)
-    if to_process > 0:
-        msgs = read_queue(queue, to_process)
+    remaining_capacity = int(concurrency_limit) - len(still_running)
+    if remaining_capacity > 0:
+        msgs = read_queue(queue, remaining_capacity)
+        started = []
         for msg in msgs:
             context.logger.debug(msg.body)
-            # TODO: Handle message received multiple times
             body = json.loads(msg.body)
             body["AWS_STEP_FUNCTIONS_STARTED_BY_EXECUTION_ID"] = execution_id
             body["JobId"] = job_id
-            body["ReceiptHandle"] = msg.receipt_handle
             body["WaitDuration"] = wait_duration
-            sf_client.start_execution(stateMachineArn=state_machine_arn, input=json.dumps(body))
+            resp = sf_client.start_execution(stateMachineArn=state_machine_arn, input=json.dumps(body))
+            started.append({
+                **resp,
+                "ReceiptHandle": msg.receipt_handle
+            })
+        still_running += started
+
+    return {
+        "Data": [{
+            "ExecutionArn": e["executionArn"],
+            "ReceiptHandle": e["ReceiptHandle"]
+        } for e in still_running],
+        "Total": len(still_running)
+    }
 
 
-def any_query_has_failed(job_id):
-    log_group = os.getenv("LogGroupName", "/aws/s3f2")
-    return len(logs.filter_log_events(
-        logGroupName=log_group,
-        logStreamNamePrefix=job_id,
-        filterPattern='QueryFailed',
-        limit=1
-    ).get('events', [])) > 0
+def load_execution(execution):
+    resp = sf_client.describe_execution(executionArn=execution["ExecutionArn"])
+    resp["ReceiptHandle"] = execution["ReceiptHandle"]
+    return resp
 
+
+def clear_completed(executions):
+    for e in executions:
+        message = sqs.Message(queue.url, e["ReceiptHandle"])
+        message.delete()
+
+
+def abandon_execution(failed):
+    raise RuntimeError("Abandoning execution because one or more queries failed. {}".format(", ".join([
+        f["executionArn"] for f in failed
+    ])))
