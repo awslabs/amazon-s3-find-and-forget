@@ -133,10 +133,7 @@ def execute(queue, s3, dlq):
                 err_message = "Unable to retrieve object: {}".format(str(e))
                 print(err_message)
                 log_failed_deletion(json.loads(message.body), err_message)
-                dlq.send_message(MessageBody={
-                    'Error': err_message,
-                    'Message': message.body,
-                })
+                dlq.send_message(MessageBody=message.body)
             finally:
                 message.delete()
                 cleanup(temp_dest)
