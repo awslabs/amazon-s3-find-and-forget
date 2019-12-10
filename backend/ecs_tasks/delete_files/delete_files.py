@@ -7,13 +7,18 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import s3fs
 import time
+
+from pyarrow.lib import ArrowException
+
 from boto_utils import log_event
 
+cw_logs = boto3.client("logs")
 
-def get_queue():
+
+def get_queue(queue_url):
     sqs_endpoint = "https://sqs.{}.amazonaws.com".format(os.getenv("AWS_DEFAULT_REGION"))
     sqs = boto3.resource(service_name='sqs', endpoint_url=sqs_endpoint)
-    return sqs.Queue(os.getenv("DELETE_OBJECTS_QUEUE"))
+    return sqs.Queue(queue_url)
 
 
 def load_parquet(f, stats):
@@ -42,11 +47,14 @@ def delete_and_write(parquet_file, row_group, columns, writer, stats):
     print("wrote table")
 
 
-def save_and_cleanup(s3, new_parquet, destination):
+def save(s3, new_parquet, destination):
     print("Saving to S3")
     s3.put(new_parquet, destination)
-    os.remove(new_parquet)
     print("File {} complete".format(destination))
+
+
+def cleanup(new_parquet):
+    os.remove(new_parquet)
 
 
 def get_container_id():
@@ -59,18 +67,27 @@ def get_container_id():
         return str(uuid4())
 
 
-def log_deletion(message, stats):
-    cw_logs = boto3.client("logs")
-    job_id = message["JobId"]
+def log_deletion(message_body, stats):
+    job_id = message_body["JobId"]
     stream_name = "{}-{}".format(job_id, get_container_id())
     event_data = {
         "Statistics": stats,
-        **message,
+        **message_body,
     }
     log_event(cw_logs, stream_name, "ObjectUpdated", event_data)
 
 
-def execute(queue, s3):
+def log_failed_deletion(message_body, err_message):
+    job_id = message_body["JobId"]
+    stream_name = "{}-{}".format(job_id, get_container_id())
+    event_data = {
+        "Error": err_message,
+        'Message': message_body,
+    }
+    log_event(cw_logs, stream_name, "ObjectUpdateFailed", event_data)
+
+
+def execute(queue, s3, dlq=None):
     print("Fetching messages...")
     temp_dest = "/tmp/new.parquet"
     messages = queue.receive_messages(WaitTimeSeconds=5, MaxNumberOfMessages=1)
@@ -79,25 +96,37 @@ def execute(queue, s3):
         time.sleep(30)
     else:
         for message in messages:
-            stats = {"ProcessedRows": 0}
-            print("Message received: {0}".format(message.body))
-            body = json.loads(message.body)
-            print("Opening the file")
-            object_path = body["Object"]
-            with s3.open(object_path, "rb") as f:
-                parquet_file = load_parquet(f, stats)
-                schema = parquet_file.metadata.schema.to_arrow_schema().remove_metadata()
-                with pq.ParquetWriter(temp_dest, schema, flavor="spark") as writer:
-                    for i in range(parquet_file.num_row_groups):
-                        cols = body["Columns"]
-                        delete_and_write(parquet_file, i, cols, writer, stats)
-            save_and_cleanup(s3, temp_dest, object_path)
-            message.delete()
-            log_deletion(body, stats)
+            try:
+                stats = {"ProcessedRows": 0}
+                print("Message received: {0}".format(message.body))
+                body = json.loads(message.body)
+                print("Opening the file")
+                object_path = body["Object"]
+                with s3.open(object_path, "rb") as f:
+                    parquet_file = load_parquet(f, stats)
+                    schema = parquet_file.metadata.schema.to_arrow_schema().remove_metadata()
+                    with pq.ParquetWriter(temp_dest, schema, flavor="spark") as writer:
+                        for i in range(parquet_file.num_row_groups):
+                            cols = body["Columns"]
+                            delete_and_write(parquet_file, i, cols, writer, stats)
+                save(s3, temp_dest, object_path)
+                log_deletion(body, stats)
+            except (KeyError, ArrowException) as e:
+                print(e)
+                log_failed_deletion(json.loads(message.body), str(e))
+                if dlq:
+                    dlq.send_message(MessageBody={
+                        'Error': "Parquet processing error: {}".format(str(e)),
+                        'Message': message.body,
+                    })
+            finally:
+                message.delete()
+                cleanup(temp_dest)
 
 
 if __name__ == '__main__':
-    queue = get_queue()
+    queue = get_queue(os.getenv("DELETE_OBJECTS_QUEUE"))
+    dlq = get_queue(os.getenv("DLQ"))
     s3 = s3fs.S3FileSystem()
     while 1:
         execute(queue, s3)

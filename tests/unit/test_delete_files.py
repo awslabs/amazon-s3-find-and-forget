@@ -5,7 +5,10 @@ from types import SimpleNamespace
 import json
 import pyarrow.parquet as pq
 import pytest
-from backend.ecs_tasks.delete_files.delete_files import delete_and_write, execute, get_queue, get_container_id, log_deletion
+from pyarrow.lib import ArrowException
+
+from backend.ecs_tasks.delete_files.delete_files import delete_and_write, execute, get_queue, get_container_id, \
+    log_deletion, log_failed_deletion
 
 pytestmark = [pytest.mark.unit]
 
@@ -32,8 +35,7 @@ def test_happy_path_when_queue_not_empty(mock_log, mock_delete_and_write, mock_l
               "MatchIds": ["12345", "23456"]}
     mock_queue = MagicMock()
     message_item = MagicMock()
-    message_item.body = json.dumps(
-        {"Object": object_path, "Columns": [column]})
+    message_item.body = message_stub()
     mock_queue.receive_messages.return_value = [message_item]
     mock_s3 = MagicMock()
     parquet_file = MagicMock()
@@ -65,14 +67,13 @@ def test_delete_correct_rows_from_dataframe(mock_pq_writer):
 
 
 @patch("boto3.resource")
-@patch("os.getenv")
-def test_sqs_using_vpc_compatible_endpoint(mock_getenv, mock_resource):
+@patch.dict(os.environ, {"AWS_DEFAULT_REGION": "eu-west-1"})
+def test_sqs_using_vpc_compatible_endpoint(mock_resource):
     mock_queue = MagicMock()
     mock_resource.return_value = mock_queue
     mock_queue.Queue.return_value = MagicMock()
-    mock_getenv.side_effect = ["eu-west-1", "https://url/q.fifo"]
 
-    q = get_queue()
+    get_queue("https://url/q.fifo")
     mock_resource.assert_called_with(
         service_name="sqs", endpoint_url="https://sqs.eu-west-1.amazonaws.com")
     mock_queue.Queue.assert_called_with("https://url/q.fifo")
@@ -82,12 +83,24 @@ def test_sqs_using_vpc_compatible_endpoint(mock_getenv, mock_resource):
 @patch("backend.ecs_tasks.delete_files.delete_files.get_container_id")
 def test_it_logs_deletions(mock_get_container, mock_log):
     mock_get_container.return_value = "4567"
-    message_stub = {"JobId": "1234", "Object": "s3://bucket/object/"}
     stats_stub = {"Some": "stats"}
-    log_deletion(message_stub, stats_stub)
+    msg = json.loads(message_stub())
+    log_deletion(msg, stats_stub)
     mock_log.assert_called_with(ANY, "1234-4567", "ObjectUpdated", {
         "Statistics": stats_stub,
-        **message_stub
+        **msg
+    })
+
+
+@patch("backend.ecs_tasks.delete_files.delete_files.log_event")
+@patch("backend.ecs_tasks.delete_files.delete_files.get_container_id")
+def test_it_logs_failed_deletions(mock_get_container, mock_log):
+    mock_get_container.return_value = "4567"
+    msg = json.loads(message_stub())
+    log_failed_deletion(msg, "Some error")
+    mock_log.assert_called_with(ANY, "1234-4567", "ObjectUpdateFailed", {
+        "Error": "Some error",
+        "Message": msg
     })
 
 
@@ -109,3 +122,62 @@ def test_it_provides_default_id(mock_uuid):
 def test_it_returns_uuid_as_string():
     resp = get_container_id()
     assert isinstance(resp, str)
+
+
+@patch("os.remove")
+@patch("backend.ecs_tasks.delete_files.delete_files.pq.ParquetWriter", MagicMock())
+@patch("backend.ecs_tasks.delete_files.delete_files.load_parquet")
+@patch("backend.ecs_tasks.delete_files.delete_files.delete_and_write")
+@patch("backend.ecs_tasks.delete_files.delete_files.log_failed_deletion")
+def test_it_handles_missing_col_exceptions(mock_log, mock_load_parquet, mock_delete_write, mock_remove):
+    # Arrange
+    mock_delete_write.side_effect = KeyError()
+    message_item = MagicMock()
+    message_item.body = message_stub()
+    mock_queue = MagicMock()
+    mock_queue.receive_messages.return_value = [message_item]
+    mock_dlq = MagicMock()
+    mock_s3 = MagicMock()
+    parquet_file = MagicMock()
+    parquet_file.num_row_groups = 1
+    mock_load_parquet.return_value = parquet_file
+    # Act
+    execute(mock_queue, mock_s3, mock_dlq)
+    # Assert
+    mock_remove.assert_called()
+    mock_log.assert_called()
+    mock_dlq.send_message.assert_called()
+
+
+@patch("os.remove")
+@patch("backend.ecs_tasks.delete_files.delete_files.pq.ParquetWriter", MagicMock())
+@patch("backend.ecs_tasks.delete_files.delete_files.load_parquet")
+@patch("backend.ecs_tasks.delete_files.delete_files.delete_and_write")
+@patch("backend.ecs_tasks.delete_files.delete_files.log_failed_deletion")
+def test_it_handles_arrow_exceptions(mock_log, mock_load_parquet, mock_delete_write, mock_remove):
+    # Arrange
+    mock_delete_write.side_effect = ArrowException()
+    message_item = MagicMock()
+    message_item.body = message_stub()
+    mock_queue = MagicMock()
+    mock_queue.receive_messages.return_value = [message_item]
+    mock_dlq = MagicMock()
+    mock_s3 = MagicMock()
+    parquet_file = MagicMock()
+    parquet_file.num_row_groups = 1
+    mock_load_parquet.return_value = parquet_file
+    # Act
+    execute(mock_queue, mock_s3, mock_dlq)
+    # Assert
+    mock_remove.assert_called()
+    mock_log.assert_called()
+    mock_dlq.send_message.assert_called()
+
+
+def message_stub(**kwargs):
+    return json.dumps({
+        "JobId": '1234',
+        "Object": "s3://bucket/path/basic.parquet",
+        "Columns": [{"Column": "customer_id", "MatchIds": ["12345", "23456"]}],
+        **kwargs
+    })
