@@ -8,6 +8,7 @@ import pyarrow.parquet as pq
 import s3fs
 import time
 
+from botocore.exceptions import ClientError
 from pyarrow.lib import ArrowException
 
 from boto_utils import log_event
@@ -128,6 +129,14 @@ def execute(queue, s3, dlq):
                 err_message = "Invalid message received: {}".format(str(e))
                 print(err_message)
                 dlq.send_message(MessageBody=message.body)
+            except ClientError as e:
+                err_message = "Unable to retrieve object: {}".format(str(e))
+                print(err_message)
+                log_failed_deletion(json.loads(message.body), err_message)
+                dlq.send_message(MessageBody={
+                    'Error': err_message,
+                    'Message': message.body,
+                })
             finally:
                 message.delete()
                 cleanup(temp_dest)

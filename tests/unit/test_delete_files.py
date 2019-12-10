@@ -1,4 +1,6 @@
 import os
+
+from botocore.exceptions import ClientError
 from mock import patch, MagicMock, mock_open, ANY
 from types import SimpleNamespace
 
@@ -58,13 +60,13 @@ def test_delete_correct_rows_from_dataframe(mock_pq_writer):
     column = {"Column": "customer_id",
               "MatchIds": ["12345", "23456"]}
     stats = {"ProcessedRows": 0, "TotalRows": 3}
-    with open('./tests/acceptance/data/basic.parquet', "rb") as f:
+    with open("./tests/acceptance/data/basic.parquet", "rb") as f:
         parquet_file = pq.ParquetFile(f, memory_map=False)
         delete_and_write(parquet_file, 0, [column], mock_writer, stats)
 
     arrow_table = mock_writer.write_table.call_args[0][0].to_pandas().to_dict()
-    assert len(arrow_table['customer_id']) == 1
-    assert arrow_table['customer_id'][0] == '34567'
+    assert len(arrow_table["customer_id"]) == 1
+    assert arrow_table["customer_id"][0] == "34567"
 
 
 @patch("boto3.resource")
@@ -211,9 +213,27 @@ def test_it_validates_messages_with_invalid_body(mock_remove):
     mock_dlq.send_message.assert_called()
 
 
+@patch("os.remove")
+@patch("backend.ecs_tasks.delete_files.delete_files.log_failed_deletion")
+def test_it_handles_s3_permission_issues(mock_log, mock_remove):
+    tmp_file = "/tmp/new.parquet"
+    mock_queue = MagicMock()
+    message_item = MagicMock()
+    message_item.body = message_stub()
+    mock_queue.receive_messages.return_value = [message_item]
+    mock_dlq = MagicMock()
+    mock_s3 = MagicMock()
+    mock_s3.open.side_effect = ClientError(operation_name="open", error_response={})
+
+    execute(mock_queue, mock_s3, mock_dlq)
+    mock_remove.assert_called_with(tmp_file)
+    mock_log.assert_called()
+    mock_dlq.send_message.assert_called()
+
+
 def message_stub(**kwargs):
     return json.dumps({
-        "JobId": '1234',
+        "JobId": "1234",
         "Object": "s3://bucket/path/basic.parquet",
         "Columns": [{"Column": "customer_id", "MatchIds": ["12345", "23456"]}],
         **kwargs
