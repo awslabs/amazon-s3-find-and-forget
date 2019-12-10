@@ -66,9 +66,11 @@ def get_aggregated_query_stats(report):
     query_count = len(combined)
     query_time = sum([
         q["QueryStatus"].get("Statistics", {}).get("EngineExecutionTimeInMillis") for q in combined
+        if q.get('QueryStatus')
     ])
     query_scanned = sum([
         q["QueryStatus"].get("Statistics", {}).get("DataScannedInBytes") for q in combined
+        if q.get('QueryStatus')
     ])
 
     return {

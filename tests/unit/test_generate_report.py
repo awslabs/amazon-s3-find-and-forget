@@ -132,6 +132,19 @@ def test_it_gets_aggregated_query_stats():
     } == resp
 
 
+def test_it_gets_handles_no_stats():
+    resp = get_aggregated_query_stats({
+        "QuerySucceeded": [query_stub() for _ in range(0, 5)],
+        "QueryFailed": [{} for _ in range(0, 5)],
+    })
+    assert {
+        "TotalQueryTimeInMillis": 5000,
+        "TotalQueryScannedInBytes": 500,
+        "TotalQueryCount": 10,
+        "TotalQueryFailedCount": 5,
+    } == resp
+
+
 def test_it_gets_aggregated_object_update_stats():
     resp = get_aggregated_object_stats({
         "ObjectUpdated": [object_update_stub()],

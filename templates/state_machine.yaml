@@ -195,7 +195,7 @@ Resources:
                 "EventName": "QueryFailed",
                 "EventData.$": "$",
                 "StreamSuffix.$": "$$.Execution.Name",
-                "JobId.$": "$.JobId"
+                "JobId.$": "$.State.JobId"
               },
               "Resource": "${LogAuditEvent.Arn}",
               "ResultPath": null,
