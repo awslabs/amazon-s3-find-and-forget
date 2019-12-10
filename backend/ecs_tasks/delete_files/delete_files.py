@@ -114,10 +114,7 @@ def execute(queue, s3, dlq):
             except (KeyError, ArrowException) as e:
                 print(e)
                 log_failed_deletion(json.loads(message.body), str(e))
-                dlq.send_message(MessageBody={
-                    'Error': "Parquet processing error: {}".format(str(e)),
-                    'Message': message.body,
-                })
+                dlq.send_message(MessageBody=message.body)
             finally:
                 message.delete()
                 cleanup(temp_dest)
