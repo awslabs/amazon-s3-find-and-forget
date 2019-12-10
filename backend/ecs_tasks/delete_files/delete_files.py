@@ -1,3 +1,4 @@
+import math
 from uuid import uuid4
 
 import boto3
@@ -7,6 +8,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import s3fs
 import time
+import shutil
 
 from botocore.exceptions import ClientError
 from pyarrow.lib import ArrowException
@@ -95,6 +97,11 @@ def validate_message(message):
             raise ValueError("Malformed message. Missing key: {}".format(k))
 
 
+def get_max_file_size():
+    total, used, free = shutil.disk_usage("/")
+    return free
+
+
 def execute(queue, s3, dlq):
     print("Fetching messages...")
     temp_dest = "/tmp/new.parquet"
@@ -111,6 +118,10 @@ def execute(queue, s3, dlq):
                 body = json.loads(message.body)
                 print("Opening the file")
                 object_path = body["Object"]
+                object_size = s3.size(object_path)
+                if get_max_file_size() < object_size:
+                    raise IOError("Insufficient disk space available for object {}. Size: {} GB".format(object_path,
+                                  round(object_size / math.pow(1024, 3), 2)))
                 with s3.open(object_path, "rb") as f:
                     parquet_file = load_parquet(f, stats)
                     schema = parquet_file.metadata.schema.to_arrow_schema().remove_metadata()
