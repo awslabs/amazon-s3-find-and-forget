@@ -87,7 +87,7 @@ def log_failed_deletion(message_body, err_message):
     log_event(cw_logs, stream_name, "ObjectUpdateFailed", event_data)
 
 
-def execute(queue, s3, dlq=None):
+def execute(queue, s3, dlq):
     print("Fetching messages...")
     temp_dest = "/tmp/new.parquet"
     messages = queue.receive_messages(WaitTimeSeconds=5, MaxNumberOfMessages=1)
@@ -114,11 +114,10 @@ def execute(queue, s3, dlq=None):
             except (KeyError, ArrowException) as e:
                 print(e)
                 log_failed_deletion(json.loads(message.body), str(e))
-                if dlq:
-                    dlq.send_message(MessageBody={
-                        'Error': "Parquet processing error: {}".format(str(e)),
-                        'Message': message.body,
-                    })
+                dlq.send_message(MessageBody={
+                    'Error': "Parquet processing error: {}".format(str(e)),
+                    'Message': message.body,
+                })
             finally:
                 message.delete()
                 cleanup(temp_dest)
@@ -129,4 +128,4 @@ if __name__ == '__main__':
     dlq = get_queue(os.getenv("DLQ"))
     s3 = s3fs.S3FileSystem()
     while 1:
-        execute(queue, s3)
+        execute(queue, s3, dlq)

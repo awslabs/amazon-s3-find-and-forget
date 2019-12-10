@@ -17,8 +17,8 @@ pytestmark = [pytest.mark.unit]
 def test_it_sleeps_if_queue_empty(mock_sleep):
     mock_queue = MagicMock()
     mock_queue.receive_message.return_value = []
-
-    execute(mock_queue, SimpleNamespace())
+    mock_dlq = MagicMock()
+    execute(mock_queue, SimpleNamespace(), mock_dlq)
     mock_sleep.assert_called_with(30)
 
 
@@ -37,12 +37,13 @@ def test_happy_path_when_queue_not_empty(mock_log, mock_delete_and_write, mock_l
     message_item = MagicMock()
     message_item.body = message_stub()
     mock_queue.receive_messages.return_value = [message_item]
+    mock_dlq = MagicMock()
     mock_s3 = MagicMock()
     parquet_file = MagicMock()
     parquet_file.num_row_groups = 1
     mock_load_parquet.return_value = parquet_file
 
-    execute(mock_queue, mock_s3)
+    execute(mock_queue, mock_s3, mock_dlq)
     mock_s3.open.assert_called_with(object_path, "rb")
     mock_delete_and_write.assert_called_with(
         ANY, 0, [column], ANY, ANY)
