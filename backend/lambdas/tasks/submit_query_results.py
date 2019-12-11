@@ -29,7 +29,7 @@ def handler(event, context):
         "JobId": event["JobId"],
         "Object": p,
         "Columns": event["Columns"]
-    } for p in paths], MessageGroupId=query_id)
+    } for p in paths])
 
     return paths
 
