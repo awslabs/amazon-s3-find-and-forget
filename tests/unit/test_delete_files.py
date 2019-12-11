@@ -25,6 +25,7 @@ def test_it_sleeps_if_queue_empty(mock_sleep):
     mock_sleep.assert_called_with(30)
 
 
+@patch("os.path.exists", MagicMock(return_value=True))
 @patch("os.remove")
 @patch("backend.ecs_tasks.delete_files.delete_files.pq.ParquetWriter")
 @patch("backend.ecs_tasks.delete_files.delete_files.load_parquet")
@@ -129,6 +130,7 @@ def test_it_returns_uuid_as_string():
     assert isinstance(resp, str)
 
 
+@patch("os.path.exists", MagicMock(return_value=True))
 @patch("os.remove")
 @patch("backend.ecs_tasks.delete_files.delete_files.pq.ParquetWriter", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.load_parquet")
@@ -155,6 +157,7 @@ def test_it_handles_missing_col_exceptions(mock_log, mock_load_parquet, mock_del
     mock_dlq.send_message.assert_called()
 
 
+@patch("os.path.exists", MagicMock(return_value=True))
 @patch("os.remove")
 @patch("backend.ecs_tasks.delete_files.delete_files.pq.ParquetWriter", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.load_parquet")
@@ -181,6 +184,7 @@ def test_it_handles_arrow_exceptions(mock_log, mock_load_parquet, mock_delete_wr
     mock_dlq.send_message.assert_called()
 
 
+@patch("os.path.exists", MagicMock(return_value=True))
 @patch("os.remove")
 def test_it_validates_messages_with_missing_keys(mock_remove):
     # Arrange
@@ -199,6 +203,7 @@ def test_it_validates_messages_with_missing_keys(mock_remove):
     mock_dlq.send_message.assert_called()
 
 
+@patch("os.path.exists", MagicMock(return_value=True))
 @patch("os.remove")
 def test_it_validates_messages_with_invalid_body(mock_remove):
     # Arrange
@@ -217,6 +222,7 @@ def test_it_validates_messages_with_invalid_body(mock_remove):
     mock_dlq.send_message.assert_called()
 
 
+@patch("os.path.exists", MagicMock(return_value=True))
 @patch("os.remove")
 @patch("backend.ecs_tasks.delete_files.delete_files.log_failed_deletion")
 @patch("backend.ecs_tasks.delete_files.delete_files.check_file_size", MagicMock())
@@ -236,6 +242,7 @@ def test_it_handles_s3_permission_issues(mock_log, mock_remove):
     mock_dlq.send_message.assert_called()
 
 
+@patch("os.path.exists", MagicMock(return_value=True))
 @patch("os.remove")
 @patch("backend.ecs_tasks.delete_files.delete_files.log_failed_deletion")
 @patch("backend.ecs_tasks.delete_files.delete_files.check_file_size")

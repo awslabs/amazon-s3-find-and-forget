@@ -12,9 +12,6 @@ Parameters:
   LogRetentionInDays:
     Type: Number
     Default: 7
-  MaxFileSize:
-    Type: String
-    Default: 9
   ResourcePrefix:
     Type: String
   VpcSecurityGroup:
@@ -84,7 +81,7 @@ Resources:
             - Name: LogGroupName
               Value: !Ref AuditLogGroup
             - Name: MAX_FILE_SIZE_GB
-              Value: !Ref MaxFileSize
+              Value: "9"
 
   DeleteService:
     Type: AWS::ECS::Service

@@ -35,10 +35,6 @@ Parameters:
     Description: The number of days to retain raw job logs
     Type: Number
     Default: 7
-  MaxFileSize:
-    Description: The maximum file size which the Fargate task should try to process. Must be less than the Fargate disk space minus installed libs etc.
-    Type: String
-    Default: 9
   PrivateSubnetIpBlocks:
     Description: Comma-delimited list of CIDR blocks for the private subnets
     Type: String
@@ -88,7 +84,6 @@ Resources:
         AuditLogGroup: !Ref AuditLogGroup
         DeletionTaskCPU: !Ref DeletionTaskCPU
         DeletionTaskMemory: !Ref DeletionTaskMemory
-        MaxFileSize: !Ref MaxFileSize
         ResourcePrefix: !Ref ResourcePrefix
         VpcSecurityGroup: !GetAtt VpcStack.Outputs.SecurityGroup
         VpcSubnets: !GetAtt VpcStack.Outputs.Subnets
