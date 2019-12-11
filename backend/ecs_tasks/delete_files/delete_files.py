@@ -150,7 +150,8 @@ def execute(queue, s3, dlq):
                 dlq.send_message(MessageBody=message.body)
             finally:
                 message.delete()
-                cleanup(temp_dest)
+                if os.path.exists(temp_dest):
+                    cleanup(temp_dest)
 
 
 if __name__ == '__main__':
