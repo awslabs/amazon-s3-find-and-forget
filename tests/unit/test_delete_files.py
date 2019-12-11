@@ -272,7 +272,7 @@ def test_it_throws_if_file_too_big():
         check_file_size(mock_s3, "some_path")
 
 
-@patch.dict(os.environ, {"MaxFileSizeGB": "5"})
+@patch.dict(os.environ, {"MAX_FILE_SIZE_GB": "5"})
 def test_it_reads_max_size_from_env():
     resp = get_max_file_size_bytes()
     assert resp == 5 * math.pow(1024, 3)

@@ -5,8 +5,12 @@ set -e
 # Obtain stack and account details
 REGION=$(aws configure get region)
 QUEUE_URL=$(aws cloudformation describe-stacks \
-  --stack-name s3f2 \
+  --stack-name S3F2 \
   --query 'Stacks[0].Outputs[?OutputKey==`DeletionQueueUrl`].OutputValue' \
+  --output text)
+DLQ_URL=$(aws cloudformation describe-stacks \
+  --stack-name S3F2 \
+  --query 'Stacks[0].Outputs[?OutputKey==`DLQUrl`].OutputValue' \
   --output text)
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 # Assume IAM Role to be passed to container
@@ -22,6 +26,7 @@ AWS_SESSION_TOKEN=$(echo "${SESSION_DATA}" | jq -r ".SessionToken")
 docker run \
 	-v "$(pwd)"/backend/ecs_tasks/delete_files/delete_files.py:/app/delete_files.py:ro \
 	-e DELETE_OBJECTS_QUEUE="${QUEUE_URL}" \
+	-e DLQ="${DLQ_URL}" \
 	-e AWS_DEFAULT_REGION="${REGION}" \
 	-e AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
 	-e AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
