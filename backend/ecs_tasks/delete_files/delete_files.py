@@ -97,7 +97,7 @@ def validate_message(message):
 
 
 def get_max_file_size_bytes():
-    max_gb = int(os.getenv("MaxFileSizeGB", 9))
+    max_gb = int(os.getenv("MAX_FILE_SIZE_GB", 9))
     return max_gb * math.pow(1024, 3)
 
 
