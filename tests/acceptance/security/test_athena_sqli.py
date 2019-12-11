@@ -101,7 +101,7 @@ def test_it_escapes_match_ids_escaped_single_quotes_preventing_stealing_informat
         pytest.fail(format_error(e))
 
 
-def test_it_handles_unicod_smuggling_preventing_bypassing_matches(sf_client, dummy_lake, execution_waiter, stack,
+def test_it_handles_unicode_smuggling_preventing_bypassing_matches(sf_client, dummy_lake, execution_waiter, stack,
                                                                   glue_data_mapper_factory, data_loader, fargate_queue, queue_reader):
     """
     Unicode smuggling is taken care out of the box.

@@ -6,17 +6,18 @@ Parameters:
   AthenaConcurrencyLimit:
     Description: How many Athena queries should be scheduled concurrently
     Type: Number
-    Default: 20
+    Default: 20 
   AthenaWorkGroup:
     Description: WorkGroup to use for Athena queries
     Type: String
     Default: primary
-  CognitoUserPoolName:
+  CreateCloudFrontDistribution:
+    Description: Creates a CloudFront distribution for accessing the web interface of the solution. This must be enabled if S3 Block Public Access is enabled at an account level.
     Type: String
-    Default: S3F2Pool
-  CognitoUserPoolClientName:
-    Type: String
-    Default: S3F2PoolClient
+    Default: "true"
+    AllowedValues:
+      - "true"
+      - "false"
   DeletionTaskCPU:
     Description: The CPU to be allocated to the Deletion Fargate Task
     Type: String
@@ -49,23 +50,12 @@ Parameters:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
 
 Resources:
-  LayersStack:
-    Type: AWS::CloudFormation::Stack
-    Properties: 
-      TemplateURL: ./layers.yaml
-  DDBStack:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: ./ddb.yaml
-      Parameters:
-        DynamoDBTablePrefix: !Ref ResourcePrefix
   APIStack: 
     Type: AWS::CloudFormation::Stack
     Properties: 
       TemplateURL: ./api.yaml
-      Parameters: 
-        CognitoUserPoolClientName: !Ref CognitoUserPoolClientName
-        CognitoUserPoolName: !Ref CognitoUserPoolName
+      Parameters:
+        CognitoUserPoolArn: !GetAtt AuthStack.Outputs.CognitoUserPoolArn
         CommonLayers: !Join
           - ","
           - - !GetAtt LayersStack.Outputs.AWSSDKLayer
@@ -74,6 +64,33 @@ Resources:
         DeletionQueueTableName: !GetAtt DDBStack.Outputs.DeletionQueueTable
         DataMapperTableName: !GetAtt DDBStack.Outputs.DataMapperTable
         StateMachineArn: !GetAtt StateMachineStack.Outputs.StateMachineArn
+  AuthStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ./auth.yaml
+      Parameters:
+        ResourcePrefix: !Ref ResourcePrefix
+  DDBStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ./ddb.yaml
+      Parameters:
+        DynamoDBTablePrefix: !Ref ResourcePrefix
+  DelStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ./deletion_flow.yaml
+      Parameters:
+        AuditLogGroup: !Ref AuditLogGroup
+        DeletionTaskCPU: !Ref DeletionTaskCPU
+        DeletionTaskMemory: !Ref DeletionTaskMemory
+        ResourcePrefix: !Ref ResourcePrefix
+        VpcSecurityGroup: !GetAtt VpcStack.Outputs.SecurityGroup
+        VpcSubnets: !GetAtt VpcStack.Outputs.Subnets
+  LayersStack:
+    Type: AWS::CloudFormation::Stack
+    Properties: 
+      TemplateURL: ./layers.yaml
   StateMachineStack:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -101,17 +118,22 @@ Resources:
       Parameters:
         PrivateSubnetIpBlocks: !Ref PrivateSubnetIpBlocks
         VpcIpBlock: !Ref VpcIpBlock
-  DelStack:
+  WebUIStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: ./deletion_flow.yaml
+      TemplateURL: ./web-ui.yaml
       Parameters:
-        AuditLogGroup: !Ref AuditLogGroup
-        DeletionTaskCPU: !Ref DeletionTaskCPU
-        DeletionTaskMemory: !Ref DeletionTaskMemory
+        ApiUrl: !GetAtt APIStack.Outputs.ApiUrl
+        CognitoIdentityPoolId: !GetAtt AuthStack.Outputs.CognitoIdentityPoolId
+        CognitoUserPoolId: !GetAtt AuthStack.Outputs.CognitoUserPoolId
+        CognitoUserPoolClientId: !GetAtt AuthStack.Outputs.CognitoUserPoolClientId
+        CommonLayers: !Join
+          - ","
+          - - !GetAtt LayersStack.Outputs.AWSSDKLayer
+            - !GetAtt LayersStack.Outputs.CustomResourceHelper
+            - !GetAtt LayersStack.Outputs.Decorators
+        CreateCloudFrontDistribution: !Ref CreateCloudFrontDistribution
         ResourcePrefix: !Ref ResourcePrefix
-        VpcSecurityGroup: !GetAtt VpcStack.Outputs.SecurityGroup
-        VpcSubnets: !GetAtt VpcStack.Outputs.Subnets
 
   AuditLogGroup:
     Type: AWS::Logs::LogGroup
@@ -131,9 +153,9 @@ Outputs:
   AuditLogGroup:
     Value: !Ref AuditLogGroup
   CognitoUserPoolClientId:
-    Value: !GetAtt APIStack.Outputs.CognitoUserPoolClientId
+    Value: !GetAtt AuthStack.Outputs.CognitoUserPoolClientId
   CognitoUserPoolId:
-    Value: !GetAtt APIStack.Outputs.CognitoUserPoolId
+    Value: !GetAtt AuthStack.Outputs.CognitoUserPoolId
   DataMapperTable:
     Value: !GetAtt DDBStack.Outputs.DataMapperTable
   DDBStack:
@@ -154,3 +176,5 @@ Outputs:
     Value: !GetAtt StateMachineStack.Outputs.StateMachineArn
   StateMachineRoleArn:
     Value: !GetAtt StateMachineStack.Outputs.StateMachineRoleArn
+  WebUIUrl:
+    Value: !GetAtt WebUIStack.Outputs.Url

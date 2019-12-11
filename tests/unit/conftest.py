@@ -1,4 +1,6 @@
 import sys
+
+from mock import MagicMock
 from os import path
 
 import pytest
@@ -12,6 +14,7 @@ def pytest_configure(config):
     """
     global_sdk_config.set_sdk_enabled(False)
     sys.path.append(path.join("backend", "lambda_layers", "boto_utils", "python"))
+    sys.path.append(path.join("backend", "lambda_layers", "cr_helper", "python"))
     sys.path.append(path.join("backend", "lambda_layers", "decorators", "python"))
 
 
@@ -27,3 +30,12 @@ def decorator_mocks(monkeypatch):
     import decorators
     monkeypatch.setattr(decorators, "with_logger", mock_decorator)
     monkeypatch.setattr(xray_recorder, "capture", lambda _: mock_decorator)
+
+@pytest.fixture(autouse=True)
+def cr_helper_mocks(monkeypatch):
+    """
+    Mock the Custom Resource Helper
+    """
+
+    import crhelper
+    monkeypatch.setattr(crhelper, "CfnResource", MagicMock())

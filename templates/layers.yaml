@@ -11,14 +11,6 @@ Resources:
       ContentUri: ../backend/lambda_layers/aws_sdk/
       CompatibleRuntimes:
         - python3.7
-  Decorators:
-    Type: AWS::Serverless::LayerVersion
-    Properties:
-      LayerName: Decorators
-      Description: Helpful function decorators
-      ContentUri: ../backend/lambda_layers/decorators/
-      CompatibleRuntimes:
-        - python3.7
   BotoUtils:
     Type: AWS::Serverless::LayerVersion
     Properties:
@@ -27,14 +19,33 @@ Resources:
       ContentUri: ../backend/lambda_layers/boto_utils/
       CompatibleRuntimes:
         - python3.7
+  CustomResourceHelper:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: CustomResourceHelper
+      Description: Helper for CloudFormation Custom Resources
+      ContentUri: ../backend/lambda_layers/cr_helper/
+      CompatibleRuntimes:
+        - python3.7
+  Decorators:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: Decorators
+      Description: Helpful function decorators
+      ContentUri: ../backend/lambda_layers/decorators/
+      CompatibleRuntimes:
+        - python3.7
 
 Outputs:
   AWSSDKLayer:
-    Description: "AWS SDK Layer"
+    Description: AWS SDK Layer
     Value: !Ref AWSSDKLayer
-  Decorators:
-    Description: "Decorators Layer"
-    Value: !Ref Decorators
   BotoUtils:
-    Description: "Boto Utils Layer"
+    Description: Boto Utils Layer
     Value: !Ref BotoUtils
+  CustomResourceHelper:
+    Description: Custom Resource Helper Layer
+    Value: !Ref CustomResourceHelper
+  Decorators:
+    Description: Decorators Layer
+    Value: !Ref Decorators

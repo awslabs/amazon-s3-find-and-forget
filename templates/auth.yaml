@@ -1,0 +1,75 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Amazon S3 Find and Forget Auth Infrastructure
+
+Parameters:
+  ResourcePrefix:
+    Type: String
+
+Resources:
+  CognitoIdentityPool:
+    Type: AWS::Cognito::IdentityPool
+    Properties:
+      IdentityPoolName: !Sub ${ResourcePrefix}IdentityPool
+      CognitoIdentityProviders:
+        - ClientId: !Ref CognitoUserPoolClient
+          ProviderName: !GetAtt CognitoUserPool.ProviderName
+      AllowUnauthenticatedIdentities: false
+
+  CognitoIdentityPoolRole:
+    Type: AWS::Cognito::IdentityPoolRoleAttachment
+    Properties:
+      IdentityPoolId: !Ref CognitoIdentityPool
+      Roles:
+        authenticated: !GetAtt ApiGatewayInvokeRole.Arn
+        unauthenticated: !GetAtt ApiGatewayInvokeRole.Arn
+
+  CognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub ${ResourcePrefix}UserPoolName
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+      UsernameAttributes:
+        - email
+      Schema:
+        - AttributeDataType: String
+          Name: email
+          Required: false
+
+  CognitoUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref CognitoUserPool
+      ClientName: !Sub ${ResourcePrefix}UserPoolClientName
+      GenerateSecret: false
+      RefreshTokenValidity: 30
+
+  ApiGatewayInvokeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonAPIGatewayInvokeFullAccess
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated:
+                - cognito-identity.amazonaws.com
+            Action:
+              - sts:AssumeRoleWithWebIdentity
+
+Outputs:
+  CognitoIdentityPoolId:
+    Description: Cognito Identity Pool Id
+    Value: !Ref CognitoIdentityPool
+  CognitoUserPoolArn:
+    Description: Cognito User Pool Arn
+    Value: !GetAtt CognitoUserPool.Arn
+  CognitoUserPoolId:
+    Description: Cognito User Pool Id
+    Value: !Ref CognitoUserPool
+  CognitoUserPoolClientId:
+    Description: Cognito User Pool Client Id
+    Value: !Ref CognitoUserPoolClient

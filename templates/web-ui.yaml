@@ -1,0 +1,167 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Amazon S3 Find and Forget Web UI
+
+Globals:
+  Function:
+    Runtime: python3.7
+    Timeout: 900
+    Layers: !Ref CommonLayers
+    Environment:
+      Variables:
+        ApiUrl: !Ref ApiUrl
+        FromBucket: !Sub solution-builders-${AWS::Region}
+        LogLevel: !Ref LogLevel
+        CognitoIdentityPoolId: !Ref CognitoIdentityPoolId
+        CognitoUserPoolId: !Ref CognitoUserPoolId
+        CognitoUserPoolClientId: !Ref CognitoUserPoolClientId
+        CreateCloudFrontDistribution: !Ref CreateCloudFrontDistribution
+        Region: !Ref AWS::Region
+        WebUIBucket: !Ref WebUIBucket
+
+Parameters:
+  ApiUrl:
+    Type: String
+  CognitoIdentityPoolId:
+    Type: String
+  CognitoUserPoolId:
+    Type: String
+  CognitoUserPoolClientId:
+    Type: String
+  CreateCloudFrontDistribution:
+    Type: String
+  CommonLayers:
+    Type: CommaDelimitedList
+  LogLevel:
+    Type: String
+    Default: INFO
+    AllowedValues:
+    - CRITICAL
+    - FATAL
+    - ERROR
+    - WARNING
+    - INFO
+    - DEBUG
+    - NOTSET
+  ResourcePrefix:
+    Type: String
+
+Conditions:
+  WithCloudFront: !Equals [!Ref CreateCloudFrontDistribution, "true"]
+
+Resources:
+  CreateWebUIConfig:
+    Type: Custom::Setup
+    Properties:
+      ServiceToken: !GetAtt CreateSettingsFile.Arn
+
+  WebUIBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders: ["*"]
+            AllowedMethods: [GET]
+            AllowedOrigins: ["*"]
+            Id: !Sub ${ResourcePrefix}CorsRule
+            MaxAge: 3600
+
+  WebUIBucketReadPolicy:
+    Type: AWS::S3::BucketPolicy
+    Condition: WithCloudFront
+    Properties:
+      Bucket: !Ref WebUIBucket
+      PolicyDocument:
+        Statement:
+          - Action: s3:GetObject
+            Effect: Allow
+            Resource: !Sub arn:aws:s3:::${WebUIBucket}/*
+            Principal:
+              CanonicalUser: !GetAtt CloudFrontOriginAccessIdentity.S3CanonicalUserId
+
+  CustomResourceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: S3F2-setup-S3-fc
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - s3:DeleteObject
+                  - s3:ListBucket
+                  - s3:PutObject
+                  - s3:PutObjectAcl
+                Resource:
+                  - !GetAtt WebUIBucket.Arn
+                  - !Sub ${WebUIBucket.Arn}/*
+              - Effect: Allow
+                Action: s3:GetObject
+                Resource: !Sub "arn:aws:s3:::solution-builders-${AWS::Region}/*"
+        - PolicyName: S3F2-cloudwatch-logs
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action: "logs:*"
+                Resource: "arn:aws:logs:*:*:*"
+
+  CreateSettingsFile:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: create_settings.handler
+      CodeUri: ../backend/lambdas/custom_resources/
+      Description: Custom Lambda resource for the Amazon S3 Find and Forget Cloudformation Stack
+      Role: !GetAtt CustomResourceRole.Arn
+
+  CloudFrontOriginAccessIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Condition: WithCloudFront
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: !Ref WebUIBucket
+
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Condition: WithCloudFront
+    Properties:
+      DistributionConfig:
+        Origins:
+          - DomainName: !GetAtt WebUIBucket.RegionalDomainName
+            Id: !Sub ${ResourcePrefix}-myS3Origin
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}
+        Enabled: true
+        HttpVersion: http2
+        Comment: The Distribution for Amazon S3 Find and Forget
+        DefaultRootObject: index.html
+        DefaultCacheBehavior:
+          AllowedMethods:
+            - HEAD
+            - GET
+            - OPTIONS
+          TargetOriginId: !Sub ${ResourcePrefix}-myS3Origin
+          ForwardedValues:
+            QueryString: false
+            Cookies:
+              Forward: none
+          ViewerProtocolPolicy: redirect-to-https
+        PriceClass: PriceClass_All
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
+
+Outputs:
+  Url:
+    Value: !If
+      - WithCloudFront
+      - !Sub "https://${CloudFrontDistribution.DomainName}"
+      - !Sub "https://${WebUIBucket.RegionalDomainName}/index.html"
+    Description: Web UI Url

@@ -125,6 +125,7 @@ dmypy.json
 .vscode/
 packaged.yaml
 backend/lambda_layers/aws_sdk/python
+backend/lambda_layers/cr_helper/python
 backend/lambda_layers/decorators/python
 !backend/lambda_layers/decorators/python/decorators.py
 .idea/
