@@ -8,7 +8,6 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import s3fs
 import time
-import shutil
 
 from botocore.exceptions import ClientError
 from pyarrow.lib import ArrowException
@@ -97,9 +96,16 @@ def validate_message(message):
             raise ValueError("Malformed message. Missing key: {}".format(k))
 
 
-def get_max_file_size():
-    total, used, free = shutil.disk_usage("/")
-    return free
+def get_max_file_size_bytes():
+    max_gb = int(os.getenv("MaxFileSizeGB", 9))
+    return max_gb * math.pow(1024, 3)
+
+
+def check_file_size(s3, object_path):
+    object_size = s3.size(object_path)
+    if get_max_file_size_bytes() < object_size:
+        raise IOError("Insufficient disk space available for object {}. Size: {} GB".format(
+            object_path, round(object_size / math.pow(1024, 3), 2)))
 
 
 def execute(queue, s3, dlq):
@@ -118,10 +124,7 @@ def execute(queue, s3, dlq):
                 body = json.loads(message.body)
                 print("Opening the file")
                 object_path = body["Object"]
-                object_size = s3.size(object_path)
-                if get_max_file_size() < object_size:
-                    raise IOError("Insufficient disk space available for object {}. Size: {} GB".format(object_path,
-                                  round(object_size / math.pow(1024, 3), 2)))
+                check_file_size(s3, object_path)
                 with s3.open(object_path, "rb") as f:
                     parquet_file = load_parquet(f, stats)
                     schema = parquet_file.metadata.schema.to_arrow_schema().remove_metadata()
@@ -140,7 +143,7 @@ def execute(queue, s3, dlq):
                 err_message = "Invalid message received: {}".format(str(e))
                 print(err_message)
                 dlq.send_message(MessageBody=message.body)
-            except ClientError as e:
+            except (IOError, ClientError) as e:
                 err_message = "Unable to retrieve object: {}".format(str(e))
                 print(err_message)
                 log_failed_deletion(json.loads(message.body), err_message)

@@ -1,3 +1,4 @@
+import math
 import os
 
 from botocore.exceptions import ClientError
@@ -10,7 +11,7 @@ import pytest
 from pyarrow.lib import ArrowException
 
 from backend.ecs_tasks.delete_files.delete_files import delete_and_write, execute, get_queue, get_container_id, \
-    log_deletion, log_failed_deletion
+    log_deletion, log_failed_deletion, check_file_size, get_max_file_size_bytes
 
 pytestmark = [pytest.mark.unit]
 
@@ -29,6 +30,7 @@ def test_it_sleeps_if_queue_empty(mock_sleep):
 @patch("backend.ecs_tasks.delete_files.delete_files.load_parquet")
 @patch("backend.ecs_tasks.delete_files.delete_files.delete_and_write")
 @patch("backend.ecs_tasks.delete_files.delete_files.log_deletion")
+@patch("backend.ecs_tasks.delete_files.delete_files.check_file_size", MagicMock())
 def test_happy_path_when_queue_not_empty(mock_log, mock_delete_and_write, mock_load_parquet, mock_pq_writer,
                                          mock_remove):
     object_path = "s3://bucket/path/basic.parquet"
@@ -132,6 +134,7 @@ def test_it_returns_uuid_as_string():
 @patch("backend.ecs_tasks.delete_files.delete_files.load_parquet")
 @patch("backend.ecs_tasks.delete_files.delete_files.delete_and_write")
 @patch("backend.ecs_tasks.delete_files.delete_files.log_failed_deletion")
+@patch("backend.ecs_tasks.delete_files.delete_files.check_file_size", MagicMock())
 def test_it_handles_missing_col_exceptions(mock_log, mock_load_parquet, mock_delete_write, mock_remove):
     # Arrange
     mock_delete_write.side_effect = KeyError()
@@ -157,6 +160,7 @@ def test_it_handles_missing_col_exceptions(mock_log, mock_load_parquet, mock_del
 @patch("backend.ecs_tasks.delete_files.delete_files.load_parquet")
 @patch("backend.ecs_tasks.delete_files.delete_files.delete_and_write")
 @patch("backend.ecs_tasks.delete_files.delete_files.log_failed_deletion")
+@patch("backend.ecs_tasks.delete_files.delete_files.check_file_size", MagicMock())
 def test_it_handles_arrow_exceptions(mock_log, mock_load_parquet, mock_delete_write, mock_remove):
     # Arrange
     mock_delete_write.side_effect = ArrowException()
@@ -215,6 +219,7 @@ def test_it_validates_messages_with_invalid_body(mock_remove):
 
 @patch("os.remove")
 @patch("backend.ecs_tasks.delete_files.delete_files.log_failed_deletion")
+@patch("backend.ecs_tasks.delete_files.delete_files.check_file_size", MagicMock())
 def test_it_handles_s3_permission_issues(mock_log, mock_remove):
     tmp_file = "/tmp/new.parquet"
     mock_queue = MagicMock()
@@ -229,6 +234,53 @@ def test_it_handles_s3_permission_issues(mock_log, mock_remove):
     mock_remove.assert_called_with(tmp_file)
     mock_log.assert_called()
     mock_dlq.send_message.assert_called()
+
+
+@patch("os.remove")
+@patch("backend.ecs_tasks.delete_files.delete_files.log_failed_deletion")
+@patch("backend.ecs_tasks.delete_files.delete_files.check_file_size")
+def test_it_handles_file_too_big(mock_check_size, mock_log, mock_remove):
+    tmp_file = "/tmp/new.parquet"
+    mock_queue = MagicMock()
+    message_item = MagicMock()
+    message_item.body = message_stub()
+    mock_queue.receive_messages.return_value = [message_item]
+    mock_dlq = MagicMock()
+    mock_s3 = MagicMock()
+    mock_check_size.side_effect = IOError("Too big")
+
+    execute(mock_queue, mock_s3, mock_dlq)
+    mock_remove.assert_called_with(tmp_file)
+    mock_log.assert_called()
+    mock_dlq.send_message.assert_called()
+
+
+@patch("backend.ecs_tasks.delete_files.delete_files.get_max_file_size_bytes", MagicMock(return_value=9 * math.pow(
+    1024, 3)))
+def test_it_permits_files_under_max_size():
+    mock_s3 = MagicMock()
+    mock_s3.size.return_value = 8 * math.pow(1024, 3)
+    check_file_size(mock_s3, "some_path")
+
+
+@patch("backend.ecs_tasks.delete_files.delete_files.get_max_file_size_bytes", MagicMock(return_value=9 * math.pow(
+    1024, 3)))
+def test_it_throws_if_file_too_big():
+    mock_s3 = MagicMock()
+    mock_s3.size.return_value = 10 * math.pow(1024, 3)
+    with pytest.raises(IOError):
+        check_file_size(mock_s3, "some_path")
+
+
+@patch.dict(os.environ, {"MaxFileSizeGB": "5"})
+def test_it_reads_max_size_from_env():
+    resp = get_max_file_size_bytes()
+    assert resp == 5 * math.pow(1024, 3)
+
+
+def test_it_defaults_max_file_size():
+    resp = get_max_file_size_bytes()
+    assert resp == 9 * math.pow(1024, 3)
 
 
 def message_stub(**kwargs):
