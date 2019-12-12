@@ -18,6 +18,7 @@ Pre-requirements:
 * AWS CLI
 * Python 3.7.5 and pip
 * virtualenv
+* node.js >= v12
 
 1. Install all the dependencies
 

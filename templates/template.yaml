@@ -176,5 +176,7 @@ Outputs:
     Value: !GetAtt StateMachineStack.Outputs.StateMachineArn
   StateMachineRoleArn:
     Value: !GetAtt StateMachineStack.Outputs.StateMachineRoleArn
+  WebUIBucket:
+    Value: !GetAtt WebUIStack.Outputs.WebUIBucket
   WebUIUrl:
     Value: !GetAtt WebUIStack.Outputs.Url

@@ -165,3 +165,6 @@ Outputs:
       - !Sub "https://${CloudFrontDistribution.DomainName}"
       - !Sub "https://${WebUIBucket.RegionalDomainName}/index.html"
     Description: Web UI Url
+  WebUIBucket:
+    Value: !Ref WebUIBucket
+    Description: Web UI S3 Bucket
