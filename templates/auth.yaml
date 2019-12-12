@@ -3,6 +3,8 @@ Transform: AWS::Serverless-2016-10-31
 Description: Amazon S3 Find and Forget Auth Infrastructure
 
 Parameters:
+  AdminEmail:
+    Type: String
   ResourcePrefix:
     Type: String
 
@@ -28,16 +30,17 @@ Resources:
     Type: AWS::Cognito::UserPool
     Properties:
       UserPoolName: !Sub ${ResourcePrefix}UserPoolName
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: true
+        InviteMessageTemplate:
+          EmailMessage: 'Your Amazon S3 Find and Forget username is {username} and the temporary password is {####}'
+          EmailSubject: 'Your temporary password for Amazon S3 Find and Forget'
+      AutoVerifiedAttributes:
+        - email
       Policies:
         PasswordPolicy:
           MinimumLength: 8
-      UsernameAttributes:
-        - email
-      Schema:
-        - AttributeDataType: String
-          Name: email
-          Required: false
-
+          
   CognitoUserPoolClient:
     Type: AWS::Cognito::UserPoolClient
     Properties:
@@ -45,6 +48,19 @@ Resources:
       ClientName: !Sub ${ResourcePrefix}UserPoolClientName
       GenerateSecret: false
       RefreshTokenValidity: 30
+
+  CognitoUserPoolUser:
+    Type: AWS::Cognito::UserPoolUser
+    Properties:
+      Username: !Ref AdminEmail
+      UserPoolId: !Ref CognitoUserPool
+      DesiredDeliveryMediums:
+        - EMAIL
+      UserAttributes:
+        - Name: email
+          Value: !Ref AdminEmail
+        - Name: email_verified
+          Value: "true"
 
   ApiGatewayInvokeRole:
     Type: AWS::IAM::Role

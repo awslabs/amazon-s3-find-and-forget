@@ -3,6 +3,10 @@ Transform: AWS::Serverless-2016-10-31
 Description: Amazon S3 Find and Forget (uksb-1q2j8beb0)
 
 Parameters:
+  AdminEmail:
+    Description: Creates a username to be used for authentication. It needs to be an e-mail address.
+    Type: String
+    AllowedPattern: ^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$
   AthenaConcurrencyLimit:
     Description: How many Athena queries should be scheduled concurrently
     Type: Number
@@ -69,6 +73,7 @@ Resources:
     Properties:
       TemplateURL: ./auth.yaml
       Parameters:
+        AdminEmail: !Ref AdminEmail
         ResourcePrefix: !Ref ResourcePrefix
   DDBStack:
     Type: AWS::CloudFormation::Stack

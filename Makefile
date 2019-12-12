@@ -6,6 +6,9 @@ pre-deploy:
 ifndef TEMP_BUCKET
 	$(error TEMP_BUCKET is undefined)
 endif
+ifndef ADMIN_EMAIL
+	$(error ADMIN_EMAIL is undefined)
+endif
 
 pre-run:
 ifndef ROLE_NAME
@@ -15,7 +18,7 @@ endif
 deploy:
 	make pre-deploy
 	aws cloudformation package --template-file templates/template.yaml --s3-bucket $(TEMP_BUCKET) --output-template-file packaged.yaml
-	aws cloudformation deploy --template-file ./packaged.yaml --stack-name S3F2 --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND --parameter-overrides CreateCloudFrontDistribution=false
+	aws cloudformation deploy --template-file ./packaged.yaml --stack-name S3F2 --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND --parameter-overrides CreateCloudFrontDistribution=false AdminEmail=$(ADMIN_EMAIL)
 	make deploy-containers
 	make setup-frontend-local-dev
 	make deploy-frontend
