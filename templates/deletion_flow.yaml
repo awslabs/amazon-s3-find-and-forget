@@ -2,12 +2,37 @@ AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: Amazon S3 Find and Forget Deletion Flow
 
+Globals:
+  Function:
+    Runtime: python3.7
+    Timeout: 900
+    Layers: !Ref CommonLayers
+    Environment:
+      Variables:
+        Cluster: !Ref ECSCluster
+        LogLevel: !Ref LogLevel
+
 Parameters:
   AuditLogGroup:
     Type: String
+  CommonLayers:
+    Type: CommaDelimitedList
+  LogLevel:
+    Type: String
+    Default: INFO
+    AllowedValues:
+    - CRITICAL
+    - FATAL
+    - ERROR
+    - WARNING
+    - INFO
+    - DEBUG
+    - NOTSET
   DeletionTaskCPU:
     Type: String
   DeletionTaskMemory:
+    Type: String
+  EnableContainerInsights:
     Type: String
   LogRetentionInDays:
     Type: Number
@@ -18,6 +43,9 @@ Parameters:
     Type: String
   VpcSubnets:
     Type: String
+
+Conditions:
+  WithContainerInsights: !Equals [!Ref EnableContainerInsights, "true"]
 
 Resources:
 
@@ -142,6 +170,25 @@ Resources:
   DLQ:
     Type: AWS::SQS::Queue
 
+  UpdateClusterConfig:
+    Type: Custom::Setup
+    Condition: WithContainerInsights
+    Properties:
+      ServiceToken: !GetAtt UpdateClusterEnableContainerInsights.Arn
+
+  UpdateClusterEnableContainerInsights:
+    Type: AWS::Serverless::Function
+    Condition: WithContainerInsights
+    Properties:
+      Handler: enable_container_insights.handler
+      CodeUri: ../backend/lambdas/custom_resources/
+      Description: Custom Lambda resource for the Amazon S3 Find and Forget Cloudformation Stack
+      Policies:
+        - Statement:
+          - Effect: Allow
+            Action: ecs:UpdateClusterSettings
+            Resource: !Sub arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:cluster/${ECSCluster}
+      
 Outputs:
   DeleteObjectsQueueUrl:
     Value: !Ref DelObjQ

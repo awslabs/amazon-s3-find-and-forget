@@ -15,7 +15,7 @@ endif
 deploy:
 	make pre-deploy
 	aws cloudformation package --template-file templates/template.yaml --s3-bucket $(TEMP_BUCKET) --output-template-file packaged.yaml
-	aws cloudformation deploy --template-file ./packaged.yaml --stack-name S3F2 --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND --parameter-overrides CreateCloudFrontDistribution=false
+	aws cloudformation deploy --template-file ./packaged.yaml --stack-name S3F2 --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND --parameter-overrides CreateCloudFrontDistribution=false EnableContainerInsights=true
 	make deploy-containers
 	make setup-frontend-local-dev
 	make deploy-frontend

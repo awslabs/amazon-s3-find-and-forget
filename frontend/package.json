@@ -1,5 +1,5 @@
 {
-  "name": "S3F2-Frontend",
+  "name": "amazon-s3-find-and-forget-frontend",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
