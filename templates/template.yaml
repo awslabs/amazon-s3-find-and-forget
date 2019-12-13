@@ -35,6 +35,13 @@ Parameters:
     Description: The memory to be allocated to the Deletion Fargate Task
     Type: String
     Default: '30720'
+  EnableContainerInsights:
+    Description: Enable ECS Container Insights
+    Type: String
+    Default: "false"
+    AllowedValues:
+      - "true"
+      - "false"
   LogRetentionInDays:
     Description: The number of days to retain raw job logs
     Type: Number
@@ -87,8 +94,14 @@ Resources:
       TemplateURL: ./deletion_flow.yaml
       Parameters:
         AuditLogGroup: !Ref AuditLogGroup
+        CommonLayers: !Join
+          - ","
+          - - !GetAtt LayersStack.Outputs.AWSSDKLayer
+            - !GetAtt LayersStack.Outputs.CustomResourceHelper
+            - !GetAtt LayersStack.Outputs.Decorators
         DeletionTaskCPU: !Ref DeletionTaskCPU
         DeletionTaskMemory: !Ref DeletionTaskMemory
+        EnableContainerInsights: !Ref EnableContainerInsights
         ResourcePrefix: !Ref ResourcePrefix
         VpcSecurityGroup: !GetAtt VpcStack.Outputs.SecurityGroup
         VpcSubnets: !GetAtt VpcStack.Outputs.Subnets

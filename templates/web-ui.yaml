@@ -79,48 +79,26 @@ Resources:
             Principal:
               CanonicalUser: !GetAtt CloudFrontOriginAccessIdentity.S3CanonicalUserId
 
-  CustomResourceRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - lambda.amazonaws.com
-            Action:
-              - sts:AssumeRole
-      Path: /
-      Policies:
-        - PolicyName: S3F2-setup-S3-fc
-          PolicyDocument:
-            Statement:
-              - Effect: Allow
-                Action: 
-                  - s3:DeleteObject
-                  - s3:ListBucket
-                  - s3:PutObject
-                  - s3:PutObjectAcl
-                Resource:
-                  - !GetAtt WebUIBucket.Arn
-                  - !Sub ${WebUIBucket.Arn}/*
-              - Effect: Allow
-                Action: s3:GetObject
-                Resource: !Sub "arn:aws:s3:::solution-builders-${AWS::Region}/*"
-        - PolicyName: S3F2-cloudwatch-logs
-          PolicyDocument:
-            Statement:
-              - Effect: Allow
-                Action: "logs:*"
-                Resource: "arn:aws:logs:*:*:*"
-
   CreateSettingsFile:
     Type: AWS::Serverless::Function
     Properties:
       Handler: create_settings.handler
       CodeUri: ../backend/lambdas/custom_resources/
       Description: Custom Lambda resource for the Amazon S3 Find and Forget Cloudformation Stack
-      Role: !GetAtt CustomResourceRole.Arn
+      Policies:
+        - Statement:
+          - Effect: Allow
+            Action: 
+              - s3:DeleteObject
+              - s3:ListBucket
+              - s3:PutObject
+              - s3:PutObjectAcl
+            Resource:
+              - !GetAtt WebUIBucket.Arn
+              - !Sub ${WebUIBucket.Arn}/*
+          - Effect: Allow
+            Action: s3:GetObject
+            Resource: !Sub "arn:aws:s3:::solution-builders-${AWS::Region}/*"
 
   CloudFrontOriginAccessIdentity:
     Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
