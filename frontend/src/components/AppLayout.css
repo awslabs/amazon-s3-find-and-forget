@@ -90,6 +90,7 @@
 }
 
 #layout p,
+#layout h1,
 #layout h2,
 #layout h3,
 #layout ul {
@@ -116,6 +117,7 @@ button.menu {
   color: #545b64;
   font-weight: 400;
   padding-left: 0;
+  border: 0;
 }
 
 button.menu:hover,
@@ -123,10 +125,19 @@ button.menu.selected {
   color: #ec7211;
   text-decoration: none;
   background: transparent;
+  border: 0;
 }
 
 button.menu.selected {
   font-weight: 800;
+}
+
+.breadcrumbs {
+  margin: 20px;
+}
+
+.breadcrumbs span {
+  vertical-align: middle;
 }
 
 @media (min-width: 0px) and (max-width: 768px) {

@@ -30,7 +30,8 @@ body {
 }
 
 .amplify-auth button,
-button {
+button,
+.aws-button {
   background: #ec7211;
   color: #fff;
   border-color: #ec7211;
@@ -49,9 +50,18 @@ button {
 }
 
 .amplify-auth button:hover,
-button:hover {
+button:hover,
+.aws-button:hover {
   background: #eb5f07;
+  border-color: #ec7211;
   opacity: 1;
+}
+
+h1 {
+  color: #16191f;
+  font-weight: 400;
+  font-size: 2rem;
+  line-height: 2rem;
 }
 
 h2 {
@@ -68,17 +78,36 @@ h3 {
   line-height: 2rem;
 }
 
-a {
+a,
+button.btn-link {
   color: #0073bb;
   text-decoration: none;
   font-weight: 400;
+  border: 0;
 }
 
-a:hover {
+a:hover,
+button.btn-link:hover {
   color: #0073bb;
+  background: transparent;
+  border: 0;
 }
 
 li {
   margin-bottom: 8px;
   list-style: none;
+}
+
+.home-button {
+  width: auto;
+}
+
+.row {
+  width: calc(100% - 40px);
+  margin: 0;
+  padding: 0;
+}
+
+.col {
+  padding: 0;
 }

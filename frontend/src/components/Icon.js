@@ -64,6 +64,13 @@ export default ({ type }) => {
       </SVGWrapper>
     );
 
+  if (type === "breadcrumb")
+    return (
+      <SVGWrapper>
+        <path d="M4 1l7 7-7 7" stroke="#545b64" fill="none" />
+      </SVGWrapper>
+    );
+
   if (type === "close")
     return (
       <SVGWrapper>
