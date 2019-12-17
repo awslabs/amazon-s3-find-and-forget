@@ -17,11 +17,14 @@ endif
 
 deploy:
 	make pre-deploy
-	aws cloudformation package --template-file templates/template.yaml --s3-bucket $(TEMP_BUCKET) --output-template-file packaged.yaml
-	aws cloudformation deploy --template-file ./packaged.yaml --stack-name S3F2 --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND --parameter-overrides CreateCloudFrontDistribution=false EnableContainerInsights=true AdminEmail=$(ADMIN_EMAIL)
+	make deploy-cfn
 	make deploy-containers
 	make setup-frontend-local-dev
 	make deploy-frontend
+
+deploy-cfn:
+	aws cloudformation package --template-file templates/template.yaml --s3-bucket $(TEMP_BUCKET) --output-template-file packaged.yaml
+	aws cloudformation deploy --template-file ./packaged.yaml --stack-name S3F2 --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND --parameter-overrides CreateCloudFrontDistribution=false EnableContainerInsights=true AdminEmail=$(ADMIN_EMAIL)
 
 deploy-containers:
 	$(eval ACCOUNT_ID := $(shell aws sts get-caller-identity --query Account --output text))

@@ -39,40 +39,40 @@ def test_it_supports_single_iter_key():
 
 def test_it_batches_msgs():
 	queue = MagicMock()
+	queue.attributes = {}
 	msgs = list(range(0, 15))
 	batch_sqs_msgs(queue, msgs)
 	queue.send_messages.assert_any_call(Entries=[{
 		"Id": ANY,
 		"MessageBody": json.dumps(x),
-		"MessageGroupId": ANY
 	} for x in range(0, 10)])
 	queue.send_messages.assert_any_call(Entries=[{
 		"Id": ANY,
 		"MessageBody": json.dumps(x),
-		"MessageGroupId": ANY
 	} for x in range(10, 15)])
 
 
 def test_it_passes_through_queue_args():
 	queue = MagicMock()
+	queue.attributes = {}
 	msgs = [1]
 	batch_sqs_msgs(queue, msgs, DelaySeconds=60)
 	queue.send_messages.assert_any_call(Entries=[{
 		"DelaySeconds": 60,
 		"Id": ANY,
 		"MessageBody": ANY,
-		"MessageGroupId": ANY
 	}])
 
 
-def test_it_sets_message_group_id_same_as_id():
+def test_it_sets_message_group_id_where_queue_is_fifo():
 	queue = MagicMock()
+	queue.attributes = {"FifoQueue": True}
 	msgs = [1]
 	batch_sqs_msgs(queue, msgs)
 	for call in queue.send_messages.call_args_list:
 		args, kwargs = call
 		for msg in kwargs['Entries']:
-			assert msg["Id"] == msg["MessageGroupId"]
+			assert "MessageGroupId" in msg
 
 
 def test_it_truncates_received_messages_once_the_desired_amount_returned():

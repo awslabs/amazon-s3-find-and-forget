@@ -790,6 +790,7 @@ Resources:
           Resource: "*"
         - Action:
           - "sqs:SendMessage"
+          - "sqs:GetQueueAttributes"
           Effect: "Allow"
           Resource: "*"
 
@@ -812,6 +813,7 @@ Resources:
         - Effect: Allow
           Action:
           - "sqs:SendMessage*"
+          - "sqs:GetQueueAttributes"
           Resource: "*"
 
   OrchestrateECSServiceScaling:
@@ -850,6 +852,7 @@ Resources:
             - "sqs:ChangeMessageVisibility"
             - "sqs:PurgeQueue"
             - "sqs:DeleteMessage"
+            - "sqs:GetQueueAttributes"
             - "states:DescribeExecution"
           Effect: "Allow"
           Resource: "*"
@@ -875,6 +878,7 @@ Resources:
       - Statement:
         - Action:
             - "sqs:DeleteMessage"
+            - "sqs:GetQueueAttributes"
           Effect: "Allow"
           Resource: "*"
 
@@ -887,6 +891,7 @@ Resources:
       - Statement:
         - Action:
             - "sqs:PurgeQueue"
+            - "sqs:GetQueueAttributes"
           Effect: "Allow"
           Resource: "*"
 
