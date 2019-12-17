@@ -20,10 +20,6 @@
   justify-content: center;
   -webkit-box-shadow: 0 1px 1px 0 rgba(0, 28, 36, 0.3),
     1px 1px 1px 0 rgba(0, 28, 36, 0.15), -1px 1px 1px 0 rgba(0, 28, 36, 0.15);
-  -webkit-box-shadow: 0 1px 1px 0 rgba(0, 28, 36, 0.3),
-    1px 1px 1px 0 rgba(0, 28, 36, 0.15), -1px 1px 1px 0 rgba(0, 28, 36, 0.15);
-  box-shadow: 0 1px 1px 0 rgba(0, 28, 36, 0.3),
-    1px 1px 1px 0 rgba(0, 28, 36, 0.15), -1px 1px 1px 0 rgba(0, 28, 36, 0.15);
   box-shadow: 0 1px 1px 0 rgba(0, 28, 36, 0.3),
     1px 1px 1px 0 rgba(0, 28, 36, 0.15), -1px 1px 1px 0 rgba(0, 28, 36, 0.15);
   outline: none;
