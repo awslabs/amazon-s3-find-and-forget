@@ -10,7 +10,7 @@ from mock import patch
 with patch.dict(os.environ, {"DataMapperTable": "DataMapperTable"}):
     from backend.lambdas.data_mappers import handlers
 
-pytestmark = [pytest.mark.unit, pytest.mark.data_mappers]
+pytestmark = [pytest.mark.unit, pytest.mark.api, pytest.mark.data_mappers]
 
 
 @patch("backend.lambdas.data_mappers.handlers.table")

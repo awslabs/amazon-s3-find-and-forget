@@ -74,6 +74,7 @@ Resources:
             - !GetAtt LayersStack.Outputs.BotoUtils
         DeletionQueueTableName: !GetAtt DDBStack.Outputs.DeletionQueueTable
         DataMapperTableName: !GetAtt DDBStack.Outputs.DataMapperTable
+        ResultBucket: !GetAtt StateMachineStack.Outputs.ResultBucket
         StateMachineArn: !GetAtt StateMachineStack.Outputs.StateMachineArn
   AuthStack:
     Type: AWS::CloudFormation::Stack
@@ -190,6 +191,8 @@ Outputs:
     Value: !GetAtt DelStack.Outputs.ECRRepository
   QueryQueueUrl:
      Value: !GetAtt StateMachineStack.Outputs.QueryQueueUrl
+  ResultBucket:
+    Value: !GetAtt StateMachineStack.Outputs.ResultBucket
   StateMachineArn:
     Value: !GetAtt StateMachineStack.Outputs.StateMachineArn
   StateMachineRoleArn:

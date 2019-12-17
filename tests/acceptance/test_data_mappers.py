@@ -1,7 +1,7 @@
 import pytest
 from boto3.dynamodb.conditions import Key
 
-pytestmark = [pytest.mark.acceptance, pytest.mark.data_mappers]
+pytestmark = [pytest.mark.acceptance, pytest.mark.api, pytest.mark.data_mappers]
 
 
 def test_it_creates_data_mapper(api_client, data_mapper_base_endpoint, data_mapper_table, glue_table_factory):

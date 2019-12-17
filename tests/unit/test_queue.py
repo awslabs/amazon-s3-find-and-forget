@@ -9,7 +9,7 @@ from mock import patch
 with patch.dict(os.environ, {"DeletionQueueTable": "DeletionQueueTable"}):
     from backend.lambdas.queue import handlers
 
-pytestmark = [pytest.mark.unit, pytest.mark.queue]
+pytestmark = [pytest.mark.unit, pytest.mark.api, pytest.mark.queue]
 
 
 @patch("backend.lambdas.queue.handlers.table")

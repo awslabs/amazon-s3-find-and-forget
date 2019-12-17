@@ -1,7 +1,7 @@
 import pytest
 from boto3.dynamodb.conditions import Key
 
-pytestmark = [pytest.mark.acceptance, pytest.mark.queue]
+pytestmark = [pytest.mark.acceptance, pytest.mark.api, pytest.mark.queue]
 
 
 def test_it_adds_to_queue(api_client, queue_base_endpoint, queue_table):
