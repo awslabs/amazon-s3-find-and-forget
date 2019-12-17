@@ -20,7 +20,7 @@ export default () => {
         onStateChange={s => setAuthState(s)}
         hide={[Greetings, SignUp]}
       >
-        {authState === "signedIn" && (
+        {signedIn && (
           <AppLayout>
             <h2>Page content</h2>
             <p>
