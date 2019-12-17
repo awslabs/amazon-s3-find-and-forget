@@ -1,0 +1,154 @@
+#layout {
+  display: flex;
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
+}
+
+#layout .content {
+  overflow: auto;
+  box-sizing: border-box;
+}
+
+#left,
+#right {
+  width: 3rem;
+  min-width: 3rem;
+  height: 100%;
+  background-color: #fff;
+  padding-top: 0.5rem;
+  justify-content: center;
+  -webkit-box-shadow: 0 1px 1px 0 rgba(0, 28, 36, 0.3),
+    1px 1px 1px 0 rgba(0, 28, 36, 0.15), -1px 1px 1px 0 rgba(0, 28, 36, 0.15);
+  -webkit-box-shadow: 0 1px 1px 0 rgba(0, 28, 36, 0.3),
+    1px 1px 1px 0 rgba(0, 28, 36, 0.15), -1px 1px 1px 0 rgba(0, 28, 36, 0.15);
+  box-shadow: 0 1px 1px 0 rgba(0, 28, 36, 0.3),
+    1px 1px 1px 0 rgba(0, 28, 36, 0.15), -1px 1px 1px 0 rgba(0, 28, 36, 0.15);
+  box-shadow: 0 1px 1px 0 rgba(0, 28, 36, 0.3),
+    1px 1px 1px 0 rgba(0, 28, 36, 0.15), -1px 1px 1px 0 rgba(0, 28, 36, 0.15);
+  outline: none;
+}
+
+#left.open,
+#right.open {
+  width: 280px;
+  margin-left: 0px;
+  flex-shrink: 0;
+}
+
+#right.open {
+  width: 290px;
+}
+
+#left.closed .content,
+#right.closed .content {
+  display: none;
+  flex-shrink: 0;
+}
+
+#left.closed:hover,
+#right.closed:hover {
+  background-color: #eaeded;
+}
+
+#left .icon,
+#right .icon {
+  position: absolute;
+  z-index: 10;
+  width: 2rem;
+  height: 2rem;
+  line-height: 2rem;
+  font-size: 2rem;
+  text-align: center;
+  user-select: none;
+  cursor: pointer;
+  color: #545b64;
+  padding-left: 0.8rem;
+  fill: none;
+}
+
+#left.closed .icon,
+#right.closed .icon {
+  height: 100%;
+}
+
+#left.open .icon {
+  left: 232px;
+  margin-top: 6px;
+}
+
+#right.open .icon {
+  margin-right: 18px;
+}
+
+#right .icon {
+  right: 0;
+}
+
+#right.closed .icon {
+  margin-right: 12px;
+}
+
+.stroke-linejoin-round {
+  stroke-linejoin: round;
+}
+
+#layout p,
+#layout h2,
+#layout h3,
+#layout ul {
+  padding: 0.5rem 2rem 0.5rem 2rem;
+}
+
+#layout ul {
+  padding-top: 0;
+}
+
+.separator-top {
+  padding-top: 20px;
+  border-top: 1px solid #eaeded;
+}
+
+.separator-bottom {
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eaeded;
+}
+
+button.menu {
+  width: 100%;
+  text-align: left;
+  color: #545b64;
+  font-weight: 400;
+  padding-left: 0;
+}
+
+button.menu:hover,
+button.menu.selected {
+  color: #ec7211;
+  text-decoration: none;
+  background: transparent;
+}
+
+button.menu.selected {
+  font-weight: 800;
+}
+
+@media (min-width: 0px) and (max-width: 768px) {
+  #right.open {
+    width: 100%;
+    z-index: 12;
+    position: absolute;
+  }
+
+  #left.open {
+    width: 100%;
+    z-index: 11;
+    position: absolute;
+  }
+
+  #left.open .icon {
+    position: absolute;
+    right: 15px;
+    left: unset;
+  }
+}
