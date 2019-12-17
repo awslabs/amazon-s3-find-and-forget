@@ -18,7 +18,7 @@ export default ({ children }) => {
           <Icon type={leftOpen ? "close" : "hamburger"} />
         </div>
         <div className="content">
-          <h2>Amazon S3 Find and Forget</h2>
+          <h2>Amazon S3 Find &amp; Forget</h2>
           <p className="separator-top separator-bottom">
             <Button className="menu selected" variant="link">
               Dashboard
