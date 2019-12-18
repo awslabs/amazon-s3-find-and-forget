@@ -495,7 +495,7 @@ Resources:
               },
               "Resource": "${ScanTable.Arn}",
               "ResultPath": "$.DataMappers",
-              "Next": "Log Find Phase Start",
+              "Next": "Start Find Phase",
               "Retry": [{
                 "ErrorEquals": [ "States.ALL" ],
                 "IntervalSeconds": 10,
@@ -507,7 +507,7 @@ Resources:
                 "Next": "Handle Error"
               }]
             },
-            "Log Find Phase Start": {
+            "Start Find Phase": {
               "Type": "Task",
               "Parameters": {
                 "EventName": "FindPhaseStarted",
@@ -517,11 +517,16 @@ Resources:
               },
               "Resource": "${LogAuditEvent.Arn}",
               "ResultPath": null,
-              "Next": "Discover Files"
+              "Next": "Discover Files",
+              "Catch": [{
+                "ErrorEquals": ["States.ALL"],
+                "ResultPath": "$.ErrorDetails",
+                "Next": "Handle Error"
+              }]
             },
             "Discover Files": {
               "Type": "Parallel",
-              "Next": "Log Find Phase End",
+              "Next": "End Find Phase",
               "ResultPath": null,
               "Branches": [
                 {
@@ -588,7 +593,7 @@ Resources:
                 "Next": "Handle Error"
               }]
             },
-            "Log Find Phase End": {
+            "End Find Phase": {
               "Type": "Task",
               "Parameters": {
                 "EventName": "FindPhaseEnded",
@@ -598,9 +603,14 @@ Resources:
               },
               "Resource": "${LogAuditEvent.Arn}",
               "ResultPath": null,
-              "Next": "Log Forget Phase Start"
+              "Next": "Start Forget Phase",
+              "Catch": [{
+                "ErrorEquals": ["States.ALL"],
+                "ResultPath": "$.ErrorDetails",
+                "Next": "Handle Error"
+              }]
             },
-            "Log Forget Phase Start": {
+            "Start Forget Phase": {
               "Type": "Task",
               "Parameters": {
                 "EventName": "ForgetPhaseStarted",
@@ -610,7 +620,12 @@ Resources:
               },
               "Resource": "${LogAuditEvent.Arn}",
               "ResultPath": null,
-              "Next": "Start Fargate Workflow"
+              "Next": "Start Fargate Workflow",
+              "Catch": [{
+                "ErrorEquals": ["States.ALL"],
+                "ResultPath": "$.ErrorDetails",
+                "Next": "Handle Error"
+              }]
             },
             "Start Fargate Workflow": {
               "Type":"Task",
@@ -624,14 +639,14 @@ Resources:
                 "Name.$": "$$.Execution.Name"
               },
               "ResultPath": null,
-              "Next": "Log Forget Phase End",
+              "Next": "End Forget Phase",
               "Catch": [{
                 "ErrorEquals": ["States.ALL"],
                 "ResultPath": "$.ErrorDetails",
                 "Next": "Handle Error"
               }]
             },
-            "Log Forget Phase End": {
+            "End Forget Phase": {
               "Type": "Task",
               "Parameters": {
                 "EventName": "ForgetPhaseEnded",
@@ -641,7 +656,12 @@ Resources:
               },
               "Resource": "${LogAuditEvent.Arn}",
               "ResultPath": null,
-              "Next": "Delete Queue Items"
+              "Next": "Delete Queue Items",
+              "Catch": [{
+                "ErrorEquals": ["States.ALL"],
+                "ResultPath": "$.ErrorDetails",
+                "Next": "Handle Error"
+              }]
             },
             "Delete Queue Items": {
               "Comment": "Deletes all items from the deletion queue",
