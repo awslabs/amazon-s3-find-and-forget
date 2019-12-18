@@ -495,7 +495,7 @@ Resources:
               },
               "Resource": "${ScanTable.Arn}",
               "ResultPath": "$.DataMappers",
-              "Next": "Discover Files",
+              "Next": "Log Find Phase Start",
               "Retry": [{
                 "ErrorEquals": [ "States.ALL" ],
                 "IntervalSeconds": 10,
@@ -507,9 +507,21 @@ Resources:
                 "Next": "Handle Error"
               }]
             },
+            "Log Find Phase Start": {
+              "Type": "Task",
+              "Parameters": {
+                "EventName": "FindPhaseStarted",
+                "EventData.$": "$$.State.EnteredTime",
+                "StreamSuffix.$": "$$.Execution.Name",
+                "JobId.$": "$$.Execution.Name"
+              },
+              "Resource": "${LogAuditEvent.Arn}",
+              "ResultPath": null,
+              "Next": "Discover Files"
+            },
             "Discover Files": {
               "Type": "Parallel",
-              "Next": "Start Fargate Workflow",
+              "Next": "Log Find Phase End",
               "ResultPath": null,
               "Branches": [
                 {
@@ -576,6 +588,30 @@ Resources:
                 "Next": "Handle Error"
               }]
             },
+            "Log Find Phase End": {
+              "Type": "Task",
+              "Parameters": {
+                "EventName": "FindPhaseEnded",
+                "EventData.$": "$$.State.EnteredTime",
+                "StreamSuffix.$": "$$.Execution.Name",
+                "JobId.$": "$$.Execution.Name"
+              },
+              "Resource": "${LogAuditEvent.Arn}",
+              "ResultPath": null,
+              "Next": "Log Forget Phase Start"
+            },
+            "Log Forget Phase Start": {
+              "Type": "Task",
+              "Parameters": {
+                "EventName": "ForgetPhaseStarted",
+                "EventData.$": "$$.State.EnteredTime",
+                "StreamSuffix.$": "$$.Execution.Name",
+                "JobId.$": "$$.Execution.Name"
+              },
+              "Resource": "${LogAuditEvent.Arn}",
+              "ResultPath": null,
+              "Next": "Start Fargate Workflow"
+            },
             "Start Fargate Workflow": {
               "Type":"Task",
               "Resource":"arn:aws:states:::states:startExecution.sync",
@@ -588,12 +624,24 @@ Resources:
                 "Name.$": "$$.Execution.Name"
               },
               "ResultPath": null,
-              "Next": "Delete Queue Items",
+              "Next": "Log Forget Phase End",
               "Catch": [{
                 "ErrorEquals": ["States.ALL"],
                 "ResultPath": "$.ErrorDetails",
                 "Next": "Handle Error"
               }]
+            },
+            "Log Forget Phase End": {
+              "Type": "Task",
+              "Parameters": {
+                "EventName": "ForgetPhaseEnded",
+                "EventData.$": "$$.State.EnteredTime",
+                "StreamSuffix.$": "$$.Execution.Name",
+                "JobId.$": "$$.Execution.Name"
+              },
+              "Resource": "${LogAuditEvent.Arn}",
+              "ResultPath": null,
+              "Next": "Delete Queue Items"
             },
             "Delete Queue Items": {
               "Comment": "Deletes all items from the deletion queue",
