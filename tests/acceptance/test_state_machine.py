@@ -68,7 +68,7 @@ def test_it_skips_empty_deletion_queue(sf_client, execution, execution_waiter):
 
     history = sf_client.get_execution_history(executionArn=execution["executionArn"])
     did_enter_skip = next((event for event in history["events"]
-                           if event["stateEnteredEventDetails"]["name"] == "No"), False)
+                           if event.get("stateEnteredEventDetails", {}).get("name") == "No"), False)
     assert did_enter_skip, "Did not enter the success state associated with an empty deletion queue"
 
 
