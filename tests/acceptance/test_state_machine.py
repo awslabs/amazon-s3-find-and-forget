@@ -67,8 +67,9 @@ def test_it_skips_empty_deletion_queue(sf_client, execution, execution_waiter):
         pytest.fail("Error waiting for execution to enter success state: {}".format(str(e)))
 
     history = sf_client.get_execution_history(executionArn=execution["executionArn"])
-    did_enter_success = next((event for event in history["events"] if event["step"] == "No"), False)
-    assert did_enter_success, "Did not enter the success state associated with an empty deletion queue"
+    did_enter_skip = next((event for event in history["events"]
+                           if event["stateEnteredEventDetails"]["name"] == "No"), False)
+    assert did_enter_skip, "Did not enter the success state associated with an empty deletion queue"
 
 
 def test_it_only_permits_single_executions(stack, sf_client, del_queue_factory):
