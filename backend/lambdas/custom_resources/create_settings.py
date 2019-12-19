@@ -4,12 +4,10 @@ from decorators import with_logger
 import boto3
 import json
 import logging
-import os
 
 helper = CfnResource(json_logging=False, log_level='DEBUG',
                      boto_level='CRITICAL')
 
-bucket = os.getenv("WebUIBucket")
 settings_file = "settings.js"
 s3_client = boto3.client("s3")
 
@@ -17,14 +15,16 @@ s3_client = boto3.client("s3")
 @helper.create
 @helper.update
 def create(event, context):
-    with_cloudfront = os.getenv("CreateCloudFrontDistribution")
+    props = event.get('ResourceProperties', None)
+    bucket = props.get("WebUIBucket")
+    with_cloudfront = props.get("CreateCloudFrontDistribution")
     acl = "private" if with_cloudfront == "true" else "public-read"
     settings = {
-        "apiUrl": os.getenv("ApiUrl"),
-        "cognitoIdentityPool": os.getenv("CognitoIdentityPoolId"),
-        "cognitoUserPoolId": os.getenv("CognitoUserPoolId"),
-        "cognitoUserPoolClientId": os.getenv("CognitoUserPoolClientId"),
-        "region": os.getenv("Region")
+        "apiUrl": props.get("ApiUrl"),
+        "cognitoIdentityPool": props.get("CognitoIdentityPoolId"),
+        "cognitoUserPoolId": props.get("CognitoUserPoolId"),
+        "cognitoUserPoolClientId": props.get("CognitoUserPoolClientId"),
+        "region": props.get("Region")
     }
     s3_client.put_object(
         ACL=acl,
@@ -38,10 +38,6 @@ def create(event, context):
 @with_logger
 @helper.delete
 def delete(event, context):
-    s3_client.delete_object(
-        Bucket=bucket,
-        Key=settings_file
-    )
     return None
 
 

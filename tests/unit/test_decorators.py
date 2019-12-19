@@ -1,11 +1,11 @@
 import json
 from types import SimpleNamespace
 
-import mock
+from mock import patch, MagicMock
 import pytest
 from botocore.exceptions import ClientError
 
-from decorators import with_logger, catch_errors, request_validator
+from decorators import with_logger, catch_errors, request_validator, add_cors_headers
 
 pytestmark = [pytest.mark.unit, pytest.mark.layers]
 
@@ -118,7 +118,7 @@ def test_it_catches_unhandled_errors():
 
 
 def test_it_wraps_with_logging():
-    with mock.patch("decorators.logger"):
+    with patch("decorators.logger"):
         @with_logger
         def dummy_handler(event, context):
             return "OK"
@@ -127,3 +127,19 @@ def test_it_wraps_with_logging():
         resp = dummy_handler({}, ctx)
         assert "OK" == resp
         assert hasattr(ctx, "logger")
+
+
+@patch("os.getenv", MagicMock(return_value='https://site.com'))
+def test_it_wraps_response_with_headers():
+
+    @add_cors_headers
+    def dummy_handler(event, context):
+        return {"statusCode": 200}
+
+    ctx = SimpleNamespace()
+    resp = dummy_handler({}, ctx)
+
+    assert resp["headers"] == {
+        'Access-Control-Allow-Origin': 'https://site.com',
+        'Content-Type': 'application/json'
+    }

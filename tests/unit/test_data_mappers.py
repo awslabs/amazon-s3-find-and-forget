@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 from botocore.exceptions import ClientError
-from mock import patch
+from mock import patch, ANY
 
 
 with patch.dict(os.environ, {"DataMapperTable": "DataMapperTable"}):
@@ -19,7 +19,8 @@ def test_it_retrieves_all_items(table):
     response = handlers.get_data_mappers_handler({}, SimpleNamespace())
     assert {
         "statusCode": 200,
-        "body": json.dumps({"DataMappers": []})
+        "body": json.dumps({"DataMappers": []}),
+        "headers": ANY
     } == response
 
 
@@ -133,7 +134,8 @@ def test_it_deletes_data_mapper(table):
         }
     }, SimpleNamespace())
     assert {
-        "statusCode": 204
+        "statusCode": 204,
+        "headers": ANY
     } == response
 
 

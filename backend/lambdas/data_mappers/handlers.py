@@ -7,7 +7,7 @@ import os
 import boto3
 from aws_xray_sdk.core import xray_recorder
 
-from decorators import with_logger, request_validator, catch_errors, load_schema
+from decorators import with_logger, request_validator, catch_errors, load_schema, add_cors_headers
 
 dynamodb_resource = boto3.resource("dynamodb")
 table = dynamodb_resource.Table(os.getenv("DataMapperTable"))
@@ -16,6 +16,7 @@ glue_client = boto3.client("glue")
 
 @with_logger
 @xray_recorder.capture('GetDataMappersHandler')
+@add_cors_headers
 @catch_errors
 def get_data_mappers_handler(event, context):
     items = table.scan()["Items"]
@@ -28,6 +29,7 @@ def get_data_mappers_handler(event, context):
 
 @with_logger
 @xray_recorder.capture('CreateDataMapperHandler')
+@add_cors_headers
 @request_validator(load_schema("data_mapper"))
 @request_validator(load_schema("data_mapper_path_parameters"), "pathParameters")
 @catch_errors
@@ -52,6 +54,7 @@ def create_data_mapper_handler(event, context):
 
 @with_logger
 @xray_recorder.capture('DeleteDataMapperHandler')
+@add_cors_headers
 @request_validator(load_schema("delete_handler"), "pathParameters")
 @catch_errors
 def delete_data_mapper_handler(event, context):
@@ -61,7 +64,7 @@ def delete_data_mapper_handler(event, context):
     })
 
     return {
-        "statusCode": 204,
+        "statusCode": 204
     }
 
 

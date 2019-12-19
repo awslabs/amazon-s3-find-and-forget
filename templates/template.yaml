@@ -7,6 +7,10 @@ Parameters:
     Description: Creates a username to be used for authentication. It needs to be an e-mail address.
     Type: String
     AllowedPattern: ^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$
+  ApiAccessControlAllowOriginOverride:
+    Description: Overrides the default Allow-Control-Allow-Origin setting. When "false" the only origin allowed is the Web UI url. This must be set to "*" if no restriction is required.
+    Type: String
+    Default: "false"
   AthenaConcurrencyLimit:
     Description: How many Athena queries should be scheduled concurrently
     Type: Number
@@ -66,6 +70,7 @@ Resources:
     Properties: 
       TemplateURL: ./api.yaml
       Parameters:
+        AccessControlAllowOriginOverride: !Ref ApiAccessControlAllowOriginOverride
         CognitoUserPoolArn: !GetAtt AuthStack.Outputs.CognitoUserPoolArn
         CommonLayers: !Join
           - ","
@@ -76,6 +81,7 @@ Resources:
         DataMapperTableName: !GetAtt DDBStack.Outputs.DataMapperTable
         ResultBucket: !GetAtt StateMachineStack.Outputs.ResultBucket
         StateMachineArn: !GetAtt StateMachineStack.Outputs.StateMachineArn
+        WebUIOrigin: !GetAtt WebUIStack.Outputs.Origin
   AuthStack:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -142,6 +148,13 @@ Resources:
     Properties:
       TemplateURL: ./web-ui.yaml
       Parameters:
+        CreateCloudFrontDistribution: !Ref CreateCloudFrontDistribution
+        ResourcePrefix: !Ref ResourcePrefix
+  WebUIHelperStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ./web-ui-helper.yaml
+      Parameters:
         ApiUrl: !GetAtt APIStack.Outputs.ApiUrl
         CognitoIdentityPoolId: !GetAtt AuthStack.Outputs.CognitoIdentityPoolId
         CognitoUserPoolId: !GetAtt AuthStack.Outputs.CognitoUserPoolId
@@ -152,7 +165,7 @@ Resources:
             - !GetAtt LayersStack.Outputs.CustomResourceHelper
             - !GetAtt LayersStack.Outputs.Decorators
         CreateCloudFrontDistribution: !Ref CreateCloudFrontDistribution
-        ResourcePrefix: !Ref ResourcePrefix
+        WebUIBucket: !GetAtt WebUIStack.Outputs.WebUIBucket
 
   AuditLogGroup:
     Type: AWS::Logs::LogGroup
@@ -161,6 +174,8 @@ Resources:
       RetentionInDays: !Ref LogRetentionInDays
 
 Outputs:
+  APIAccessControlAllowOriginHeader:
+    Value: !GetAtt APIStack.Outputs.AccessControlAllowOriginHeader
   APIStack:
     Value: !Ref APIStack
   ApiUrl:

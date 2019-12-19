@@ -3,7 +3,7 @@ import os
 from types import SimpleNamespace
 
 import pytest
-from mock import patch
+from mock import patch, ANY
 
 
 with patch.dict(os.environ, {"DeletionQueueTable": "DeletionQueueTable"}):
@@ -18,7 +18,8 @@ def test_it_retrieves_all_items(table):
     response = handlers.get_handler({}, SimpleNamespace())
     assert {
         "statusCode": 200,
-        "body": json.dumps({"MatchIds": []})
+        "body": json.dumps({"MatchIds": []}),
+        "headers": ANY
     } == response
 
 
@@ -61,7 +62,8 @@ def test_it_cancels_deletions(table):
         }
     }, SimpleNamespace())
     assert {
-        "statusCode": 204
+        "statusCode": 204,
+        "headers": ANY
     } == response
 
 
@@ -78,5 +80,6 @@ def test_it_process_queue(sfn_client):
         "statusCode": 202,
         "body": json.dumps({
             "JobId": "e723c10b-9be4-46ca-90b8-8b94a7105b44"
-        })
+        }),
+        "headers": ANY
     } == response

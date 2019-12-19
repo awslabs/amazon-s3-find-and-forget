@@ -1,48 +1,9 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Transform: AWS::Serverless-2016-10-31
 Description: Amazon S3 Find and Forget Web UI
 
-Globals:
-  Function:
-    Runtime: python3.7
-    Timeout: 900
-    Layers: !Ref CommonLayers
-    Environment:
-      Variables:
-        ApiUrl: !Ref ApiUrl
-        FromBucket: !Sub solution-builders-${AWS::Region}
-        LogLevel: !Ref LogLevel
-        CognitoIdentityPoolId: !Ref CognitoIdentityPoolId
-        CognitoUserPoolId: !Ref CognitoUserPoolId
-        CognitoUserPoolClientId: !Ref CognitoUserPoolClientId
-        CreateCloudFrontDistribution: !Ref CreateCloudFrontDistribution
-        Region: !Ref AWS::Region
-        WebUIBucket: !Ref WebUIBucket
-
 Parameters:
-  ApiUrl:
-    Type: String
-  CognitoIdentityPoolId:
-    Type: String
-  CognitoUserPoolId:
-    Type: String
-  CognitoUserPoolClientId:
-    Type: String
   CreateCloudFrontDistribution:
     Type: String
-  CommonLayers:
-    Type: CommaDelimitedList
-  LogLevel:
-    Type: String
-    Default: INFO
-    AllowedValues:
-    - CRITICAL
-    - FATAL
-    - ERROR
-    - WARNING
-    - INFO
-    - DEBUG
-    - NOTSET
   ResourcePrefix:
     Type: String
 
@@ -50,10 +11,6 @@ Conditions:
   WithCloudFront: !Equals [!Ref CreateCloudFrontDistribution, "true"]
 
 Resources:
-  CreateWebUIConfig:
-    Type: Custom::Setup
-    Properties:
-      ServiceToken: !GetAtt CreateSettingsFile.Arn
 
   WebUIBucket:
     Type: AWS::S3::Bucket
@@ -78,27 +35,6 @@ Resources:
             Resource: !Sub arn:aws:s3:::${WebUIBucket}/*
             Principal:
               CanonicalUser: !GetAtt CloudFrontOriginAccessIdentity.S3CanonicalUserId
-
-  CreateSettingsFile:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: create_settings.handler
-      CodeUri: ../backend/lambdas/custom_resources/
-      Description: Custom Lambda resource for the Amazon S3 Find and Forget Cloudformation Stack
-      Policies:
-        - Statement:
-          - Effect: Allow
-            Action: 
-              - s3:DeleteObject
-              - s3:ListBucket
-              - s3:PutObject
-              - s3:PutObjectAcl
-            Resource:
-              - !GetAtt WebUIBucket.Arn
-              - !Sub ${WebUIBucket.Arn}/*
-          - Effect: Allow
-            Action: s3:GetObject
-            Resource: !Sub "arn:aws:s3:::solution-builders-${AWS::Region}/*"
 
   CloudFrontOriginAccessIdentity:
     Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
@@ -137,6 +73,12 @@ Resources:
           CloudFrontDefaultCertificate: true
 
 Outputs:
+  Origin:
+    Value: !If
+      - WithCloudFront
+      - !Sub "https://${CloudFrontDistribution.DomainName}"
+      - !Sub "https://${WebUIBucket.RegionalDomainName}"
+    Description: Web UI Origin
   Url:
     Value: !If
       - WithCloudFront

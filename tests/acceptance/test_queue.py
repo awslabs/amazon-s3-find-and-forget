@@ -4,7 +4,7 @@ from boto3.dynamodb.conditions import Key
 pytestmark = [pytest.mark.acceptance, pytest.mark.api, pytest.mark.queue]
 
 
-def test_it_adds_to_queue(api_client, queue_base_endpoint, queue_table):
+def test_it_adds_to_queue(api_client, queue_base_endpoint, queue_table, stack):
     # Arrange
     key = "test"
     item = {
@@ -22,14 +22,16 @@ def test_it_adds_to_queue(api_client, queue_base_endpoint, queue_table):
     query_result = queue_table.query(KeyConditionExpression=Key("MatchId").eq(key))
     assert 1 == len(query_result["Items"])
     assert item == query_result["Items"][0]
+    assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
 
 
-def test_it_rejects_invalid_add_to_queue(api_client, queue_base_endpoint):
+def test_it_rejects_invalid_add_to_queue(api_client, queue_base_endpoint, stack):
     response = api_client.patch(queue_base_endpoint, json={"INVALID": "PAYLOAD"})
     assert 422 == response.status_code
+    assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
 
 
-def test_it_gets_queue(api_client, queue_base_endpoint, del_queue_factory):
+def test_it_gets_queue(api_client, queue_base_endpoint, del_queue_factory, stack):
     # Arrange
     del_queue_item = del_queue_factory()
     # Act
@@ -39,9 +41,10 @@ def test_it_gets_queue(api_client, queue_base_endpoint, del_queue_factory):
     assert response.status_code == 200
     assert isinstance(response_body.get("MatchIds"), list)
     assert del_queue_item in response_body["MatchIds"]
+    assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
 
 
-def test_it_cancels_deletion(api_client, del_queue_factory, queue_base_endpoint, queue_table):
+def test_it_cancels_deletion(api_client, del_queue_factory, queue_base_endpoint, queue_table, stack):
     # Arrange
     del_queue_item = del_queue_factory()
     key = del_queue_item["MatchId"]
@@ -52,9 +55,10 @@ def test_it_cancels_deletion(api_client, del_queue_factory, queue_base_endpoint,
     # Check the item doesn't exist in the DDB Table
     query_result = queue_table.query(KeyConditionExpression=Key("MatchId").eq(key))
     assert 0 == len(query_result["Items"])
+    assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
 
 
-def test_it_handles_not_found(api_client, del_queue_factory, queue_base_endpoint, queue_table):
+def test_it_handles_not_found(api_client, del_queue_factory, queue_base_endpoint, queue_table, stack):
     # Arrange
     del_queue_item = del_queue_factory()
     key = del_queue_item["MatchId"]
@@ -65,6 +69,7 @@ def test_it_handles_not_found(api_client, del_queue_factory, queue_base_endpoint
     # Check the item doesn't exist in the DDB Table
     query_result = queue_table.query(KeyConditionExpression=Key("MatchId").eq(key))
     assert 0 == len(query_result["Items"])
+    assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
 
 
 def test_it_processes_queue(api_client, queue_base_endpoint, sf_client, stack):
@@ -85,5 +90,6 @@ def test_it_processes_queue(api_client, queue_base_endpoint, sf_client, stack):
         )
         # Verify the job started
         assert job["status"] in ["SUCCEEDED", "RUNNING"]
+        assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
     finally:
         sf_client.stop_execution(executionArn=execution_arn)

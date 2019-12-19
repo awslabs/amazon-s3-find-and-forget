@@ -36,6 +36,7 @@ def test_it_retrieves_in_flight_jobs(sf_client):
         "JobStatus": "RUNNING",
         "StartTime": ANY
     } == json.loads(response["body"])
+    assert ANY == response["headers"]
 
 
 @patch("backend.lambdas.jobs.handlers.get_object_contents")
@@ -61,4 +62,5 @@ def test_it_retrieves_in_summary_for_completed(sf_client, get_object_contents):
         "StartTime": ANY,
         "EndTime": ANY
     } == json.loads(response["body"])
+    assert ANY == response["headers"]
 

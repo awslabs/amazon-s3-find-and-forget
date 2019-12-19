@@ -10,20 +10,30 @@ Globals:
     Layers: !Ref CommonLayers
     Environment:
       Variables:
+        AllowOrigin: !If
+          - DefaultAccessControlOrigin
+          - !Ref WebUIOrigin
+          - !Ref AccessControlAllowOriginOverride
         DeletionQueueTable: !Ref DeletionQueueTableName
         DataMapperTable: !Ref DataMapperTableName
         LogLevel: !Ref LogLevel
   Api:
     EndpointConfiguration: REGIONAL
     TracingEnabled: true
-    Cors: "'*'"
+    Cors:
+      AllowMethods: "'*'"
+      AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+      AllowOrigin: "'*'"
     Auth:
       DefaultAuthorizer: CognitoAuthorizer
       Authorizers:
         CognitoAuthorizer:
           UserPoolArn: !Ref CognitoUserPoolArn
+      AddDefaultAuthorizerToCorsPreflight: False
 
 Parameters:
+  AccessControlAllowOriginOverride:
+    Type: String
   CognitoUserPoolArn:
     Type: String
   DeletionQueueTableName:
@@ -52,7 +62,12 @@ Parameters:
       - INFO
       - DEBUG
       - NOTSET
+  WebUIOrigin:
+    Type: String
 
+Conditions:
+  DefaultAccessControlOrigin: !Equals [!Ref AccessControlAllowOriginOverride, "false"]
+  
 Resources:
   ## Queue
   EnqueueDeletion:
@@ -197,6 +212,12 @@ Resources:
             Resource: "*"
 
 Outputs:
+  AccessControlAllowOriginHeader:
+    Description: Access-Control-Allow-Origin header sent from API endpoints 
+    Value: !If
+      - DefaultAccessControlOrigin
+      - !Ref WebUIOrigin
+      - !Ref AccessControlAllowOriginOverride
   ApiUrl:
     Description: API endpoint URL for Prod environment
     Value: !Sub https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/

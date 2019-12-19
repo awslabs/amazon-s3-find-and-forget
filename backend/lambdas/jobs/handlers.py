@@ -8,7 +8,7 @@ import boto3
 from datetime import datetime, timezone
 from aws_xray_sdk.core import xray_recorder
 
-from decorators import with_logger, request_validator, catch_errors, load_schema
+from decorators import with_logger, request_validator, catch_errors, load_schema, add_cors_headers
 
 sf_client = boto3.client("stepfunctions")
 s3 = boto3.resource("s3")
@@ -17,6 +17,7 @@ bucket = os.getenv("ResultBucket")
 
 @with_logger
 @xray_recorder.capture('GetJobHandler')
+@add_cors_headers
 @request_validator(load_schema("get_job_handler"), "pathParameters")
 @catch_errors
 def get_job_handler(event, context):

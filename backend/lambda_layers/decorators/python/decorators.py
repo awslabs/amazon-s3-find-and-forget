@@ -99,3 +99,22 @@ def load_schema(schema_name, schema_dir=None):
 
     with open(os.path.join(schema_dir, "{}.json".format(schema_name))) as f:
         return json.load(f)
+
+
+def add_cors_headers(handler):
+    """
+    Decorator which returns standard response headers to be used on each API method
+    """
+
+    @functools.wraps(handler) 
+    def wrapper(event, context): 
+        resp = handler(event, context) 
+        resp["headers"] = { 
+           'Content-Type': 'application/json', 
+           'Access-Control-Allow-Origin': os.getenv("AllowOrigin", ""), 
+           **resp.get("headers", {}) 
+        }
+
+        return resp
+ 
+    return wrapper 

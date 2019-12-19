@@ -31,6 +31,7 @@ def decorator_mocks(monkeypatch):
     monkeypatch.setattr(decorators, "with_logger", mock_decorator)
     monkeypatch.setattr(xray_recorder, "capture", lambda _: mock_decorator)
 
+
 @pytest.fixture(autouse=True)
 def cr_helper_mocks(monkeypatch):
     """

@@ -1,0 +1,96 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Amazon S3 Find and Forget Web UI helper
+
+Globals:
+  Function:
+    Runtime: python3.7
+    Timeout: 900
+    Layers: !Ref CommonLayers
+
+Parameters:
+  ApiUrl:
+    Type: String
+  CognitoIdentityPoolId:
+    Type: String
+  CognitoUserPoolId:
+    Type: String
+  CognitoUserPoolClientId:
+    Type: String
+  CreateCloudFrontDistribution:
+    Type: String
+  CommonLayers:
+    Type: CommaDelimitedList
+  LogLevel:
+    Type: String
+    Default: INFO
+    AllowedValues:
+    - CRITICAL
+    - FATAL
+    - ERROR
+    - WARNING
+    - INFO
+    - DEBUG
+    - NOTSET
+  WebUIBucket:
+    Type: String
+
+Resources:
+  CreateWebUIConfig:
+    Type: Custom::Setup
+    Properties:
+      ServiceToken: !GetAtt CreateSettingsFile.Arn
+      ApiUrl: !Ref ApiUrl
+      FromBucket: !Sub solution-builders-${AWS::Region}
+      LogLevel: !Ref LogLevel
+      CognitoIdentityPoolId: !Ref CognitoIdentityPoolId
+      CognitoUserPoolId: !Ref CognitoUserPoolId
+      CognitoUserPoolClientId: !Ref CognitoUserPoolClientId
+      CreateCloudFrontDistribution: !Ref CreateCloudFrontDistribution
+      Region: !Ref AWS::Region
+      WebUIBucket: !Ref WebUIBucket
+
+  CleanupWebUI:
+    Type: Custom::Setup
+    Properties:
+      ServiceToken: !GetAtt RemoveAllObjects.Arn
+      LogLevel: !Ref LogLevel
+      WebUIBucket: !Ref WebUIBucket
+
+  CreateSettingsFile:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: create_settings.handler
+      CodeUri: ../backend/lambdas/custom_resources/
+      Description: Custom Lambda resource for the Amazon S3 Find and Forget Cloudformation Stack
+      Policies:
+        - Statement:
+          - Effect: Allow
+            Action:
+              - s3:PutObject
+              - s3:PutObjectAcl
+            Resource:
+              - !Sub arn:aws:s3:::${WebUIBucket}/*
+          - Effect: Allow
+            Action: s3:GetObject
+            Resource: !Sub "arn:aws:s3:::solution-builders-${AWS::Region}/*"
+
+  RemoveAllObjects:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: cleanup_bucket.handler
+      CodeUri: ../backend/lambdas/custom_resources/
+      Description: Custom Lambda resource for the Amazon S3 Find and Forget Cloudformation Stack
+      Policies:
+        - Statement:
+          - Effect: Allow
+            Action: 
+              - s3:DeleteObject
+              - s3:ListBucket
+            Resource:
+              - !Sub arn:aws:s3:::${WebUIBucket}
+              - !Sub arn:aws:s3:::${WebUIBucket}/*
+          - Effect: Allow
+            Action: s3:GetObject
+            Resource: !Sub "arn:aws:s3:::solution-builders-${AWS::Region}/*"
+          

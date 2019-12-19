@@ -7,7 +7,7 @@ import os
 import boto3
 from aws_xray_sdk.core import xray_recorder
 
-from decorators import with_logger, request_validator, catch_errors, load_schema
+from decorators import with_logger, request_validator, catch_errors, load_schema, add_cors_headers
 
 sfn_client = boto3.client("stepfunctions")
 dynamodb_resource = boto3.resource("dynamodb")
@@ -16,6 +16,7 @@ table = dynamodb_resource.Table(os.getenv("DeletionQueueTable"))
 
 @with_logger
 @xray_recorder.capture('EnqueueHandler')
+@add_cors_headers
 @request_validator(load_schema("queue_item"), "body")
 @catch_errors
 def enqueue_handler(event, context):
@@ -36,6 +37,7 @@ def enqueue_handler(event, context):
 
 @with_logger
 @xray_recorder.capture('GetQueueHandler')
+@add_cors_headers
 @catch_errors
 def get_handler(event, context):
     items = table.scan()["Items"]
@@ -48,6 +50,7 @@ def get_handler(event, context):
 
 @with_logger
 @xray_recorder.capture('CancelDeletionHandler')
+@add_cors_headers
 @request_validator(load_schema("cancel_handler"), "pathParameters")
 @catch_errors
 def cancel_handler(event, context):
@@ -57,12 +60,13 @@ def cancel_handler(event, context):
     })
 
     return {
-        "statusCode": 204,
+        "statusCode": 204
     }
 
 
 @with_logger
 @xray_recorder.capture('ProcessDeletionHandler')
+@add_cors_headers
 @catch_errors
 def process_handler(event, context):
     response = sfn_client.start_execution(

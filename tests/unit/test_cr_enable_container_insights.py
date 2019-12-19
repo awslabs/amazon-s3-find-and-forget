@@ -24,14 +24,14 @@ def test_it_updates_cluster_setting(getenv_mock, mock_client):
         ]
     )
 
-    assert None == resp
+    assert not resp
 
 
 @patch("backend.lambdas.custom_resources.enable_container_insights.ecs_client")
 def test_it_does_nothing_on_delete(mock_client):
     mock_client.return_value = MagicMock()
     resp = delete({}, MagicMock())
-    assert mock_client.called == False
+    mock_client.assert_not_called()
     assert resp == None
 
 

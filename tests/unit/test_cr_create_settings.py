@@ -9,16 +9,21 @@ from backend.lambdas.custom_resources.create_settings import create, delete, han
 pytestmark = [pytest.mark.unit, pytest.mark.task]
 
 
-@patch("backend.lambdas.custom_resources.create_settings.bucket", "webuibucket")
 @patch("backend.lambdas.custom_resources.create_settings.s3_client")
-@patch("os.getenv")
-def test_it_saves_file_with_public_acl_when_cloudfront_false(getenv_mock, mock_client):
+def test_it_saves_file_with_public_acl_when_cloudfront_false(mock_client):
+    event = {
+        'ResourceProperties': {
+            'ApiUrl': 'https://apiurl/',
+            'CognitoIdentityPoolId': 'cognito-idp',
+            'CognitoUserPoolClientId': 'cognito-upc',
+            'CognitoUserPoolId': 'cognito-up',
+            'CreateCloudFrontDistribution': 'false',
+            'Region': 'eu-west-1',
+            'WebUIBucket': 'webuibucket'
+        }
+    }
 
-    with_cloudfront = "false"
-    getenv_mock.side_effect = [with_cloudfront, "https://apiurl/",
-                               "cognito-idp", "cognito-up", "cognito-upc", "eu-west-1"]
-
-    resp = create({}, MagicMock())
+    resp = create(event, MagicMock())
 
     mock_client.put_object.assert_called_with(
         ACL="public-read",
@@ -35,16 +40,21 @@ def test_it_saves_file_with_public_acl_when_cloudfront_false(getenv_mock, mock_c
     assert "arn:aws:s3:::webuibucket/settings.js" == resp
 
 
-@patch("backend.lambdas.custom_resources.create_settings.bucket", "webuibucket")
 @patch("backend.lambdas.custom_resources.create_settings.s3_client")
-@patch("os.getenv")
-def test_it_saves_file_with_private_acl_when_cloudfront_true(getenv_mock, mock_client):
+def test_it_saves_file_with_private_acl_when_cloudfront_true(mock_client):
+    event = {
+        'ResourceProperties': {
+            'ApiUrl': 'https://apiurl/',
+            'CognitoIdentityPoolId': 'cognito-idp',
+            'CognitoUserPoolClientId': 'cognito-upc',
+            'CognitoUserPoolId': 'cognito-up',
+            'CreateCloudFrontDistribution': 'true',
+            'Region': 'eu-west-1',
+            'WebUIBucket': 'webuibucket'
+        }
+    }
 
-    with_cloudfront = "true"
-    getenv_mock.side_effect = [with_cloudfront, "https://apiurl/",
-                               "cognito-idp", "cognito-up", "cognito-upc", "eu-west-1"]
-
-    resp = create({}, MagicMock())
+    resp = create(event, MagicMock())
 
     mock_client.put_object.assert_called_with(
         ACL="private",
@@ -61,18 +71,22 @@ def test_it_saves_file_with_private_acl_when_cloudfront_true(getenv_mock, mock_c
     assert "arn:aws:s3:::webuibucket/settings.js" == resp
 
 
-@patch("backend.lambdas.custom_resources.create_settings.bucket", "webuibucket")
 @patch("backend.lambdas.custom_resources.create_settings.s3_client")
-@patch("os.getenv")
-def test_it_deletes_file(getenv_mock, mock_client):
-
-    resp = delete({}, MagicMock())
-
-    mock_client.delete_object.assert_called_with(
-        Bucket="webuibucket",
-        Key="settings.js")
-
-    assert None == resp
+def test_it_does_nothing_on_delete(mock_client):
+    event = {
+        'ResourceProperties': {
+            'ApiUrl': 'https://apiurl/',
+            'CognitoIdentityPoolId': 'cognito-idp',
+            'CognitoUserPoolClientId': 'cognito-upc',
+            'CognitoUserPoolId': 'cognito-up',
+            'CreateCloudFrontDistribution': 'true',
+            'Region': 'eu-west-1',
+            'WebUIBucket': 'webuibucket'
+        }
+    }
+    resp = delete(event, MagicMock())
+    mock_client.assert_not_called()
+    assert not resp
 
 
 @patch("backend.lambdas.custom_resources.create_settings.helper")
