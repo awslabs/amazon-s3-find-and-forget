@@ -67,6 +67,11 @@ def glue_client():
     return boto3.client("glue")
 
 
+@pytest.fixture(scope="session")
+def logs_client():
+    return boto3.client("logs")
+
+
 @pytest.fixture(scope="session", autouse=True)
 def cognito_token(stack):
     # Generate User in Cognito

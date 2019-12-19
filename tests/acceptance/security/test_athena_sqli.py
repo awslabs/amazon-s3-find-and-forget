@@ -5,8 +5,7 @@ from botocore.exceptions import WaiterError
 
 logger = logging.getLogger()
 
-pytestmark = [pytest.mark.acceptance, pytest.mark.state_machine, pytest.mark.athena, pytest.mark.security,
-              pytest.mark.usefixtures("empty_lake")]
+pytestmark = [pytest.mark.acceptance, pytest.mark.athena, pytest.mark.security, pytest.mark.usefixtures("empty_lake")]
 
 
 def arrange_and_execute(sf_client, execution_waiter, stack, data_loader, query_input, fargate_queue, queue_reader):
