@@ -47,14 +47,14 @@ Resources:
           AttributeName: JobId
           AttributeType: S
         -
-          AttributeName: StartDate
+          AttributeName: StatusStartDate
           AttributeType: S
       KeySchema:
         -
           AttributeName: JobId
           KeyType: HASH
         -
-          AttributeName: StartDate
+          AttributeName: StatusStartDate
           KeyType: RANGE
       BillingMode: PAY_PER_REQUEST
 
