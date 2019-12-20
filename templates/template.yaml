@@ -79,7 +79,7 @@ Resources:
             - !GetAtt LayersStack.Outputs.BotoUtils
         DeletionQueueTableName: !GetAtt DDBStack.Outputs.DeletionQueueTable
         DataMapperTableName: !GetAtt DDBStack.Outputs.DataMapperTable
-        JobTableName: !GetAtt DDBStack.Outputs.JobTableName
+        JobTableName: !GetAtt DDBStack.Outputs.JobTable
         ResultBucket: !GetAtt StateMachineStack.Outputs.ResultBucket
         StateMachineArn: !GetAtt StateMachineStack.Outputs.StateMachineArn
         WebUIOrigin: !GetAtt WebUIStack.Outputs.Origin
@@ -136,7 +136,7 @@ Resources:
         DeleteQueueUrl: !GetAtt DelStack.Outputs.DeleteObjectsQueueUrl
         DeletionTasksMaxNumber: !Ref DeletionTasksMaxNumber
         ECSCluster: !GetAtt DelStack.Outputs.ECSCluster
-        JobTableName: !GetAtt DDBStack.Outputs.JobTableName
+        JobTableName: !GetAtt DDBStack.Outputs.JobTable
         StateMachinePrefix: !Ref ResourcePrefix
   VpcStack:
     Type: AWS::CloudFormation::Stack
