@@ -38,8 +38,30 @@ Resources:
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
 
+  JobTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub ${DynamoDBTablePrefix}_Jobs
+      AttributeDefinitions:
+        -
+          AttributeName: JobId
+          AttributeType: S
+        -
+          AttributeName: StatusStartDate
+          AttributeType: S
+      KeySchema:
+        -
+          AttributeName: JobId
+          KeyType: HASH
+        -
+          AttributeName: StatusStartDate
+          KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST
+
 Outputs:
   DeletionQueueTable:
     Value: !Ref DeletionQueueTable
   DataMapperTable:
     Value: !Ref DataMapperTable
+  JobTable:
+    Value: !Ref JobTable

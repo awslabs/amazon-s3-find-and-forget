@@ -27,11 +27,13 @@ Parameters:
   CommonLayers:
     Type: CommaDelimitedList
     Description: Common layers supplied to all functions
+  DataMapperTableName:
+    Description: Table name for Data Mapper Table
+    Type: String
   DeletionQueueTableName:
     Description: Table name for Deletion Queue Table
     Type: String
-  DataMapperTableName:
-    Description: Table name for Data Mapper Table
+  DeleteQueueUrl:
     Type: String
   DeleteServiceName:
     Type: String
@@ -39,7 +41,7 @@ Parameters:
     Type: Number
   ECSCluster:
     Type: String
-  DeleteQueueUrl:
+  JobTableName:
     Type: String
   LogLevel:
     Type: String

@@ -16,6 +16,7 @@ Globals:
           - !Ref AccessControlAllowOriginOverride
         DeletionQueueTable: !Ref DeletionQueueTableName
         DataMapperTable: !Ref DataMapperTableName
+        JobTable: !Ref JobTableName
         LogLevel: !Ref LogLevel
   Api:
     EndpointConfiguration: REGIONAL
@@ -36,21 +37,17 @@ Parameters:
     Type: String
   CognitoUserPoolArn:
     Type: String
-  DeletionQueueTableName:
-    Description: Table name for Deletion Queue Table
-    Type: String
-  DataMapperTableName:
-    Description: Table name for DataMapper Table
-    Type: String
-  ResultBucket:
-    Description: Bucket where job reports are stored
-    Type: String
-  StateMachineArn:
-    Description: State Machine to invoke to process the deletion queue
-    Type: String
   CommonLayers:
     Type: CommaDelimitedList
     Description: Common layers supplied to all functions
+  DataMapperTableName:
+    Description: Table name for DataMapper Table
+    Type: String
+  DeletionQueueTableName:
+    Description: Table name for Deletion Queue Table
+    Type: String
+  JobTableName:
+    Type: String
   LogLevel:
     Type: String
     Default: INFO
@@ -62,6 +59,12 @@ Parameters:
       - INFO
       - DEBUG
       - NOTSET
+  ResultBucket:
+    Description: Bucket where job reports are stored
+    Type: String
+  StateMachineArn:
+    Description: State Machine to invoke to process the deletion queue
+    Type: String
   WebUIOrigin:
     Type: String
 

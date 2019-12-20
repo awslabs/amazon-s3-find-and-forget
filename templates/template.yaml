@@ -79,6 +79,7 @@ Resources:
             - !GetAtt LayersStack.Outputs.BotoUtils
         DeletionQueueTableName: !GetAtt DDBStack.Outputs.DeletionQueueTable
         DataMapperTableName: !GetAtt DDBStack.Outputs.DataMapperTable
+        JobTableName: !GetAtt DDBStack.Outputs.JobTableName
         ResultBucket: !GetAtt StateMachineStack.Outputs.ResultBucket
         StateMachineArn: !GetAtt StateMachineStack.Outputs.StateMachineArn
         WebUIOrigin: !GetAtt WebUIStack.Outputs.Origin
@@ -129,12 +130,13 @@ Resources:
           - - !GetAtt LayersStack.Outputs.AWSSDKLayer
             - !GetAtt LayersStack.Outputs.Decorators
             - !GetAtt LayersStack.Outputs.BotoUtils
+        DataMapperTableName: !GetAtt DDBStack.Outputs.DataMapperTable
         DeleteServiceName: !GetAtt DelStack.Outputs.DeleteServiceName
         DeletionQueueTableName: !GetAtt DDBStack.Outputs.DeletionQueueTable
-        DeletionTasksMaxNumber: !Ref DeletionTasksMaxNumber
-        DataMapperTableName: !GetAtt DDBStack.Outputs.DataMapperTable
-        ECSCluster: !GetAtt DelStack.Outputs.ECSCluster
         DeleteQueueUrl: !GetAtt DelStack.Outputs.DeleteObjectsQueueUrl
+        DeletionTasksMaxNumber: !Ref DeletionTasksMaxNumber
+        ECSCluster: !GetAtt DelStack.Outputs.ECSCluster
+        JobTableName: !GetAtt DDBStack.Outputs.JobTableName
         StateMachinePrefix: !Ref ResourcePrefix
   VpcStack:
     Type: AWS::CloudFormation::Stack
@@ -204,6 +206,8 @@ Outputs:
     Value: !GetAtt DelStack.Outputs.DLQUrl
   ECRRepository:
     Value: !GetAtt DelStack.Outputs.ECRRepository
+  JobTable:
+    Value: !GetAtt DDBStack.Outputs.JobTable
   QueryQueueUrl:
      Value: !GetAtt StateMachineStack.Outputs.QueryQueueUrl
   ResultBucket:
