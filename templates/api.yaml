@@ -47,6 +47,7 @@ Parameters:
     Description: Table name for Deletion Queue Table
     Type: String
   JobTableName:
+    Description: Table name for Jobs Table
     Type: String
   LogLevel:
     Type: String

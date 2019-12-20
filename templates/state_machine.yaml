@@ -42,6 +42,7 @@ Parameters:
   ECSCluster:
     Type: String
   JobTableName:
+    Description: Table name for Jobs Table
     Type: String
   LogLevel:
     Type: String
