@@ -47,16 +47,28 @@ Resources:
           AttributeName: JobId
           AttributeType: S
         -
-          AttributeName: StatusStartDate
+          AttributeName: Data
           AttributeType: S
+        -
+          AttributeName: CreatedAt
+          AttributeType: N
       KeySchema:
         -
           AttributeName: JobId
           KeyType: HASH
-        -
-          AttributeName: StatusStartDate
-          KeyType: RANGE
       BillingMode: PAY_PER_REQUEST
+      GlobalSecondaryIndexes:
+        -
+          IndexName: Data-GSI
+          KeySchema:
+            -
+              AttributeName: Data
+              KeyType: HASH
+            -
+              AttributeName: CreatedAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
 
 Outputs:
   DeletionQueueTable:
