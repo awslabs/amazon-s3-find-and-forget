@@ -79,6 +79,7 @@ Resources:
             - !GetAtt LayersStack.Outputs.BotoUtils
         DeletionQueueTableName: !GetAtt DDBStack.Outputs.DeletionQueueTable
         DataMapperTableName: !GetAtt DDBStack.Outputs.DataMapperTable
+        JobTableDateGSI: !GetAtt DDBStack.Outputs.JobTableDateGSI
         JobTableName: !GetAtt DDBStack.Outputs.JobTable
         ResultBucket: !GetAtt StateMachineStack.Outputs.ResultBucket
         StateMachineArn: !GetAtt StateMachineStack.Outputs.StateMachineArn

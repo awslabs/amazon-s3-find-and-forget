@@ -47,7 +47,7 @@ Resources:
           AttributeName: JobId
           AttributeType: S
         -
-          AttributeName: Data
+          AttributeName: GSIBucket
           AttributeType: S
         -
           AttributeName: CreatedAt
@@ -59,10 +59,10 @@ Resources:
       BillingMode: PAY_PER_REQUEST
       GlobalSecondaryIndexes:
         -
-          IndexName: Data-GSI
+          IndexName: Date-GSI
           KeySchema:
             -
-              AttributeName: Data
+              AttributeName: GSIBucket
               KeyType: HASH
             -
               AttributeName: CreatedAt
@@ -77,3 +77,5 @@ Outputs:
     Value: !Ref DataMapperTable
   JobTable:
     Value: !Ref JobTable
+  JobTableDateGSI:
+    Value: Date-GSI

@@ -17,6 +17,7 @@ Globals:
         DeletionQueueTable: !Ref DeletionQueueTableName
         DataMapperTable: !Ref DataMapperTableName
         JobTable: !Ref JobTableName
+        JobTableDateGSI: !Ref JobTableDateGSI
         LogLevel: !Ref LogLevel
   Api:
     EndpointConfiguration: REGIONAL
@@ -45,6 +46,9 @@ Parameters:
     Type: String
   DeletionQueueTableName:
     Description: Table name for Deletion Queue Table
+    Type: String
+  JobTableDateGSI:
+    Description: Date ordered GSI for Jobs Table
     Type: String
   JobTableName:
     Description: Table name for Jobs Table
