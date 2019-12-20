@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 from os import getenv
@@ -305,6 +306,30 @@ def glue_data_mapper_factory(glue_client, data_mapper_table, glue_table_factory)
 @pytest.fixture(scope="module")
 def jobs_endpoint():
     return "jobs"
+
+
+@pytest.fixture(scope="module")
+def job_table(ddb_resource, stack):
+    return ddb_resource.Table(stack["JobTable"])
+
+
+@pytest.fixture
+def job_factory(job_table):
+    def factory(job_id="testId", status="QUEUED", gsib="0", created_at=round(datetime.datetime.now().timestamp()),
+                **kwargs):
+        item = {
+            "JobId": job_id,
+            "JobStatus": status,
+            "CreatedAt": created_at,
+            "GSIBucket": gsib,
+            **kwargs
+        }
+        job_table.put_item(Item=item)
+        return item
+
+    yield factory
+
+    empty_table(job_table, "JobId")
 
 
 @pytest.fixture(scope="session")

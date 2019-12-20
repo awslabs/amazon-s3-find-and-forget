@@ -209,15 +209,26 @@ Resources:
             Path: /jobs/{job_id}
             Method: get
       Policies:
-        - S3ReadPolicy:
-            BucketName: !Ref ResultBucket
-        - Statement:
-          - Action:
-            - "states:ListStateMachines"
-            - "states:ListExecutions"
-            - "states:DescribeExecution"
-            Effect: "Allow"
-            Resource: "*"
+        - DynamoDBReadPolicy:
+            TableName: !Ref JobTableName
+
+  ListJobs:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers.list_jobs_handler
+      CodeUri: ../backend/lambdas/jobs/
+      Environment:
+        Variables:
+          GSIBucketCount: 1
+      Events:
+        List:
+          Type: Api
+          Properties:
+            Path: /jobs
+            Method: get
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref JobTableName
 
 Outputs:
   AccessControlAllowOriginHeader:

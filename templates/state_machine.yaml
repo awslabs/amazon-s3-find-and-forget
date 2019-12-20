@@ -386,7 +386,7 @@ Resources:
                 {
                   "Variable": "$.IsOldestExecution",
                   "BooleanEquals": true,
-                  "Next": "Purge Queues"
+                  "Next": "Query Deletion Queue"
                 },
                 {
                   "Variable": "$.IsOldestExecution",
@@ -395,53 +395,6 @@ Resources:
                 }
               ],
               "Default": "Handle Error"
-            },
-            "Purge Queues": {
-              "Type": "Parallel",
-              "Next": "Query Deletion Queue",
-              "ResultPath": null,
-              "Branches": [{
-                "StartAt": "Purge Query Queue",
-                "States": {
-                  "Purge Query Queue": {
-                    "Parameters": {
-                      "QueueUrl": "${QueryQueue}"
-                    },
-                    "Comment": "Purge the query queue",
-                    "Type": "Task",
-                    "Resource": "${PurgeQueue.Arn}",
-                    "End": true,
-                    "Retry": [{
-                      "ErrorEquals": [ "States.ALL" ],
-                      "IntervalSeconds": 60,
-                      "MaxAttempts": 1
-                    }]
-                  }
-                }
-              }, {
-               "StartAt": "Purge Deletion Queue",
-               "States": {
-                 "Purge Deletion Queue": {
-                   "Parameters": {
-                     "QueueUrl": "${DeleteQueueUrl}"
-                   },
-                   "Comment": "Purge the deletion queue",
-                   "Type": "Task",
-                   "Resource": "${PurgeQueue.Arn}",
-                   "End": true,
-                   "Retry": [{
-                     "ErrorEquals": [ "States.ALL" ],
-                     "IntervalSeconds": 60,
-                     "MaxAttempts": 1
-                   }]
-                 }
-               }
-             }],
-             "Catch": [{
-               "ErrorEquals": ["States.ALL"],
-               "ResultPath": "$.ErrorDetails",
-               "Next": "Handle Error"
-             }]
             },
             "Query Deletion Queue": {
               "Comment": "Scan the deletion queue table to obtain all users to be deleted ",
@@ -488,7 +441,54 @@ Resources:
             "Yes": {
               "Comment": "Continue.",
               "Type": "Pass",
-              "Next": "Get Data Mappers"
+              "Next": "Purge Queues"
+            },
+            "Purge Queues": {
+              "Type": "Parallel",
+              "Next": "Get Data Mappers",
+              "ResultPath": null,
+              "Branches": [{
+                "StartAt": "Purge Query Queue",
+                "States": {
+                  "Purge Query Queue": {
+                    "Parameters": {
+                      "QueueUrl": "${QueryQueue}"
+                    },
+                    "Comment": "Purge the query queue",
+                    "Type": "Task",
+                    "Resource": "${PurgeQueue.Arn}",
+                    "End": true,
+                    "Retry": [{
+                      "ErrorEquals": [ "States.ALL" ],
+                      "IntervalSeconds": 60,
+                      "MaxAttempts": 1
+                    }]
+                  }
+                }
+              }, {
+               "StartAt": "Purge Deletion Queue",
+               "States": {
+                 "Purge Deletion Queue": {
+                   "Parameters": {
+                     "QueueUrl": "${DeleteQueueUrl}"
+                   },
+                   "Comment": "Purge the deletion queue",
+                   "Type": "Task",
+                   "Resource": "${PurgeQueue.Arn}",
+                   "End": true,
+                   "Retry": [{
+                     "ErrorEquals": [ "States.ALL" ],
+                     "IntervalSeconds": 60,
+                     "MaxAttempts": 1
+                   }]
+                 }
+               }
+             }],
+             "Catch": [{
+               "ErrorEquals": ["States.ALL"],
+               "ResultPath": "$.ErrorDetails",
+               "Next": "Handle Error"
+             }]
             },
             "Get Data Mappers": {
               "Comment": "Gets the list of data mappers",
