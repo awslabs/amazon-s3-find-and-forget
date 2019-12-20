@@ -1,4 +1,5 @@
 import datetime
+import decimal
 import json
 from types import SimpleNamespace
 
@@ -86,6 +87,13 @@ def test_it_respects_page_size_with_multiple_buckets(table):
     resp = handlers.list_jobs_handler({"queryStringParameters": {"page_size": 5}}, SimpleNamespace())
     assert 3 == table.query.call_count
     assert 5 == len(json.loads(resp["body"])["Jobs"])
+
+
+def test_decimal_encoder():
+    res_a = json.dumps({"k": decimal.Decimal(1.1)}, cls=handlers.DecimalEncoder)
+    res_b = json.dumps({"k": decimal.Decimal(1.5)}, cls=handlers.DecimalEncoder)
+    assert "{\"k\": 1}" == res_a
+    assert "{\"k\": 2}" == res_b
 
 
 def job_stub(job_id="test", created_at=round(datetime.datetime.now().timestamp())):

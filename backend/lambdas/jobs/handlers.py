@@ -80,5 +80,5 @@ def list_jobs_handler(event, context):
 class DecimalEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, decimal.Decimal):
-            return int(o)
+            return round(o)
         return super(DecimalEncoder, self).default(o)
