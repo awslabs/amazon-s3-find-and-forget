@@ -86,8 +86,13 @@ Resources:
             Resource: "*"
           - Effect: Allow
             Action:
+            - "dynamodb:Query"
+            - "dynamodb:GetItem"
+            - "dynamodb:PutItem"
             - "dynamodb:DeleteItem"
-            Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DeletionQueueTableName}"
+            Resource:
+              - !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${JobTableName}"
+              - !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DeletionQueueTableName}"
           - Effect: Allow
             Action:
             - "events:PutTargets"
@@ -713,7 +718,6 @@ Resources:
                 "Input.$": "$"
               },
               "Resource": "${GenerateReport.Arn}",
-              "ResultPath": "$.Reports",
               "End": true
             },
             "Handle Error": {
@@ -985,9 +989,14 @@ Resources:
     Properties:
       Handler: generate_report.handler
       CodeUri: ../backend/lambdas/tasks/
+      Environment:
+        Variables:
+          JobTableName: !Ref JobTableName
       Policies:
       - S3CrudPolicy:
           BucketName: !Ref ResultBucket
+      - DynamoDBCrudPolicy:
+          TableName: !Ref JobTableName
       - Statement:
         - Action:
           - "logs:Describe*"

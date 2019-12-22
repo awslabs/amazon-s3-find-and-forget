@@ -1,6 +1,7 @@
 """
 Task for generating final report
 """
+import datetime
 import json
 import os
 from collections import defaultdict
@@ -10,16 +11,21 @@ from decorators import with_logger
 
 logs = boto3.client("logs")
 s3 = boto3.resource('s3')
+dynamodb = boto3.resource('dynamodb')
+table = dynamodb.Table(os.getenv("JobTableName", "S3F2_JobTable"))
 summary_report_keys = [
     'JobId',
     'JobStartTime',
     'JobFinishTime',
     'JobStatus',
+    'CreatedAt',
+    'GSIBucket',
     'TotalQueryTimeInMillis',
     'TotalQueryScannedInBytes',
     'TotalQueryCount',
-    'TotalObjectUpdatedCount',
     'TotalQueryFailedCount',
+    'TotalObjectUpdatedCount',
+    'TotalObjectUpdateFailedCount',
 ]
 
 
@@ -30,9 +36,13 @@ def handler(event, context):
     job_id = event["JobId"]
     job_start = event["JobStartTime"]
     job_finished = event["JobFinishTime"]
+    created_at = event.get("CreatedAt", round(datetime.datetime.now().timestamp()))
+    gsi_bucket = event.get("GSIBucket", "0")
     report_data["JobId"] = job_id
     report_data["JobStartTime"] = job_start
     report_data["JobFinishTime"] = job_finished
+    report_data["CreatedAt"] = created_at
+    report_data["GSIBucket"] = gsi_bucket
     # Get All Events
     job_logs = get_job_logs(job_id)
     log_events = [json.loads(e["message"]) for e in job_logs]
@@ -44,21 +54,21 @@ def handler(event, context):
     report_data["JobStatus"] = get_status(report_data)
     # Summarise
     bucket = event["Bucket"]
-    return write_reports(bucket, job_id, report_data)
-
-
-def write_reports(bucket, job_id, report_data):
+    write_log(bucket, job_id, report_data)
     summary_report = {
         k: v for k, v in report_data.items() if k in summary_report_keys
     }
-    detailed_report_key = "reports/{}/detailed.json".format(job_id)
+    write_summary(summary_report)
+    return summary_report
+
+
+def write_summary(report):
+    table.put_item(Item=report)
+
+
+def write_log(bucket, job_id, report_data):
+    detailed_report_key = "reports/{}.json".format(job_id)
     s3.Object(bucket, detailed_report_key).put(Body=json.dumps(report_data))
-    summary_report_key = "reports/{}/summary.json".format(job_id)
-    s3.Object(bucket, summary_report_key).put(Body=json.dumps(summary_report))
-    return [
-        detailed_report_key,
-        summary_report_key
-    ]
 
 
 def get_aggregated_query_stats(report):

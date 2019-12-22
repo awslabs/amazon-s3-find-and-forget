@@ -7,19 +7,20 @@ import pytest
 from mock import patch
 
 with patch.dict(os.environ, {"QueryQueue": "test"}):
-    from backend.lambdas.tasks.generate_report import handler, write_reports, get_status, get_aggregated_query_stats,\
-        get_aggregated_object_stats, get_job_logs
-
+    from backend.lambdas.tasks.generate_report import handler, write_log, get_status, get_aggregated_query_stats, \
+    get_aggregated_object_stats, get_job_logs, write_summary
 
 pytestmark = [pytest.mark.unit, pytest.mark.task]
 
 
-@patch("backend.lambdas.tasks.generate_report.write_reports")
+@patch("backend.lambdas.tasks.generate_report.write_summary")
+@patch("backend.lambdas.tasks.generate_report.write_log")
 @patch("backend.lambdas.tasks.generate_report.get_job_logs")
 @patch("backend.lambdas.tasks.generate_report.get_aggregated_query_stats")
 @patch("backend.lambdas.tasks.generate_report.get_aggregated_object_stats")
 @patch("backend.lambdas.tasks.generate_report.get_status")
-def test_it_generates_reports(mock_get_status, mock_query_stats, mock_object_stats, mock_get_logs, mock_write):
+def test_it_generates_reports(mock_get_status, mock_query_stats, mock_object_stats, mock_get_logs, mock_write_log,
+                              mock_write_summary):
     mock_get_status.return_value = "COMPLETED"
     mock_query_stats.return_value = {
         "TotalQueryTimeInMillis": 10000,
@@ -39,14 +40,18 @@ def test_it_generates_reports(mock_get_status, mock_query_stats, mock_object_sta
         "Bucket": "some_bucket",
         "JobStartTime": "2019-12-05T13:38:02.858Z",
         "JobFinishTime": "2019-12-05T13:39:37.220Z",
-        "JobId": "123"
+        "JobId": "123",
+        "GSIBucket": "0",
+        "CreatedAt": "123456"
     }, SimpleNamespace())
-    mock_write.assert_called_with("some_bucket", "123", {
+    mock_write_log.assert_called_with("some_bucket", "123", mock.ANY)
+    mock_write_summary.assert_called()
+    assert {
         "JobId": "123",
         "JobStartTime": "2019-12-05T13:38:02.858Z",
         "JobFinishTime": "2019-12-05T13:39:37.220Z",
-        "QuerySucceeded": [query_stub()],
-        "ObjectUpdated": [object_update_stub()],
+        "GSIBucket": "0",
+        "CreatedAt": "123456",
         "TotalObjectUpdatedCount": 1,
         "TotalObjectUpdateFailedCount": 0,
         "TotalQueryTimeInMillis": 10000,
@@ -54,24 +59,24 @@ def test_it_generates_reports(mock_get_status, mock_query_stats, mock_object_sta
         "TotalQueryCount": 10,
         "TotalQueryFailedCount": 0,
         "JobStatus": "COMPLETED"
-    })
+    } == resp
 
 
 @patch("backend.lambdas.tasks.generate_report.s3")
-def test_it_writes_reports_to_s3(mock_s3):
+def test_it_writes_log_to_s3(mock_s3):
     mock_object = mock.MagicMock()
     mock_s3.Object.return_value = mock_object
-    detailed = report_stub(JobId="123")
-    summary = {k: v for k, v in detailed.items() if k not in ["ObjectUpdated", "QuerySucceeded"]}
-    resp = write_reports("test_bucket", "123", detailed)
-    assert [
-        "reports/123/detailed.json",
-        "reports/123/summary.json"
-    ] == resp
-    assert 2 == mock_s3.Object.call_count
-    reports = [json.loads(arg[1]["Body"]) for arg in mock_object.put.call_args_list]
-    assert summary in reports
-    assert detailed in reports
+    expected = report_stub(JobId="123")
+    write_log("test_bucket", "123", expected)
+    assert 1 == mock_s3.Object.call_count
+    report = json.loads(mock_object.put.call_args_list[0][1]["Body"])
+    assert expected == report
+
+
+@patch("backend.lambdas.tasks.generate_report.table")
+def test_it_writes_summary(mock_table):
+    write_summary({"report": "data"})
+    mock_table.put_item.assert_called_with(Item={"report": "data"})
 
 
 @patch("backend.lambdas.tasks.generate_report.logs")
@@ -176,6 +181,8 @@ def object_update_stub(**kwargs):
 
 def report_stub(**kwargs):
     return {
+        "GSIBucket": "0",
+        "CreatedAt": "123456",
         "JobStartTime": "2019-12-05T13:38:02.858Z",
         "JobFinishTime": "2019-12-05T13:39:37.220Z",
         "JobId": "28921fc6-17ca-4a1b-bc1a-ffaf1a5a4bae",
