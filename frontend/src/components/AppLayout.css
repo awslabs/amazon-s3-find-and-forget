@@ -10,6 +10,11 @@
   box-sizing: border-box;
 }
 
+#main {
+  width: 100%;
+  overflow: scroll;
+}
+
 #left,
 #right {
   width: 3rem;
@@ -97,6 +102,10 @@
   padding: 0.5rem 2rem 0.5rem 2rem;
 }
 
+#layout .spinner {
+  margin: 2rem;
+}
+
 #layout ul {
   padding-top: 0;
 }
@@ -138,6 +147,10 @@ button.menu.selected {
 
 .breadcrumbs span {
   vertical-align: middle;
+}
+
+.breadcrumb-last {
+  margin-left: 10px;
 }
 
 @media (min-width: 0px) and (max-width: 768px) {

@@ -7,7 +7,7 @@ export default ({ onStartDeletionJobClick }) => (
       <Col>
         <h1>Dashboard</h1>
       </Col>
-      <Col style={{ textAlign: "right", paddingTop: "0.5rem" }}>
+      <Col className="buttons-right">
         <Button
           className="aws-button home-button"
           onClick={onStartDeletionJobClick}

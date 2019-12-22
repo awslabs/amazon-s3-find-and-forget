@@ -13,7 +13,6 @@ dynamodb_resource = boto3.resource("dynamodb")
 table = dynamodb_resource.Table(os.getenv("DataMapperTable"))
 glue_client = boto3.client("glue")
 
-
 @with_logger
 @xray_recorder.capture('GetDataMappersHandler')
 @add_cors_headers

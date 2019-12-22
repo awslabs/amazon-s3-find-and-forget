@@ -20,20 +20,23 @@ export default ({ currentPage, onMenuClick, pages }) => {
         <div className="content">
           <h2>Amazon S3 Find &amp; Forget</h2>
           <p className="separator-top separator-bottom">
-            {pages.map((page, index) => {
-              const classes = ["menu"];
-              if (index === currentPage) classes.push("selected");
-              return (
-                <Button
-                  className={classes.join(" ")}
-                  variant="link"
-                  key={index}
-                  onClick={() => onMenuClick(index)}
-                >
-                  {page.title}
-                </Button>
-              );
-            })}
+            {pages
+              .filter(p => !p.parent)
+              .map((page, index) => {
+                const classes = ["menu"];
+                const selected = index === currentPage || index === pages[currentPage].parent;
+                if (selected) classes.push("selected");
+                return (
+                  <Button
+                    className={classes.join(" ")}
+                    variant="link"
+                    key={index}
+                    onClick={() => onMenuClick(index)}
+                  >
+                    {page.title}
+                  </Button>
+                );
+              })}
           </p>
         </div>
       </div>
@@ -42,7 +45,19 @@ export default ({ currentPage, onMenuClick, pages }) => {
           <Button variant="link" onClick={() => onMenuClick(0)}>
             S3 Find &amp; Forget
           </Button>
-          <Icon type="breadcrumb" /> <span>{pages[currentPage].title}</span>
+          <Icon type="breadcrumb" />
+          {typeof pages[currentPage].parent !== "undefined" && (
+            <>
+              <Button
+                variant="link"
+                onClick={() => onMenuClick(pages[currentPage].parent)}
+              >
+                {pages[pages[currentPage].parent].title}
+              </Button>
+              <Icon type="breadcrumb" />
+            </>
+          )}
+          <span className="breadcrumb-last">{pages[currentPage].title}</span>
         </div>
         <div className="content">{pages[currentPage].page}</div>
       </div>

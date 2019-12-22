@@ -1,4 +1,4 @@
-import Amplify, { API } from "aws-amplify";
+import Amplify, { API, Auth } from "aws-amplify";
 import { retryWrapper } from "./index";
 
 const settings = window.s3f2Settings || {};
@@ -13,12 +13,24 @@ Amplify.configure({
     userPoolWebClientId: settings.cognitoUserPoolClientId
   },
   API: {
-    endpoints: [{ name: "apiGateway", endpoint: settings.apiUrl, region }]
+    endpoints: [
+      {
+        name: "apiGateway",
+        endpoint: settings.apiUrl,
+        region,
+        custom_header: async () => {
+          const session = await Auth.currentSession();
+          const token = session.getIdToken().getJwtToken();
+          return { Authorization: `Bearer ${token}` };
+        }
+      }
+    ]
   }
 });
 
-export default (endpoint, { data, headers, method }) =>
-  retryWrapper(() =>
+export default (endpoint, options = {}) => {
+  const { data, headers, method } = options;
+  return retryWrapper(() =>
     API[method || "get"]("apiGateway", endpoint, {
       body: data || {},
       headers: Object.assign(
@@ -28,3 +40,4 @@ export default (endpoint, { data, headers, method }) =>
       )
     })
   );
+};

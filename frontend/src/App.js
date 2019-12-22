@@ -6,11 +6,12 @@ import ConfigurationHelp from "./components/help/Configuration";
 import ConfigurationPage from "./components/pages/Configuration";
 import DashboardHelp from "./components/help/Dashboard";
 import DashboardPage from "./components/pages/Dashboard";
+import DeletionJobsHelp from "./components/help/DeletionJobs";
+import DeletionJobsPage from "./components/pages/DeletionJobs";
 import DeletionQueueHelp from "./components/help/DeletionQueue";
 import DeletionQueuePage from "./components/pages/DeletionQueue";
 import Header from "./components/Header";
-import DeletionJobsHelp from "./components/help/DeletionJobs";
-import DeletionJobsPage from "./components/pages/DeletionJobs";
+import NewConfiguration from "./components/pages/NewConfiguration";
 
 import gateway from "./utils/gateway";
 
@@ -26,7 +27,9 @@ export default () => {
     },
     {
       title: "Configuration",
-      page: <ConfigurationPage />,
+      page: (
+        <ConfigurationPage gateway={gateway} onPageChange={setCurrentPage} />
+      ),
       help: <ConfigurationHelp />
     },
     {
@@ -38,6 +41,16 @@ export default () => {
       title: "Deletion Jobs",
       page: <DeletionJobsPage />,
       help: <DeletionJobsHelp />
+    },
+    {
+      title: "Create Data Mapper",
+      page: (
+        <NewConfiguration
+          gateway={gateway}
+          goToDataMappers={() => setCurrentPage(1)}
+        />
+      ),
+      parent: 1
     }
   ];
 
@@ -48,18 +61,19 @@ export default () => {
   return (
     <div className={classNames.join(" ")}>
       <Header signedIn={signedIn} />
-      <Authenticator
-        onStateChange={s => setAuthState(s)}
-        hide={[Greetings, SignUp]}
-      >
-        {signedIn && (
-          <AppLayout
-            currentPage={currentPage}
-            onMenuClick={setCurrentPage}
-            pages={pages}
-          />
-        )}
-      </Authenticator>
+      {!signedIn && (
+        <Authenticator
+          onStateChange={s => setAuthState(s)}
+          hide={[Greetings, SignUp]}
+        />
+      )}
+      {signedIn && (
+        <AppLayout
+          currentPage={currentPage}
+          onMenuClick={setCurrentPage}
+          pages={pages}
+        />
+      )}
     </div>
   );
 };

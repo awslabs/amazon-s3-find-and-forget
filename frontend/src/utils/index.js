@@ -19,3 +19,14 @@ export const retryWrapper = (p, timeout, retryN) =>
         );
       })
   );
+
+export const formatErrorMessage = e => {
+  let msg = e.toString() || "An error happened";
+  if (e.response) {
+    if (e.response.status) msg += ` (${e.response.status} status code)`;
+    if (e.response.data && e.response.data.Message)
+      msg += `: ${e.response.data.Message}`;
+  }
+
+  return msg;
+};

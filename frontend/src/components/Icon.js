@@ -1,22 +1,24 @@
 import React from "react";
 
-const SVGWrapper = ({ children }) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 16 16"
-    focusable="false"
-    aria-hidden="true"
-    width="16"
-    height="16"
-  >
-    {children}
-  </svg>
-);
+export default ({ type, size }) => {
+  size = size || "16";
 
-export default ({ type }) => {
+  const SVGWrapper = ({ children }) => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox={`0 0 ${size} ${size}`}
+      focusable="false"
+      aria-hidden="true"
+      width={size}
+      height={size}
+    >
+      {children}
+    </svg>
+  );
+
   if (type === "alert-error")
     return (
-      <SVGWrapper>
+      <SVGWrapper size={size}>
         <circle
           className="stroke-linejoin-round"
           cx="8"
@@ -127,5 +129,19 @@ export default ({ type }) => {
         />
       </SVGWrapper>
     );
+
+  if (type === "refresh")
+    return (
+      <SVGWrapper>
+        <path d="M10 5h5V0" stroke="#16191f" fill="none" strokeWidth="2px" />
+        <path
+          d="M15 8a6.957 6.957 0 01-7 7 6.957 6.957 0 01-7-7 6.957 6.957 0 017-7 6.87 6.87 0 016.3 4"
+          stroke="#16191f"
+          fill="none"
+          strokeWidth="2px"
+        />
+      </SVGWrapper>
+    );
+
   return "";
 };
