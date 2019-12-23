@@ -5,8 +5,23 @@ export default {
     return request(`data_mappers/${id}`, { method: "del" });
   },
 
+  deleteQueueMatch(id) {
+    return request(`queue/matches/${id}`, { method: "del" });
+  },
+
+  enqueue(id, dataMappers) {
+    return request(`queue`, {
+      method: "patch",
+      data: { MatchId: id, DataMappers: dataMappers }
+    });
+  },
+
   getDataMappers() {
     return request("data_mappers");
+  },
+
+  getQueue() {
+    return request("queue");
   },
 
   putDataMapper(id, db, table, columns) {

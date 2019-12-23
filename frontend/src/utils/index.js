@@ -30,3 +30,19 @@ export const formatErrorMessage = e => {
 
   return msg;
 };
+
+export const isEmpty = x =>
+  !x || (Array.isArray(x) ? x.length === 0 : x.trim() === "");
+
+export const isIdValid = x => {
+  const idRegex = /^[a-zA-Z0-9-_]+$/;
+  return idRegex.test(x);
+};
+
+export const arrayItemsAnyEmpty = x => {
+  const arrayItemsAnyEmptyReducer = (a, v) => a || isEmpty(v);
+  return !x || x.reduce(arrayItemsAnyEmptyReducer, false);
+};
+
+export const sortBy = (obj, key) =>
+  obj.sort((a, b) => (a[key] > b[key] ? 1 : a[key] < b[key] ? -1 : 0));

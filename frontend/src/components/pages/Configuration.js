@@ -4,7 +4,7 @@ import { Button, Col, Form, Modal, Row, Spinner, Table } from "react-bootstrap";
 import Alert from "../Alert";
 import Icon from "../Icon";
 
-import { formatErrorMessage } from "../../utils";
+import { formatErrorMessage, sortBy } from "../../utils";
 
 export default ({ gateway, onPageChange }) => {
   const [dataMappers, setDataMappers] = useState([]);
@@ -39,7 +39,7 @@ export default ({ gateway, onPageChange }) => {
     const fetchDataMappers = async () => {
       try {
         const result = await gateway.getDataMappers();
-        setDataMappers(result.DataMappers);
+        setDataMappers(sortBy(result.DataMappers, "DataMapperId"));
         setFormState("list");
       } catch (e) {
         setFormState("error");

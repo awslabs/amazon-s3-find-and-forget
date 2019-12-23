@@ -299,9 +299,8 @@ li {
   padding: 0;
 }
 
-.selected-card {
-  border: 1px solid #00a1c9;
-  background-color: #f1faff;
+.radio-card {
+  border: 1px solid #879596;
   float: left;
   border-radius: 2px;
   padding: 16px;
@@ -309,12 +308,17 @@ li {
   margin-bottom: 20px;
 }
 
-.selected-card p {
+.radio-card p {
   color: #687078 !important;
   font-size: 13px;
   line-height: 18px;
   padding: 0 0 0 27px !important;
   margin-bottom: 0;
+}
+
+.radio-card.selected {
+  border: 1px solid #00a1c9;
+  background-color: #f1faff;
 }
 
 .form-group .form-label {
@@ -326,14 +330,36 @@ li {
   font-size: 13px;
 }
 
+form input[type="text"] {
+  border-radius: 1px;
+  background-image: none !important;
+}
+
+form input.is-invalid {
+  color: #d13212;
+  border-color: #d13212;
+  padding-left: 7px;
+  border-left-width: 4px;
+}
+
 form input[type="text"]::placeholder {
   color: #879596;
   font-style: italic;
 }
 
+form .form-check {
+  margin-bottom: 5px;
+  vertical-align: middle;
+}
+
+form .form-check-label {
+  margin-left: 6px;
+  white-space: normal;
+}
+
 .form-container.submit-container {
   text-align: right;
-  margin-bottom: 20px;
+  margin-bottom: 50px;
   margin-left: 25px;
   padding: 0;
 }

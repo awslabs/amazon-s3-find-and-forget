@@ -12,6 +12,7 @@ import DeletionQueueHelp from "./components/help/DeletionQueue";
 import DeletionQueuePage from "./components/pages/DeletionQueue";
 import Header from "./components/Header";
 import NewConfiguration from "./components/pages/NewConfiguration";
+import NewDeletionQueueMatch from "./components/pages/NewDeletionQueueMatch";
 
 import gateway from "./utils/gateway";
 
@@ -34,7 +35,9 @@ export default () => {
     },
     {
       title: "Deletion Queue",
-      page: <DeletionQueuePage />,
+      page: (
+        <DeletionQueuePage gateway={gateway} onPageChange={setCurrentPage} />
+      ),
       help: <DeletionQueueHelp />
     },
     {
@@ -51,6 +54,16 @@ export default () => {
         />
       ),
       parent: 1
+    },
+    {
+      title: "Add item to the Deletion Queue",
+      page: (
+        <NewDeletionQueueMatch
+          gateway={gateway}
+          goToDeletionQueue={() => setCurrentPage(2)}
+        />
+      ),
+      parent: 2
     }
   ];
 

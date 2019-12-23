@@ -3,7 +3,13 @@ import { Button, Form, Spinner } from "react-bootstrap";
 
 import Alert from "../Alert";
 
-import { formatErrorMessage } from "../../utils";
+import {
+  arrayItemsAnyEmpty,
+  formatErrorMessage,
+  isEmpty,
+  isIdValid
+} from "../../utils";
+
 const region = window.s3f2Settings.region;
 
 export default ({ gateway, goToDataMappers }) => {
@@ -18,19 +24,10 @@ export default ({ gateway, goToDataMappers }) => {
   const validationAttributes = isValid =>
     !submitClicked ? {} : isValid ? { isValid: true } : { isInvalid: true };
 
-  const isEmpty = x =>
-    !x || (Array.isArray(x) ? x.length === 0 : x.trim() === "");
-
-  const idRegex = /^[a-zA-Z0-9-_]+$/;
-  const isIdValid = x => idRegex.test(x);
-
-  const arrayItemsNotEmptyReducer = (a, v) => a && !isEmpty(v);
-  const arrayItemsNotEmpty = x => x && x.reduce(arrayItemsNotEmptyReducer);
-
   const isDataMapperIdValid = !isEmpty(dataMapperId) && isIdValid(dataMapperId);
   const isGlueDatabaseValid = !isEmpty(glueDatabase);
   const isGlueTableValid = !isEmpty(glueTable);
-  const isColumnsValid = !isEmpty(columns) && arrayItemsNotEmpty(columns);
+  const isColumnsValid = !isEmpty(columns) && !arrayItemsAnyEmpty(columns);
 
   const isFormValid =
     isDataMapperIdValid &&
@@ -127,7 +124,7 @@ export default ({ gateway, goToDataMappers }) => {
             <h2>Query Executor</h2>
             <div className="content">
               <p>Query Executor Type</p>
-              <div className="selected-card">
+              <div className="radio-card selected">
                 <Form.Check inline readOnly checked type="radio" />
                 <span>Athena + Glue</span>
                 <p>
