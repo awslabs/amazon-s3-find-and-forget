@@ -19,6 +19,7 @@ def test_it_saves_file_with_public_acl_when_cloudfront_false(mock_client):
             'CognitoUserPoolId': 'cognito-up',
             'CreateCloudFrontDistribution': 'false',
             'Region': 'eu-west-1',
+            'Version': '1.0',
             'WebUIBucket': 'webuibucket'
         }
     }
@@ -34,7 +35,8 @@ def test_it_saves_file_with_public_acl_when_cloudfront_false(mock_client):
             "cognitoIdentityPool": "cognito-idp",
             "cognitoUserPoolId": "cognito-up",
             "cognitoUserPoolClientId": "cognito-upc",
-            "region": "eu-west-1"
+            "region": "eu-west-1",
+            "version": "1.0"
         })))
 
     assert "arn:aws:s3:::webuibucket/settings.js" == resp
@@ -50,6 +52,7 @@ def test_it_saves_file_with_private_acl_when_cloudfront_true(mock_client):
             'CognitoUserPoolId': 'cognito-up',
             'CreateCloudFrontDistribution': 'true',
             'Region': 'eu-west-1',
+            'Version': '1.0',
             'WebUIBucket': 'webuibucket'
         }
     }
@@ -65,7 +68,8 @@ def test_it_saves_file_with_private_acl_when_cloudfront_true(mock_client):
             "cognitoIdentityPool": "cognito-idp",
             "cognitoUserPoolId": "cognito-up",
             "cognitoUserPoolClientId": "cognito-upc",
-            "region": "eu-west-1"
+            "region": "eu-west-1",
+            "version": "1.0"
         })))
 
     assert "arn:aws:s3:::webuibucket/settings.js" == resp
@@ -81,6 +85,7 @@ def test_it_does_nothing_on_delete(mock_client):
             'CognitoUserPoolId': 'cognito-up',
             'CreateCloudFrontDistribution': 'true',
             'Region': 'eu-west-1',
+            'Version': '1.0',
             'WebUIBucket': 'webuibucket'
         }
     }

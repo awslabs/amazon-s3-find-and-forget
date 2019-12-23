@@ -23,7 +23,7 @@ export default () => {
   const pages = [
     {
       title: "Dashboard",
-      page: <DashboardPage onStartDeletionJobClick={() => setCurrentPage(3)} />,
+      page: <DashboardPage gateway={gateway} goToPage={setCurrentPage} />,
       help: <DashboardHelp />
     },
     {

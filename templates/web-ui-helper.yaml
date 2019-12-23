@@ -32,6 +32,8 @@ Parameters:
     - INFO
     - DEBUG
     - NOTSET
+  Version:
+    Type: String
   WebUIBucket:
     Type: String
 
@@ -48,6 +50,7 @@ Resources:
       CognitoUserPoolClientId: !Ref CognitoUserPoolClientId
       CreateCloudFrontDistribution: !Ref CreateCloudFrontDistribution
       Region: !Ref AWS::Region
+      Version: !Ref Version
       WebUIBucket: !Ref WebUIBucket
 
   CleanupWebUI:

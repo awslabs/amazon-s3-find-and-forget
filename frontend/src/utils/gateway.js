@@ -20,6 +20,10 @@ export default {
     return request("data_mappers");
   },
 
+  getJobs(pageSize = 10) {
+    return request(`jobs?page_size=${pageSize}`);
+  },
+
   getQueue() {
     return request("queue");
   },

@@ -24,7 +24,8 @@ def create(event, context):
         "cognitoIdentityPool": props.get("CognitoIdentityPoolId"),
         "cognitoUserPoolId": props.get("CognitoUserPoolId"),
         "cognitoUserPoolClientId": props.get("CognitoUserPoolClientId"),
-        "region": props.get("Region")
+        "region": props.get("Region"),
+        "version": props.get("Version")
     }
     s3_client.put_object(
         ACL=acl,

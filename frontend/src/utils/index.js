@@ -46,3 +46,10 @@ export const arrayItemsAnyEmpty = x => {
 
 export const sortBy = (obj, key) =>
   obj.sort((a, b) => (a[key] > b[key] ? 1 : a[key] < b[key] ? -1 : 0));
+
+export const daysSinceDateTime = x => {
+  const now = new Date();
+  const from = new Date(x);
+  const aDay = 24 * 60 * 60 * 1000;
+  return parseInt((now - from) / aDay, 10);
+};
