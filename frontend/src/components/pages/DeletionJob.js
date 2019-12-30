@@ -122,7 +122,7 @@ export default ({ gateway, jobId }) => {
             )}`}
             noSeparator
           >
-            {!isUndefined(job.TotalQueryFailedCoun) && (
+            {!isUndefined(job.TotalQueryFailedCount) && (
               <Icon
                 type={`alert-${errorCountClass(job.TotalQueryFailedCount)}`}
               />
