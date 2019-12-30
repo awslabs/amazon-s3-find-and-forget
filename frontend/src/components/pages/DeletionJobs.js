@@ -111,12 +111,10 @@ export default ({ gateway, goToJobDetails }) => {
           <div className="content centered">
             <b>The Deletion Jobs list is empty</b>
             <p>No items to display</p>
-            <Button
-              className="aws-button"
-              // onClick={() => onPageChange(5)}
-            >
-              Start a Deletion Job
-            </Button>
+            <StartDeletionJob
+              gateway={gateway}
+              goToJobDetails={goToJobDetails}
+            />
           </div>
         )}
       </Form>
