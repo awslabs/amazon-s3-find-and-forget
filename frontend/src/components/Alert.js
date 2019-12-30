@@ -4,7 +4,7 @@ import { Alert } from "react-bootstrap";
 import Icon from "./Icon";
 
 export default ({ children, title, type }) => (
-  <Alert variant={type === "error" ? "danger" : "warning"}>
+  <Alert variant={type === "error" ? "danger" : "info"}>
     <span className="icon">
       <Icon type={`alert-${type}`} size="32" />
     </span>

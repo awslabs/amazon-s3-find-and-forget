@@ -1,5 +1,7 @@
 import request from "./request";
 
+import { isEmpty } from "./";
+
 export default {
   deleteDataMapper(id) {
     return request(`data_mappers/${id}`, { method: "del" });
@@ -20,12 +22,24 @@ export default {
     return request("data_mappers");
   },
 
-  getJobs(pageSize = 10) {
-    return request(`jobs?page_size=${pageSize}`);
+  getJob(jobId) {
+    return request(`jobs/${jobId}`);
+  },
+
+  getJobs(pageSize, startAt) {
+    let qs = "?";
+    if (!isEmpty(pageSize)) qs += `page_size=${pageSize}&`;
+    if (!isEmpty(startAt)) qs += `start_at=${startAt}&`;
+
+    return request(`jobs${qs.slice(0, -1)}`);
   },
 
   getQueue() {
     return request("queue");
+  },
+
+  processQueue() {
+    return request("queue", { method: "del" });
   },
 
   putDataMapper(id, db, table, columns) {

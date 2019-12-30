@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { Button, Col, Row, Spinner } from "react-bootstrap";
+import { Col, Row, Spinner } from "react-bootstrap";
 
 import Alert from "../Alert";
 import MetricsDashboard from "../MetricsDashboard";
+import StartDeletionJob from "../StartDeletionJob";
 
 import { daysSinceDateTime, formatErrorMessage } from "../../utils";
 
 const { region, version } = window.s3f2Settings;
 
-export default ({ gateway, goToPage }) => {
+export default ({ gateway, goToJobDetails, goToPage }) => {
   const [errorDetails, setErrorDetails] = useState(undefined);
   const [formState, setFormState] = useState("initial");
   const [metrics, setMetrics] = useState([]);
@@ -62,12 +63,11 @@ export default ({ gateway, goToPage }) => {
           <h1>Dashboard</h1>
         </Col>
         <Col className="buttons-right">
-          <Button
-            className="aws-button home-button"
-            onClick={() => goToPage(3)}
-          >
-            Start a Deletion Job
-          </Button>
+          <StartDeletionJob
+            className="home-button"
+            gateway={gateway}
+            goToJobDetails={goToJobDetails}
+          />
         </Col>
       </Row>
       {formState === "error" && (

@@ -37,7 +37,29 @@ export default ({ type, size }) => {
       </SVGWrapper>
     );
 
-  if (type === "alert-warning")
+  if (type === "alert-success")
+    return (
+      <SVGWrapper>
+        <circle
+          className="stroke-linejoin-round"
+          cx="8"
+          cy="8"
+          r="7"
+          stroke="#1d8102"
+          fill="none"
+          strokeWidth="2px"
+        ></circle>
+        <path
+          className="stroke-linecap-square"
+          d="M5 8l2 2 3.521-3.521"
+          stroke="#1d8102"
+          fill="none"
+          strokeWidth="2px"
+        ></path>
+      </SVGWrapper>
+    );
+
+  if (type === "alert-info")
     return (
       <SVGWrapper>
         <circle

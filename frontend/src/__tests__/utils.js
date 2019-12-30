@@ -1,7 +1,10 @@
 import {
   arrayItemsAnyEmpty,
+  formatDateTime,
+  formatFileSize,
   isEmpty,
   isIdValid,
+  isUndefined,
   retryWrapper,
   sortBy
 } from "../utils";
@@ -82,7 +85,9 @@ test("isEmpty", () => {
     { test: null, expected: true },
     { test: undefined, expected: true },
     { test: "", expected: true },
-    { test: "foo", expected: false }
+    { test: "foo", expected: false },
+    { test: 123, expected: false },
+    { test: 0, expected: false }
   ];
 
   scenarios.forEach(scenario =>
@@ -131,4 +136,35 @@ test("sortBy", () => {
   scenarios.forEach(scenario =>
     expect(sortBy(scenario.test, "a")).toEqual(scenario.expected)
   );
+});
+
+test("formatDateTime", () => {
+  expect(formatDateTime("2019-12-23T16:52:43.814Z")).toEqual(
+    "2019-12-23 16:52:43"
+  );
+});
+
+test("formatFileSize", () => {
+  const scenarios = [
+    { test: 1, expected: "1 byte" },
+    { test: 400, expected: "400 bytes" },
+    { test: 3398, expected: "3.3 KB" },
+    { test: 459234, expected: "448 KB" },
+    { test: 6234567, expected: "5.9 MB" },
+    { test: 35895345, expected: "34 MB" },
+    { test: 403212340, expected: "385 MB" },
+    { test: 60245566785, expected: "56 GB" },
+    { test: 2345673567346763, expected: "2.1 PB" }
+  ];
+
+  scenarios.forEach(scenario =>
+    expect(formatFileSize(scenario.test)).toEqual(scenario.expected)
+  );
+});
+
+test("isUndefined", () => {
+  expect(isUndefined(undefined)).toEqual(true);
+  expect(isUndefined(0)).toEqual(false);
+  expect(isUndefined(null)).toEqual(false);
+  expect(isUndefined("")).toEqual(false);
 });

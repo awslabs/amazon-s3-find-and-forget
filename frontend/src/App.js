@@ -6,6 +6,7 @@ import ConfigurationHelp from "./components/help/Configuration";
 import ConfigurationPage from "./components/pages/Configuration";
 import DashboardHelp from "./components/help/Dashboard";
 import DashboardPage from "./components/pages/Dashboard";
+import DeletionJob from "./components/pages/DeletionJob";
 import DeletionJobsHelp from "./components/help/DeletionJobs";
 import DeletionJobsPage from "./components/pages/DeletionJobs";
 import DeletionQueueHelp from "./components/help/DeletionQueue";
@@ -19,11 +20,23 @@ import gateway from "./utils/gateway";
 export default () => {
   const [authState, setAuthState] = useState(undefined);
   const [currentPage, setCurrentPage] = useState(0);
+  const [selectedJobId, selectJobId] = useState(undefined);
+
+  const goToJobDetails = jobId => {
+    selectJobId(jobId);
+    setCurrentPage(6);
+  };
 
   const pages = [
     {
       title: "Dashboard",
-      page: <DashboardPage gateway={gateway} goToPage={setCurrentPage} />,
+      page: (
+        <DashboardPage
+          gateway={gateway}
+          goToJobDetails={goToJobDetails}
+          goToPage={setCurrentPage}
+        />
+      ),
       help: <DashboardHelp />
     },
     {
@@ -42,7 +55,9 @@ export default () => {
     },
     {
       title: "Deletion Jobs",
-      page: <DeletionJobsPage />,
+      page: (
+        <DeletionJobsPage gateway={gateway} goToJobDetails={goToJobDetails} />
+      ),
       help: <DeletionJobsHelp />
     },
     {
@@ -64,6 +79,17 @@ export default () => {
         />
       ),
       parent: 2
+    },
+    {
+      title: selectedJobId || "Deletion Job details",
+      page: (
+        <DeletionJob
+          gateway={gateway}
+          goToJobsList={() => setCurrentPage(3)}
+          jobId={selectedJobId}
+        />
+      ),
+      parent: 3
     }
   ];
 
@@ -74,17 +100,16 @@ export default () => {
   return (
     <div className={classNames.join(" ")}>
       <Header signedIn={signedIn} />
-      {!signedIn && (
-        <Authenticator
-          onStateChange={s => setAuthState(s)}
-          hide={[Greetings, SignUp]}
-        />
-      )}
-      {signedIn && (
+      {signedIn ? (
         <AppLayout
           currentPage={currentPage}
           onMenuClick={setCurrentPage}
           pages={pages}
+        />
+      ) : (
+        <Authenticator
+          onStateChange={s => setAuthState(s)}
+          hide={[Greetings, SignUp]}
         />
       )}
     </div>

@@ -32,7 +32,13 @@ export const formatErrorMessage = e => {
 };
 
 export const isEmpty = x =>
-  !x || (Array.isArray(x) ? x.length === 0 : x.trim() === "");
+  x === null ||
+  isUndefined(x) ||
+  (Array.isArray(x)
+    ? x.length === 0
+    : typeof x === "string"
+    ? x.trim() === ""
+    : false);
 
 export const isIdValid = x => {
   const idRegex = /^[a-zA-Z0-9-_]+$/;
@@ -53,3 +59,20 @@ export const daysSinceDateTime = x => {
   const aDay = 24 * 60 * 60 * 1000;
   return parseInt((now - from) / aDay, 10);
 };
+
+export const formatDateTime = x => x.replace("T", " ").substr(0, 19);
+
+export const formatFileSize = x => {
+  const units = ["bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
+
+  if (x === 1) return "1 byte";
+
+  let l = 0;
+  let n = parseInt(x, 10) || 0;
+
+  while (n >= 1024 && ++l) n = n / 1024;
+
+  return n.toFixed(n < 10 && l > 0 ? 1 : 0) + " " + units[l];
+};
+
+export const isUndefined = x => typeof x === "undefined";

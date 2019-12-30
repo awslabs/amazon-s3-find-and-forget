@@ -147,14 +147,14 @@ li {
   float: left;
 }
 
-.alert-warning {
+.alert-info {
   border-color: #0073bb;
   background-color: #f1faff;
   float: left;
 }
 
 .alert-danger .icon,
-.alert-warning .icon {
+.alert-info .icon {
   width: 3.2rem;
   height: 4rem;
   padding: 0.4rem 0;
@@ -250,6 +250,12 @@ li {
   text-decoration: none;
   pointer-events: none;
   cursor: auto;
+}
+
+.action-button-orange {
+  margin-left: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #ec7211;
 }
 
 .aws-button:active,
@@ -415,4 +421,52 @@ form .form-check-label {
 .modal-title {
   font-weight: 700;
   font-size: 1.3rem;
+}
+
+.status-label span {
+  vertical-align: middle;
+  margin-left: 5px;
+}
+
+.status-label.error {
+  color: #d13212;
+}
+
+.status-label.success {
+  color: #1d8102;
+}
+
+.status-label.info {
+  color: #0073bb;
+}
+
+.stroke-linejoin-round {
+  stroke-linejoin: round;
+}
+
+.stroke-linecap-square {
+  stroke-linecap: square;
+}
+
+.details {
+  padding: 20px 30px !important;
+}
+
+.details .label {
+  color: #545b64;
+}
+
+.details .value {
+  color: #000;
+}
+
+.details-box {
+  width: 50%;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  float: left;
+}
+
+.details-box.with-border-bottom {
+  border-bottom: 1px solid #eaeded;
 }
