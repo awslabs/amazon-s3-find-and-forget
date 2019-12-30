@@ -9,12 +9,9 @@ import {
   formatDateTime,
   formatErrorMessage,
   formatFileSize,
-  isEmpty,
-  isUndefined
+  isUndefined,
+  withDefault
 } from "../../utils";
-
-const withDefault = (x, formatter = () => x) =>
-  isEmpty(x) ? "-" : formatter(x);
 
 const COUNTDOWN_INTERVAL = 10;
 

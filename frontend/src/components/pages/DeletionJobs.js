@@ -5,7 +5,7 @@ import Alert from "../Alert";
 import Icon from "../Icon";
 import StartDeletionJob from "../StartDeletionJob";
 
-import { formatDateTime, formatErrorMessage } from "../../utils";
+import { formatDateTime, formatErrorMessage, withDefault } from "../../utils";
 
 export default ({ gateway, goToJobDetails }) => {
   const [errorDetails, setErrorDetails] = useState(undefined);
@@ -78,6 +78,7 @@ export default ({ gateway, goToJobDetails }) => {
               <td></td>
               <td>Job Id</td>
               <td>Status</td>
+              <td>Updates</td>
               <td>Start Time</td>
               <td>Finish Time</td>
             </tr>
@@ -100,7 +101,7 @@ export default ({ gateway, goToJobDetails }) => {
                     <Icon type={`alert-${successJobClass(job)}`} />
                     <span>{job.JobStatus}</span>
                   </td>
-
+                  <td>{withDefault(job.TotalObjectUpdatedCount)}</td>
                   <td>{formatDateTime(job.JobStartTime)}</td>
                   <td>{formatDateTime(job.JobFinishTime)}</td>
                 </tr>

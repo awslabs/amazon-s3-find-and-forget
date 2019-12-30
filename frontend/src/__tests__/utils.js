@@ -6,7 +6,8 @@ import {
   isIdValid,
   isUndefined,
   retryWrapper,
-  sortBy
+  sortBy,
+  withDefault
 } from "../utils";
 
 test("retryWrapper: retries no times if no failure", async () => {
@@ -167,4 +168,10 @@ test("isUndefined", () => {
   expect(isUndefined(0)).toEqual(false);
   expect(isUndefined(null)).toEqual(false);
   expect(isUndefined("")).toEqual(false);
+});
+
+test("withDefault", () => {
+  expect(withDefault(0)).toEqual(0);
+  expect(withDefault(undefined)).toEqual("-");
+  expect(withDefault("")).toEqual("-");
 });

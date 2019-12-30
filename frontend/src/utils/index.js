@@ -76,3 +76,6 @@ export const formatFileSize = x => {
 };
 
 export const isUndefined = x => typeof x === "undefined";
+
+export const withDefault = (x, formatter = () => x) =>
+  isEmpty(x) ? "-" : formatter(x);
