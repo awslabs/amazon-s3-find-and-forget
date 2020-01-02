@@ -47,6 +47,12 @@ export default ({ gateway, goToDataMappers }) => {
     tableRef.selectedIndex = 0;
   };
 
+  const resetGlueColumns = () => {
+    setColumns([]);
+    let checkboxes = document.getElementsByName("column");
+    for (let i = 0; i < checkboxes.length; i++) checkboxes[i].checked = false;
+  };
+
   const submitForm = async () => {
     setSubmitClicked(true);
     if (isFormValid) {
@@ -195,6 +201,7 @@ export default ({ gateway, goToDataMappers }) => {
                   onChange={e => {
                     setGlueDatabase(e.target.value);
                     resetGlueTable();
+                    resetGlueColumns();
                   }}
                   {...validationAttributes(isGlueDatabaseValid)}
                 >
@@ -214,7 +221,10 @@ export default ({ gateway, goToDataMappers }) => {
                 </Form.Text>
                 <Form.Control
                   as="select"
-                  onChange={e => setGlueTable(e.target.value)}
+                  onChange={e => {
+                    setGlueTable(e.target.value);
+                    resetGlueColumns();
+                  }}
                   {...validationAttributes(isGlueTableValid)}
                 >
                   <option value="-1" defaultValue>
@@ -227,7 +237,7 @@ export default ({ gateway, goToDataMappers }) => {
                   ))}
                 </Form.Control>
               </Form.Group>
-              <Form.Group controlId="glueColumns">
+              <Form.Group>
                 <Form.Label>Columns used to query for matches</Form.Label>
                 <Form.Text className="text-muted">
                   Select one or more column from the table
@@ -236,6 +246,7 @@ export default ({ gateway, goToDataMappers }) => {
                   <Form.Check
                     type="checkbox"
                     key={index}
+                    name="column"
                     label={c}
                     onChange={e =>
                       e.target.checked ? addColumn(c) : removeColumn(c)
