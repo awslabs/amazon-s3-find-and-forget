@@ -19,3 +19,16 @@ export const glueSerializer = tables => {
   });
   return result;
 };
+
+export const bucketMapper = tables => {
+  const result = {};
+
+  tables.forEach(
+    t =>
+      (result[
+        `${t.Table.DatabaseName}/${t.Table.Name}`
+      ] = t.Table.StorageDescriptor.Location.split("/")[2])
+  );
+
+  return result;
+};

@@ -1,7 +1,9 @@
 import React from "react";
 import { Button, Modal } from "react-bootstrap";
 
-export default ({ show, close }) => (
+const region = window.s3f2Settings.region;
+
+export default ({ bucket, close, show }) => (
   <Modal centered show={show} size="lg" onHide={close}>
     <Modal.Header closeButton>
       <Modal.Title>S3 Bucket Policy</Modal.Title>
@@ -18,11 +20,15 @@ export default ({ show, close }) => (
         Solution CloudFormation Stack Output.
       </p>
       <p>
-        2. Find the relevant Bucket in the S3 AWS Web Console and{" "}
-        <a href="https://s3.console.aws.amazon.com/s3/home" target="_new">
-          click its name
-        </a>
-        , then "Permissions", and finally "Bucket Policy".
+        2. Open the{" "}
+        <a
+          href={`https://s3.console.aws.amazon.com/s3/buckets/matteo-tests/?region=${region}&tab=permissions`}
+          target="_new"
+        >
+          Permissions configuration for the {bucket} bucket in the S3 AWS Web
+          Console
+        </a>{" "}
+        and then click "Bucket Policy".
       </p>
       <p> 3. Edit the Policy and then click "Save". Here is an example:</p>
       <code>
@@ -39,8 +45,8 @@ export default ({ show, close }) => (
                   },
                   Action: "s3:*",
                   Resource: [
-                    "arn:aws:s3:::<YOUR_S3_BUCKET_NAME>",
-                    "arn:aws:s3:::<YOUR_S3_BUCKET_NAME>/*"
+                    `arn:aws:s3:::${bucket}`,
+                    `arn:aws:s3:::${bucket}/*`
                   ]
                 }
               ]

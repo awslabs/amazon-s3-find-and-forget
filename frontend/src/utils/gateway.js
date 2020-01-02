@@ -34,6 +34,13 @@ export default {
     return { DatabaseList: all };
   },
 
+  getGlueTable(database, table) {
+    return glueGateway("GetTable", {
+      DatabaseName: database,
+      Name: table
+    });
+  },
+
   async getGlueTables(database) {
     const all = [];
     let watermark = undefined;

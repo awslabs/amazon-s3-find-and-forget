@@ -6,8 +6,10 @@ import BucketPolicyModal from "../BucketPolicyModal";
 import Icon from "../Icon";
 
 import { formatErrorMessage, sortBy } from "../../utils";
+import { bucketMapper } from "../../utils/glueSerializer";
 
 export default ({ gateway, onPageChange }) => {
+  const [bucketLocations, setBucketLocations] = useState(undefined);
   const [dataMappers, setDataMappers] = useState([]);
   const [deleting, setDeleting] = useState(false);
   const [errorDetails, setErrorDetails] = useState(undefined);
@@ -17,6 +19,12 @@ export default ({ gateway, onPageChange }) => {
   const [showingBucketPolicy, showBucketPolicy] = useState(false);
 
   const noSelected = typeof selectedRow === "undefined";
+
+  const getSelectedBucket = () => {
+    const selectedDataMapper = dataMappers[selectedRow];
+    const key = `${selectedDataMapper.QueryExecutorParameters.Database}/${selectedDataMapper.QueryExecutorParameters.Table}`;
+    return bucketLocations[key];
+  };
 
   const refreshDataMappers = () => {
     selectRow(undefined);
@@ -41,7 +49,16 @@ export default ({ gateway, onPageChange }) => {
     const fetchDataMappers = async () => {
       try {
         const result = await gateway.getDataMappers();
+        const tableDetails = await Promise.all(
+          result.DataMappers.map(dm =>
+            gateway.getGlueTable(
+              dm.QueryExecutorParameters.Database,
+              dm.QueryExecutorParameters.Table
+            )
+          )
+        );
         setDataMappers(sortBy(result.DataMappers, "DataMapperId"));
+        setBucketLocations(bucketMapper(tableDetails));
         setFormState("list");
       } catch (e) {
         setFormState("error");
@@ -66,6 +83,7 @@ export default ({ gateway, onPageChange }) => {
           </Button>
           <Button
             className="aws-button action-button"
+            {...(noSelected && { disabled: "disabled" })}
             onClick={() => showBucketPolicy(true)}
           >
             View S3 Bucket Policy
@@ -95,38 +113,42 @@ export default ({ gateway, onPageChange }) => {
         </Alert>
       )}
       {!noSelected && (
-        <Modal
-          centered
-          show={deleting}
-          size="lg"
-          onHide={() => setDeleting(false)}
-        >
-          <Modal.Header closeButton>
-            <Modal.Title>
-              Delete {dataMappers[selectedRow].DataMapperId}
-            </Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            Are you sure you want to delete{" "}
-            <i>{dataMappers[selectedRow].DataMapperId}</i>?
-          </Modal.Body>
-          <Modal.Footer>
-            <Button
-              className="aws-button cancel"
-              onClick={() => setDeleting(false)}
-            >
-              Cancel
-            </Button>
-            <Button className="aws-button" onClick={deleteDataMapper}>
-              Delete Data Mapper
-            </Button>
-          </Modal.Footer>
-        </Modal>
+        <>
+          <Modal
+            centered
+            show={deleting}
+            size="lg"
+            onHide={() => setDeleting(false)}
+          >
+            <Modal.Header closeButton>
+              <Modal.Title>
+                Delete {dataMappers[selectedRow].DataMapperId}
+              </Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              Are you sure you want to delete{" "}
+              <i>{dataMappers[selectedRow].DataMapperId}</i>?
+            </Modal.Body>
+            <Modal.Footer>
+              <Button
+                className="aws-button cancel"
+                onClick={() => setDeleting(false)}
+              >
+                Cancel
+              </Button>
+              <Button className="aws-button" onClick={deleteDataMapper}>
+                Delete Data Mapper
+              </Button>
+            </Modal.Footer>
+          </Modal>
+          <BucketPolicyModal
+            show={showingBucketPolicy}
+            close={() => showBucketPolicy(false)}
+            bucket={getSelectedBucket()}
+          />
+        </>
       )}
-      <BucketPolicyModal
-        show={showingBucketPolicy}
-        close={() => showBucketPolicy(false)}
-      />
+
       <Form>
         <Table>
           <thead>
