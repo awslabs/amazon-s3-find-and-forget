@@ -23,8 +23,8 @@ Resources:
     Properties:
       IdentityPoolId: !Ref CognitoIdentityPool
       Roles:
-        authenticated: !GetAtt ApiGatewayInvokeRole.Arn
-        unauthenticated: !GetAtt ApiGatewayInvokeRole.Arn
+        authenticated: !GetAtt ServiceInvokeRole.Arn
+        unauthenticated: !GetAtt ServiceInvokeRole.Arn
 
   CognitoUserPool:
     Type: AWS::Cognito::UserPool
@@ -62,7 +62,7 @@ Resources:
         - Name: email_verified
           Value: "true"
 
-  ApiGatewayInvokeRole:
+  ServiceInvokeRole:
     Type: AWS::IAM::Role
     Properties:
       ManagedPolicyArns:
@@ -75,6 +75,15 @@ Resources:
                 - cognito-identity.amazonaws.com
             Action:
               - sts:AssumeRoleWithWebIdentity
+      Path: "/"
+      Policies:
+        - PolicyName: WebServicesExecutionPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: glue:Get*
+                Resource: "*"
 
 Outputs:
   CognitoIdentityPoolId:

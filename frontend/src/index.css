@@ -336,12 +336,14 @@ li {
   font-size: 13px;
 }
 
-form input[type="text"] {
-  border-radius: 1px;
+form input[type="text"],
+form select {
+  border-radius: 1px !important;
   background-image: none !important;
 }
 
-form input.is-invalid {
+form input.is-invalid,
+form select.is-invalid {
   color: #d13212;
   border-color: #d13212;
   padding-left: 7px;

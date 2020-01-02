@@ -1,33 +1,39 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button, Form, Spinner } from "react-bootstrap";
 
 import Alert from "../Alert";
 
-import {
-  arrayItemsAnyEmpty,
-  formatErrorMessage,
-  isEmpty,
-  isIdValid
-} from "../../utils";
+import { formatErrorMessage, isEmpty, isIdValid } from "../../utils";
+
+import { glueSerializer } from "../../utils/glueSerializer";
 
 const region = window.s3f2Settings.region;
 
 export default ({ gateway, goToDataMappers }) => {
-  const [columns, setColumns] = useState(undefined);
+  const [columns, setColumns] = useState([]);
   const [dataMapperId, setDataMapperId] = useState(undefined);
   const [errorDetails, setErrorDetails] = useState(undefined);
-  const [formState, setFormState] = useState("initial");
+  const [formState, setFormState] = useState("loading");
+  const [glueData, setGlueData] = useState(undefined);
   const [glueDatabase, setGlueDatabase] = useState(undefined);
   const [glueTable, setGlueTable] = useState(undefined);
   const [submitClicked, setSubmitClicked] = useState(false);
+
+  const addColumn = c => {
+    if (!columns.includes(c)) setColumns([...columns, c]);
+  };
+
+  const removeColumn = c => {
+    if (columns.includes(c)) setColumns(columns.filter(x => x !== c));
+  };
 
   const validationAttributes = isValid =>
     !submitClicked ? {} : isValid ? { isValid: true } : { isInvalid: true };
 
   const isDataMapperIdValid = !isEmpty(dataMapperId) && isIdValid(dataMapperId);
-  const isGlueDatabaseValid = !isEmpty(glueDatabase);
-  const isGlueTableValid = !isEmpty(glueTable);
-  const isColumnsValid = !isEmpty(columns) && !arrayItemsAnyEmpty(columns);
+  const isGlueDatabaseValid = !isEmpty(glueDatabase) && glueDatabase !== "-1";
+  const isGlueTableValid = !isEmpty(glueTable) && glueTable !== "-1";
+  const isColumnsValid = !isEmpty(columns);
 
   const isFormValid =
     isDataMapperIdValid &&
@@ -35,24 +41,16 @@ export default ({ gateway, goToDataMappers }) => {
     isGlueTableValid &&
     isColumnsValid;
 
-  const resetForm = () => {
-    setColumns(undefined);
-    setDataMapperId(undefined);
-    setGlueDatabase(undefined);
-    setGlueTable(undefined);
-    setSubmitClicked(false);
-    setFormState("initial");
-  };
-
-  const cancel = () => {
-    resetForm();
-    goToDataMappers();
+  const resetGlueTable = () => {
+    setGlueTable("-1");
+    const tableRef = document.getElementById("glueTable");
+    tableRef.selectedIndex = 0;
   };
 
   const submitForm = async () => {
     setSubmitClicked(true);
     if (isFormValid) {
-      setFormState("saving");
+      setFormState("loading");
       try {
         await gateway.putDataMapper(
           dataMapperId,
@@ -61,7 +59,6 @@ export default ({ gateway, goToDataMappers }) => {
           columns
         );
         setFormState("saved");
-        resetForm();
         goToDataMappers();
       } catch (e) {
         setFormState("error");
@@ -69,6 +66,38 @@ export default ({ gateway, goToDataMappers }) => {
       }
     }
   };
+
+  const selectedDatabase = glueDatabase
+    ? glueData.databases.find(x => x.name === glueDatabase)
+    : undefined;
+
+  const selectedTable = selectedDatabase
+    ? selectedDatabase.tables.find(t => t.name === glueTable)
+    : undefined;
+
+  const tablesForSelectedDatabase = selectedDatabase
+    ? selectedDatabase.tables
+    : [];
+
+  const columnsForSelectedTable = selectedTable ? selectedTable.columns : [];
+  const noTables = !glueData || isEmpty(glueData.databases);
+
+  useEffect(() => {
+    const fetchGlueTables = async () => {
+      try {
+        const databases = await gateway.getGlueDatabases();
+        const tables = await Promise.all(
+          databases.DatabaseList.map(x => gateway.getGlueTables(x.Name))
+        );
+        setGlueData(glueSerializer(tables));
+        setFormState("initial");
+      } catch (e) {
+        setFormState("error");
+        setErrorDetails(formatErrorMessage(e));
+      }
+    };
+    fetchGlueTables();
+  }, [gateway]);
 
   return (
     <Form>
@@ -84,7 +113,7 @@ export default ({ gateway, goToDataMappers }) => {
           Amazon S3 Find and Forget Solution.
         </p>
       </div>
-      {formState === "saving" && (
+      {formState === "loading" && (
         <Spinner animation="border" role="status" className="spinner" />
       )}
       {formState === "error" && (
@@ -95,13 +124,35 @@ export default ({ gateway, goToDataMappers }) => {
             </Alert>
           </div>
           <div className="form-container submit-container">
-            <Button className="aws-button" onClick={cancel}>
+            <Button className="aws-button" onClick={goToDataMappers}>
               Return to Data Mappers
             </Button>
           </div>
         </>
       )}
-      {formState === "initial" && (
+      {formState === "initial" && noTables && (
+        <div className="page-table form-container">
+          <div className="content centered">
+            <b>No Glue Tables found</b>
+            <p>
+              There are no valid Glue Tables available in the current account
+              for the region <i>{region}</i>.
+            </p>
+            <Button
+              className="aws-button"
+              onClick={() =>
+                window.open(
+                  `https://console.aws.amazon.com/glue/home?region=${region}`,
+                  "_blank"
+                )
+              }
+            >
+              Create a Glue Table in the AWS Glue Console
+            </Button>
+          </div>
+        </div>
+      )}
+      {formState === "initial" && !noTables && (
         <>
           <div className="page-table form-container">
             <h2>Data Mapper Settings</h2>
@@ -109,8 +160,8 @@ export default ({ gateway, goToDataMappers }) => {
               <Form.Group controlId="dataMapperId">
                 <Form.Label>Data Mapper Name</Form.Label>
                 <Form.Text className="text-muted">
-                  Input a name for your Data Mapper. Alphanumeric characters and
-                  (_-) are allowed
+                  Input a name for your Data Mapper. Only alphanumeric
+                  characters are allowed.
                 </Form.Text>
                 <Form.Control
                   type="text"
@@ -136,46 +187,67 @@ export default ({ gateway, goToDataMappers }) => {
               <Form.Group controlId="glueDatabase">
                 <Form.Label>AWS Glue Database</Form.Label>
                 <Form.Text className="text-muted">
-                  Input an existing Glue Database in the current account in the{" "}
-                  <i>{region}</i> region
+                  Glue Database in the current account in the <i>{region}</i>{" "}
+                  region
                 </Form.Text>
                 <Form.Control
-                  type="text"
-                  onChange={e => setGlueDatabase(e.target.value)}
+                  as="select"
+                  onChange={e => {
+                    setGlueDatabase(e.target.value);
+                    resetGlueTable();
+                  }}
                   {...validationAttributes(isGlueDatabaseValid)}
-                />
+                >
+                  <option value="-1">Select a Glue Database</option>
+                  {glueData.databases.map((d, index) => (
+                    <option key={index} value={d.name}>
+                      {d.name}
+                    </option>
+                  ))}
+                </Form.Control>
               </Form.Group>
               <Form.Group controlId="glueTable">
                 <Form.Label>AWS Glue Table</Form.Label>
                 <Form.Text className="text-muted">
-                  Input an existing Glue Table in the current account in the{" "}
-                  <i>{region}</i> region
+                  Glue Table in the current account in the <i>{region}</i>{" "}
+                  region
                 </Form.Text>
                 <Form.Control
-                  type="text"
+                  as="select"
                   onChange={e => setGlueTable(e.target.value)}
                   {...validationAttributes(isGlueTableValid)}
-                />
+                >
+                  <option value="-1" defaultValue>
+                    Select a Glue Table
+                  </option>
+                  {tablesForSelectedDatabase.map((t, index) => (
+                    <option key={index} value={t.name}>
+                      {t.name}
+                    </option>
+                  ))}
+                </Form.Control>
               </Form.Group>
-              <Form.Group controlId="glueTable">
+              <Form.Group controlId="glueColumns">
                 <Form.Label>Columns used to query for matches</Form.Label>
                 <Form.Text className="text-muted">
-                  Input a comma separated list of columns used to query for
-                  matches
+                  Select one or more column from the table
                 </Form.Text>
-                <Form.Control
-                  type="text"
-                  placeholder="userid, author"
-                  onChange={e =>
-                    setColumns(e.target.value.split(",").map(x => x.trim()))
-                  }
-                  {...validationAttributes(isColumnsValid)}
-                />
+                {columnsForSelectedTable.map((c, index) => (
+                  <Form.Check
+                    type="checkbox"
+                    key={index}
+                    label={c}
+                    onChange={e =>
+                      e.target.checked ? addColumn(c) : removeColumn(c)
+                    }
+                    {...validationAttributes(isColumnsValid)}
+                  />
+                ))}
               </Form.Group>
             </div>
           </div>
           <div className="form-container submit-container">
-            <Button className="aws-button cancel" onClick={cancel}>
+            <Button className="aws-button cancel" onClick={goToDataMappers}>
               Cancel
             </Button>
             <Button className="aws-button" onClick={submitForm}>

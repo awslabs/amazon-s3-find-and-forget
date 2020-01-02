@@ -19,7 +19,7 @@ export default ({ gateway, goToJobDetails, goToPage }) => {
       try {
         const [queue, jobs, dataMappers] = await Promise.all([
           gateway.getQueue(),
-          gateway.getJobs(1),
+          gateway.getLastJob(),
           gateway.getDataMappers()
         ]);
 

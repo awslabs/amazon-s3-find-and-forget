@@ -26,16 +26,8 @@ export default ({ gateway, goToJobDetails }) => {
     const fetchJobs = async () => {
       setFormState("initial");
       try {
-        const allJobs = [];
-        const pageSize = undefined;
-        let watermark = undefined;
-        while (true) {
-          const page = await gateway.getJobs(pageSize, watermark);
-          allJobs.push(...page.Jobs);
-          if (page.NextStart) watermark = page.NextStart;
-          else break;
-        }
-        setJobs(allJobs);
+        const jobs = await gateway.getJobs();
+        setJobs(jobs.Jobs);
         setFormState("list");
       } catch (e) {
         setFormState("error");

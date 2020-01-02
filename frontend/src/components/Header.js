@@ -2,7 +2,7 @@ import { Auth } from "aws-amplify";
 import React, { useEffect, useState } from "react";
 import { Button, Navbar } from "react-bootstrap";
 
-import { retryWrapper } from "../utils";
+import { retryWrapper } from "../utils/retryWrapper";
 import "./Header.css";
 
 export default ({ signedIn }) => {
