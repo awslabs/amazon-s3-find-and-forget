@@ -11,6 +11,8 @@ Globals:
 Parameters:
   ApiUrl:
     Type: String
+  AthenaExecutionRole:
+    Type: String
   CognitoIdentityPoolId:
     Type: String
   CognitoUserPoolId:
@@ -21,6 +23,8 @@ Parameters:
     Type: String
   CommonLayers:
     Type: CommaDelimitedList
+  DeleteTaskRole:
+    Type: String
   LogLevel:
     Type: String
     Default: INFO
@@ -43,6 +47,8 @@ Resources:
     Properties:
       ServiceToken: !GetAtt CreateSettingsFile.Arn
       ApiUrl: !Ref ApiUrl
+      AthenaExecutionRole: !Ref AthenaExecutionRole
+      DeleteTaskRole: !Ref DeleteTaskRole
       FromBucket: !Sub solution-builders-${AWS::Region}
       LogLevel: !Ref LogLevel
       CognitoIdentityPoolId: !Ref CognitoIdentityPoolId

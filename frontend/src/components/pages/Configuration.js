@@ -9,6 +9,7 @@ import { formatErrorMessage, sortBy } from "../../utils";
 import { bucketMapper } from "../../utils/glueSerializer";
 
 export default ({ gateway, onPageChange }) => {
+  const [accountId, setAccountId] = useState("<AWS::ACCOUNT_ID>");
   const [bucketLocations, setBucketLocations] = useState(undefined);
   const [dataMappers, setDataMappers] = useState([]);
   const [deleting, setDeleting] = useState(false);
@@ -48,16 +49,24 @@ export default ({ gateway, onPageChange }) => {
   useEffect(() => {
     const fetchDataMappers = async () => {
       try {
-        const result = await gateway.getDataMappers();
+        const [mappers, identity] = await Promise.all([
+          gateway.getDataMappers(),
+          gateway.getAccountId()
+        ]);
+
         const tableDetails = await Promise.all(
-          result.DataMappers.map(dm =>
+          mappers.DataMappers.map(dm =>
             gateway.getGlueTable(
               dm.QueryExecutorParameters.Database,
               dm.QueryExecutorParameters.Table
             )
           )
         );
-        setDataMappers(sortBy(result.DataMappers, "DataMapperId"));
+
+        setAccountId(
+          identity.GetCallerIdentityResponse.GetCallerIdentityResult.Account
+        );
+        setDataMappers(sortBy(mappers.DataMappers, "DataMapperId"));
         setBucketLocations(bucketMapper(tableDetails));
         setFormState("list");
       } catch (e) {
@@ -142,9 +151,10 @@ export default ({ gateway, onPageChange }) => {
             </Modal.Footer>
           </Modal>
           <BucketPolicyModal
-            show={showingBucketPolicy}
-            close={() => showBucketPolicy(false)}
+            accountId={accountId}
             bucket={getSelectedBucket()}
+            close={() => showBucketPolicy(false)}
+            show={showingBucketPolicy}
           />
         </>
       )}

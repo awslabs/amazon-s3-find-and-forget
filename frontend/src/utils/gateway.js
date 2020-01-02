@@ -1,4 +1,4 @@
-import { apiGateway, glueGateway } from "./request";
+import { apiGateway, glueGateway, stsGateway } from "./request";
 
 export default {
   deleteDataMapper(id) {
@@ -14,6 +14,10 @@ export default {
       method: "patch",
       data: { MatchId: id, DataMappers: dataMappers }
     });
+  },
+
+  getAccountId() {
+    return stsGateway("/?Action=GetCallerIdentity&Version=2011-06-15");
   },
 
   getDataMappers() {

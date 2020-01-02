@@ -1,9 +1,9 @@
 import React from "react";
 import { Button, Modal } from "react-bootstrap";
 
-const region = window.s3f2Settings.region;
+const { athenaExecutionRole, deleteTaskRole, region } = window.s3f2Settings;
 
-export default ({ bucket, close, show }) => (
+export default ({ accountId, bucket, close, show }) => (
   <Modal centered show={show} size="lg" onHide={close}>
     <Modal.Header closeButton>
       <Modal.Title>S3 Bucket Policy</Modal.Title>
@@ -15,14 +15,9 @@ export default ({ bucket, close, show }) => (
         them.
       </p>
       <p>
-        1. Retrieve the Athena Query Executor (<b>AthenaExecutionRoleArn</b>)
-        and Delete Task (<b>DeleteTaskIAMRoleArn</b>) IAM roles from the
-        Solution CloudFormation Stack Output.
-      </p>
-      <p>
-        2. Open the{" "}
+        1. Open the{" "}
         <a
-          href={`https://s3.console.aws.amazon.com/s3/buckets/matteo-tests/?region=${region}&tab=permissions`}
+          href={`https://s3.console.aws.amazon.com/s3/buckets/${bucket}/?region=${region}&tab=permissions`}
           target="_new"
         >
           Permissions configuration for the {bucket} bucket in the S3 AWS Web
@@ -30,7 +25,11 @@ export default ({ bucket, close, show }) => (
         </a>{" "}
         and then click "Bucket Policy".
       </p>
-      <p> 3. Edit the Policy and then click "Save". Here is an example:</p>
+      <p>
+        2. Edit the Policy for allowing the Athena Query Executor and Delete
+        Task to read/write to the S3 Bucket and then click "Save". Here is an
+        example:
+      </p>
       <code>
         <pre>
           {JSON.stringify(
@@ -41,7 +40,10 @@ export default ({ bucket, close, show }) => (
                   Sid: "AllowS3F2",
                   Effect: "Allow",
                   Principal: {
-                    AWS: ["<AthenaExecutionRoleArn>", "<DeleteTaskIAMRoleArn>"]
+                    AWS: [
+                      `arn:aws:iam::${accountId}:role/${athenaExecutionRole}`,
+                      `arn:aws:iam::${accountId}:role/${deleteTaskRole}`
+                    ]
                   },
                   Action: "s3:*",
                   Resource: [

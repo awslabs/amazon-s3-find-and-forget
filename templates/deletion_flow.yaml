@@ -82,7 +82,7 @@ Resources:
   DeleteTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      TaskRoleArn: !Ref DeleteTaskIAMRole
+      TaskRoleArn: !Ref DeleteTaskRole
       ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
       NetworkMode: awsvpc
       Memory: !Ref DeletionTaskMemory
@@ -123,7 +123,7 @@ Resources:
           Subnets: !Split [",", !Ref VpcSubnets]
       TaskDefinition: !Ref DeleteTaskDefinition
 
-  DeleteTaskIAMRole:
+  DeleteTaskRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -194,8 +194,10 @@ Outputs:
     Value: !Ref DelObjQ
   DeleteServiceName:
     Value: !GetAtt DeleteService.Name
-  DeleteTaskIAMRoleArn:
-    Value: !GetAtt DeleteTaskIAMRole.Arn
+  DeleteTaskRole:
+    Value: !Ref DeleteTaskRole
+  DeleteTaskRoleArn:
+    Value: !GetAtt DeleteTaskRole.Arn
   DLQUrl:
     Value: !Ref DLQ
   ECSCluster:

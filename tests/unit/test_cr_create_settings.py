@@ -14,10 +14,12 @@ def test_it_saves_file_with_public_acl_when_cloudfront_false(mock_client):
     event = {
         'ResourceProperties': {
             'ApiUrl': 'https://apiurl/',
+            'AthenaExecutionRole': 'athena-role',
             'CognitoIdentityPoolId': 'cognito-idp',
             'CognitoUserPoolClientId': 'cognito-upc',
             'CognitoUserPoolId': 'cognito-up',
             'CreateCloudFrontDistribution': 'false',
+            'DeleteTaskRole': 'delete-role',
             'Region': 'eu-west-1',
             'Version': '1.0',
             'WebUIBucket': 'webuibucket'
@@ -32,9 +34,11 @@ def test_it_saves_file_with_public_acl_when_cloudfront_false(mock_client):
         Key="settings.js",
         Body="window.s3f2Settings={}".format(json.dumps({
             "apiUrl": "https://apiurl/",
+            "athenaExecutionRole": "athena-role",
             "cognitoIdentityPool": "cognito-idp",
             "cognitoUserPoolId": "cognito-up",
             "cognitoUserPoolClientId": "cognito-upc",
+            "deleteTaskRole": "delete-role",
             "region": "eu-west-1",
             "version": "1.0"
         })))
@@ -47,10 +51,12 @@ def test_it_saves_file_with_private_acl_when_cloudfront_true(mock_client):
     event = {
         'ResourceProperties': {
             'ApiUrl': 'https://apiurl/',
+            'AthenaExecutionRole': 'athena-role',
             'CognitoIdentityPoolId': 'cognito-idp',
             'CognitoUserPoolClientId': 'cognito-upc',
             'CognitoUserPoolId': 'cognito-up',
             'CreateCloudFrontDistribution': 'true',
+            'DeleteTaskRole': 'delete-role',
             'Region': 'eu-west-1',
             'Version': '1.0',
             'WebUIBucket': 'webuibucket'
@@ -65,9 +71,11 @@ def test_it_saves_file_with_private_acl_when_cloudfront_true(mock_client):
         Key="settings.js",
         Body="window.s3f2Settings={}".format(json.dumps({
             "apiUrl": "https://apiurl/",
+            "athenaExecutionRole": "athena-role",
             "cognitoIdentityPool": "cognito-idp",
             "cognitoUserPoolId": "cognito-up",
             "cognitoUserPoolClientId": "cognito-upc",
+            "deleteTaskRole": "delete-role",
             "region": "eu-west-1",
             "version": "1.0"
         })))
@@ -80,10 +88,12 @@ def test_it_does_nothing_on_delete(mock_client):
     event = {
         'ResourceProperties': {
             'ApiUrl': 'https://apiurl/',
+            'AthenaExecutionRole': 'athena-role',
             'CognitoIdentityPoolId': 'cognito-idp',
             'CognitoUserPoolClientId': 'cognito-upc',
             'CognitoUserPoolId': 'cognito-up',
             'CreateCloudFrontDistribution': 'true',
+            'DeleteTaskRole': 'delete-role',
             'Region': 'eu-west-1',
             'Version': '1.0',
             'WebUIBucket': 'webuibucket'

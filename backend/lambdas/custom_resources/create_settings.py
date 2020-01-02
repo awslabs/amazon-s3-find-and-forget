@@ -21,9 +21,11 @@ def create(event, context):
     acl = "private" if with_cloudfront == "true" else "public-read"
     settings = {
         "apiUrl": props.get("ApiUrl"),
+        "athenaExecutionRole": props.get("AthenaExecutionRole"),
         "cognitoIdentityPool": props.get("CognitoIdentityPoolId"),
         "cognitoUserPoolId": props.get("CognitoUserPoolId"),
         "cognitoUserPoolClientId": props.get("CognitoUserPoolClientId"),
+        "deleteTaskRole": props.get("DeleteTaskRole"),
         "region": props.get("Region"),
         "version": props.get("Version")
     }

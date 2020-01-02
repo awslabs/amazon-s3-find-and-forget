@@ -1007,17 +1007,19 @@ Resources:
           Resource: "*"
 
 Outputs:
-  AthenaStateMachineArn:
-    Value: !Ref AthenaStateMachine
+  AthenaExecutionRole:
+    Value: !Ref ExecuteQueryRole
   AthenaExecutionRoleArn:
     Value: !GetAtt ExecuteQueryRole.Arn
+  AthenaStateMachineArn:
+    Value: !Ref AthenaStateMachine
   AuditLogGroup:
     Value: !Ref AuditLogGroup
-  StateMachineArn:
-    Value: !Ref StateMachine
-  StateMachineRoleArn:
-    Value: !GetAtt StatesExecutionRole.Arn
   QueryQueueUrl:
     Value: !Ref QueryQueue
   ResultBucket:
     Value: !Ref ResultBucket
+  StateMachineArn:
+    Value: !Ref StateMachine
+  StateMachineRoleArn:
+    Value: !GetAtt StatesExecutionRole.Arn

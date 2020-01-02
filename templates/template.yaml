@@ -164,6 +164,7 @@ Resources:
       TemplateURL: ./web-ui-helper.yaml
       Parameters:
         ApiUrl: !GetAtt APIStack.Outputs.ApiUrl
+        AthenaExecutionRole: !GetAtt StateMachineStack.Outputs.AthenaExecutionRole
         CognitoIdentityPoolId: !GetAtt AuthStack.Outputs.CognitoIdentityPoolId
         CognitoUserPoolId: !GetAtt AuthStack.Outputs.CognitoUserPoolId
         CognitoUserPoolClientId: !GetAtt AuthStack.Outputs.CognitoUserPoolClientId
@@ -173,6 +174,7 @@ Resources:
             - !GetAtt LayersStack.Outputs.CustomResourceHelper
             - !GetAtt LayersStack.Outputs.Decorators
         CreateCloudFrontDistribution: !Ref CreateCloudFrontDistribution
+        DeleteTaskRole: !GetAtt DelStack.Outputs.DeleteTaskRole
         Version: !FindInMap [Solution, Constants, Version]
         WebUIBucket: !GetAtt WebUIStack.Outputs.WebUIBucket
 
@@ -203,8 +205,8 @@ Outputs:
     Value: !GetAtt DDBStack.Outputs.DataMapperTable
   DDBStack:
     Value: !Ref DDBStack
-  DeleteTaskIAMRoleArn:
-    Value: !GetAtt DelStack.Outputs.DeleteTaskIAMRoleArn
+  DeleteTaskRoleArn:
+    Value: !GetAtt DelStack.Outputs.DeleteTaskRoleArn
   DeletionQueueTable:
     Value: !GetAtt DDBStack.Outputs.DeletionQueueTable
   DeletionQueueUrl:
