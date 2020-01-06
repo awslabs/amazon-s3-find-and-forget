@@ -28,7 +28,7 @@ export default ({ gateway, jobId }) => {
     setRenderTableCount(renderTableCount + 1);
   }, [renderTableCount, setCoundDownLeft, setRenderTableCount]);
 
-  const withCountDown = job && job.JobStats === ("RUNNING" || "QUEUED");
+  const withCountDown = job && job.JobStats === "RUNNING";
 
   const errorCountClass = x =>
     x === 0 || isUndefined(x) ? "success" : "error";
