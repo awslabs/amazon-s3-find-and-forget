@@ -29,6 +29,7 @@ export default ({ gateway, onPageChange }) => {
 
   const refreshDataMappers = () => {
     selectRow(undefined);
+    setDataMappers([]);
     let radios = document.getElementsByName("item");
     for (let i = 0; i < radios.length; i++) radios[i].checked = false;
     setRenderTableCount(renderTableCount + 1);
