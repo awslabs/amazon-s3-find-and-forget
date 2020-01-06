@@ -21,8 +21,8 @@ export default ({ gateway, onPageChange }) => {
 
   const noSelected = typeof selectedRow === "undefined";
 
-  const getSelectedBucket = () => {
-    const selectedDataMapper = dataMappers[selectedRow];
+  const getBucket = row => {
+    const selectedDataMapper = dataMappers[row];
     const key = `${selectedDataMapper.QueryExecutorParameters.Database}/${selectedDataMapper.QueryExecutorParameters.Table}`;
     return bucketLocations[key];
   };
@@ -66,8 +66,8 @@ export default ({ gateway, onPageChange }) => {
         setAccountId(
           identity.GetCallerIdentityResponse.GetCallerIdentityResult.Account
         );
-        setDataMappers(sortBy(mappers.DataMappers, "DataMapperId"));
         setBucketLocations(bucketMapper(tableDetails));
+        setDataMappers(sortBy(mappers.DataMappers, "DataMapperId"));
         setFormState("list");
       } catch (e) {
         setFormState("error");
@@ -152,7 +152,7 @@ export default ({ gateway, onPageChange }) => {
           </Modal>
           <BucketPolicyModal
             accountId={accountId}
-            bucket={getSelectedBucket()}
+            bucket={getBucket(selectedRow).bucket}
             close={() => showBucketPolicy(false)}
             show={showingBucketPolicy}
           />
@@ -169,6 +169,7 @@ export default ({ gateway, onPageChange }) => {
               <td>Format</td>
               <td>Query Executor</td>
               <td>Query Executor Parameters</td>
+              <td>Location</td>
             </tr>
           </thead>
           <tbody>
@@ -196,6 +197,7 @@ export default ({ gateway, onPageChange }) => {
                     {dataMapper.QueryExecutorParameters.Table} (
                     {dataMapper.QueryExecutorParameters.DataCatalogProvider})
                   </td>
+                  <td>{getBucket(index).location}</td>
                 </tr>
               ))}
           </tbody>

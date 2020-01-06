@@ -25,9 +25,10 @@ export const bucketMapper = tables => {
 
   tables.forEach(
     t =>
-      (result[
-        `${t.Table.DatabaseName}/${t.Table.Name}`
-      ] = t.Table.StorageDescriptor.Location.split("/")[2])
+      (result[`${t.Table.DatabaseName}/${t.Table.Name}`] = {
+        bucket: t.Table.StorageDescriptor.Location.split("/")[2],
+        location: t.Table.StorageDescriptor.Location
+      })
   );
 
   return result;

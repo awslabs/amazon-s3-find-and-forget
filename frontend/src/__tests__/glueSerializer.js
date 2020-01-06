@@ -219,9 +219,22 @@ test("it should serialize dbs and tables", () => {
   }));
 
   expect(bucketMapper(getTableResponseArray)).toEqual({
-    "db2/table1": "my-s3-bucket",
-    "db2/table2": "my-s3-bucket",
-    "db3/table5": "my-s3-bucket",
-    "db3/table3": "aws-glue-datasets-eu-west-1"
+    "db2/table1": {
+      bucket: "my-s3-bucket",
+      location: "s3://my-s3-bucket/parquet/"
+    },
+    "db2/table2": {
+      bucket: "my-s3-bucket",
+      location: "s3://my-s3-bucket/parquet2/"
+    },
+    "db3/table5": {
+      bucket: "my-s3-bucket",
+      location: "s3://my-s3-bucket/parquet56/"
+    },
+    "db3/table3": {
+      bucket: "aws-glue-datasets-eu-west-1",
+      location:
+        "s3://aws-glue-datasets-eu-west-1/examples/githubarchive/month/data/"
+    }
   });
 });
