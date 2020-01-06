@@ -53,6 +53,9 @@ Parameters:
   JobTableName:
     Description: Table name for Jobs Table
     Type: String
+  JobTableStreamArn:
+    Description: Stream ARN for Jobs Table
+    Type: String
   LogLevel:
     Type: String
     Default: INFO
@@ -128,6 +131,7 @@ Resources:
       Environment:
         Variables:
           StateMachineArn: !Ref StateMachineArn
+          GSIBucketCount: 1
       Events:
         Get:
           Type: Api
@@ -137,13 +141,8 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref DeletionQueueTableName
-        - Statement:
-          - Action:
-            - "states:ListStateMachines"
-            - "states:DescribeStateMachine"
-            - "states:StartExecution"
-            Effect: "Allow"
-            Resource: !Ref StateMachineArn
+        - DynamoDBCrudPolicy:
+            TableName: !Ref JobTableName
   # DataMappers
   CreateDataMapper:
     Type: AWS::Serverless::Function
@@ -229,6 +228,32 @@ Resources:
       Policies:
         - DynamoDBReadPolicy:
             TableName: !Ref JobTableName
+
+  StreamProcessor:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: stream_processor.handler
+      CodeUri: ../backend/lambdas/queue/
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref JobTableName
+        - Statement:
+          - Effect: Allow
+            Action:
+              - "states:DescribeStateMachine"
+              - "states:DescribeExecution"
+              - "states:StartExecution"
+            Resource: !Ref StateMachineArn
+      Environment:
+        Variables:
+          StateMachineArn: !Ref StateMachineArn
+      Events:
+        Stream:
+          Type: DynamoDB
+          Properties:
+            Stream: !Ref JobTableStreamArn
+            StartingPosition: TRIM_HORIZON
+            BatchSize: 1
 
 Outputs:
   AccessControlAllowOriginHeader:

@@ -86,6 +86,7 @@ Resources:
         DataMapperTableName: !GetAtt DDBStack.Outputs.DataMapperTable
         JobTableDateGSI: !GetAtt DDBStack.Outputs.JobTableDateGSI
         JobTableName: !GetAtt DDBStack.Outputs.JobTable
+        JobTableStreamArn: !GetAtt DDBStack.Outputs.JobTableStreamArn
         ResultBucket: !GetAtt StateMachineStack.Outputs.ResultBucket
         StateMachineArn: !GetAtt StateMachineStack.Outputs.StateMachineArn
         WebUIOrigin: !GetAtt WebUIStack.Outputs.Origin

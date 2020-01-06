@@ -1,4 +1,5 @@
 import time
+import uuid
 
 import mock
 import pytest
@@ -35,8 +36,8 @@ def test_it_handles_unknown_jobs(api_client, jobs_endpoint, stack):
 
 def test_it_lists_jobs_by_date(api_client, jobs_endpoint, job_factory, stack):
     # Arrange
-    job_id_1 = job_factory(job_id="123", created_at=1576861489)["JobId"]
-    job_id_2 = job_factory(job_id="234", created_at=1576861490)["JobId"]
+    job_id_1 = job_factory(job_id=str(uuid.uuid4()), created_at=1576861489)["JobId"]
+    job_id_2 = job_factory(job_id=str(uuid.uuid4()), created_at=1576861490)["JobId"]
     time.sleep(1)  # No item waiter therefore wait for gsi propagation
     # Act
     response = api_client.get(jobs_endpoint)

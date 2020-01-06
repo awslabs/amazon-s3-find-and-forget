@@ -315,7 +315,7 @@ def job_table(ddb_resource, stack):
 
 @pytest.fixture
 def job_factory(job_table):
-    def factory(job_id="testId", status="QUEUED", gsib="0", created_at=round(datetime.datetime.now().timestamp()),
+    def factory(job_id=str(uuid4()), status="QUEUED", gsib="0", created_at=round(datetime.datetime.now().timestamp()),
                 **kwargs):
         item = {
             "JobId": job_id,
@@ -332,14 +332,23 @@ def job_factory(job_table):
     empty_table(job_table, "JobId")
 
 
+def get_waiter_model(config_file):
+    waiter_dir = Path(__file__).parent.parent.joinpath("waiters")
+    with open(waiter_dir.joinpath(config_file)) as f:
+        config = json.load(f)
+    return WaiterModel(config)
+
+
 @pytest.fixture(scope="session")
 def execution_waiter(sf_client):
-    waiter_dir = Path(__file__).parent.parent.joinpath("waiters")
-    with open(waiter_dir.joinpath("stepfunctions.json")) as f:
-        config = json.load(f)
-
-    waiter_model = WaiterModel(config)
+    waiter_model = get_waiter_model("stepfunctions.json")
     return create_waiter_with_client("ExecutionComplete", waiter_model, sf_client)
+
+
+@pytest.fixture(scope="session")
+def execution_exists_waiter(sf_client):
+    waiter_model = get_waiter_model("stepfunctions.json")
+    return create_waiter_with_client("ExecutionExists", waiter_model, sf_client)
 
 
 @pytest.fixture(scope="function")

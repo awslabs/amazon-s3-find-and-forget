@@ -1,3 +1,4 @@
+import decimal
 import json
 import os
 import time
@@ -87,3 +88,10 @@ def create_stream_if_not_exists(client, log_group, log_stream):
         )
     else:
         return response[0].get("uploadSequenceToken")
+
+
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, decimal.Decimal):
+            return round(o)
+        return super(DecimalEncoder, self).default(o)

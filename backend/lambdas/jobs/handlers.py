@@ -2,7 +2,6 @@
 Job handlers
 """
 import datetime
-import decimal
 import json
 import os
 
@@ -10,6 +9,7 @@ import boto3
 from aws_xray_sdk.core import xray_recorder
 from boto3.dynamodb.conditions import Key
 
+from boto_utils import DecimalEncoder
 from decorators import with_logger, request_validator, catch_errors, load_schema, add_cors_headers
 
 ddb = boto3.resource("dynamodb")
@@ -76,9 +76,3 @@ def list_jobs_handler(event, context):
         }, cls=DecimalEncoder)
     }
 
-
-class DecimalEncoder(json.JSONEncoder):
-    def default(self, o):
-        if isinstance(o, decimal.Decimal):
-            return round(o)
-        return super(DecimalEncoder, self).default(o)

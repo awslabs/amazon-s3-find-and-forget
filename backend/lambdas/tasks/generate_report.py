@@ -36,8 +36,8 @@ def handler(event, context):
     job_id = event["JobId"]
     job_start = event["JobStartTime"]
     job_finished = event["JobFinishTime"]
-    created_at = event.get("CreatedAt", round(datetime.datetime.now().timestamp()))
-    gsi_bucket = event.get("GSIBucket", "0")
+    created_at = event["Input"].get("CreatedAt", round(datetime.datetime.now().timestamp()))
+    gsi_bucket = event["Input"].get("GSIBucket", "0")
     report_data["JobId"] = job_id
     report_data["JobStartTime"] = job_start
     report_data["JobFinishTime"] = job_finished

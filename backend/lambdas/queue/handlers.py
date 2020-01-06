@@ -1,8 +1,11 @@
 """
 Queue handlers
 """
+import datetime
+import random
 import json
 import os
+import uuid
 
 import boto3
 from aws_xray_sdk.core import xray_recorder
@@ -11,7 +14,9 @@ from decorators import with_logger, request_validator, catch_errors, load_schema
 
 sfn_client = boto3.client("stepfunctions")
 dynamodb_resource = boto3.resource("dynamodb")
-table = dynamodb_resource.Table(os.getenv("DeletionQueueTable"))
+deletion_queue_table = dynamodb_resource.Table(os.getenv("DeletionQueueTable", "S3F2_DeletionQueue"))
+jobs_table = dynamodb_resource.Table(os.getenv("JobTable", "S3F2_Jobs"))
+bucket_count = int(os.getenv("GSIBucketCount", 1))
 
 
 @with_logger
@@ -27,7 +32,7 @@ def enqueue_handler(event, context):
         "MatchId": match_id,
         "DataMappers": data_mappers,
     }
-    table.put_item(Item=item)
+    deletion_queue_table.put_item(Item=item)
 
     return {
         "statusCode": 201,
@@ -40,7 +45,7 @@ def enqueue_handler(event, context):
 @add_cors_headers
 @catch_errors
 def get_handler(event, context):
-    items = table.scan()["Items"]
+    items = deletion_queue_table.scan()["Items"]
 
     return {
         "statusCode": 200,
@@ -55,7 +60,7 @@ def get_handler(event, context):
 @catch_errors
 def cancel_handler(event, context):
     match_id = event["pathParameters"]["match_id"]
-    table.delete_item(Key={
+    deletion_queue_table.delete_item(Key={
         "MatchId": match_id
     })
 
@@ -69,12 +74,15 @@ def cancel_handler(event, context):
 @add_cors_headers
 @catch_errors
 def process_handler(event, context):
-    response = sfn_client.start_execution(
-        stateMachineArn=os.getenv("StateMachineArn")
-    )
+    item = {
+        "JobId": str(uuid.uuid4()),
+        "JobStatus": "QUEUED",
+        "GSIBucket": str(random.randint(0, bucket_count - 1)),
+        "CreatedAt": round(datetime.datetime.now().timestamp()),
+    }
+    jobs_table.put_item(Item=item)
+
     return {
         "statusCode": 202,
-        "body": json.dumps({
-            "JobId": response["executionArn"].rsplit(":", 1)[-1]
-        })
+        "body": json.dumps(item)
     }

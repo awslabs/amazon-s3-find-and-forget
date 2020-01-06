@@ -1,10 +1,11 @@
+import decimal
 import json
 import os
 import types
 import pytest
 from mock import MagicMock, ANY, patch
 
-from boto_utils import paginate, batch_sqs_msgs, read_queue, create_stream_if_not_exists, log_event
+from boto_utils import paginate, batch_sqs_msgs, read_queue, create_stream_if_not_exists, log_event, DecimalEncoder
 
 pytestmark = [pytest.mark.unit, pytest.mark.layers]
 
@@ -176,3 +177,10 @@ def test_it_allows_log_group_override(create_mock):
 		logStreamName=ANY,
 		logEvents=ANY,
 	)
+
+
+def test_decimal_encoder():
+	res_a = json.dumps({"k": decimal.Decimal(1.1)}, cls=DecimalEncoder)
+	res_b = json.dumps({"k": decimal.Decimal(1.5)}, cls=DecimalEncoder)
+	assert "{\"k\": 1}" == res_a
+	assert "{\"k\": 2}" == res_b

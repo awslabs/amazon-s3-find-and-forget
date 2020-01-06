@@ -5,14 +5,13 @@ from types import SimpleNamespace
 import pytest
 from mock import patch, ANY
 
-
 with patch.dict(os.environ, {"DeletionQueueTable": "DeletionQueueTable"}):
     from backend.lambdas.queue import handlers
 
 pytestmark = [pytest.mark.unit, pytest.mark.api, pytest.mark.queue]
 
 
-@patch("backend.lambdas.queue.handlers.table")
+@patch("backend.lambdas.queue.handlers.deletion_queue_table")
 def test_it_retrieves_all_items(table):
     table.scan.return_value = {"Items": []}
     response = handlers.get_handler({}, SimpleNamespace())
@@ -23,7 +22,7 @@ def test_it_retrieves_all_items(table):
     } == response
 
 
-@patch("backend.lambdas.queue.handlers.table")
+@patch("backend.lambdas.queue.handlers.deletion_queue_table")
 def test_it_add_to_queue(table):
     response = handlers.enqueue_handler({
         "body": json.dumps({
@@ -39,7 +38,7 @@ def test_it_add_to_queue(table):
     } == json.loads(response["body"])
 
 
-@patch("backend.lambdas.queue.handlers.table")
+@patch("backend.lambdas.queue.handlers.deletion_queue_table")
 def test_it_provides_default_data_mappers(table):
     response = handlers.enqueue_handler({
         "body": json.dumps({
@@ -54,7 +53,7 @@ def test_it_provides_default_data_mappers(table):
     } == json.loads(response["body"])
 
 
-@patch("backend.lambdas.queue.handlers.table")
+@patch("backend.lambdas.queue.handlers.deletion_queue_table")
 def test_it_cancels_deletions(table):
     response = handlers.cancel_handler({
         "pathParameters": {
@@ -67,19 +66,25 @@ def test_it_cancels_deletions(table):
     } == response
 
 
-@patch("backend.lambdas.queue.handlers.sfn_client")
-def test_it_process_queue(sfn_client):
-    sfn_client.start_execution.return_value = {
-        "executionArn": "arn:aws:states:eu-west-1:123456789012:execution:HelloWorld:e723c10b-9be4-46ca-90b8-8b94a7105b44",
-        "startDate": 1571321214.368
-    }
+@patch("backend.lambdas.queue.handlers.bucket_count", 1)
+@patch("backend.lambdas.queue.handlers.uuid")
+@patch("backend.lambdas.queue.handlers.jobs_table")
+def test_it_process_queue(table, uuid):
+    uuid.uuid4.return_value = 123
     response = handlers.process_handler({
         "body": ""
     }, SimpleNamespace())
+    table.put_item.assert_called_with(Item={
+        "JobId": "123",
+        "JobStatus": "QUEUED",
+        "GSIBucket": "0",
+        "CreatedAt": ANY,
+    })
+    assert 202 == response["statusCode"]
+    assert "headers" in response
     assert {
-        "statusCode": 202,
-        "body": json.dumps({
-            "JobId": "e723c10b-9be4-46ca-90b8-8b94a7105b44"
-        }),
-        "headers": ANY
-    } == response
+        "JobId": "123",
+        "JobStatus": "QUEUED",
+        "GSIBucket": "0",
+        "CreatedAt": ANY,
+    } == json.loads(response["body"])

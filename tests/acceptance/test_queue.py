@@ -72,24 +72,23 @@ def test_it_handles_not_found(api_client, del_queue_factory, queue_base_endpoint
     assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
 
 
-def test_it_processes_queue(api_client, queue_base_endpoint, sf_client, stack):
+def test_it_processes_queue(api_client, queue_base_endpoint, sf_client, job_table, stack, execution_exists_waiter):
     # Arrange
     # Act
     response = api_client.delete(queue_base_endpoint)
     response_body = response.json()
-    execution_arn = "{}:{}".format(stack["StateMachineArn"].replace("stateMachine", "execution"),
-                                   response_body["JobId"])
+    job_id = response_body["JobId"]
+    execution_arn = "{}:{}".format(stack["StateMachineArn"].replace("stateMachine", "execution"), job_id)
 
     try:
         # Assert
         assert 202 == response.status_code
-        # Check the execution started
         assert "JobId" in response_body
-        job = sf_client.describe_execution(
-            executionArn=execution_arn
-        )
-        # Verify the job started
-        assert job["status"] in ["SUCCEEDED", "RUNNING"]
+        # Check the job was written to DynamoDB
+        query_result = job_table.query(KeyConditionExpression=Key("JobId").eq(job_id))
+        assert 1 == len(query_result["Items"])
+        # Verify the job started from the DynamoDB stream
+        execution_exists_waiter.wait(executionArn=execution_arn)
         assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
     finally:
         sf_client.stop_execution(executionArn=execution_arn)

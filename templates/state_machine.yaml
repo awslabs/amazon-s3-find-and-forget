@@ -90,6 +90,7 @@ Resources:
             - "dynamodb:GetItem"
             - "dynamodb:PutItem"
             - "dynamodb:DeleteItem"
+            - "dynamodb:UpdateItem"
             Resource:
               - !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${JobTableName}"
               - !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DeletionQueueTableName}"
@@ -391,7 +392,7 @@ Resources:
                 {
                   "Variable": "$.IsOldestExecution",
                   "BooleanEquals": true,
-                  "Next": "Query Deletion Queue"
+                  "Next": "Update Job Status"
                 },
                 {
                   "Variable": "$.IsOldestExecution",
@@ -400,6 +401,35 @@ Resources:
                 }
               ],
               "Default": "Handle Error"
+            },
+            "Update Job Status": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::dynamodb:updateItem",
+              "Parameters": {
+                "TableName": "${JobTableName}",
+                "Key": {
+                  "JobId": {
+                    "S.$": "$$.Execution.Name"
+                  }
+                },
+                "UpdateExpression": "SET JobStatus = :status",
+                "ExpressionAttributeValues": {
+                  ":status": {
+                    "S": "RUNNING"
+                  }
+                }
+              },
+              "Retry": [{
+                "ErrorEquals": [ "States.ALL" ],
+                "IntervalSeconds": 10,
+                "MaxAttempts": 1
+              }],
+              "Catch": [{
+                "ErrorEquals": ["States.ALL"],
+                "ResultPath": "$.ErrorDetails",
+                "Next": "Handle Error"
+              }],
+              "Next": "Query Deletion Queue"
             },
             "Query Deletion Queue": {
               "Comment": "Scan the deletion queue table to obtain all users to be deleted ",

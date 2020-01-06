@@ -1,6 +1,28 @@
 {
   "version": 2,
   "waiters": {
+    "ExecutionExists": {
+      "delay": 5,
+      "operation": "DescribeExecution",
+      "maxAttempts": 30,
+      "acceptors": [
+        {
+          "expected": 200,
+          "matcher": "status",
+          "state": "success"
+        },
+        {
+          "expected": 400,
+          "matcher": "status",
+          "state": "retry"
+        },
+        {
+          "expected": 404,
+          "matcher": "status",
+          "state": "retry"
+        }
+      ]
+    },
     "ExecutionComplete": {
       "delay": 2,
       "operation": "DescribeExecution",

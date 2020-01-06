@@ -41,8 +41,10 @@ def test_it_generates_reports(mock_get_status, mock_query_stats, mock_object_sta
         "JobStartTime": "2019-12-05T13:38:02.858Z",
         "JobFinishTime": "2019-12-05T13:39:37.220Z",
         "JobId": "123",
-        "GSIBucket": "0",
-        "CreatedAt": "123456"
+        "Input": {
+            "GSIBucket": "0",
+            "CreatedAt": 123456,
+        }
     }, SimpleNamespace())
     mock_write_log.assert_called_with("some_bucket", "123", mock.ANY)
     mock_write_summary.assert_called()
@@ -51,7 +53,7 @@ def test_it_generates_reports(mock_get_status, mock_query_stats, mock_object_sta
         "JobStartTime": "2019-12-05T13:38:02.858Z",
         "JobFinishTime": "2019-12-05T13:39:37.220Z",
         "GSIBucket": "0",
-        "CreatedAt": "123456",
+        "CreatedAt": 123456,
         "TotalObjectUpdatedCount": 1,
         "TotalObjectUpdateFailedCount": 0,
         "TotalQueryTimeInMillis": 10000,
@@ -182,7 +184,7 @@ def object_update_stub(**kwargs):
 def report_stub(**kwargs):
     return {
         "GSIBucket": "0",
-        "CreatedAt": "123456",
+        "CreatedAt": 123456,
         "JobStartTime": "2019-12-05T13:38:02.858Z",
         "JobFinishTime": "2019-12-05T13:39:37.220Z",
         "JobId": "28921fc6-17ca-4a1b-bc1a-ffaf1a5a4bae",
