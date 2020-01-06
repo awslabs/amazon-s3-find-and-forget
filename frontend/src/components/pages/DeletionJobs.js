@@ -94,8 +94,8 @@ export default ({ gateway, goToJobDetails }) => {
                     <span>{job.JobStatus}</span>
                   </td>
                   <td>{withDefault(job.TotalObjectUpdatedCount)}</td>
-                  <td>{formatDateTime(job.JobStartTime)}</td>
-                  <td>{formatDateTime(job.JobFinishTime)}</td>
+                  <td>{job.JobStartTime ? formatDateTime(job.JobStartTime) : "-"}</td>
+                  <td>{job.JobFinishTime ? formatDateTime(job.JobFinishTime) : "-"}</td>
                 </tr>
               ))}
           </tbody>
