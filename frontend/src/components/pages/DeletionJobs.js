@@ -5,7 +5,12 @@ import Alert from "../Alert";
 import Icon from "../Icon";
 import StartDeletionJob from "../StartDeletionJob";
 
-import { formatDateTime, formatErrorMessage, withDefault } from "../../utils";
+import {
+  formatDateTime,
+  formatErrorMessage,
+  withDefault,
+  successJobClass
+} from "../../utils";
 
 export default ({ gateway, goToJobDetails }) => {
   const [errorDetails, setErrorDetails] = useState(undefined);
@@ -14,13 +19,6 @@ export default ({ gateway, goToJobDetails }) => {
   const [renderTableCount, setRenderTableCount] = useState(0);
 
   const refreshJobs = () => setRenderTableCount(renderTableCount + 1);
-
-  const successJobClass = job =>
-    job.JobStatus === "COMPLETED"
-      ? "success"
-      : job.jobStatus === "RUNNING"
-      ? "info"
-      : "error";
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -89,13 +87,13 @@ export default ({ gateway, goToJobDetails }) => {
                       {job.JobId}
                     </Button>
                   </td>
-                  <td className={`status-label ${successJobClass(job)}`}>
-                    <Icon type={`alert-${successJobClass(job)}`} />
+                  <td className={`status-label ${successJobClass(job.JobStatus)}`}>
+                    <Icon type={`alert-${successJobClass(job.JobStatus)}`} />
                     <span>{job.JobStatus}</span>
                   </td>
                   <td>{withDefault(job.TotalObjectUpdatedCount)}</td>
-                  <td>{job.JobStartTime ? formatDateTime(job.JobStartTime) : "-"}</td>
-                  <td>{job.JobFinishTime ? formatDateTime(job.JobFinishTime) : "-"}</td>
+                  <td>{formatDateTime(job.JobStartTime)}</td>
+                  <td>{formatDateTime(job.JobFinishTime)}</td>
                 </tr>
               ))}
           </tbody>

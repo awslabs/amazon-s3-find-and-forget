@@ -10,7 +10,8 @@ import {
   formatErrorMessage,
   formatFileSize,
   isUndefined,
-  withDefault
+  withDefault,
+  successJobClass
 } from "../../utils";
 
 const COUNTDOWN_INTERVAL = 10;
@@ -27,14 +28,7 @@ export default ({ gateway, jobId }) => {
     setRenderTableCount(renderTableCount + 1);
   }, [renderTableCount, setCoundDownLeft, setRenderTableCount]);
 
-  const withCountDown = job && job.JobStats === "RUNNING";
-
-  const successJobClass =
-    job && job.JobStatus === "COMPLETED"
-      ? "success"
-      : job && job.jobStatus === "RUNNING"
-      ? "info"
-      : "error";
+  const withCountDown = job && job.JobStats === ("RUNNING" || "QUEUED");
 
   const errorCountClass = x =>
     x === 0 || isUndefined(x) ? "success" : "error";
@@ -98,16 +92,16 @@ export default ({ gateway, jobId }) => {
           <DetailsBox label="Job Id">{job.JobId}</DetailsBox>
           <DetailsBox
             label="Status"
-            className={`status-label ${successJobClass}`}
+            className={`status-label ${successJobClass(job.JobStatus)}`}
           >
-            <Icon type={`alert-${successJobClass}`} />
+            <Icon type={`alert-${successJobClass(job.JobStatus)}`} />
             <span>{job.JobStatus}</span>
           </DetailsBox>
           <DetailsBox label="Start Time">
             {formatDateTime(job.JobStartTime)}
           </DetailsBox>
           <DetailsBox label="Finish Time">
-            {job.JobFinishTime ? formatDateTime(job.JobFinishTime) : "-"}
+            {formatDateTime(job.JobFinishTime)}
           </DetailsBox>
           <DetailsBox label="Total Query Count" noSeparator>
             {withDefault(job.TotalQueryCount)}
