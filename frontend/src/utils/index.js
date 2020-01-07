@@ -28,14 +28,14 @@ export const sortBy = (obj, key) =>
 
 export const daysSinceDateTime = x => {
   const now = new Date();
-  const from = new Date(x);
+  const from = x ? new Date(x) : now;
   const aDay = 24 * 60 * 60 * 1000;
   return parseInt((now - from) / aDay, 10);
 };
 
 export const formatDateTime = x => {
-    return x ? x.replace("T", " ").substr(0, 19) : "-";
-}
+  return x ? x.replace("T", " ").substr(0, 19) : "-";
+};
 
 export const formatFileSize = x => {
   const units = ["bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
@@ -56,13 +56,13 @@ export const withDefault = (x, formatter = () => x) =>
   isEmpty(x) ? "-" : formatter(x);
 
 export const successJobClass = status => {
-  switch(status) {
+  switch (status) {
     case "COMPLETED":
-      return "success"
+      return "success";
     case "RUNNING":
     case "QUEUED":
-      return "info"
+      return "info";
     default:
-      return "error"
+      return "error";
   }
-}
+};
