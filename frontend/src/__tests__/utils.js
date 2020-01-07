@@ -55,9 +55,13 @@ test("sortBy", () => {
 });
 
 test("formatDateTime", () => {
-  expect(formatDateTime("2019-12-23T16:52:43.814Z")).toEqual(
-    "2019-12-23 16:52:43"
+  expect(formatDateTime(1578405187)).toEqual(
+    "Tue, 07 Jan 2020 13:53:07 GMT"
   );
+});
+
+test("formatDateTime undefined arg", () => {
+  expect(formatDateTime()).toEqual("-");
 });
 
 test("formatFileSize", () => {

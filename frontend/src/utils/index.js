@@ -28,13 +28,13 @@ export const sortBy = (obj, key) =>
 
 export const daysSinceDateTime = x => {
   const now = new Date();
-  const from = x ? new Date(x) : now;
+  const from = x ? new Date(x * 1000) : now;
   const aDay = 24 * 60 * 60 * 1000;
   return parseInt((now - from) / aDay, 10);
 };
 
 export const formatDateTime = x => {
-  return x ? x.replace("T", " ").substr(0, 19) : "-";
+  return x ? new Date(x * 1000).toUTCString() : "-"
 };
 
 export const formatFileSize = x => {
