@@ -8,11 +8,12 @@ from mock import patch
 
 with patch.dict(os.environ, {"QueryQueue": "test"}):
     from backend.lambdas.tasks.generate_report import handler, write_log, get_status, get_aggregated_query_stats, \
-    get_aggregated_object_stats, get_job_logs, write_summary
+    get_aggregated_object_stats, get_job_logs, write_summary, convert_iso8601_to_epoch, normalise_dates
 
 pytestmark = [pytest.mark.unit, pytest.mark.task]
 
 
+@patch("backend.lambdas.tasks.generate_report.normalise_dates")
 @patch("backend.lambdas.tasks.generate_report.write_summary")
 @patch("backend.lambdas.tasks.generate_report.write_log")
 @patch("backend.lambdas.tasks.generate_report.get_job_logs")
@@ -20,7 +21,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.task]
 @patch("backend.lambdas.tasks.generate_report.get_aggregated_object_stats")
 @patch("backend.lambdas.tasks.generate_report.get_status")
 def test_it_generates_reports(mock_get_status, mock_query_stats, mock_object_stats, mock_get_logs, mock_write_log,
-                              mock_write_summary):
+                              mock_write_summary, mock_normalise_dates):
     mock_get_status.return_value = "COMPLETED"
     mock_query_stats.return_value = {
         "TotalQueryTimeInMillis": 10000,
@@ -36,6 +37,22 @@ def test_it_generates_reports(mock_get_status, mock_query_stats, mock_object_sta
         {"message": json.dumps({"EventName": "QuerySucceeded", "EventData": query_stub()})},
         {"message": json.dumps({"EventName": "ObjectUpdated", "EventData": object_update_stub()})},
     ]
+    mock_normalise_dates.return_value = {
+        'JobId': '123',
+        'JobStartTime': 1578327177,
+        'JobFinishTime': 1578327177,
+        'CreatedAt': 123456,
+        'GSIBucket': '0',
+        'QuerySucceeded': [{'QueryStatus': {'Statistics': {'DataScannedInBytes': 100, 'EngineExecutionTimeInMillis': 1000}}}],
+        'ObjectUpdated': [{}],
+        'TotalObjectUpdatedCount': 1,
+        'TotalObjectUpdateFailedCount': 0,
+        'TotalQueryTimeInMillis': 10000,
+        'TotalQueryScannedInBytes': 1000,
+        'TotalQueryCount': 10,
+        'TotalQueryFailedCount': 0,
+        'JobStatus': 'COMPLETED'
+    }
     resp = handler({
         "Bucket": "some_bucket",
         "JobStartTime": "2019-12-05T13:38:02.858Z",
@@ -48,10 +65,26 @@ def test_it_generates_reports(mock_get_status, mock_query_stats, mock_object_sta
     }, SimpleNamespace())
     mock_write_log.assert_called_with("some_bucket", "123", mock.ANY)
     mock_write_summary.assert_called()
+    mock_normalise_dates.assert_called_with({
+        'JobId': '123',
+        'JobStartTime': '2019-12-05T13:38:02.858Z',
+        'JobFinishTime': '2019-12-05T13:39:37.220Z',
+        'CreatedAt': 123456,
+        'GSIBucket': '0',
+        'QuerySucceeded': [{'QueryStatus': {'Statistics': {'DataScannedInBytes': 100, 'EngineExecutionTimeInMillis': 1000}}}],
+        'ObjectUpdated': [{}],
+        'TotalObjectUpdatedCount': 1,
+        'TotalObjectUpdateFailedCount': 0,
+        'TotalQueryTimeInMillis': 10000,
+        'TotalQueryScannedInBytes': 1000,
+        'TotalQueryCount': 10,
+        'TotalQueryFailedCount': 0,
+        'JobStatus': 'COMPLETED'
+    })
     assert {
         "JobId": "123",
-        "JobStartTime": "2019-12-05T13:38:02.858Z",
-        "JobFinishTime": "2019-12-05T13:39:37.220Z",
+        "JobStartTime": 1578327177,
+        "JobFinishTime": 1578327177,
         "GSIBucket": "0",
         "CreatedAt": 123456,
         "TotalObjectUpdatedCount": 1,
@@ -163,6 +196,28 @@ def test_it_gets_aggregated_object_update_stats():
     } == resp
 
 
+def test_it_normalises_date_like_fields():
+    assert {
+        "a": [{"a": 1578327177, "b": "string"}],
+        "b": [1578327177],
+        "c": {"a": 1578327177},
+        "d": 1578327177,
+        "e": "string",
+        "f": 2,
+    } == normalise_dates({
+        "a": [{"a": "2020-01-06T16:12:57.092Z", "b": "string"}],
+        "b": ["2020-01-06T16:12:57.092Z"],
+        "c": {"a": "2020-01-06T16:12:57.092Z"},
+        "d": "2020-01-06T16:12:57.092Z",
+        "e": "string",
+        "f": 2,
+    })
+
+
+def test_it_converts_sfn_datetimes_to_epoch():
+    assert 1578327177 == convert_iso8601_to_epoch("2020-01-06T16:12:57.092Z")
+
+
 def query_stub(**kwargs):
     return {
         "QueryStatus": {
@@ -198,3 +253,4 @@ def report_stub(**kwargs):
         "QuerySucceeded": [query_stub()],
         **kwargs
     }
+

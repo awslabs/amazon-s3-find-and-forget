@@ -79,7 +79,6 @@ def test_it_processes_queue(api_client, queue_base_endpoint, sf_client, job_tabl
     response_body = response.json()
     job_id = response_body["JobId"]
     execution_arn = "{}:{}".format(stack["StateMachineArn"].replace("stateMachine", "execution"), job_id)
-
     try:
         # Assert
         assert 202 == response.status_code

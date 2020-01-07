@@ -314,7 +314,9 @@ def job_table(ddb_resource, stack):
 
 
 @pytest.fixture
-def job_factory(job_table):
+def job_factory(job_table, sf_client, stack):
+    items = []
+
     def factory(job_id=str(uuid4()), status="QUEUED", gsib="0", created_at=round(datetime.datetime.now().timestamp()),
                 **kwargs):
         item = {
@@ -325,11 +327,17 @@ def job_factory(job_table):
             **kwargs
         }
         job_table.put_item(Item=item)
+        items.append("{}:{}".format(stack["StateMachineArn"].replace("stateMachine", "execution"), job_id))
         return item
 
     yield factory
 
     empty_table(job_table, "JobId")
+    for arn in items:
+        try:
+            sf_client.stop_execution(executionArn=arn)
+        except Exception as e:
+            logger.warning("Unable to stop execution: {}".format(str(e)))
 
 
 def get_waiter_model(config_file):
