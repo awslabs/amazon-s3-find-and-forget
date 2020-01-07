@@ -151,7 +151,7 @@ export default ({ gateway, jobId }) => {
               <span>{withDefault(job.TotalQueryFailedCount)}</span>
             </DetailsBox>
             <DetailsBox label="Total Query Time">
-              {withDefault(job.TotalQueryCount, x => `${x}s`)}
+              {withDefault((job.TotalQueryTimeInMillis / 1000).toFixed(0), x => `${x}s`)}
             </DetailsBox>
             <DetailsBox label="Total Query Scanned Bytes">
               {withDefault(
