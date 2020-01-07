@@ -20,6 +20,10 @@ body {
   width: 100%;
 }
 
+.hide {
+  display: none;
+}
+
 .amplify-auth label {
   margin-bottom: 0;
 }
@@ -211,6 +215,10 @@ li {
   background-color: #fff;
   padding: 40px;
   color: #545b64;
+}
+
+.page-table .header {
+  border-bottom: 1px solid #eaeded;
 }
 
 .centered {
@@ -480,4 +488,12 @@ form .form-check-label {
 .details-box a {
   padding-left: 0;
   padding-right: 4px;
+}
+
+.json-visualiser {
+  font-size: 12px;
+}
+
+.refresh-counter {
+  margin-left: 10px;
 }

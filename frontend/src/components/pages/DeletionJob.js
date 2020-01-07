@@ -16,7 +16,6 @@ import {
 } from "../../utils";
 
 const COUNTDOWN_INTERVAL = 10;
-const region = window.s3f2Settings.region;
 
 export default ({ gateway, jobId }) => {
   const [countDownLeft, setCoundDownLeft] = useState(COUNTDOWN_INTERVAL);
@@ -25,6 +24,7 @@ export default ({ gateway, jobId }) => {
   const [job, setJob] = useState(undefined);
   const [renderTableCount, setRenderTableCount] = useState(0);
   const [report, setReport] = useState(undefined);
+  const [reportShown, showReport] = useState(false);
 
   const refreshJob = useCallback(() => {
     setCoundDownLeft(COUNTDOWN_INTERVAL);
@@ -36,6 +36,31 @@ export default ({ gateway, jobId }) => {
 
   const errorCountClass = x =>
     x === 0 || isUndefined(x) ? "success" : "error";
+
+  const loadReport = async () => {
+    if (!report) {
+      setFormState("loading-report");
+      try {
+        const reportContent = await gateway.getObject(job.JobReportLocation);
+        setReport(reportContent);
+        setFormState("details");
+      } catch (e) {
+        setFormState("error");
+        setErrorDetails(formatErrorMessage(e));
+      }
+    }
+  };
+
+  const openReport = async () => {
+    await loadReport();
+    showReport(true);
+  };
+
+  const downloadReport = async () => {
+    await loadReport();
+    const el = document.getElementById("download-report-link");
+    if (el) el.click();
+  };
 
   useEffect(() => {
     if (withCountDown) {
@@ -55,10 +80,6 @@ export default ({ gateway, jobId }) => {
       setFormState("initial");
       try {
         const jobDetails = await gateway.getJob(jobId);
-        if (jobDetails.JobReportLocation) {
-          const report = await gateway.getObject(jobDetails.JobReportLocation);
-          setReport(report);
-        }
         setJob(jobDetails);
         setFormState("details");
       } catch (e) {
@@ -73,19 +94,19 @@ export default ({ gateway, jobId }) => {
   return (
     <>
       <div className="page-table">
-        <Row style={{ borderBottom: "1px solid #eaeded" }}>
+        <Row className="header">
           <Col>
             <h2>Job Overview</h2>
           </Col>
           <Col className="buttons-right" md="auto">
-            <Button className="aws-button action-button" onClick={refreshJob}>
-              <Icon type="refresh" />
-              {withCountDown && (
-                <span style={{ marginLeft: "10px" }}>
+            {withCountDown && (
+              <Button className="aws-button action-button" onClick={refreshJob}>
+                <Icon type="refresh" />
+                <span className="refresh-counter">
                   Refreshing in {countDownLeft}s...
                 </span>
-              )}
-            </Button>
+              </Button>
+            )}
           </Col>
         </Row>
         {formState === "initial" && (
@@ -96,7 +117,7 @@ export default ({ gateway, jobId }) => {
             Please retry later.
           </Alert>
         )}
-        {formState === "details" && (
+        {job && (
           <div className="details content">
             <DetailsBox label="Job Id">{job.JobId}</DetailsBox>
             <DetailsBox
@@ -160,35 +181,55 @@ export default ({ gateway, jobId }) => {
           </div>
         )}
       </div>
-      {formState === "details" && job && job.JobReportLocation && (
+      {job && job.JobReportLocation && (
         <div className="page-table">
-          <Row style={{ borderBottom: "1px solid #eaeded" }}>
+          <Row className="header">
             <Col>
               <h2>Job Report</h2>
+            </Col>
+            <Col className="buttons-right" md="auto">
+              {!reportShown && (
+                <Button
+                  className="aws-button action-button"
+                  onClick={openReport}
+                >
+                  Open Report
+                </Button>
+              )}
+              <Button
+                className="aws-button action-button"
+                onClick={downloadReport}
+              >
+                Download Report
+              </Button>
+              <a
+                href={`data:text/json;charset=utf-8,${encodeURIComponent(
+                  JSON.stringify(report)
+                )}`}
+                id="download-report-link"
+                className="hide"
+                download={`${job.JobId}.json`}
+              >
+                Download link
+              </a>
             </Col>
           </Row>
           <div className="details content">
             <DetailsBox label="Report Location" fullWidth>
-              <a
-                href={`https://s3.console.aws.amazon.com/s3/object/${job.JobReportLocation.replace(
-                  "s3://",
-                  ""
-                )}?region=${region}&tab=overview`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {job.JobReportLocation}
-              </a>
-              <Icon type="new-window" />
+              {job.JobReportLocation}
             </DetailsBox>
-            {report && (
-              <ReactJson
-                displayDataTypes={false}
-                indentWidth={2}
-                name={false}
-                src={report}
-                style={{ fontSize: "12px" }}
-              />
+            {formState === "loading-report" && (
+              <Spinner animation="border" role="status" className="spinner" />
+            )}
+            {report && reportShown && (
+              <DetailsBox fullWidth className="json-visualiser">
+                <ReactJson
+                  displayDataTypes={false}
+                  indentWidth={2}
+                  name={false}
+                  src={report}
+                />
+              </DetailsBox>
             )}
           </div>
         </div>
