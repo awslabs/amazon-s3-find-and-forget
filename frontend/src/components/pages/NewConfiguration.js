@@ -245,6 +245,7 @@ export default ({ gateway, goToDataMappers }) => {
                 {columnsForSelectedTable.map((c, index) => (
                   <Form.Check
                     type="checkbox"
+                    id={`cb-${index}`}
                     key={index}
                     name="column"
                     label={c}
