@@ -31,6 +31,13 @@ def test_it_rejects_invalid_add_to_queue(api_client, queue_base_endpoint, stack)
     assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
 
 
+def test_it_rejects_duplicate_add_to_queue(api_client, queue_base_endpoint, del_queue_factory, stack):
+    del_queue_item = del_queue_factory()
+    response = api_client.patch(queue_base_endpoint, json={"MatchId": del_queue_item["MatchId"]})
+    assert 400 == response.status_code
+    assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
+
+
 def test_it_gets_queue(api_client, queue_base_endpoint, del_queue_factory, stack):
     # Arrange
     del_queue_item = del_queue_factory()
@@ -79,7 +86,6 @@ def test_it_processes_queue(api_client, queue_base_endpoint, sf_client, job_tabl
     response_body = response.json()
     job_id = response_body["JobId"]
     execution_arn = "{}:{}".format(stack["StateMachineArn"].replace("stateMachine", "execution"), job_id)
-
     try:
         # Assert
         assert 202 == response.status_code

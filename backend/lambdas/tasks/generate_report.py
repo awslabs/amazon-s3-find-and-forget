@@ -4,6 +4,7 @@ Task for generating final report
 import datetime
 import json
 import os
+import sys
 from collections import defaultdict
 
 import boto3
@@ -52,6 +53,7 @@ def handler(event, context):
     report_data.update(get_aggregated_query_stats(report_data))
     report_data.update(get_aggregated_object_stats(report_data))
     report_data["JobStatus"] = get_status(report_data)
+    report_data = normalise_dates(report_data)
     # Summarise
     bucket = event["Bucket"]
     report_location = write_log(bucket, job_id, report_data)
@@ -125,3 +127,20 @@ def get_job_logs(job_id):
         if not resp.get('nextToken'):
             break
         kwargs['nextToken'] = resp['nextToken']
+
+
+def normalise_dates(data):
+    if isinstance(data, str):
+        try:
+            return convert_iso8601_to_epoch(data)
+        except ValueError:
+            return data
+    elif isinstance(data, list):
+        return [normalise_dates(i) for i in data]
+    elif isinstance(data, dict):
+        return {k: normalise_dates(v) for k, v in data.items()}
+    return data
+
+
+def convert_iso8601_to_epoch(iso_time: str):
+    return round(datetime.datetime.strptime(iso_time, "%Y-%m-%dT%H:%M:%S.%fZ").timestamp())
