@@ -4,6 +4,16 @@ import { retryWrapper } from "./retryWrapper";
 const settings = window.s3f2Settings || {};
 const region = settings.region || "eu-west-1";
 
+const EMPTY_BODY_SHA256 =
+  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+
+const getRegionalConfig = serviceName => ({
+  name: serviceName,
+  endpoint: `https://${serviceName}.${region}.amazonaws.com`,
+  region,
+  service: serviceName
+});
+
 Amplify.configure({
   Auth: {
     identityPoolId: settings.cognitoIdentityPool,
@@ -24,40 +34,20 @@ Amplify.configure({
           return { Authorization: `Bearer ${token}` };
         }
       },
-      {
-        name: "glue",
-        endpoint: `https://glue.${region}.amazonaws.com`,
-        region,
-        service: "glue"
-      },
-      {
-        name: "s3",
-        endpoint: `https://s3.${region}.amazonaws.com`,
-        region,
-        service: "s3"
-      },
-      {
-        name: "sts",
-        endpoint: `https://sts.${region}.amazonaws.com`,
-        region,
-        service: "sts"
-      }
+      getRegionalConfig("glue"),
+      getRegionalConfig("s3"),
+      getRegionalConfig("sts")
     ]
   }
 });
 
 const apiWrapper = (api, endpoint, options) => {
   const { data, headers, method } = options;
-  return retryWrapper(() =>
-    API[method || "get"](api, endpoint, {
-      body: data || {},
-      headers: Object.assign(
-        {},
-        { "Content-Type": "application/json" },
-        headers || {}
-      )
-    })
-  );
+  const reqOptions = {
+    headers: headers || { "Content-Type": "application/json" }
+  };
+  if (data) reqOptions.body = data;
+  return retryWrapper(() => API[method || "get"](api, endpoint, reqOptions));
 };
 
 export const apiGateway = (endpoint, options = {}) =>
@@ -74,13 +64,9 @@ export const glueGateway = (endpointName, data) =>
   });
 
 export const s3Gateway = endpoint =>
-  apiWrapper("s3", endpoint, { headers: { "X-Amz-Content-Sha256": 0 } });
-
-export const stsGateway = (endpoint, data) =>
-  apiWrapper("sts", endpoint, {
-    data,
-    headers: {
-      "Content-Type": "application/json"
-    },
-    method: "post"
+  apiWrapper("s3", endpoint, {
+    headers: { "X-Amz-Content-Sha256": EMPTY_BODY_SHA256 }
   });
+
+export const stsGateway = endpoint =>
+  apiWrapper("sts", endpoint, { method: "post" });
