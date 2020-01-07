@@ -96,6 +96,7 @@ Resources:
       TemplateURL: ./auth.yaml
       Parameters:
         AdminEmail: !Ref AdminEmail
+        ReportsBucket: !GetAtt StateMachineStack.Outputs.ResultBucket
         ResourcePrefix: !Ref ResourcePrefix
   DDBStack:
     Type: AWS::CloudFormation::Stack

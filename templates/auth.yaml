@@ -7,6 +7,8 @@ Parameters:
     Type: String
   ResourcePrefix:
     Type: String
+  ReportsBucket:
+    Type: String
 
 Resources:
   CognitoIdentityPool:
@@ -86,6 +88,10 @@ Resources:
                   - glue:Get*
                   - sts:GetCallerIdentity
                 Resource: "*"
+              - Effect: Allow
+                Action: s3:GetObject
+                Resource: 
+                  - !Sub arn:aws:s3:::${ReportsBucket}/reports/*
 
 Outputs:
   CognitoIdentityPoolId:

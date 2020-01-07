@@ -787,6 +787,13 @@ Resources:
           Prefix: queries
           Status: Enabled
           ExpirationInDays: '1'
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders: ["*"]
+            AllowedMethods: [GET]
+            AllowedOrigins: ["*"]
+            Id: !Sub ${StateMachinePrefix}CorsRule
+            MaxAge: 3600
 
   QueryQueue:
     Type: AWS::SQS::Queue

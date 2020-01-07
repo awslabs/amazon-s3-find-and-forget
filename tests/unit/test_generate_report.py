@@ -36,6 +36,7 @@ def test_it_generates_reports(mock_get_status, mock_query_stats, mock_object_sta
         {"message": json.dumps({"EventName": "QuerySucceeded", "EventData": query_stub()})},
         {"message": json.dumps({"EventName": "ObjectUpdated", "EventData": object_update_stub()})},
     ]
+    mock_write_log.return_value = "s3://some_bucket/reports/123.json"
     resp = handler({
         "Bucket": "some_bucket",
         "JobStartTime": "2019-12-05T13:38:02.858Z",
@@ -60,7 +61,8 @@ def test_it_generates_reports(mock_get_status, mock_query_stats, mock_object_sta
         "TotalQueryScannedInBytes": 1000,
         "TotalQueryCount": 10,
         "TotalQueryFailedCount": 0,
-        "JobStatus": "COMPLETED"
+        "JobStatus": "COMPLETED",
+        "JobReportLocation": "s3://some_bucket/reports/123.json"
     } == resp
 
 
@@ -68,11 +70,12 @@ def test_it_generates_reports(mock_get_status, mock_query_stats, mock_object_sta
 def test_it_writes_log_to_s3(mock_s3):
     mock_object = mock.MagicMock()
     mock_s3.Object.return_value = mock_object
-    expected = report_stub(JobId="123")
-    write_log("test_bucket", "123", expected)
+    expected = report_stub(JobId="1234")
+    report_location = write_log("test_bucket", "1234", expected)
     assert 1 == mock_s3.Object.call_count
     report = json.loads(mock_object.put.call_args_list[0][1]["Body"])
     assert expected == report
+    assert report_location == "s3://test_bucket/reports/1234.json"
 
 
 @patch("backend.lambdas.tasks.generate_report.table")

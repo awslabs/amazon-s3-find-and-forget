@@ -54,10 +54,11 @@ def handler(event, context):
     report_data["JobStatus"] = get_status(report_data)
     # Summarise
     bucket = event["Bucket"]
-    write_log(bucket, job_id, report_data)
+    report_location = write_log(bucket, job_id, report_data)
     summary_report = {
         k: v for k, v in report_data.items() if k in summary_report_keys
     }
+    summary_report["JobReportLocation"] = report_location
     write_summary(summary_report)
     return summary_report
 
@@ -69,6 +70,7 @@ def write_summary(report):
 def write_log(bucket, job_id, report_data):
     detailed_report_key = "reports/{}.json".format(job_id)
     s3.Object(bucket, detailed_report_key).put(Body=json.dumps(report_data))
+    return "s3://{}/{}".format(bucket, detailed_report_key)
 
 
 def get_aggregated_query_stats(report):

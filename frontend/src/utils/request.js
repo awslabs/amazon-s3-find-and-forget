@@ -31,6 +31,12 @@ Amplify.configure({
         service: "glue"
       },
       {
+        name: "s3",
+        endpoint: `https://s3.${region}.amazonaws.com`,
+        region,
+        service: "s3"
+      },
+      {
         name: "sts",
         endpoint: `https://sts.${region}.amazonaws.com`,
         region,
@@ -67,8 +73,11 @@ export const glueGateway = (endpointName, data) =>
     method: "post"
   });
 
+export const s3Gateway = endpoint =>
+  apiWrapper("s3", endpoint, { headers: { "X-Amz-Content-Sha256": 0 } });
+
 export const stsGateway = (endpoint, data) =>
-  apiWrapper("sts", `${endpoint}`, {
+  apiWrapper("sts", endpoint, {
     data,
     headers: {
       "Content-Type": "application/json"

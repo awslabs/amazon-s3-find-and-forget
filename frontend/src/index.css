@@ -184,6 +184,7 @@ li {
   border-top: 1px solid #eaeded;
   border-radius: 0;
   border-bottom: 1px solid #8b969a;
+  margin-bottom: 20px;
 }
 
 .page-table thead {
@@ -288,7 +289,6 @@ li {
 
 .form-container {
   max-width: 800px;
-  margin-bottom: 20px;
 }
 
 #layout .form-container h2 {
@@ -471,4 +471,13 @@ form .form-check-label {
 
 .details-box.with-border-bottom {
   border-bottom: 1px solid #eaeded;
+}
+
+.details-box.w100 {
+  width: 100%;
+}
+
+.details-box a {
+  padding-left: 0;
+  padding-right: 4px;
 }

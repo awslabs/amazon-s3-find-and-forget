@@ -195,7 +195,7 @@ export default ({ gateway, goToDeletionQueue }) => {
               Cancel
             </Button>
             <Button className="aws-button" onClick={submitForm}>
-              Create Data Mapper
+              Add Item to the Deletion Queue
             </Button>
           </div>
         </>

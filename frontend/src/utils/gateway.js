@@ -1,4 +1,4 @@
-import { apiGateway, glueGateway, stsGateway } from "./request";
+import { apiGateway, glueGateway, s3Gateway, stsGateway } from "./request";
 
 export default {
   deleteDataMapper(id) {
@@ -82,6 +82,10 @@ export default {
       else break;
     }
     return { Jobs: allJobs };
+  },
+
+  getObject(s3Path) {
+    return s3Gateway(s3Path.replace("s3:/", ""));
   },
 
   getQueue() {
