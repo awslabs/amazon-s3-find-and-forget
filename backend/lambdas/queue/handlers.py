@@ -9,6 +9,7 @@ import uuid
 
 import boto3
 from aws_xray_sdk.core import xray_recorder
+from boto3.dynamodb.conditions import Attr
 
 from decorators import with_logger, request_validator, catch_errors, load_schema, add_cors_headers
 
@@ -32,7 +33,7 @@ def enqueue_handler(event, context):
         "MatchId": match_id,
         "DataMappers": data_mappers,
     }
-    deletion_queue_table.put_item(Item=item)
+    deletion_queue_table.put_item(Item=item, ConditionExpression=Attr("MatchId").not_exists())
 
     return {
         "statusCode": 201,
