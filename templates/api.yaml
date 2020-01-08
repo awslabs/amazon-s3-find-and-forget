@@ -158,9 +158,16 @@ Resources:
       Policies:
       - Statement:
         - Action:
-            - "glue:Get*"
+            - "glue:BatchGetPartition"
+            - "glue:GetDatabase*"
+            - "glue:GetPartition*"
+            - "glue:GetTable*"
           Effect: "Allow"
-          Resource: "*"
+          Resource:
+            - !Sub "arn:${AWS::Partition}:glue:*:*:catalog*"
+            - !Sub "arn:${AWS::Partition}:glue:*:*:database*"
+            - !Sub "arn:${AWS::Partition}:glue:*:*:table*"
+            - !Sub "arn:${AWS::Partition}:glue:*:*:partition*"
       - DynamoDBCrudPolicy:
           TableName: !Ref DataMapperTableName
   GetDataMappers:
