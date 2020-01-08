@@ -118,7 +118,7 @@ Resources:
         Get:
           Type: Api
           Properties:
-            Path: /queue/matches/{match_id}
+            Path: /queue/matches
             Method: delete
       Policies:
         - DynamoDBCrudPolicy:

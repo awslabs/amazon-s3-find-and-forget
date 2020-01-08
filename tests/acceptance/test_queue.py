@@ -56,7 +56,7 @@ def test_it_cancels_deletion(api_client, del_queue_factory, queue_base_endpoint,
     del_queue_item = del_queue_factory()
     key = del_queue_item["MatchId"]
     # Act
-    response = api_client.delete("{}/matches/{}".format(queue_base_endpoint, key))
+    response = api_client.delete("{}/matches".format(queue_base_endpoint), json={"MatchIds": [key]})
     # Assert
     assert 204 == response.status_code
     # Check the item doesn't exist in the DDB Table
@@ -70,7 +70,7 @@ def test_it_handles_not_found(api_client, del_queue_factory, queue_base_endpoint
     del_queue_item = del_queue_factory()
     key = del_queue_item["MatchId"]
     # Act
-    response = api_client.delete("{}/matches/{}".format(queue_base_endpoint, key))
+    response = api_client.delete("{}/matches".format(queue_base_endpoint), json={"MatchIds": [key]})
     # Assert
     assert 204 == response.status_code
     # Check the item doesn't exist in the DDB Table

@@ -27,7 +27,7 @@ export default ({ gateway, onPageChange }) => {
     setDeleting(false);
     setFormState("initial");
     try {
-      await gateway.deleteQueueMatch(queue[selectedRow].MatchId);
+      await gateway.deleteQueueMatches([queue[selectedRow].MatchId]);
       refreshQueue();
     } catch (e) {
       setFormState("error");

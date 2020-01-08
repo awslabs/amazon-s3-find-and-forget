@@ -56,9 +56,9 @@ def test_it_provides_default_data_mappers(table):
 @patch("backend.lambdas.queue.handlers.deletion_queue_table")
 def test_it_cancels_deletions(table):
     response = handlers.cancel_handler({
-        "pathParameters": {
-            "match_id": "test",
-        }
+        "body": json.dumps({
+            "MatchIds": ["test"],
+        })
     }, SimpleNamespace())
     assert {
         "statusCode": 204,

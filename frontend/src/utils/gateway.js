@@ -5,8 +5,13 @@ export default {
     return apiGateway(`data_mappers/${id}`, { method: "del" });
   },
 
-  deleteQueueMatch(id) {
-    return apiGateway(`queue/matches/${id}`, { method: "del" });
+  deleteQueueMatches(ids) {
+    return apiGateway(`queue/matches`, {
+      method: "del",
+      data: {
+        MatchIds: ids
+      }
+    })
   },
 
   enqueue(id, dataMappers) {

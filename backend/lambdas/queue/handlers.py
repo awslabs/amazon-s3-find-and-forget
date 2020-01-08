@@ -57,13 +57,16 @@ def get_handler(event, context):
 @with_logger
 @xray_recorder.capture('CancelDeletionHandler')
 @add_cors_headers
-@request_validator(load_schema("cancel_handler"), "pathParameters")
+@request_validator(load_schema("cancel_handler"), "body")
 @catch_errors
 def cancel_handler(event, context):
-    match_id = event["pathParameters"]["match_id"]
-    deletion_queue_table.delete_item(Key={
-        "MatchId": match_id
-    })
+    body = json.loads(event["body"])
+    match_ids = body["MatchIds"]
+    with deletion_queue_table.batch_writer() as batch:
+        for match_id in match_ids:
+            batch.delete_item(Key={
+                "MatchId": match_id
+            })
 
     return {
         "statusCode": 204
