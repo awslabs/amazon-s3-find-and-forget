@@ -5,7 +5,7 @@ import Alert from "../Alert";
 import BucketPolicyModal from "../BucketPolicyModal";
 import Icon from "../Icon";
 
-import { formatErrorMessage, sortBy } from "../../utils";
+import { formatErrorMessage, isUndefined, sortBy } from "../../utils";
 import { bucketMapper } from "../../utils/glueSerializer";
 
 export default ({ gateway, onPageChange }) => {
@@ -19,7 +19,7 @@ export default ({ gateway, onPageChange }) => {
   const [selectedRow, selectRow] = useState(undefined);
   const [showingBucketPolicy, showBucketPolicy] = useState(false);
 
-  const noSelected = typeof selectedRow === "undefined";
+  const noSelected = isUndefined(selectedRow);
 
   const getBucket = row => {
     const selectedDataMapper = dataMappers[row];

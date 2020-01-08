@@ -4,7 +4,7 @@ import { Button, Col, Form, Modal, Row, Spinner, Table } from "react-bootstrap";
 import Alert from "../Alert";
 import Icon from "../Icon";
 
-import { formatErrorMessage, sortBy } from "../../utils";
+import { formatErrorMessage, isUndefined, sortBy } from "../../utils";
 
 export default ({ gateway, onPageChange }) => {
   const [deleting, setDeleting] = useState(false);
@@ -14,7 +14,7 @@ export default ({ gateway, onPageChange }) => {
   const [renderTableCount, setRenderTableCount] = useState(0);
   const [selectedRow, selectRow] = useState(undefined);
 
-  const noSelected = typeof selectedRow === "undefined";
+  const noSelected = isUndefined(selectedRow);
 
   const refreshQueue = () => {
     selectRow(undefined);

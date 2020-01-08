@@ -4,6 +4,8 @@ import { Button } from "react-bootstrap";
 import Icon from "./Icon";
 import "./AppLayout.css";
 
+import { isUndefined } from "../utils";
+
 export default ({ currentPage, onMenuClick, pages }) => {
   const [leftOpen, setLeftOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(false);
@@ -24,7 +26,8 @@ export default ({ currentPage, onMenuClick, pages }) => {
               .filter(p => !p.parent)
               .map((page, index) => {
                 const classes = ["menu"];
-                const selected = index === currentPage || index === pages[currentPage].parent;
+                const selected =
+                  index === currentPage || index === pages[currentPage].parent;
                 if (selected) classes.push("selected");
                 return (
                   <Button
@@ -46,7 +49,7 @@ export default ({ currentPage, onMenuClick, pages }) => {
             S3 Find &amp; Forget
           </Button>
           <Icon type="breadcrumb" />
-          {typeof pages[currentPage].parent !== "undefined" && (
+          {!isUndefined(pages[currentPage].parent) && (
             <>
               <Button
                 variant="link"
