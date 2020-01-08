@@ -221,3 +221,4 @@ def get_table_stub(s3_loc="s3://bucket/"):
             }
         }
     }
+
