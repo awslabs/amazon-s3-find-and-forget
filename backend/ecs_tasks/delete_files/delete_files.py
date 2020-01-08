@@ -37,9 +37,11 @@ def load_parquet(f, stats):
     return parquet_file
 
 
-def delete_from_dataframe(df, columns):
+def delete_from_dataframe(df, columns, stats):
+    original = len(df)
     for column in columns:
         df = df[~df[column["Column"]].isin(column["MatchIds"])]
+    stats["DeletedRows"] += abs(original - len(df))
     return pa.Table.from_pandas(df, preserve_index=False).replace_schema_metadata()
 
 
@@ -51,7 +53,7 @@ def delete_and_write(parquet_file, row_group, columns, writer, stats):
     if stats["ProcessedRows"] > 0:
         logger.info("Processing {} rows ({}/{} {}% completed)...".format(
             current_rows, stats["ProcessedRows"], stats["TotalRows"], int((stats["ProcessedRows"] * 100) / stats["TotalRows"])))
-    tab = delete_from_dataframe(df, columns)
+    tab = delete_from_dataframe(df, columns, stats)
     writer.write_table(tab)
     logger.info("wrote table")
 
@@ -120,7 +122,7 @@ def execute(message, receipt_handle):
     temp_dest = "/tmp/new.parquet"
     try:
         validate_message(message)
-        stats = {"ProcessedRows": 0}
+        stats = {"ProcessedRows": 0, "DeletedRows": 0}
         logger.info("Message received: {0}".format(message))
         body = json.loads(message)
         logger.info("Opening the file")
@@ -133,7 +135,10 @@ def execute(message, receipt_handle):
                 for i in range(parquet_file.num_row_groups):
                     cols = body["Columns"]
                     delete_and_write(parquet_file, i, cols, writer, stats)
-        save(s3, temp_dest, object_path)
+        if stats["DeletedRows"] > 0:
+            save(s3, temp_dest, object_path)
+        else:
+            logger.warning("The object {} was processed successfully but no rows required deletion".format(object_path))
         log_deletion(body, stats)
         return object_path
     except (KeyError, ArrowException) as e:

@@ -38,11 +38,44 @@ def test_happy_path_when_queue_not_empty(mock_s3, mock_log, mock_delete_and_writ
     parquet_file.num_row_groups = 1
     mock_load_parquet.return_value = parquet_file
 
+    def dw_side_effect(parquet_file, row_group, columns, writer, stats):
+        stats["DeletedRows"] = 1
+
+    mock_delete_and_write.side_effect = dw_side_effect
     execute(message_stub(), "receipt_handle")
     mock_s3.open.assert_called_with(object_path, "rb")
     mock_delete_and_write.assert_called_with(
         ANY, 0, [column], ANY, ANY)
     mock_s3.put.assert_called_with(tmp_file, object_path)
+    mock_remove.assert_called_with(tmp_file)
+
+
+@patch("os.path.exists", MagicMock(return_value=True))
+@patch("os.remove")
+@patch("backend.ecs_tasks.delete_files.delete_files.logger")
+@patch("backend.ecs_tasks.delete_files.delete_files.pq.ParquetWriter")
+@patch("backend.ecs_tasks.delete_files.delete_files.load_parquet")
+@patch("backend.ecs_tasks.delete_files.delete_files.delete_and_write")
+@patch("backend.ecs_tasks.delete_files.delete_files.log_deletion")
+@patch("backend.ecs_tasks.delete_files.delete_files.s3")
+@patch("backend.ecs_tasks.delete_files.delete_files.queue", MagicMock())
+@patch("backend.ecs_tasks.delete_files.delete_files.check_file_size", MagicMock())
+def test_warning_logged_for_no_deletions(
+        mock_s3, mock_log, mock_delete_and_write, mock_load_parquet, mock_pq_writer, mock_logger, mock_remove):
+    object_path = "s3://bucket/path/basic.parquet"
+    tmp_file = "/tmp/new.parquet"
+    column = {"Column": "customer_id",
+              "MatchIds": ["12345", "23456"]}
+    parquet_file = MagicMock()
+    parquet_file.num_row_groups = 1
+    mock_load_parquet.return_value = parquet_file
+
+    execute(message_stub(), "receipt_handle")
+    mock_s3.open.assert_called_with(object_path, "rb")
+    mock_delete_and_write.assert_called_with(
+        ANY, 0, [column], ANY, ANY)
+    mock_s3.put.assert_not_called()
+    mock_logger.warning.assert_called()
     mock_remove.assert_called_with(tmp_file)
 
 
@@ -52,7 +85,7 @@ def test_delete_correct_rows_from_dataframe(mock_pq_writer):
     mock_pq_writer.return_value = mock_writer
     column = {"Column": "customer_id",
               "MatchIds": ["12345", "23456"]}
-    stats = {"ProcessedRows": 0, "TotalRows": 3}
+    stats = {"ProcessedRows": 0, "TotalRows": 3, "DeletedRows": 0}
     with open("./tests/acceptance/data/basic.parquet", "rb") as f:
         parquet_file = pq.ParquetFile(f, memory_map=False)
         delete_and_write(parquet_file, 0, [column], mock_writer, stats)
