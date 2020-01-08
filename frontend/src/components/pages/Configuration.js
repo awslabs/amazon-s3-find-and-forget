@@ -5,7 +5,7 @@ import Alert from "../Alert";
 import BucketPolicyModal from "../BucketPolicyModal";
 import Icon from "../Icon";
 
-import { formatErrorMessage, isUndefined, sortBy } from "../../utils";
+import { formatErrorMessage, isEmpty, isUndefined, sortBy } from "../../utils";
 import { bucketMapper } from "../../utils/glueSerializer";
 
 export default ({ gateway, onPageChange }) => {
@@ -203,7 +203,7 @@ export default ({ gateway, onPageChange }) => {
               ))}
           </tbody>
         </Table>
-        {dataMappers && dataMappers.length === 0 && formState !== "initial" && (
+        {isEmpty(dataMappers) && formState !== "initial" && (
           <div className="content centered">
             <b>No Data Mappers</b>
             <p>No Data Mappers to display</p>

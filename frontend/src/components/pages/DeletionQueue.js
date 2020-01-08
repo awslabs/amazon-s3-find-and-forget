@@ -4,7 +4,7 @@ import { Button, Col, Form, Modal, Row, Spinner, Table } from "react-bootstrap";
 import Alert from "../Alert";
 import Icon from "../Icon";
 
-import { formatErrorMessage, isUndefined, sortBy } from "../../utils";
+import { formatErrorMessage, isEmpty, isUndefined, sortBy } from "../../utils";
 
 export default ({ gateway, onPageChange }) => {
   const [deleting, setDeleting] = useState(false);
@@ -143,7 +143,7 @@ export default ({ gateway, onPageChange }) => {
               ))}
           </tbody>
         </Table>
-        {queue && queue.length === 0 && formState !== "initial" && (
+        {isEmpty(queue) && formState !== "initial" && (
           <div className="content centered">
             <b>The Deletion Queue is empty</b>
             <p>No items to display</p>

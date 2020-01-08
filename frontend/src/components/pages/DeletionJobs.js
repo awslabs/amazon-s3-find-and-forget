@@ -9,8 +9,9 @@ import TablePagination from "../TablePagination";
 import {
   formatDateTime,
   formatErrorMessage,
-  withDefault,
-  successJobClass
+  isEmpty,
+  successJobClass,
+  withDefault
 } from "../../utils";
 
 const PAGE_SIZE = 10;
@@ -120,7 +121,7 @@ export default ({ gateway, goToJobDetails }) => {
               )}
           </tbody>
         </Table>
-        {jobs && jobs.length === 0 && formState !== "initial" && (
+        {isEmpty(jobs) && formState !== "initial" && (
           <div className="content centered">
             <b>The Deletion Jobs list is empty</b>
             <p>No items to display</p>
