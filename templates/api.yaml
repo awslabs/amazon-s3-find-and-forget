@@ -25,7 +25,10 @@ Globals:
     Cors:
       AllowMethods: "'*'"
       AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-      AllowOrigin: "'*'"
+      AllowOrigin: !If
+        - DefaultAccessControlOrigin
+        - !Sub "'${WebUIOrigin}'"
+        - !Sub "'${AccessControlAllowOriginOverride}'"
     Auth:
       DefaultAuthorizer: CognitoAuthorizer
       Authorizers:
