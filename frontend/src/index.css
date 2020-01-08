@@ -132,6 +132,9 @@ li {
   margin: 25px;
   width: calc(100% - 50px);
   color: #16191f;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
 }
 
 .alert-content .alert-heading {
@@ -148,13 +151,11 @@ li {
 .alert-danger {
   border-color: #d13212;
   background-color: #fdf3f1;
-  float: left;
 }
 
 .alert-info {
   border-color: #0073bb;
   background-color: #f1faff;
-  float: left;
 }
 
 .alert-danger .icon,
@@ -163,16 +164,11 @@ li {
   height: 4rem;
   padding: 0.4rem 0;
   box-sizing: border-box;
-  float: left;
 }
 
 .alert svg {
   width: 62px;
   height: 62px;
-}
-
-.alert-content {
-  float: left;
 }
 
 .page-table {

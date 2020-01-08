@@ -1,12 +1,13 @@
 export const formatErrorMessage = e => {
-  let msg = e.toString() || "An error happened";
-  if (e.response) {
-    if (e.response.status) msg += ` (${e.response.status} status code)`;
-    if (e.response.data && e.response.data.Message)
-      msg += `: ${e.response.data.Message}`;
+  if (e && e.response) {
+    if (e.response.data && e.response.data.Message) {
+      return e.response.data.Message;
+    } else {
+      return `Unknown error (${e.response.status} status code)`
+    }
   }
 
-  return msg;
+  return e && e.toString() || "Unknown error";
 };
 
 export const isEmpty = x =>

@@ -45,13 +45,18 @@ def request_validator(request_schema, payload_key="body"):
             except KeyError as e:
                 logger.fatal("Invalid payload key: {}".format(str(e)))
                 return {
-                    "statusCode": 500
+                    "statusCode": 500,
+                    "body": json.dumps({
+                        "Message": "Invalid configuration: ".format(str(e)),
+                    })
                 }
             except jsonschema.ValidationError as exception:
                 logger.error("Invalid Request: {}".format(exception.message))
                 return {
                     "statusCode": 422,
-                    "body": exception.message,
+                    "body": json.dumps({
+                        "Message": "Invalid Request: {}".format(exception.message),
+                    })
                 }
 
             return handler(event, context)
@@ -73,20 +78,27 @@ def catch_errors(handler):
         except ClientError as e:
             logger.error("boto3 client error: {}".format(str(e)))
             return {
-                "statusCode": e.response['ResponseMetadata'].get('HTTPStatusCode', 400)
+                "statusCode": e.response['ResponseMetadata'].get('HTTPStatusCode', 400),
+                "body": json.dumps({
+                    "Message": "Client error: {}".format(str(e)),
+                })
             }
         except ValueError as e:
             logger.warning("Invalid request: {}".format(str(e)))
             return {
                 "statusCode": 400,
-                "body": str(e),
+                "body": json.dumps({
+                    "Message": "Invalid request: {}".format(str(e)),
+                })
             }
         except Exception as e:
             # Unknown error so avoid leaking any info
             logger.error("Error handling event: {}".format(str(e)))
             return {
                 "statusCode": 400,
-                "body": "Unable to process request",
+                "body": json.dumps({
+                    "Message": "Unable to process request: {}".format(str(e)),
+                })
             }
 
     return wrapper

@@ -1,4 +1,5 @@
 import {
+  formatErrorMessage,
   formatDateTime,
   formatFileSize,
   isEmpty,
@@ -94,3 +95,19 @@ test("withDefault", () => {
   expect(withDefault(undefined)).toEqual("-");
   expect(withDefault("")).toEqual("-");
 });
+
+test("formatErrorMessage", () => {
+    expect(formatErrorMessage()).toEqual("Unknown error")
+    expect(formatErrorMessage("Error message!")).toEqual("Error message!")
+    expect(formatErrorMessage({
+      response: {
+        status: 400
+      }
+    })).toEqual("Unknown error (400 status code)")
+    expect(formatErrorMessage({
+      response: {
+        status: 422,
+        data: { Message: "Error from API"}
+      }
+    })).toEqual("Error from API")
+})

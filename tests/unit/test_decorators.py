@@ -34,6 +34,7 @@ def test_it_validates_dict_keys():
     }, SimpleNamespace())
 
     assert 422 == resp["statusCode"]
+    assert "Message" in json.loads(resp["body"])
 
 
 def test_it_validates_str_keys():
@@ -48,6 +49,7 @@ def test_it_validates_str_keys():
     }, SimpleNamespace())
 
     assert 422 == resp["statusCode"]
+    assert "Message" in json.loads(resp["body"])
 
 
 def test_it_defaults_to_body_key():
@@ -62,6 +64,7 @@ def test_it_defaults_to_body_key():
     }, SimpleNamespace())
 
     assert 422 == resp["statusCode"]
+    assert "Message" in json.loads(resp["body"])
 
 
 def test_it_returns_fatal_error_on_misconfiguration():
@@ -72,6 +75,7 @@ def test_it_returns_fatal_error_on_misconfiguration():
     resp = dummy_handler({}, SimpleNamespace())
 
     assert 500 == resp["statusCode"]
+    assert "Message" in json.loads(resp["body"])
 
 
 def test_it_allows_valid_schemas():
@@ -95,6 +99,7 @@ def test_it_catches_client_errors():
 
     resp = dummy_handler({}, SimpleNamespace())
     assert 404 == resp["statusCode"]
+    assert "Message" in json.loads(resp["body"])
 
 
 def test_it_catches_returnable_errors():
@@ -105,7 +110,9 @@ def test_it_catches_returnable_errors():
 
     resp = dummy_handler({}, SimpleNamespace())
     assert 400 == resp["statusCode"]
-    assert expected_msg == resp["body"]
+    body = json.loads(resp["body"])
+    assert "Message" in body
+    assert "Invalid request: {}".format(expected_msg) == body["Message"]
 
 
 def test_it_catches_unhandled_errors():
@@ -115,6 +122,7 @@ def test_it_catches_unhandled_errors():
 
     resp = dummy_handler({}, SimpleNamespace())
     assert 400 == resp["statusCode"]
+    assert "Message" in json.loads(resp["body"])
 
 
 def test_it_wraps_with_logging():
