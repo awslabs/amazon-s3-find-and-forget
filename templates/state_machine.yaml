@@ -79,11 +79,22 @@ Resources:
           - Effect: Allow
             Action:
             - "lambda:InvokeFunction"
-            Resource: "*"
-          - Effect: Allow
-            Action:
-            - "sqs:SendMessage"
-            Resource: "*"
+            Resource:
+            - !GetAtt OldestExecutionCheck.Arn
+            - !GetAtt ScanTable.Arn
+            - !GetAtt ParseStateMachineOutput.Arn
+            - !GetAtt CheckQueueSize.Arn
+            - !GetAtt ExecuteQuery.Arn
+            - !GetAtt CheckQueryStatus.Arn
+            - !GetAtt SubmitQueryResults.Arn
+            - !GetAtt GenerateQueries.Arn
+            - !GetAtt OrchestrateECSServiceScaling.Arn
+            - !GetAtt AggregateResults.Arn
+            - !GetAtt WorkQueryQueue.Arn
+            - !GetAtt DeleteQueueMessage.Arn
+            - !GetAtt PurgeQueue.Arn
+            - !GetAtt LogAuditEvent.Arn
+            - !GetAtt GenerateReport.Arn
           - Effect: Allow
             Action:
             - "dynamodb:Query"
@@ -92,8 +103,8 @@ Resources:
             - "dynamodb:DeleteItem"
             - "dynamodb:UpdateItem"
             Resource:
-              - !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${JobTableName}"
-              - !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DeletionQueueTableName}"
+            - !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${JobTableName}"
+            - !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DeletionQueueTableName}"
           - Effect: Allow
             Action:
             - "events:PutTargets"
@@ -102,10 +113,17 @@ Resources:
             Resource: "*"
           - Effect: Allow
             Action:
-            - "states:StartExecution"
-            - "states:List*"
-            - "states:Describe*"
+            - "states:DescribeExecution"
+            - "states:DescribeStateMachine"
+            - "states:DescribeStateMachineForExecution"
+            - "states:ListStateMachines"
+            - "states:ListExecutions"
             Resource: "*"
+          - Effect: Allow
+            Action:
+            - "states:StartExecution"
+            Resource:
+            - !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${StateMachinePrefix}*"
 
   AthenaStateMachine:
     Type: AWS::StepFunctions::StateMachine
@@ -843,7 +861,11 @@ Resources:
         - Action:
           - "sqs:GetQueueAttributes"
           Effect: "Allow"
-          Resource: "*"
+          Resource:
+          - !GetAtt QueryQueue.Arn
+          - !Sub
+            - arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${QueueName}
+            - QueueName: !Select [4, !Split ["/", !Ref DeleteQueueUrl]]
 
   ExecuteQuery:
     Type: AWS::Serverless::Function
@@ -858,19 +880,20 @@ Resources:
           BucketName: !Ref ResultBucket
       - Statement:
         - Action:
-          - "athena:StartQueryExecution"
-          - "glue:GetDatabase"
-          - "glue:GetTable"
+          - "glue:BatchGetPartition"
+          - "glue:GetDatabase*"
           - "glue:GetPartition*"
+          - "glue:GetTable*"
           Effect: "Allow"
-          Resource: "*"
-        # TODO: Remove for publishing
+          Resource:
+          - !Sub "arn:${AWS::Partition}:glue:*:*:catalog*"
+          - !Sub "arn:${AWS::Partition}:glue:*:*:database*"
+          - !Sub "arn:${AWS::Partition}:glue:*:*:table*"
+          - !Sub "arn:${AWS::Partition}:glue:*:*:partition*"
         - Action:
-          - "s3:PutObject"
-          - "s3:Get*"
-          - "s3:List*"
+          - "athena:StartQueryExecution"
           Effect: "Allow"
-          Resource: "*"
+          Resource: !Sub "arn:${AWS::Partition}:athena:${AWS::Region}:${AWS::AccountId}:workgroup/${AthenaWorkGroup}"
 
   CheckQueryStatus:
     Type: AWS::Serverless::Function
@@ -882,7 +905,7 @@ Resources:
         - Action:
           - "athena:GetQueryExecution"
           Effect: "Allow"
-          Resource: "*"
+          Resource: !Sub "arn:${AWS::Partition}:athena:${AWS::Region}:${AWS::AccountId}:workgroup/${AthenaWorkGroup}"
 
   SubmitQueryResults:
     Type: AWS::Serverless::Function
@@ -899,12 +922,16 @@ Resources:
         - Action:
           - "athena:GetQueryResults"
           Effect: "Allow"
-          Resource: "*"
+          Resource: !Sub "arn:${AWS::Partition}:athena:${AWS::Region}:${AWS::AccountId}:workgroup/${AthenaWorkGroup}"
         - Action:
           - "sqs:SendMessage"
           - "sqs:GetQueueAttributes"
           Effect: "Allow"
-          Resource: "*"
+          Resource:
+          - !GetAtt QueryQueue.Arn
+          - !Sub
+            - arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${QueueName}
+            - QueueName: !Select [4, !Split ["/", !Ref DeleteQueueUrl]]
 
   GenerateQueries:
     Type: AWS::Serverless::Function
@@ -916,17 +943,23 @@ Resources:
           QueryQueue: !Ref QueryQueue
       Policies:
       - Statement:
-        - Effect: "Allow"
-          Action:
-          - "glue:GetDatabase"
-          - "glue:GetTable*"
+        - Action:
+          - "glue:BatchGetPartition"
+          - "glue:GetDatabase*"
           - "glue:GetPartition*"
-          Resource: "*"
+          - "glue:GetTable*"
+          Effect: "Allow"
+          Resource:
+          - !Sub "arn:${AWS::Partition}:glue:*:*:catalog*"
+          - !Sub "arn:${AWS::Partition}:glue:*:*:database*"
+          - !Sub "arn:${AWS::Partition}:glue:*:*:table*"
+          - !Sub "arn:${AWS::Partition}:glue:*:*:partition*"
         - Effect: Allow
           Action:
           - "sqs:SendMessage*"
           - "sqs:GetQueueAttributes"
-          Resource: "*"
+          Resource:
+          - !GetAtt QueryQueue.Arn
 
   OrchestrateECSServiceScaling:
     Type: AWS::Serverless::Function
@@ -938,7 +971,7 @@ Resources:
         - Action:
           - "ecs:UpdateService"
           Effect: "Allow"
-          Resource: "*"
+          Resource: !Sub "arn:${AWS::Partition}:ecs:${AWS::Region}:${AWS::AccountId}:service/${ECSCluster}/${DeleteServiceName}"
 
   AggregateResults:
     Type: AWS::Serverless::Function
@@ -954,29 +987,32 @@ Resources:
       Environment:
         Variables:
           AthenaConcurrencyLimit: !Ref AthenaConcurrencyLimit
-          StateMachineArn: !Ref AthenaStateMachine
+          StateMachineArn: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${StateMachinePrefix}-AthenaStateMachine"
           QueueUrl: !Ref QueryQueue
           WaitDuration: 15
       Policies:
       - Statement:
         - Action:
-            - "sqs:ReceiveMessage*"
-            - "sqs:ChangeMessageVisibility"
-            - "sqs:PurgeQueue"
-            - "sqs:DeleteMessage"
-            - "sqs:GetQueueAttributes"
-            - "states:DescribeExecution"
+          - "states:StartExecution"
+          - "states:DescribeExecution"
+          Effect: Allow
+          Resource:
+          - !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${StateMachinePrefix}-AthenaStateMachine"
+          - !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:execution:${StateMachinePrefix}-AthenaStateMachine:*"
+        - Action:
+          - "sqs:ReceiveMessage*"
+          - "sqs:ChangeMessageVisibility"
+          - "sqs:PurgeQueue"
+          - "sqs:DeleteMessage"
+          - "sqs:GetQueueAttributes"
           Effect: "Allow"
-          Resource: "*"
-        - Effect: Allow
-          Action:
-            - "states:StartExecution"
-          Resource: !Ref AthenaStateMachine
+          Resource:
+          - !GetAtt QueryQueue.Arn
         - Action:
           - "logs:Describe*"
           - "logs:Filter*"
           Effect: "Allow"
-          Resource: "*"
+          Resource: !Sub "arn:${AWS::Partition}:logs:*:*:*"
 
   DeleteQueueMessage:
     Type: AWS::Serverless::Function
@@ -989,10 +1025,10 @@ Resources:
       Policies:
       - Statement:
         - Action:
-            - "sqs:DeleteMessage"
-            - "sqs:GetQueueAttributes"
+          - "sqs:DeleteMessage"
+          - "sqs:GetQueueAttributes"
           Effect: "Allow"
-          Resource: "*"
+          Resource: !GetAtt QueryQueue.Arn
 
   PurgeQueue:
     Type: AWS::Serverless::Function
@@ -1002,10 +1038,14 @@ Resources:
       Policies:
       - Statement:
         - Action:
-            - "sqs:PurgeQueue"
-            - "sqs:GetQueueAttributes"
+          - "sqs:PurgeQueue"
+          - "sqs:GetQueueAttributes"
           Effect: "Allow"
-          Resource: "*"
+          Resource:
+          - !GetAtt QueryQueue.Arn
+          - !Sub
+            - arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${QueueName}
+            - QueueName: !Select [4, !Split ["/", !Ref DeleteQueueUrl]]
 
   LogAuditEvent:
     Type: AWS::Serverless::Function
@@ -1019,7 +1059,7 @@ Resources:
             - "logs:DescribeLogStreams"
             - "logs:PutLogEvents"
           Effect: "Allow"
-          Resource: "*"
+          Resource: !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/s3f2*"
 
   GenerateReport:
     Type: AWS::Serverless::Function
@@ -1036,12 +1076,17 @@ Resources:
           TableName: !Ref JobTableName
       - Statement:
         - Action:
-          - "logs:Describe*"
-          - "logs:Filter*"
-          - "logs:Get*"
-          - "logs:List*"
+          - "logs:DescribeLogGroups"
+          - "logs:DescribeLogStreams"
+          - "logs:DescribeQueries"
+          - "logs:FilterLogEvents"
+          - "logs:GetLogEvents"
+          - "logs:GetLogGroupFields"
+          - "logs:GetLogRecord"
+          - "logs:GetQueryResults"
+          - "logs:ListLogDeliveries"
           Effect: "Allow"
-          Resource: "*"
+          Resource: !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/s3f2*"
 
 Outputs:
   AthenaExecutionRole:
