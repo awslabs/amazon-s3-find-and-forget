@@ -55,8 +55,15 @@ Parameters:
     - INFO
     - DEBUG
     - NOTSET
+  ReportsAccessControlAllowOriginOverride:
+    Type: String
   StateMachinePrefix:
     Type: String
+  WebUIOrigin:
+    Type: String
+
+Conditions:
+  DefaultAccessControlOrigin: !Equals [!Ref ReportsAccessControlAllowOriginOverride, "false"]
 
 Resources:
   StatesExecutionRole:
@@ -809,7 +816,11 @@ Resources:
         CorsRules:
           - AllowedHeaders: ["*"]
             AllowedMethods: [GET]
-            AllowedOrigins: ["*"]
+            AllowedOrigins:
+              - !If
+                - DefaultAccessControlOrigin
+                - !Ref WebUIOrigin
+                - !Ref ReportsAccessControlAllowOriginOverride
             Id: !Sub ${StateMachinePrefix}CorsRule
             MaxAge: 3600
 

@@ -8,7 +8,7 @@ Parameters:
     Type: String
     AllowedPattern: ^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$
   ApiAccessControlAllowOriginOverride:
-    Description: Overrides the default Allow-Control-Allow-Origin setting. When "false" the only origin allowed is the Web UI url. This must be set to "*" if no restriction is required.
+    Description: Overrides the default Allow-Control-Allow-Origin setting for the API. When "false" the only origin allowed is the Web UI url. This must be set to "*" if no restriction is required.
     Type: String
     Default: "false"
   AthenaConcurrencyLimit:
@@ -54,6 +54,10 @@ Parameters:
     Description: Comma-delimited list of CIDR blocks for the private subnets
     Type: String
     Default: "10.0.0.0/22, 10.0.4.0/22, 10.0.8.0/22"
+  ReportsBucketAccessControlAllowOriginOverride:
+    Description: Overrides the default Allow-Control-Allow-Origin setting for the Reports Bucket. When "false" the only origin allowed is the Web UI url. This must be set to "*" if no restriction is required.
+    Type: String
+    Default: "false"
   ResourcePrefix:
     Description: The prefix used in DynamoDB table and state machine names
     Type: String
@@ -145,7 +149,9 @@ Resources:
         DeletionTasksMaxNumber: !Ref DeletionTasksMaxNumber
         ECSCluster: !GetAtt DelStack.Outputs.ECSCluster
         JobTableName: !GetAtt DDBStack.Outputs.JobTable
+        ReportsAccessControlAllowOriginOverride: !Ref ReportsBucketAccessControlAllowOriginOverride
         StateMachinePrefix: !Ref ResourcePrefix
+        WebUIOrigin: !GetAtt WebUIStack.Outputs.Origin
   VpcStack:
     Type: AWS::CloudFormation::Stack
     Properties:
