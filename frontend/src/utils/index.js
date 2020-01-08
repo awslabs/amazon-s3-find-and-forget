@@ -3,11 +3,11 @@ export const formatErrorMessage = e => {
     if (e.response.data && e.response.data.Message) {
       return e.response.data.Message;
     } else {
-      return `Unknown error (${e.response.status} status code)`
+      return `Unknown error (${e.response.status} status code)`;
     }
   }
 
-  return e && e.toString() || "Unknown error";
+  return e ? e.toString() : "Unknown error";
 };
 
 export const isEmpty = x =>
@@ -34,9 +34,7 @@ export const daysSinceDateTime = x => {
   return parseInt((now - from) / aDay, 10);
 };
 
-export const formatDateTime = x => {
-  return x ? new Date(x * 1000).toUTCString() : "-"
-};
+export const formatDateTime = x => (x ? new Date(x * 1000).toUTCString() : "-");
 
 export const formatFileSize = x => {
   const units = ["bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
@@ -67,3 +65,5 @@ export const successJobClass = status => {
       return "error";
   }
 };
+
+export const last = x => (x.length > 0 ? x[x.length - 1] : null);

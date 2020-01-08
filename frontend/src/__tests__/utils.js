@@ -5,6 +5,7 @@ import {
   isEmpty,
   isIdValid,
   isUndefined,
+  last,
   sortBy,
   withDefault
 } from "../utils";
@@ -56,9 +57,7 @@ test("sortBy", () => {
 });
 
 test("formatDateTime", () => {
-  expect(formatDateTime(1578405187)).toEqual(
-    "Tue, 07 Jan 2020 13:53:07 GMT"
-  );
+  expect(formatDateTime(1578405187)).toEqual("Tue, 07 Jan 2020 13:53:07 GMT");
 });
 
 test("formatDateTime undefined arg", () => {
@@ -96,18 +95,28 @@ test("withDefault", () => {
   expect(withDefault("")).toEqual("-");
 });
 
+test("last", () => {
+  expect(last([1, 2, 3])).toEqual(3);
+  expect(last([1])).toEqual(1);
+  expect(last([])).toEqual(null);
+});
+
 test("formatErrorMessage", () => {
-    expect(formatErrorMessage()).toEqual("Unknown error")
-    expect(formatErrorMessage("Error message!")).toEqual("Error message!")
-    expect(formatErrorMessage({
+  expect(formatErrorMessage()).toEqual("Unknown error");
+  expect(formatErrorMessage("Error message!")).toEqual("Error message!");
+  expect(
+    formatErrorMessage({
       response: {
         status: 400
       }
-    })).toEqual("Unknown error (400 status code)")
-    expect(formatErrorMessage({
+    })
+  ).toEqual("Unknown error (400 status code)");
+  expect(
+    formatErrorMessage({
       response: {
         status: 422,
-        data: { Message: "Error from API"}
+        data: { Message: "Error from API" }
       }
-    })).toEqual("Error from API")
-})
+    })
+  ).toEqual("Error from API");
+});

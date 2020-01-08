@@ -88,6 +88,25 @@ export default ({ type, size }) => {
       </SVGWrapper>
     );
 
+  if (type === "arrow-next")
+    return (
+      <SVGWrapper>
+        <path d="M4 1l7 7-7 7" stroke="#545b64" fill="none" strokeWidth="2px" />
+      </SVGWrapper>
+    );
+
+  if (type === "arrow-prev")
+    return (
+      <SVGWrapper>
+        <path
+          d="M12 1L5 8l7 7"
+          stroke="#545b64"
+          fill="none"
+          strokeWidth="2px"
+        />
+      </SVGWrapper>
+    );
+
   if (type === "breadcrumb")
     return (
       <SVGWrapper>

@@ -4,6 +4,7 @@ import { Button, Col, Form, Row, Spinner, Table } from "react-bootstrap";
 import Alert from "../Alert";
 import Icon from "../Icon";
 import StartDeletionJob from "../StartDeletionJob";
+import TablePagination from "../TablePagination";
 
 import {
   formatDateTime,
@@ -12,13 +13,17 @@ import {
   successJobClass
 } from "../../utils";
 
+const PAGE_SIZE = 10;
+
 export default ({ gateway, goToJobDetails }) => {
+  const [currentPage, setCurrentPage] = useState(0);
   const [errorDetails, setErrorDetails] = useState(undefined);
   const [formState, setFormState] = useState("initial");
   const [jobs, setJobs] = useState([]);
   const [renderTableCount, setRenderTableCount] = useState(0);
 
   const refreshJobs = () => setRenderTableCount(renderTableCount + 1);
+  const pages = Math.ceil(jobs.length / PAGE_SIZE);
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -34,6 +39,9 @@ export default ({ gateway, goToJobDetails }) => {
     };
     fetchJobs();
   }, [gateway, renderTableCount]);
+
+  const shouldShowItem = index =>
+    index >= PAGE_SIZE * currentPage && index < PAGE_SIZE * (currentPage + 1);
 
   return (
     <div className="page-table">
@@ -52,7 +60,12 @@ export default ({ gateway, goToJobDetails }) => {
           />
         </Col>
       </Row>
-
+      <Row className="pagination">
+        <Col></Col>
+        <Col className="buttons-right" md="auto">
+          <TablePagination onPageChange={setCurrentPage} pages={pages} />
+        </Col>
+      </Row>
       {formState === "initial" && (
         <Spinner animation="border" role="status" className="spinner" />
       )}
@@ -75,27 +88,36 @@ export default ({ gateway, goToJobDetails }) => {
           </thead>
           <tbody>
             {jobs &&
-              jobs.map((job, index) => (
-                <tr key={index}>
-                  <td></td>
-                  <td>
-                    <Button
-                      variant="link"
-                      style={{ paddingLeft: 0 }}
-                      onClick={() => goToJobDetails(job.JobId)}
-                    >
-                      {job.JobId}
-                    </Button>
-                  </td>
-                  <td className={`status-label ${successJobClass(job.JobStatus)}`}>
-                    <Icon type={`alert-${successJobClass(job.JobStatus)}`} />
-                    <span>{job.JobStatus}</span>
-                  </td>
-                  <td>{withDefault(job.TotalObjectUpdatedCount)}</td>
-                  <td>{formatDateTime(job.JobStartTime)}</td>
-                  <td>{formatDateTime(job.JobFinishTime)}</td>
-                </tr>
-              ))}
+              jobs.map(
+                (job, index) =>
+                  shouldShowItem(index) && (
+                    <tr key={index}>
+                      <td></td>
+                      <td>
+                        <Button
+                          variant="link"
+                          style={{ paddingLeft: 0 }}
+                          onClick={() => goToJobDetails(job.JobId)}
+                        >
+                          {job.JobId}
+                        </Button>
+                      </td>
+                      <td
+                        className={`status-label ${successJobClass(
+                          job.JobStatus
+                        )}`}
+                      >
+                        <Icon
+                          type={`alert-${successJobClass(job.JobStatus)}`}
+                        />
+                        <span>{job.JobStatus}</span>
+                      </td>
+                      <td>{withDefault(job.TotalObjectUpdatedCount)}</td>
+                      <td>{formatDateTime(job.JobStartTime)}</td>
+                      <td>{formatDateTime(job.JobFinishTime)}</td>
+                    </tr>
+                  )
+              )}
           </tbody>
         </Table>
         {jobs && jobs.length === 0 && formState !== "initial" && (

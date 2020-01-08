@@ -493,3 +493,18 @@ form .form-check-label {
 .refresh-counter {
   margin-left: 10px;
 }
+
+.pagination button {
+  color: #16191f;
+}
+
+.pagination button:active,
+.pagination button:focus,
+.pagination button:hover {
+  color: #16191f;
+  text-decoration: none !important;
+}
+
+.pagination .selected {
+  font-weight: bold;
+}
