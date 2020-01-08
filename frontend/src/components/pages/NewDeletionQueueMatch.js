@@ -165,7 +165,7 @@ export default ({ gateway, goToDeletionQueue }) => {
                 </div>
               )}
               {dataMappersMode === "select" && (
-                <Form.Group controlId="selectedDataMappers">
+                <Form.Group>
                   <Form.Label>Data Mappers</Form.Label>
                   <Form.Text className="text-muted">
                     Select all the Data Mappers that apply to the current match.
@@ -175,6 +175,7 @@ export default ({ gateway, goToDeletionQueue }) => {
                     <Form.Check
                       type="checkbox"
                       key={index}
+                      id={`cb-sdm-${index}`}
                       label={dataMapper.DataMapperId}
                       onChange={e => {
                         const id = dataMapper.DataMapperId;
