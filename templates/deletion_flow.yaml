@@ -153,14 +153,6 @@ Resources:
             - logs:PutLogEvents
             Effect: Allow
             Resource: "arn:aws:logs:*:*:*"
-          # TODO: Remove for publishing
-          - Action:
-              - s3:PutObject
-              - s3:Get*
-              - s3:HeadBucket
-              - s3:List*
-            Effect: Allow
-            Resource: "*"
 
   DeleteTaskLogGroup:
     Type: AWS::Logs::LogGroup
