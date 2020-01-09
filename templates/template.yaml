@@ -3,14 +3,14 @@ Transform: AWS::Serverless-2016-10-31
 Description: Amazon S3 Find and Forget (uksb-1q2j8beb0)
 
 Parameters:
+  AccessControlAllowOriginOverride:
+    Description: Overrides the default Allow-Control-Allow-Origin setting for the API and Reports Bucket. When "false" the only origin allowed is the Web UI url. This must be set to "*" if no restriction is required.
+    Type: String
+    Default: "false"
   AdminEmail:
     Description: Creates a username to be used for authentication. It needs to be an e-mail address.
     Type: String
     AllowedPattern: ^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$
-  ApiAccessControlAllowOriginOverride:
-    Description: Overrides the default Allow-Control-Allow-Origin setting for the API. When "false" the only origin allowed is the Web UI url. This must be set to "*" if no restriction is required.
-    Type: String
-    Default: "false"
   AthenaConcurrencyLimit:
     Description: How many Athena queries should be scheduled concurrently
     Type: Number
@@ -54,10 +54,6 @@ Parameters:
     Description: Comma-delimited list of CIDR blocks for the private subnets
     Type: String
     Default: "10.0.0.0/22, 10.0.4.0/22, 10.0.8.0/22"
-  ReportsBucketAccessControlAllowOriginOverride:
-    Description: Overrides the default Allow-Control-Allow-Origin setting for the Reports Bucket. When "false" the only origin allowed is the Web UI url. This must be set to "*" if no restriction is required.
-    Type: String
-    Default: "false"
   ResourcePrefix:
     Description: The prefix used in DynamoDB table and state machine names
     Type: String
@@ -79,7 +75,7 @@ Resources:
     Properties: 
       TemplateURL: ./api.yaml
       Parameters:
-        AccessControlAllowOriginOverride: !Ref ApiAccessControlAllowOriginOverride
+        AccessControlAllowOriginOverride: !Ref AccessControlAllowOriginOverride
         CognitoUserPoolArn: !GetAtt AuthStack.Outputs.CognitoUserPoolArn
         CommonLayers: !Join
           - ","
@@ -149,7 +145,7 @@ Resources:
         DeletionTasksMaxNumber: !Ref DeletionTasksMaxNumber
         ECSCluster: !GetAtt DelStack.Outputs.ECSCluster
         JobTableName: !GetAtt DDBStack.Outputs.JobTable
-        ReportsAccessControlAllowOriginOverride: !Ref ReportsBucketAccessControlAllowOriginOverride
+        ReportsAccessControlAllowOriginOverride: !Ref AccessControlAllowOriginOverride
         StateMachinePrefix: !Ref ResourcePrefix
         WebUIOrigin: !GetAtt WebUIStack.Outputs.Origin
   VpcStack:
