@@ -37,12 +37,11 @@ def read_queue(queue, number_to_read=10):
 def batch_sqs_msgs(queue, messages, **kwargs):
     chunks = [messages[x:x + batch_size] for x in range(0, len(messages), batch_size)]
     for chunk in chunks:
-        random_id = str(uuid.uuid4())
         entries = [
             {
                 'Id': str(uuid.uuid4()),
                 'MessageBody': json.dumps(m),
-                **({'MessageGroupId': random_id} if queue.attributes.get("FifoQueue", False) else {}),
+                **({'MessageGroupId': str(uuid.uuid4())} if queue.attributes.get("FifoQueue", False) else {}),
                 **kwargs,
             } for m in chunk
         ]
