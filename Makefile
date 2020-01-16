@@ -18,8 +18,8 @@ endif
 
 deploy:
 	make pre-deploy
-	# make deploy-containers
-	# make deploy-frontend
+	make deploy-containers
+	make deploy-frontend
 	make deploy-cfn
 	make setup-frontend-local-dev
 
