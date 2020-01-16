@@ -201,10 +201,10 @@ def test_it_gets_aggregated_object_update_stats():
 
 def test_it_normalises_date_like_fields():
     assert {
-        "a": [{"a": 1578327177, "b": "string"}],
-        "b": [1578327177],
-        "c": {"a": 1578327177},
-        "d": 1578327177,
+        "a": [{"a": 1578348777, "b": "string"}],
+        "b": [1578348777],
+        "c": {"a": 1578348777},
+        "d": 1578348777,
         "e": "string",
         "f": 2,
     } == normalise_dates({
@@ -218,7 +218,7 @@ def test_it_normalises_date_like_fields():
 
 
 def test_it_converts_sfn_datetimes_to_epoch():
-    assert 1578327177 == convert_iso8601_to_epoch("2020-01-06T16:12:57.092Z")
+    assert 1578348777 == convert_iso8601_to_epoch("2020-01-06T16:12:57.092Z")
 
 
 def query_stub(**kwargs):
