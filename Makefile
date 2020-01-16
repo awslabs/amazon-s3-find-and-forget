@@ -1,4 +1,5 @@
 SHELL := /bin/bash
+VERSION := $(shell cat templates/template.yaml | shyaml get-value Mappings.Solution.Constants.Version)
 
 .PHONY : deploy deploy-containers pre-deploy setup test test-cov test-acceptance test-acceptance-cov test-no-state-machine test-no-state-machine-cov test-unit test-unit-cov
 
@@ -17,16 +18,20 @@ endif
 
 deploy:
 	make pre-deploy
+	# make deploy-containers
+	# make deploy-frontend
 	make deploy-cfn
-	make deploy-containers
 	make setup-frontend-local-dev
-	make deploy-frontend
 
 deploy-cfn:
 	aws cloudformation package --template-file templates/template.yaml --s3-bucket $(TEMP_BUCKET) --output-template-file packaged.yaml
-	aws cloudformation deploy --template-file ./packaged.yaml --stack-name S3F2 --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND --parameter-overrides CreateCloudFrontDistribution=false EnableContainerInsights=true AdminEmail=$(ADMIN_EMAIL) AccessControlAllowOriginOverride=*
+	aws cloudformation deploy --template-file ./packaged.yaml --stack-name S3F2 --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND --parameter-overrides CreateCloudFrontDistribution=false EnableContainerInsights=true AdminEmail=$(ADMIN_EMAIL) AccessControlAllowOriginOverride=* PreBuiltArtefactsBucket=$(TEMP_BUCKET)
 
 deploy-containers:
+	zip -r backend.zip backend/lambda_layers backend/ecs_tasks/delete_files/ -x backend/ecs_tasks/delete_files/__pycache*
+	aws s3 cp backend.zip s3://$(TEMP_BUCKET)/amazon-s3-find-and-forget/$(VERSION)/backend.zip
+
+deploy-containers-override:
 	$(eval ACCOUNT_ID := $(shell aws sts get-caller-identity --query Account --output text))
 	$(eval REGION := $(shell aws configure get region))
 	$(eval ECR_REPOSITORY := $(shell aws cloudformation describe-stacks --stack-name S3F2 --query 'Stacks[0].Outputs[?OutputKey==`ECRRepository`].OutputValue' --output text))
@@ -36,6 +41,11 @@ deploy-containers:
 	docker push $(ACCOUNT_ID).dkr.ecr.$(REGION).amazonaws.com/$(ECR_REPOSITORY):latest
 
 deploy-frontend:
+	cd frontend && npm run build
+	cd frontend/build && zip -r ../../frontend.zip . -x *settings.js
+	aws s3 cp frontend.zip s3://$(TEMP_BUCKET)/amazon-s3-find-and-forget/$(VERSION)/frontend.zip
+
+deploy-frontend-override:
 	$(eval WEBUI_BUCKET := $(shell aws cloudformation describe-stacks --stack-name S3F2 --query 'Stacks[0].Outputs[?OutputKey==`WebUIBucket`].OutputValue' --output text))
 	cd frontend && npm run build
 	cd frontend/build && aws s3 cp --recursive . s3://$(WEBUI_BUCKET) --acl public-read --exclude *settings.js

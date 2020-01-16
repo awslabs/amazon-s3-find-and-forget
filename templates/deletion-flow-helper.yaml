@@ -1,0 +1,200 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Amazon S3 Find and Forget Deletion Flow helper
+
+Globals:
+  Function:
+    Runtime: python3.7
+    Timeout: 900
+    Layers: !Ref CommonLayers
+
+Parameters:
+  ArtefactName:
+    Type: String
+    Default: build/s3f2.zip
+  CommonLayers:
+    Type: CommaDelimitedList
+  ECRRepository:
+    Type: String
+  LogLevel:
+    Type: String
+    Default: INFO
+    AllowedValues:
+    - CRITICAL
+    - FATAL
+    - ERROR
+    - WARNING
+    - INFO
+    - DEBUG
+    - NOTSET
+  PreBuiltArtefactsBucket:
+    Type: String
+  Version:
+    Type: String
+
+Resources:
+  CodeBuildArtifactBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      VersioningConfiguration:
+        Status: Enabled
+
+  CodeBuildServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Statement:
+              - Resource: "*"
+                Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - ecr:GetAuthorizationToken
+              - Resource: !Sub arn:aws:s3:::${CodeBuildArtifactBucket}/*
+                Effect: Allow
+                Action:
+                  - s3:*
+              - Resource: !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ECRRepository}
+                Effect: Allow
+                Action:
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:BatchGetImage
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:PutImage
+                  - ecr:InitiateLayerUpload
+                  - ecr:UploadLayerPart
+                  - ecr:CompleteLayerUpload
+
+  CodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            pre_build:
+              commands:
+                - $(aws ecr get-login --no-include-email)
+                - IMAGE_URI="${REPOSITORY_URI}"
+            build:
+              commands:
+                - docker build --tag "$IMAGE_URI" -f backend/ecs_tasks/delete_files/Dockerfile .
+            post_build:
+              commands:
+                - docker push "$IMAGE_URI"
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/docker:18.09.0
+        Type: LINUX_CONTAINER
+        EnvironmentVariables:
+          - Name: AWS_DEFAULT_REGION
+            Value: !Ref AWS::Region
+          - Name: REPOSITORY_URI
+            Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECRRepository}
+      Name: !Ref AWS::StackName
+      ServiceRole: !Ref CodeBuildServiceRole
+
+  CodePipelineServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codepipeline.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Statement:
+              - Resource: "*"
+                Effect: Allow
+                Action:
+                  - ecs:DescribeServices
+                  - ecs:DescribeTaskDefinition
+                  - ecs:DescribeTasks
+                  - ecs:ListTasks
+                  - ecs:RegisterTaskDefinition
+                  - ecs:UpdateService
+                  - codebuild:StartBuild
+                  - codebuild:BatchGetBuilds
+                  - iam:PassRole
+                  - s3:*
+
+  CodePipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt CodePipelineServiceRole.Arn
+      ArtifactStore:
+        Type: S3
+        Location: !Ref CodeBuildArtifactBucket
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: App
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Version: "1"
+                Provider: S3
+              Configuration:
+                S3Bucket: !Ref CodeBuildArtifactBucket
+                S3ObjectKey: !Ref ArtefactName
+              OutputArtifacts:
+                - Name: S3F2
+              RunOrder: 1
+        - Name: Build
+          Actions:
+            - Name: Build
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: "1"
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref CodeBuildProject
+              InputArtifacts:
+                - Name: S3F2
+              OutputArtifacts:
+                - Name: BuildOutput
+              RunOrder: 1
+
+  CopyBackendArtefactFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: copy_backend_artefact.handler
+      CodeUri: ../backend/lambdas/custom_resources/
+      Description: Custom Lambda resource for the Amazon S3 Find and Forget Cloudformation Stack
+      Policies:
+        - Statement:
+          - Effect: Allow
+            Action: s3:PutObject*
+            Resource: !Sub arn:aws:s3:::${CodeBuildArtifactBucket}/*
+          - Effect: Allow
+            Action: s3:GetObject
+            Resource: !Sub "arn:aws:s3:::${PreBuiltArtefactsBucket}/*"
+
+  CopyBackendArtefact:
+    Type: Custom::Setup
+    Properties:
+      ServiceToken: !GetAtt CopyBackendArtefactFunction.Arn
+      ArtefactName: !Ref ArtefactName
+      CodeBuildArtifactBucket: !Ref CodeBuildArtifactBucket
+      LogLevel: !Ref LogLevel
+      Region: !Ref AWS::Region
+      PreBuiltArtefactsBucket: !Ref PreBuiltArtefactsBucket
+      Version: !Ref Version

@@ -36,6 +36,8 @@ Parameters:
     - INFO
     - DEBUG
     - NOTSET
+  PreBuiltArtefactsBucket:
+    Type: String
   Version:
     Type: String
   WebUIBucket:
@@ -49,7 +51,7 @@ Resources:
       ApiUrl: !Ref ApiUrl
       AthenaExecutionRole: !Ref AthenaExecutionRole
       DeleteTaskRole: !Ref DeleteTaskRole
-      FromBucket: !Sub solution-builders-${AWS::Region}
+      FromBucket: !Ref PreBuiltArtefactsBucket
       LogLevel: !Ref LogLevel
       CognitoIdentityPoolId: !Ref CognitoIdentityPoolId
       CognitoUserPoolId: !Ref CognitoUserPoolId

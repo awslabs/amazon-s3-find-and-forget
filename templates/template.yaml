@@ -50,19 +50,27 @@ Parameters:
     Description: The number of days to retain raw job logs
     Type: Number
     Default: 7
+  PreBuiltArtefactsBucketOverride:
+    Description: Overrides the default Bucket containing Front-end and Back-end pre-built artefacts. When false, the default is used (solution-builders-${AWS::Region})
+    Type: String
+    Default: "false"
   PrivateSubnetIpBlocks:
     Description: Comma-delimited list of CIDR blocks for the private subnets
     Type: String
     Default: "10.0.0.0/22, 10.0.4.0/22, 10.0.8.0/22"
   ResourcePrefix:
-    Description: The prefix used in DynamoDB table and state machine names
+    Description: The prefix used for uniquely named resources, such as Dynamo DB Tables, State Machines, etc.
     Type: String
-    Default: S3F2
+    Default: s3f2
+    AllowedPattern: ^[a-z0-9]*$
   VpcIpBlock:
     Description: CIDR block for the VPC
     Type: String
     Default: 10.0.0.0/16
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+
+Conditions:
+  DefaultPreBuiltArtefactsBucket: !Equals [!Ref PreBuiltArtefactsBucketOverride, "false"]
 
 Mappings:
   Solution:
@@ -107,7 +115,7 @@ Resources:
   DelStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: ./deletion_flow.yaml
+      TemplateURL: ./deletion-flow.yaml
       Parameters:
         AuditLogGroup: !Ref AuditLogGroup
         CommonLayers: !Join
@@ -121,6 +129,19 @@ Resources:
         ResourcePrefix: !Ref ResourcePrefix
         VpcSecurityGroup: !GetAtt VpcStack.Outputs.SecurityGroup
         VpcSubnets: !GetAtt VpcStack.Outputs.Subnets
+  DelStackHelper:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ./deletion-flow-helper.yaml
+      Parameters:
+        CommonLayers: !Join
+          - ","
+          - - !GetAtt LayersStack.Outputs.AWSSDKLayer
+            - !GetAtt LayersStack.Outputs.CustomResourceHelper
+            - !GetAtt LayersStack.Outputs.Decorators
+        ECRRepository: !GetAtt DelStack.Outputs.ECRRepository
+        PreBuiltArtefactsBucket: !If [DefaultPreBuiltArtefactsBucket, !Sub "solution-builders-${AWS::Region}", !Ref PreBuiltArtefactsBucketOverride]
+        Version: !FindInMap [Solution, Constants, Version]
   LayersStack:
     Type: AWS::CloudFormation::Stack
     Properties: 
@@ -128,7 +149,7 @@ Resources:
   StateMachineStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: ./state_machine.yaml
+      TemplateURL: ./state-machine.yaml
       Parameters:
         AthenaConcurrencyLimit: !Ref AthenaConcurrencyLimit
         AthenaWorkGroup: !Ref AthenaWorkGroup
@@ -179,13 +200,14 @@ Resources:
             - !GetAtt LayersStack.Outputs.Decorators
         CreateCloudFrontDistribution: !Ref CreateCloudFrontDistribution
         DeleteTaskRole: !GetAtt DelStack.Outputs.DeleteTaskRole
+        PreBuiltArtefactsBucket: !If [DefaultPreBuiltArtefactsBucket, !Sub "solution-builders-${AWS::Region}", !Ref PreBuiltArtefactsBucketOverride]
         Version: !FindInMap [Solution, Constants, Version]
         WebUIBucket: !GetAtt WebUIStack.Outputs.WebUIBucket
 
   AuditLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: /aws/s3f2/
+      LogGroupName: !Sub /aws/${ResourcePrefix}/
       RetentionInDays: !Ref LogRetentionInDays
 
 Outputs:
