@@ -98,9 +98,9 @@ export default ({ gateway, goToJobDetails }) => {
                         <Button
                           variant="link"
                           style={{ paddingLeft: 0 }}
-                          onClick={() => goToJobDetails(job.JobId)}
+                          onClick={() => goToJobDetails(job.Id)}
                         >
-                          {job.JobId}
+                          {job.Id}
                         </Button>
                       </td>
                       <td

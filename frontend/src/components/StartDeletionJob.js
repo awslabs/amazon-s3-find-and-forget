@@ -20,7 +20,7 @@ export default ({ className, gateway, goToJobDetails }) => {
     try {
       const job = await gateway.processQueue();
       setFormState("initial");
-      goToJobDetails(job.JobId);
+      goToJobDetails(job.Id);
     } catch (e) {
       setFormState("error");
       setErrorDetails(formatErrorMessage(e));

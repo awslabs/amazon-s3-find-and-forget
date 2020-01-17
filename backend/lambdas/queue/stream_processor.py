@@ -28,7 +28,7 @@ def handler(event, context):
         deserialized = {}
         for key in new_image:
             deserialized[key] = deserializer.deserialize(new_image[key])
-        job_id = deserialized["JobId"]
+        job_id = deserialized["Id"]
         try:
             client.start_execution(
                 stateMachineArn=state_machine_arn,

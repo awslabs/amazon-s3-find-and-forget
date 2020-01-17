@@ -433,8 +433,11 @@ Resources:
               "Parameters": {
                 "TableName": "${JobTableName}",
                 "Key": {
-                  "JobId": {
+                  "Id": {
                     "S.$": "$$.Execution.Name"
+                  },
+                  "Type": {
+                    "S": "Job"
                   }
                 },
                 "UpdateExpression": "SET JobStatus = :status",

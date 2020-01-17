@@ -75,7 +75,8 @@ def test_it_process_queue(table, uuid):
         "body": ""
     }, SimpleNamespace())
     table.put_item.assert_called_with(Item={
-        "JobId": "123",
+        "Id": "123",
+        "Type": "Job",
         "JobStatus": "QUEUED",
         "GSIBucket": "0",
         "CreatedAt": ANY,
@@ -83,7 +84,8 @@ def test_it_process_queue(table, uuid):
     assert 202 == response["statusCode"]
     assert "headers" in response
     assert {
-        "JobId": "123",
+        "Id": "123",
+        "Type": "Job",
         "JobStatus": "QUEUED",
         "GSIBucket": "0",
         "CreatedAt": ANY,
