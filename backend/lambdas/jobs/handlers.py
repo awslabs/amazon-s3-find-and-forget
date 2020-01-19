@@ -27,7 +27,8 @@ def get_job_handler(event, context):
     job_id = event["pathParameters"]["job_id"]
     resp = table.get_item(
         Key={
-            'JobId': job_id
+            'Id': job_id,
+            'Type': "Job",
         }
     )
     item = resp.get('Item')

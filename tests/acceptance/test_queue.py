@@ -84,14 +84,14 @@ def test_it_processes_queue(api_client, queue_base_endpoint, sf_client, job_tabl
     # Act
     response = api_client.delete(queue_base_endpoint)
     response_body = response.json()
-    job_id = response_body["JobId"]
+    job_id = response_body["Id"]
     execution_arn = "{}:{}".format(stack["StateMachineArn"].replace("stateMachine", "execution"), job_id)
     try:
         # Assert
         assert 202 == response.status_code
-        assert "JobId" in response_body
+        assert "Id" in response_body
         # Check the job was written to DynamoDB
-        query_result = job_table.query(KeyConditionExpression=Key("JobId").eq(job_id))
+        query_result = job_table.query(KeyConditionExpression=Key("Id").eq(job_id))
         assert 1 == len(query_result["Items"])
         # Verify the job started from the DynamoDB stream
         execution_exists_waiter.wait(executionArn=execution_arn)

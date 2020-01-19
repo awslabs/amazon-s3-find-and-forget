@@ -119,7 +119,7 @@ export default ({ gateway, jobId }) => {
         )}
         {job && (
           <div className="details content">
-            <DetailsBox label="Job Id">{job.JobId}</DetailsBox>
+            <DetailsBox label="Job Id">{job.Id}</DetailsBox>
             <DetailsBox
               label="Status"
               className={`status-label ${successJobClass(job.JobStatus)}`}
@@ -211,7 +211,7 @@ export default ({ gateway, jobId }) => {
                 )}`}
                 id="download-report-link"
                 className="hide"
-                download={`${job.JobId}.json`}
+                download={`${job.Id}.json`}
               >
                 Download link
               </a>

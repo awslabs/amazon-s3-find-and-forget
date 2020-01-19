@@ -31,7 +31,8 @@ def test_it_starts_state_machine(mock_client, mock_deserializer):
             "eventName": "INSERT",
             "dynamodb": {
                 "NewImage": {
-                    "JobId": {"S": "job123"},
+                    "Id": {"S": "job123"},
+                    "Type": {"S": "Job"},
                 }
             }
         }]
@@ -50,7 +51,8 @@ def test_it_decodes_decimals(mock_client, mock_deserializer):
             "eventName": "INSERT",
             "dynamodb": {
                 "NewImage": {
-                    "JobId": {"S": "job123"},
+                    "Id": {"S": "job123"},
+                    "Type": {"S": "Job"},
                     "CreatedAt": {"N": 123.0},
                 }
             }
@@ -70,7 +72,8 @@ def test_it_decodes_decimals(mock_client, mock_deserializer):
             "eventName": "INSERT",
             "dynamodb": {
                 "NewImage": {
-                    "JobId": {"S": "job123"},
+                    "Id": {"S": "job123"},
+                    "Type": {"S": "Job"},
                     "CreatedAt": {"N": 123.0},
                 }
             }
@@ -93,7 +96,8 @@ def test_it_handles_already_existing_executions(mock_client, mock_deserializer):
             "eventName": "INSERT",
             "dynamodb": {
                 "NewImage": {
-                    "JobId": {"S": "job123"},
+                    "Id": {"S": "job123"},
+                    "Type": {"S": "Job"},
                     "CreatedAt": {"N": 123.0},
                 }
             }

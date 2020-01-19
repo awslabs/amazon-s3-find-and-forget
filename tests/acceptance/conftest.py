@@ -320,7 +320,8 @@ def job_factory(job_table, sf_client, stack):
     def factory(job_id=str(uuid4()), status="QUEUED", gsib="0", created_at=round(datetime.datetime.now().timestamp()),
                 **kwargs):
         item = {
-            "JobId": job_id,
+            "Id": job_id,
+            "Type": "Job",
             "JobStatus": status,
             "CreatedAt": created_at,
             "GSIBucket": gsib,
@@ -332,7 +333,7 @@ def job_factory(job_table, sf_client, stack):
 
     yield factory
 
-    empty_table(job_table, "JobId")
+    empty_table(job_table, "Id", "Type")
     for arn in items:
         try:
             sf_client.stop_execution(executionArn=arn)

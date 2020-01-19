@@ -79,7 +79,8 @@ def cancel_handler(event, context):
 @catch_errors
 def process_handler(event, context):
     item = {
-        "JobId": str(uuid.uuid4()),
+        "Id": str(uuid.uuid4()),
+        "Type": "Job",
         "JobStatus": "QUEUED",
         "GSIBucket": str(random.randint(0, bucket_count - 1)),
         "CreatedAt": round(datetime.datetime.now().timestamp()),

@@ -39,7 +39,8 @@ def test_it_generates_reports(mock_get_status, mock_query_stats, mock_object_sta
     ]
     mock_write_log.return_value = "s3://some_bucket/reports/123.json"
     mock_normalise_dates.return_value = {
-        'JobId': '123',
+        'Id': '123',
+        'Type': 'Job',
         'JobStartTime': 1578327177,
         'JobFinishTime': 1578327177,
         'CreatedAt': 123456,
@@ -67,7 +68,8 @@ def test_it_generates_reports(mock_get_status, mock_query_stats, mock_object_sta
     mock_write_log.assert_called_with("some_bucket", "123", mock.ANY)
     mock_write_summary.assert_called()
     mock_normalise_dates.assert_called_with({
-        'JobId': '123',
+        'Id': '123',
+        'Type': 'Job',
         'JobStartTime': '2019-12-05T13:38:02.858Z',
         'JobFinishTime': '2019-12-05T13:39:37.220Z',
         'CreatedAt': 123456,
@@ -83,7 +85,8 @@ def test_it_generates_reports(mock_get_status, mock_query_stats, mock_object_sta
         'JobStatus': 'COMPLETED'
     })
     assert {
-        "JobId": "123",
+        "Id": "123",
+        'Type': 'Job',
         "JobStartTime": 1578327177,
         "JobFinishTime": 1578327177,
         "GSIBucket": "0",
@@ -103,7 +106,7 @@ def test_it_generates_reports(mock_get_status, mock_query_stats, mock_object_sta
 def test_it_writes_log_to_s3(mock_s3):
     mock_object = mock.MagicMock()
     mock_s3.Object.return_value = mock_object
-    expected = report_stub(JobId="1234")
+    expected = report_stub(Id="1234")
     report_location = write_log("test_bucket", "1234", expected)
     assert 1 == mock_s3.Object.call_count
     report = json.loads(mock_object.put.call_args_list[0][1]["Body"])
@@ -201,10 +204,10 @@ def test_it_gets_aggregated_object_update_stats():
 
 def test_it_normalises_date_like_fields():
     assert {
-        "a": [{"a": 1578327177, "b": "string"}],
-        "b": [1578327177],
-        "c": {"a": 1578327177},
-        "d": 1578327177,
+        "a": [{"a": 1578348777, "b": "string"}],
+        "b": [1578348777],
+        "c": {"a": 1578348777},
+        "d": 1578348777,
         "e": "string",
         "f": 2,
     } == normalise_dates({
@@ -218,7 +221,7 @@ def test_it_normalises_date_like_fields():
 
 
 def test_it_converts_sfn_datetimes_to_epoch():
-    assert 1578327177 == convert_iso8601_to_epoch("2020-01-06T16:12:57.092Z")
+    assert 1578348777 == convert_iso8601_to_epoch("2020-01-06T16:12:57.092Z")
 
 
 def query_stub(**kwargs):
@@ -245,7 +248,8 @@ def report_stub(**kwargs):
         "CreatedAt": 123456,
         "JobStartTime": "2019-12-05T13:38:02.858Z",
         "JobFinishTime": "2019-12-05T13:39:37.220Z",
-        "JobId": "28921fc6-17ca-4a1b-bc1a-ffaf1a5a4bae",
+        "Id": "28921fc6-17ca-4a1b-bc1a-ffaf1a5a4bae",
+        'Type': 'Job',
         "JobStatus": "COMPLETED",
         "TotalQueryTimeInMillis": 100,
         "TotalQueryScannedInBytes": 100,

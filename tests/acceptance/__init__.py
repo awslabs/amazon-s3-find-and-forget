@@ -52,12 +52,15 @@ def query_parquet_file(f, column, val):
     return [i for i in table.column(column) if i == val]
 
 
-def empty_table(table, key):
+def empty_table(table, pk, sk=None):
     items = table.scan()["Items"]
     with table.batch_writer() as batch:
         for item in items:
+            key = {
+                pk: item[pk],
+            }
+            if sk:
+                key[sk] = item[sk]
             batch.delete_item(
-                Key={
-                    key: item[key],
-                }
+                Key=key
             )

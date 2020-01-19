@@ -13,7 +13,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.api, pytest.mark.jobs]
 
 @patch("backend.lambdas.jobs.handlers.table")
 def test_it_retrieves_jobs(table):
-    mock_job = {"JobId": "test"}
+    mock_job = {"Id": "test"}
     table.get_item.return_value = {
         "Item": mock_job
     }
@@ -90,4 +90,4 @@ def test_it_respects_page_size_with_multiple_buckets(table):
 
 
 def job_stub(job_id="test", created_at=round(datetime.datetime.now().timestamp())):
-    return {"JobId": job_id, "CreatedAt": created_at}
+    return {"Id": job_id, "CreatedAt": created_at}

@@ -46,7 +46,10 @@ Resources:
         StreamViewType: NEW_IMAGE
       AttributeDefinitions:
         -
-          AttributeName: JobId
+          AttributeName: Id
+          AttributeType: S
+        -
+          AttributeName: Type
           AttributeType: S
         -
           AttributeName: GSIBucket
@@ -56,8 +59,11 @@ Resources:
           AttributeType: N
       KeySchema:
         -
-          AttributeName: JobId
+          AttributeName: Id
           KeyType: HASH
+        -
+          AttributeName: Type
+          KeyType: RANGE
       BillingMode: PAY_PER_REQUEST
       GlobalSecondaryIndexes:
         -
