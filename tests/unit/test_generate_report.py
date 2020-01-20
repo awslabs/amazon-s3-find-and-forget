@@ -40,6 +40,7 @@ def test_it_generates_reports(mock_get_status, mock_query_stats, mock_object_sta
     mock_write_log.return_value = "s3://some_bucket/reports/123.json"
     mock_normalise_dates.return_value = {
         'Id': '123',
+        'Sk': '123',
         'Type': 'Job',
         'JobStartTime': 1578327177,
         'JobFinishTime': 1578327177,
@@ -69,6 +70,7 @@ def test_it_generates_reports(mock_get_status, mock_query_stats, mock_object_sta
     mock_write_summary.assert_called()
     mock_normalise_dates.assert_called_with({
         'Id': '123',
+        'Sk': '123',
         'Type': 'Job',
         'JobStartTime': '2019-12-05T13:38:02.858Z',
         'JobFinishTime': '2019-12-05T13:39:37.220Z',
@@ -86,6 +88,7 @@ def test_it_generates_reports(mock_get_status, mock_query_stats, mock_object_sta
     })
     assert {
         "Id": "123",
+        'Sk': '123',
         'Type': 'Job',
         "JobStartTime": 1578327177,
         "JobFinishTime": 1578327177,
@@ -245,6 +248,7 @@ def report_stub(**kwargs):
         "JobStartTime": "2019-12-05T13:38:02.858Z",
         "JobFinishTime": "2019-12-05T13:39:37.220Z",
         "Id": "28921fc6-17ca-4a1b-bc1a-ffaf1a5a4bae",
+        "Sk": "28921fc6-17ca-4a1b-bc1a-ffaf1a5a4bae",
         'Type': 'Job',
         "JobStatus": "COMPLETED",
         "TotalQueryTimeInMillis": 100,

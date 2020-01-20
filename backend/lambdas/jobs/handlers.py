@@ -28,7 +28,7 @@ def get_job_handler(event, context):
     resp = table.get_item(
         Key={
             'Id': job_id,
-            'Type': "Job",
+            'Sk': job_id,
         }
     )
     item = resp.get('Item')

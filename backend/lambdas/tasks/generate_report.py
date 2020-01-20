@@ -17,6 +17,7 @@ dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table(os.getenv("JobTableName", "S3F2_JobTable"))
 summary_report_keys = [
     'Id',
+    'Sk',
     'JobStartTime',
     'JobFinishTime',
     'JobStatus',
@@ -42,6 +43,7 @@ def handler(event, context):
     created_at = event["Input"].get("CreatedAt", round(datetime.datetime.now().timestamp()))
     gsi_bucket = event["Input"].get("GSIBucket", "0")
     report_data["Id"] = job_id
+    report_data["Sk"] = job_id
     report_data["Type"] = "Job"
     report_data["JobStartTime"] = job_start
     report_data["JobFinishTime"] = job_finished

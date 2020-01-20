@@ -436,8 +436,8 @@ Resources:
                   "Id": {
                     "S.$": "$$.Execution.Name"
                   },
-                  "Type": {
-                    "S": "Job"
+                  "Sk": {
+                    "S.$": "$$.Execution.Name"
                   }
                 },
                 "UpdateExpression": "SET JobStatus = :status",

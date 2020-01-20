@@ -321,6 +321,7 @@ def job_factory(job_table, sf_client, stack):
                 **kwargs):
         item = {
             "Id": job_id,
+            "Sk": job_id,
             "Type": "Job",
             "JobStatus": status,
             "CreatedAt": created_at,
@@ -333,7 +334,7 @@ def job_factory(job_table, sf_client, stack):
 
     yield factory
 
-    empty_table(job_table, "Id", "Type")
+    empty_table(job_table, "Id", "Sk")
     for arn in items:
         try:
             sf_client.stop_execution(executionArn=arn)
