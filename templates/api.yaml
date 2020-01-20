@@ -243,9 +243,9 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: stream_processor.handler
-      CodeUri: ../backend/lambdas/queue/
+      CodeUri: ../backend/lambdas/jobs/
       Policies:
-        - DynamoDBReadPolicy:
+        - DynamoDBCrudPolicy:
             TableName: !Ref JobTableName
         - Statement:
           - Effect: Allow
@@ -263,7 +263,19 @@ Resources:
           Properties:
             Stream: !Ref JobTableStreamArn
             StartingPosition: TRIM_HORIZON
-            BatchSize: 1
+            BatchSize: 10
+            MaximumBatchingWindowInSeconds: 5
+            BisectBatchOnFunctionError: true
+            ParallelizationFactor: 1
+            MaximumRetryAttempts: 3
+            MaximumRecordAgeInSeconds: 86400
+            DestinationConfig:
+              OnFailure:
+                Type: SQS
+                Destination: !GetAtt EventsDLQ.Arn
+
+  EventsDLQ:
+    Type: AWS::SQS::Queue
 
 Outputs:
   AccessControlAllowOriginHeader:
