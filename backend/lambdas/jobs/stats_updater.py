@@ -10,7 +10,7 @@ table = ddb.Table(os.getenv("JobTable", "S3F2_Jobs"))
 
 
 def update_stats(event):
-    job_id = event["JobId"]
+    job_id = event["Id"]
     event_name = event["EventName"]
     event_data = event.get("EventData", {})
     if event_name in ["QuerySucceeded", "QueryFailed"]:
@@ -23,7 +23,7 @@ def _update_query_stats(job_id, event_name, event_data):
     table.update_item(
         Key={
             'Id': job_id,
-            'Type': 'Job'
+            'Sk': job_id,
         },
         UpdateExpression="set #q = if_not_exists(#q, :z) + :q, "
                          "#qs = if_not_exists(#qs, :z) + :qs, "
@@ -53,7 +53,7 @@ def _update_object_stats(job_id, event_name):
     table.update_item(
         Key={
             'Id': job_id,
-            'Type': 'Job'
+            'Sk': job_id
         },
         UpdateExpression="set #c = if_not_exists(#c, :z) + :c, #f = if_not_exists(#f, :z) + :f",
         ExpressionAttributeNames={
@@ -67,5 +67,3 @@ def _update_object_stats(job_id, event_name):
         },
         ReturnValues="UPDATED_NEW"
     )
-
-{"Id":{"S": "5a826122-e505-4a05-8d0b-f99a99df4a76"},"Type":{"S":"Job"}}
