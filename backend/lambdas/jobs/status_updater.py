@@ -6,8 +6,6 @@ import os
 
 import boto3
 
-from boto_utils import convert_iso8601_to_epoch
-
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
@@ -41,7 +39,7 @@ def update_status(event):
         if event_name in time_events:
             update_expression += ", #time_attr = :t"
             additional_attr_names["#time_attr"] = time_events[event_name]
-            additional_attr_values[":t"] = convert_iso8601_to_epoch(event["EventData"])
+            additional_attr_values[":t"] = event["EventData"]
         table.update_item(
             Key={
                 'Id': job_id,

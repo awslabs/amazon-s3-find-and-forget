@@ -9,7 +9,6 @@ pytestmark = [pytest.mark.unit, pytest.mark.jobs]
 
 
 @patch("backend.lambdas.jobs.status_updater.table")
-@patch("backend.lambdas.jobs.status_updater.convert_iso8601_to_epoch", Mock(return_value=12345))
 def test_it_handles_job_started(table):
     update_status({
         "Id": "job123",
@@ -17,7 +16,7 @@ def test_it_handles_job_started(table):
         "Type": "JobEvent",
         "CreatedAt": 123.0,
         "EventName": "JobStarted",
-        "EventData": "2020-01-20T16:57:05.095Z"
+        "EventData": 12345
     })
     table.update_item.assert_called_with(
         Key={
@@ -42,7 +41,6 @@ def test_it_handles_job_started(table):
 
 
 @patch("backend.lambdas.jobs.status_updater.table")
-@patch("backend.lambdas.jobs.status_updater.convert_iso8601_to_epoch", Mock(return_value=12345))
 def test_it_handles_job_finished(table):
     update_status({
         "Id": "job123",
@@ -50,7 +48,7 @@ def test_it_handles_job_finished(table):
         "Type": "JobEvent",
         "CreatedAt": 123.0,
         "EventName": "JobSucceeded",
-        "EventData": {}
+        "EventData": 12345
     })
     table.update_item.assert_called_with(
         Key={
