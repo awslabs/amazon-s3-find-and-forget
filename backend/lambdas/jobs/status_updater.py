@@ -6,6 +6,8 @@ import os
 
 import boto3
 
+from boto_utils import convert_iso8601_to_epoch
+
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
@@ -20,29 +22,43 @@ status_map = {
     "JobSucceeded": "COMPLETED",
 }
 
+time_events = {
+    "JobStarted": "JobStartTime",
+    "JobSucceeded": "JobFinishTime"
+}
+
 
 def update_status(event):
     event_name = event["EventName"]
     if event_name not in status_map:
-        pass
+        return
     job_id = event["Id"]
     status = status_map[event_name]
     try:
+        update_expression = "set #status = :s"
+        additional_attr_names = {}
+        additional_attr_values = {}
+        if event_name in time_events:
+            update_expression += ", #time_attr = :t"
+            additional_attr_names["#time_attr"] = time_events[event_name]
+            additional_attr_values[":t"] = convert_iso8601_to_epoch(event["EventData"])
         table.update_item(
             Key={
                 'Id': job_id,
                 'Sk': job_id,
             },
-            UpdateExpression="set #status = :s",
+            UpdateExpression=update_expression,
             ConditionExpression="#status = :r OR #status = :c OR #status = :q",
             ExpressionAttributeNames={
                 '#status': 'JobStatus',
+                **additional_attr_names,
             },
             ExpressionAttributeValues={
                 ':s': status,
                 ':r': "RUNNING",
                 ':c': "COMPLETED",
                 ':q': "QUEUED",
+                **additional_attr_values,
             },
             ReturnValues="UPDATED_NEW"
         )

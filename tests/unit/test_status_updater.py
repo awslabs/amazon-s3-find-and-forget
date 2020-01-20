@@ -1,7 +1,7 @@
 import boto3
 import pytest
 from botocore.exceptions import ClientError
-from mock import patch
+from mock import patch, Mock
 
 from backend.lambdas.jobs.status_updater import update_status
 
@@ -9,6 +9,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.jobs]
 
 
 @patch("backend.lambdas.jobs.status_updater.table")
+@patch("backend.lambdas.jobs.status_updater.convert_iso8601_to_epoch", Mock(return_value=12345))
 def test_it_handles_job_started(table):
     update_status({
         "Id": "job123",
@@ -16,29 +17,32 @@ def test_it_handles_job_started(table):
         "Type": "JobEvent",
         "CreatedAt": 123.0,
         "EventName": "JobStarted",
-        "EventData": {}
+        "EventData": "2020-01-20T16:57:05.095Z"
     })
     table.update_item.assert_called_with(
         Key={
             'Id': "job123",
             'Sk': "job123",
         },
-        UpdateExpression="set #status = :s",
+        UpdateExpression="set #status = :s, #time_attr = :t",
         ConditionExpression="#status = :r OR #status = :c OR #status = :q",
         ExpressionAttributeNames={
             '#status': 'JobStatus',
+            '#time_attr': 'JobStartTime',
         },
         ExpressionAttributeValues={
             ':s': "RUNNING",
             ':r': "RUNNING",
             ':c': "COMPLETED",
             ':q': "QUEUED",
+            ':t': 12345,
         },
         ReturnValues="UPDATED_NEW"
     )
 
 
 @patch("backend.lambdas.jobs.status_updater.table")
+@patch("backend.lambdas.jobs.status_updater.convert_iso8601_to_epoch", Mock(return_value=12345))
 def test_it_handles_job_finished(table):
     update_status({
         "Id": "job123",
@@ -53,16 +57,18 @@ def test_it_handles_job_finished(table):
             'Id': "job123",
             'Sk': "job123",
         },
-        UpdateExpression="set #status = :s",
+        UpdateExpression="set #status = :s, #time_attr = :t",
         ConditionExpression="#status = :r OR #status = :c OR #status = :q",
         ExpressionAttributeNames={
             '#status': 'JobStatus',
+            '#time_attr': 'JobFinishTime',
         },
         ExpressionAttributeValues={
             ':s': "COMPLETED",
             ':r': "RUNNING",
             ':c': "COMPLETED",
             ':q': "QUEUED",
+            ':t': 12345,
         },
         ReturnValues="UPDATED_NEW"
     )
@@ -99,7 +105,7 @@ def test_it_handles_query_failed(table):
 
 
 @patch("backend.lambdas.jobs.status_updater.table")
-def test_it_handles_update_failed(table):
+def test_it_handles_obj_update_failed(table):
     update_status({
         "Id": "job123",
         "Sk": "123456",
@@ -169,7 +175,7 @@ def test_it_handles_already_failed_jobs(table, ddb):
         "Sk": "123456",
         "Type": "JobEvent",
         "CreatedAt": 123.0,
-        "EventName": "JobSucceeded",
+        "EventName": "Exception",
         "EventData": {}
     })
     table.update_item.assert_called()
@@ -184,6 +190,19 @@ def test_it_throws_for_non_condition_errors(table):
             "Sk": "123456",
             "Type": "JobEvent",
             "CreatedAt": 123.0,
-            "EventName": "JobSucceeded",
+            "EventName": "Exception",
             "EventData": {}
         })
+
+
+@patch("backend.lambdas.jobs.status_updater.table")
+def test_it_ignores_none_status_events(table):
+    update_status({
+        "Id": "job123",
+        "Sk": "123456",
+        "Type": "JobEvent",
+        "CreatedAt": 123.0,
+        "EventName": "SomeEvent",
+        "EventData": {}
+    })
+    table.update_item.assert_not_called()
