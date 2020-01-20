@@ -1,6 +1,7 @@
 """
 Task for generating final report
 """
+import calendar
 import datetime
 import json
 import os
@@ -145,4 +146,4 @@ def normalise_dates(data):
 
 
 def convert_iso8601_to_epoch(iso_time: str):
-    return round(datetime.datetime.strptime(iso_time, "%Y-%m-%dT%H:%M:%S.%fZ").timestamp())
+    return calendar.timegm(datetime.datetime.strptime(iso_time, "%Y-%m-%dT%H:%M:%S.%fZ").timetuple())
