@@ -1,7 +1,6 @@
 """
 Task for generating final report
 """
-import calendar
 import datetime
 import json
 import os
@@ -9,6 +8,7 @@ import sys
 from collections import defaultdict
 
 import boto3
+from boto_utils import convert_iso8601_to_epoch
 from decorators import with_logger
 
 logs = boto3.client("logs")
@@ -143,7 +143,3 @@ def normalise_dates(data):
     elif isinstance(data, dict):
         return {k: normalise_dates(v) for k, v in data.items()}
     return data
-
-
-def convert_iso8601_to_epoch(iso_time: str):
-    return calendar.timegm(datetime.datetime.strptime(iso_time, "%Y-%m-%dT%H:%M:%S.%fZ").timetuple())

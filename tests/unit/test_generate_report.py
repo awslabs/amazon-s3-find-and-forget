@@ -8,7 +8,7 @@ from mock import patch
 
 with patch.dict(os.environ, {"QueryQueue": "test"}):
     from backend.lambdas.tasks.generate_report import handler, write_log, get_status, get_aggregated_query_stats, \
-    get_aggregated_object_stats, get_job_logs, write_summary, convert_iso8601_to_epoch, normalise_dates
+    get_aggregated_object_stats, get_job_logs, write_summary, normalise_dates
 
 pytestmark = [pytest.mark.unit, pytest.mark.task]
 
@@ -218,10 +218,6 @@ def test_it_normalises_date_like_fields():
         "e": "string",
         "f": 2,
     })
-
-
-def test_it_converts_sfn_datetimes_to_epoch():
-    assert 1578327177 == convert_iso8601_to_epoch("2020-01-06T16:12:57.092Z")
 
 
 def query_stub(**kwargs):
