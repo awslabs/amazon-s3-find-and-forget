@@ -63,3 +63,32 @@ def test_it_lists_jobs_by_date(api_client, jobs_endpoint, job_factory, stack):
         "CreatedAt": mock.ANY,
     } == response_body["Jobs"][1]
     assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
+
+
+def test_it_updates_job_in_response_to_events(job_factory, job_event_factory, job_table, stack, sf_client):
+    job_id = job_factory()["Id"]
+    execution_arn = "{}:{}".format(stack["StateMachineArn"].replace("stateMachine", "execution"), job_id)
+    try:
+        job_event_factory(job_id, "QueryFailed", {"QueryStatus": {"Statistics": {
+            "DataScannedInBytes": 1024,
+            "EngineExecutionTimeInMillis": 100,
+        }}})
+        time.sleep(5)  # No item waiter therefore wait for stream processor
+        item = job_table.get_item(Key={"Id": job_id, "Sk": job_id})["Item"]
+        assert "ABORTED" == item["JobStatus"]
+        assert 1024.0 == item["TotalQueryScannedInBytes"]
+        assert 100.0 == item["TotalQueryTimeInMillis"]
+    finally:
+        sf_client.stop_execution(executionArn=execution_arn)
+
+
+def test_it_locks_job_status_for_failed_jobs(job_factory, job_event_factory, job_table, stack, sf_client):
+    job_id = job_factory(JobStatus="FAILED")["Id"]
+    execution_arn = "{}:{}".format(stack["StateMachineArn"].replace("stateMachine", "execution"), job_id)
+    try:
+        job_event_factory(job_id, "JobSucceeded", {})
+        time.sleep(5)  # No item waiter therefore wait for stream processor
+        item = job_table.get_item(Key={"Id": job_id, "Sk": job_id})["Item"]
+        assert "FAILED" == item["JobStatus"]
+    finally:
+        sf_client.stop_execution(executionArn=execution_arn)

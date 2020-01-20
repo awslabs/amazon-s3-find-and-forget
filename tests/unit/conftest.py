@@ -16,6 +16,7 @@ def pytest_configure(config):
     sys.path.append(path.join("backend", "lambda_layers", "boto_utils", "python"))
     sys.path.append(path.join("backend", "lambda_layers", "cr_helper", "python"))
     sys.path.append(path.join("backend", "lambda_layers", "decorators", "python"))
+    sys.path.append(path.join("backend", "lambdas", "jobs"))
 
 
 @pytest.fixture(autouse=True)
