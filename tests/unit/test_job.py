@@ -130,13 +130,13 @@ def test_it_handles_job_event_start_at(k, table):
     table.query.return_value = {"Items": [stub]}
     response = handlers.list_job_events_handler({
         "pathParameters": {"job_id": "test"},
-        "queryStringParameters": {"start_at": "123456"},
+        "queryStringParameters": {"start_at": "12345"},
     }, SimpleNamespace())
     resp_body = json.loads(response["body"])
     assert 200 == response["statusCode"]
     assert "NextStart" in resp_body
     k.assert_called_with("Sk")
-    k().lt.assert_called_with("123456")
+    k().lt.assert_called_with("12345")
 
 
 def job_stub(job_id="test", created_at=round(datetime.datetime.utcnow().timestamp()), **kwargs):
