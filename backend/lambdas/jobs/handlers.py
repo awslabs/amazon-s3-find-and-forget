@@ -82,7 +82,7 @@ def list_jobs_handler(event, context):
 @xray_recorder.capture('ListJobEventsHandler')
 @add_cors_headers
 @catch_errors
-def list_job_events(event, context):
+def list_job_events_handler(event, context):
     job_id = event["pathParameters"]["job_id"]
     qs = event.get("queryStringParameters")
     if not qs:

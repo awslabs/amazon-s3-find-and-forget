@@ -94,7 +94,7 @@ def test_it_respects_list_job_page_size_with_multiple_buckets(table):
 def test_it_lists_jobs_events(table):
     stub = job_event_stub()
     table.query.return_value = {"Items": [stub]}
-    response = handlers.list_job_events({"pathParameters": {"job_id": "test"}}, SimpleNamespace())
+    response = handlers.list_job_events_handler({"pathParameters": {"job_id": "test"}}, SimpleNamespace())
     resp_body = json.loads(response["body"])
     assert 200 == response["statusCode"]
     assert 1 == len(resp_body["JobEvents"])
@@ -105,7 +105,7 @@ def test_it_lists_jobs_events(table):
 def test_it_paginates_jobs_events(table):
     stub = job_event_stub()
     table.query.return_value = {"Items": [stub for _ in range(0, 3)]}
-    response = handlers.list_job_events({
+    response = handlers.list_job_events_handler({
         "pathParameters": {"job_id": "test"},
         "queryStringParameters": {"page_size": 3},
     }, SimpleNamespace())
@@ -128,7 +128,7 @@ def test_it_paginates_jobs_events(table):
 def test_it_handles_job_event_start_at(k, table):
     stub = job_event_stub()
     table.query.return_value = {"Items": [stub]}
-    response = handlers.list_job_events({
+    response = handlers.list_job_events_handler({
         "pathParameters": {"job_id": "test"},
         "queryStringParameters": {"start_at": "123456"},
     }, SimpleNamespace())

@@ -80,7 +80,7 @@ def test_it_lists_job_events_by_date(api_client, jobs_endpoint, job_factory, job
     execution_arn = "{}:{}".format(stack["StateMachineArn"].replace("stateMachine", "execution"), job_id)
     try:
         # Act
-        response = api_client.get(jobs_endpoint)
+        response = api_client.get("{}/{}/events".format(jobs_endpoint, job_id))
         response_body = response.json()
         # Assert
         assert response.status_code == 200
