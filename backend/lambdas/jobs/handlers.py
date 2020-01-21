@@ -77,3 +77,35 @@ def list_jobs_handler(event, context):
         }, cls=DecimalEncoder)
     }
 
+
+@with_logger
+@xray_recorder.capture('ListJobEventsHandler')
+@add_cors_headers
+@catch_errors
+def list_job_events(event, context):
+    job_id = event["pathParameters"]["job_id"]
+    qs = event.get("queryStringParameters")
+    if not qs:
+        qs = {}
+    page_size = int(qs.get("page_size", 10))
+    start_at = int(qs.get("start_at", round(datetime.datetime.utcnow().timestamp())))
+    items = table.query(
+        KeyConditionExpression=Key('Id').eq(job_id) & Key('Sk').lt(str(start_at)),
+        ScanIndexForward=False,
+        Limit=page_size,
+        FilterExpression="#t = :t",
+        ExpressionAttributeNames={"#t": "Type"},
+        ExpressionAttributeValues={":t": "JobEvent"}
+    )["Items"]
+    if len(items) < page_size:
+        next_start = None
+    else:
+        next_start = min([item["CreatedAt"] for item in items])
+
+    return {
+        "statusCode": 200,
+        "body": json.dumps({
+            "JobEvents": items,
+            "NextStart": next_start,
+        }, cls=DecimalEncoder)
+    }
