@@ -41,8 +41,8 @@ def _update_query_stats(job_id, event_name, event_data):
             ':q': 1,
             ':qs': 1 if event_name == "QuerySucceeded" else 0,
             ':f': 1 if event_name == "QueryFailed" else 0,
-            ':s': event_data.get("QueryStatus", {}).get("Statistics", {}).get("DataScannedInBytes", 0),
-            ':t': event_data.get("QueryStatus", {}).get("Statistics", {}).get("EngineExecutionTimeInMillis", 0),
+            ':s': event_data.get("Statistics", {}).get("DataScannedInBytes", 0),
+            ':t': event_data.get("Statistics", {}).get("EngineExecutionTimeInMillis", 0),
             ':z': 0,
         },
         ReturnValues="UPDATED_NEW"

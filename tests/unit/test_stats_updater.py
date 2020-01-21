@@ -15,11 +15,9 @@ def test_it_handles_successful_queries(table):
         "CreatedAt": 123.0,
         "EventName": "QuerySucceeded",
         "EventData": {
-            "QueryStatus": {
-                "Statistics": {
-                    "DataScannedInBytes": 10,
-                    "EngineExecutionTimeInMillis": 100
-                }
+            "Statistics": {
+                "DataScannedInBytes": 10,
+                "EngineExecutionTimeInMillis": 100
             }
         }
     })
