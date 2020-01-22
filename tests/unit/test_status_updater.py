@@ -10,14 +10,14 @@ pytestmark = [pytest.mark.unit, pytest.mark.jobs]
 
 @patch("backend.lambdas.jobs.status_updater.table")
 def test_it_handles_job_started(table):
-    update_status({
+    resp = update_status("job123", [{
         "Id": "job123",
         "Sk": "123456",
         "Type": "JobEvent",
         "CreatedAt": 123.0,
         "EventName": "JobStarted",
         "EventData": 12345
-    })
+    }])
     table.update_item.assert_called_with(
         Key={
             'Id': "job123",
@@ -38,18 +38,20 @@ def test_it_handles_job_started(table):
         },
         ReturnValues="UPDATED_NEW"
     )
+    assert 1 == table.update_item.call_count
+    assert "RUNNING" == resp
 
 
 @patch("backend.lambdas.jobs.status_updater.table")
 def test_it_handles_job_finished(table):
-    update_status({
+    resp = update_status("job123", [{
         "Id": "job123",
         "Sk": "123456",
         "Type": "JobEvent",
         "CreatedAt": 123.0,
         "EventName": "JobSucceeded",
         "EventData": 12345
-    })
+    }])
     table.update_item.assert_called_with(
         Key={
             'Id': "job123",
@@ -70,18 +72,20 @@ def test_it_handles_job_finished(table):
         },
         ReturnValues="UPDATED_NEW"
     )
+    assert 1 == table.update_item.call_count
+    assert "COMPLETED" == resp
 
 
 @patch("backend.lambdas.jobs.status_updater.table")
 def test_it_handles_query_failed(table):
-    update_status({
+    resp = update_status("job123", [{
         "Id": "job123",
         "Sk": "123456",
         "Type": "JobEvent",
         "CreatedAt": 123.0,
         "EventName": "QueryFailed",
         "EventData": {}
-    })
+    }])
     table.update_item.assert_called_with(
         Key={
             'Id': "job123",
@@ -100,18 +104,20 @@ def test_it_handles_query_failed(table):
         },
         ReturnValues="UPDATED_NEW"
     )
+    assert 1 == table.update_item.call_count
+    assert "ABORTED" == resp
 
 
 @patch("backend.lambdas.jobs.status_updater.table")
 def test_it_handles_obj_update_failed(table):
-    update_status({
+    resp = update_status("job123", [{
         "Id": "job123",
         "Sk": "123456",
         "Type": "JobEvent",
         "CreatedAt": 123.0,
         "EventName": "ObjectUpdateFailed",
         "EventData": {}
-    })
+    }])
     table.update_item.assert_called_with(
         Key={
             'Id': "job123",
@@ -130,18 +136,20 @@ def test_it_handles_obj_update_failed(table):
         },
         ReturnValues="UPDATED_NEW"
     )
+    assert 1 == table.update_item.call_count
+    assert "COMPLETED_WITH_ERRORS" == resp
 
 
 @patch("backend.lambdas.jobs.status_updater.table")
 def test_it_handles_exception(table):
-    update_status({
+    resp = update_status("job123", [{
         "Id": "job123",
         "Sk": "123456",
         "Type": "JobEvent",
         "CreatedAt": 123.0,
         "EventName": "Exception",
         "EventData": {}
-    })
+    }])
     table.update_item.assert_called_with(
         Key={
             'Id': "job123",
@@ -160,6 +168,8 @@ def test_it_handles_exception(table):
         },
         ReturnValues="UPDATED_NEW"
     )
+    assert 1 == table.update_item.call_count
+    assert "FAILED" == resp
 
 
 @patch("backend.lambdas.jobs.status_updater.ddb")
@@ -168,39 +178,41 @@ def test_it_handles_already_failed_jobs(table, ddb):
     e = boto3.client("dynamodb").exceptions.ConditionalCheckFailedException
     ddb.meta.client.exceptions.ConditionalCheckFailedException = e
     table.update_item.side_effect = e({}, "ConditionalCheckFailedException")
-    update_status({
+    resp = update_status("job123", [{
         "Id": "job123",
         "Sk": "123456",
         "Type": "JobEvent",
         "CreatedAt": 123.0,
         "EventName": "Exception",
         "EventData": {}
-    })
+    }])
     table.update_item.assert_called()
+    assert not resp
 
 
 @patch("backend.lambdas.jobs.status_updater.table")
 def test_it_throws_for_non_condition_errors(table):
     table.update_item.side_effect = ClientError({"Error": {"Code": "AnError"}}, "update_item")
     with pytest.raises(ClientError):
-        update_status({
+        resp = update_status("job123", [{
             "Id": "job123",
             "Sk": "123456",
             "Type": "JobEvent",
             "CreatedAt": 123.0,
             "EventName": "Exception",
             "EventData": {}
-        })
+        }])
 
 
 @patch("backend.lambdas.jobs.status_updater.table")
 def test_it_ignores_none_status_events(table):
-    update_status({
+    resp = update_status("job123", [{
         "Id": "job123",
         "Sk": "123456",
         "Type": "JobEvent",
         "CreatedAt": 123.0,
         "EventName": "SomeEvent",
         "EventData": {}
-    })
+    }])
     table.update_item.assert_not_called()
+    assert not resp

@@ -8,7 +8,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.jobs]
 
 @patch("backend.lambdas.jobs.stats_updater.table")
 def test_it_handles_successful_queries(table):
-    update_stats({
+    resp = update_stats("job123", [{
         "Id": "job123",
         "Sk": "123456",
         "Type": "JobEvent",
@@ -20,128 +20,252 @@ def test_it_handles_successful_queries(table):
                 "EngineExecutionTimeInMillis": 100
             }
         }
-    })
+    }])
     table.update_item.assert_called_with(
         Key={
             'Id': "job123",
             'Sk': "job123",
         },
-        UpdateExpression="set #q = if_not_exists(#q, :z) + :q, "
+        UpdateExpression="set #qt = if_not_exists(#qt, :z) + :qt, "
                          "#qs = if_not_exists(#qs, :z) + :qs, "
-                         "#f = if_not_exists(#f, :z) + :f, "
-                         "#s = if_not_exists(#s, :z) + :s, "
-                         "#t = if_not_exists(#t, :z) + :t",
+                         "#qf = if_not_exists(#qf, :z) + :qf, "
+                         "#qb = if_not_exists(#qb, :z) + :qb, "
+                         "#qm = if_not_exists(#qm, :z) + :qm, "
+                         "#ou = if_not_exists(#ou, :z) + :ou, "
+                         "#of = if_not_exists(#of, :z) + :of",
         ExpressionAttributeNames={
-            '#q': 'TotalQueryCount',
+            '#qt': 'TotalQueryCount',
             '#qs': 'TotalQuerySucceededCount',
-            '#f': 'TotalQueryFailedCount',
-            '#s': 'TotalQueryScannedInBytes',
-            '#t': 'TotalQueryTimeInMillis',
+            '#qf': 'TotalQueryFailedCount',
+            '#qb': 'TotalQueryScannedInBytes',
+            '#qm': 'TotalQueryTimeInMillis',
+            '#ou': 'TotalObjectUpdatedCount',
+            '#of': 'TotalObjectUpdateFailedCount',
         },
         ExpressionAttributeValues={
-            ':q': 1,
+            ':qt': 1,
             ':qs': 1,
-            ':f': 0,
-            ':s': 10,
-            ':t': 100,
+            ':qf': 0,
+            ':qb': 10,
+            ':qm': 100,
+            ':ou': 0,
+            ':of': 0,
             ':z': 0,
         },
         ReturnValues="UPDATED_NEW"
     )
+    assert {
+        "TotalQueryCount": 1,
+        "TotalQuerySucceededCount": 1,
+        "TotalQueryScannedInBytes": 10,
+        "TotalQueryTimeInMillis": 100,
+    } == resp
 
 
 @patch("backend.lambdas.jobs.stats_updater.table")
 def test_it_handles_failed_queries(table):
-    update_stats({
+    resp = update_stats("job123", [{
         "Id": "job123",
         "Sk": "123456",
         "Type": "JobEvent",
         "CreatedAt": 123.0,
         "EventName": "QueryFailed",
         "EventData": {}
-    })
+    }])
     table.update_item.assert_called_with(
         Key={
             'Id': "job123",
             'Sk': "job123",
         },
-        UpdateExpression="set #q = if_not_exists(#q, :z) + :q, "
+        UpdateExpression="set #qt = if_not_exists(#qt, :z) + :qt, "
                          "#qs = if_not_exists(#qs, :z) + :qs, "
-                         "#f = if_not_exists(#f, :z) + :f, "
-                         "#s = if_not_exists(#s, :z) + :s, "
-                         "#t = if_not_exists(#t, :z) + :t",
+                         "#qf = if_not_exists(#qf, :z) + :qf, "
+                         "#qb = if_not_exists(#qb, :z) + :qb, "
+                         "#qm = if_not_exists(#qm, :z) + :qm, "
+                         "#ou = if_not_exists(#ou, :z) + :ou, "
+                         "#of = if_not_exists(#of, :z) + :of",
         ExpressionAttributeNames={
-            '#q': 'TotalQueryCount',
+            '#qt': 'TotalQueryCount',
             '#qs': 'TotalQuerySucceededCount',
-            '#f': 'TotalQueryFailedCount',
-            '#s': 'TotalQueryScannedInBytes',
-            '#t': 'TotalQueryTimeInMillis',
+            '#qf': 'TotalQueryFailedCount',
+            '#qb': 'TotalQueryScannedInBytes',
+            '#qm': 'TotalQueryTimeInMillis',
+            '#ou': 'TotalObjectUpdatedCount',
+            '#of': 'TotalObjectUpdateFailedCount',
         },
         ExpressionAttributeValues={
-            ':q': 1,
+            ':qt': 1,
             ':qs': 0,
-            ':f': 1,
-            ':s': 0,
-            ':t': 0,
+            ':qf': 1,
+            ':qb': 0,
+            ':qm': 0,
+            ':ou': 0,
+            ':of': 0,
             ':z': 0,
         },
         ReturnValues="UPDATED_NEW"
     )
+    assert {
+        "TotalQueryCount": 1,
+        "TotalQueryFailedCount": 1,
+    } == resp
 
 
 @patch("backend.lambdas.jobs.stats_updater.table")
 def test_it_handles_successful_updates(table):
-    update_stats({
+    resp = update_stats("job123", [{
         "Id": "job123",
         "Sk": "123456",
         "Type": "JobEvent",
         "CreatedAt": 123.0,
         "EventName": "ObjectUpdated",
         "EventData": {}
-    })
+    }])
     table.update_item.assert_called_with(
         Key={
             'Id': "job123",
             'Sk': 'job123'
         },
-        UpdateExpression="set #c = if_not_exists(#c, :z) + :c, #f = if_not_exists(#f, :z) + :f",
+        UpdateExpression="set #qt = if_not_exists(#qt, :z) + :qt, "
+                         "#qs = if_not_exists(#qs, :z) + :qs, "
+                         "#qf = if_not_exists(#qf, :z) + :qf, "
+                         "#qb = if_not_exists(#qb, :z) + :qb, "
+                         "#qm = if_not_exists(#qm, :z) + :qm, "
+                         "#ou = if_not_exists(#ou, :z) + :ou, "
+                         "#of = if_not_exists(#of, :z) + :of",
         ExpressionAttributeNames={
-            '#c': 'TotalObjectUpdatedCount',
-            '#f': 'TotalObjectUpdateFailedCount',
+            '#qt': 'TotalQueryCount',
+            '#qs': 'TotalQuerySucceededCount',
+            '#qf': 'TotalQueryFailedCount',
+            '#qb': 'TotalQueryScannedInBytes',
+            '#qm': 'TotalQueryTimeInMillis',
+            '#ou': 'TotalObjectUpdatedCount',
+            '#of': 'TotalObjectUpdateFailedCount',
         },
         ExpressionAttributeValues={
-            ':c': 1,
-            ':f': 0,
+            ':qt': 0,
+            ':qs': 0,
+            ':qf': 0,
+            ':qb': 0,
+            ':qm': 0,
+            ':ou': 1,
+            ':of': 0,
             ':z': 0,
         },
         ReturnValues="UPDATED_NEW"
     )
+    assert {
+        "TotalObjectUpdatedCount": 1,
+    } == resp
 
 
 @patch("backend.lambdas.jobs.stats_updater.table")
 def test_it_handles_failed_updates(table):
-    update_stats({
+    resp = update_stats("job123", [{
         "Id": "job123",
         "Sk": "123456",
         "Type": "JobEvent",
         "CreatedAt": 123.0,
         "EventName": "ObjectUpdateFailed",
         "EventData": {}
-    })
+    }])
     table.update_item.assert_called_with(
         Key={
             'Id': "job123",
             'Sk': 'job123'
         },
-        UpdateExpression="set #c = if_not_exists(#c, :z) + :c, #f = if_not_exists(#f, :z) + :f",
+        UpdateExpression="set #qt = if_not_exists(#qt, :z) + :qt, "
+                         "#qs = if_not_exists(#qs, :z) + :qs, "
+                         "#qf = if_not_exists(#qf, :z) + :qf, "
+                         "#qb = if_not_exists(#qb, :z) + :qb, "
+                         "#qm = if_not_exists(#qm, :z) + :qm, "
+                         "#ou = if_not_exists(#ou, :z) + :ou, "
+                         "#of = if_not_exists(#of, :z) + :of",
         ExpressionAttributeNames={
-            '#c': 'TotalObjectUpdatedCount',
-            '#f': 'TotalObjectUpdateFailedCount',
+            '#qt': 'TotalQueryCount',
+            '#qs': 'TotalQuerySucceededCount',
+            '#qf': 'TotalQueryFailedCount',
+            '#qb': 'TotalQueryScannedInBytes',
+            '#qm': 'TotalQueryTimeInMillis',
+            '#ou': 'TotalObjectUpdatedCount',
+            '#of': 'TotalObjectUpdateFailedCount',
         },
         ExpressionAttributeValues={
-            ':c': 0,
-            ':f': 1,
+            ':qt': 0,
+            ':qs': 0,
+            ':qf': 0,
+            ':qb': 0,
+            ':qm': 0,
+            ':ou': 0,
+            ':of': 1,
             ':z': 0,
         },
         ReturnValues="UPDATED_NEW"
     )
+    assert {
+        "TotalObjectUpdateFailedCount": 1,
+    } == resp
+
+
+@patch("backend.lambdas.jobs.stats_updater.table")
+def test_it_handles_multiple_events(table):
+    resp = update_stats("job123", [{
+        "Id": "job123",
+        "Sk": "123456",
+        "Type": "JobEvent",
+        "CreatedAt": 123.0,
+        "EventName": "QuerySucceeded",
+        "EventData": {
+            "Statistics": {
+                "DataScannedInBytes": 10,
+                "EngineExecutionTimeInMillis": 100
+            }
+        }
+    }, {
+        "Id": "job123",
+        "Sk": "123456",
+        "Type": "JobEvent",
+        "CreatedAt": 123.0,
+        "EventName": "ObjectUpdated",
+        "EventData": {}
+    }])
+    table.update_item.assert_called_with(
+        Key={
+            'Id': "job123",
+            'Sk': 'job123'
+        },
+        UpdateExpression="set #qt = if_not_exists(#qt, :z) + :qt, "
+                         "#qs = if_not_exists(#qs, :z) + :qs, "
+                         "#qf = if_not_exists(#qf, :z) + :qf, "
+                         "#qb = if_not_exists(#qb, :z) + :qb, "
+                         "#qm = if_not_exists(#qm, :z) + :qm, "
+                         "#ou = if_not_exists(#ou, :z) + :ou, "
+                         "#of = if_not_exists(#of, :z) + :of",
+        ExpressionAttributeNames={
+            '#qt': 'TotalQueryCount',
+            '#qs': 'TotalQuerySucceededCount',
+            '#qf': 'TotalQueryFailedCount',
+            '#qb': 'TotalQueryScannedInBytes',
+            '#qm': 'TotalQueryTimeInMillis',
+            '#ou': 'TotalObjectUpdatedCount',
+            '#of': 'TotalObjectUpdateFailedCount',
+        },
+        ExpressionAttributeValues={
+            ':qt': 1,
+            ':qs': 1,
+            ':qf': 0,
+            ':qb': 10,
+            ':qm': 100,
+            ':ou': 1,
+            ':of': 0,
+            ':z': 0,
+        },
+        ReturnValues="UPDATED_NEW"
+    )
+    assert {
+        "TotalQueryCount": 1,
+        "TotalQuerySucceededCount": 1,
+        "TotalQueryScannedInBytes": 10,
+        "TotalQueryTimeInMillis": 100,
+        "TotalObjectUpdatedCount": 1,
+    } == resp

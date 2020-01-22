@@ -104,6 +104,9 @@ def test_it_handles_job_event_records(mock_deserializer, mock_stats, mock_status
         "Sk": "123456",
         "Type": "JobEvent",
     }
+    mock_status.return_value = "RUNNING"
+    mock_stats.return_value = {}
+
     handler({
         "Records": [{
             "eventName": "INSERT",
@@ -120,6 +123,35 @@ def test_it_handles_job_event_records(mock_deserializer, mock_stats, mock_status
     assert 1 == mock_status.call_count
     assert 1 == mock_stats.call_count
     assert 1 == mock_deserializer.call_count
+
+
+@patch("backend.lambdas.jobs.stream_processor.update_status")
+@patch("backend.lambdas.jobs.stream_processor.update_stats")
+@patch("backend.lambdas.jobs.stream_processor.should_process", Mock(return_value=True))
+@patch("backend.lambdas.jobs.stream_processor.deserialize_item")
+def test_it_does_not_update_stats_if_status_fails(mock_deserializer, mock_stats, mock_status):
+    mock_deserializer.return_value = {
+        "Id": "job123",
+        "Sk": "123456",
+        "Type": "JobEvent",
+    }
+    mock_status.side_effect = ValueError
+
+    with pytest.raises(ValueError):
+        handler({
+            "Records": [{
+                "eventName": "INSERT",
+                "dynamodb": {
+                    "NewImage": {
+                        "Id": {"S": "job123"},
+                        "Sk": {"S": "123456"},
+                        "Type": {"S": "JobEvent"},
+                    }
+                }
+            }]
+        }, SimpleNamespace())
+
+    mock_stats.assert_not_called()
 
 
 @patch("backend.lambdas.jobs.stream_processor.should_process", Mock(return_value=True))

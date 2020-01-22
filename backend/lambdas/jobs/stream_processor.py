@@ -3,6 +3,8 @@ from os import getenv
 import json
 import boto3
 from boto3.dynamodb.types import TypeDeserializer
+from itertools import groupby
+from operator import itemgetter
 
 from stats_updater import update_stats
 from status_updater import update_status
@@ -24,13 +26,16 @@ def handler(event, context):
     events = [
         deserialize_item(r) for r in event["Records"] if should_process(r) and is_job_event(r)
     ]
+    grouped_events = groupby(sorted(events, key=itemgetter("Id")), key=itemgetter("Id"))
 
     for job in jobs:
         process_job(job)
 
-    for job_event in events:
-        update_status(job_event)
-        update_stats(job_event)
+    for job_id, group in grouped_events:
+        status = update_status(job_id, group)
+        context.logger.info("Updated Status for Job ID {}: {}".format(job_id, status))
+        stats = update_stats(job_id, group)
+        context.logger.info("Updated Stats for Job ID {}: {}".format(job_id, json.dumps(stats)))
 
 
 def deserialize_item(record):

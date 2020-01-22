@@ -1,68 +1,73 @@
 """
 Job Stats Updater
 """
-import os
-
 import boto3
+from os import getenv
+from collections import Counter, defaultdict
 
 ddb = boto3.resource("dynamodb")
-table = ddb.Table(os.getenv("JobTable", "S3F2_Jobs"))
+table = ddb.Table(getenv("JobTable", "S3F2_Jobs"))
 
 
-def update_stats(event):
-    job_id = event["Id"]
-    event_name = event["EventName"]
-    event_data = event.get("EventData", {})
-    if event_name in ["QuerySucceeded", "QueryFailed"]:
-        _update_query_stats(job_id, event_name, event_data)
-    if event_name in ["ObjectUpdated", "ObjectUpdateFailed"]:
-        _update_object_stats(job_id, event_name)
+def update_stats(job_id, events):
+    stats = _aggregate_stats(events)
+    _update_job(job_id, stats)
+    return stats
 
 
-def _update_query_stats(job_id, event_name, event_data):
+def _aggregate_stats(events):
+    stats = Counter({})
+
+    for event in events:
+        event_name = event["EventName"]
+        event_data = event.get("EventData", {})
+        if event_name in ["QuerySucceeded", "QueryFailed"]:
+            stats += Counter({
+                "TotalQueryCount": 1,
+                "TotalQuerySucceededCount": 1 if event_name == "QuerySucceeded" else 0,
+                "TotalQueryFailedCount": 1 if event_name == "QueryFailed" else 0,
+                "TotalQueryScannedInBytes": event_data.get("Statistics", {}).get("DataScannedInBytes", 0),
+                "TotalQueryTimeInMillis": event_data.get("Statistics", {}).get("EngineExecutionTimeInMillis", 0),
+            })
+        if event_name in ["ObjectUpdated", "ObjectUpdateFailed"]:
+            stats += Counter({
+                "TotalObjectUpdatedCount": 1 if event_name == "ObjectUpdated" else 0,
+                "TotalObjectUpdateFailedCount": 1 if event_name == "ObjectUpdateFailed" else 0,
+            })
+
+    return stats
+
+
+def _update_job(job_id, stats):
     table.update_item(
         Key={
             'Id': job_id,
             'Sk': job_id,
         },
-        UpdateExpression="set #q = if_not_exists(#q, :z) + :q, "
+        UpdateExpression="set #qt = if_not_exists(#qt, :z) + :qt, "
                          "#qs = if_not_exists(#qs, :z) + :qs, "
-                         "#f = if_not_exists(#f, :z) + :f, "
-                         "#s = if_not_exists(#s, :z) + :s, "
-                         "#t = if_not_exists(#t, :z) + :t",
+                         "#qf = if_not_exists(#qf, :z) + :qf, "
+                         "#qb = if_not_exists(#qb, :z) + :qb, "
+                         "#qm = if_not_exists(#qm, :z) + :qm, "
+                         "#ou = if_not_exists(#ou, :z) + :ou, "
+                         "#of = if_not_exists(#of, :z) + :of",
         ExpressionAttributeNames={
-            '#q': 'TotalQueryCount',
+            '#qt': 'TotalQueryCount',
             '#qs': 'TotalQuerySucceededCount',
-            '#f': 'TotalQueryFailedCount',
-            '#s': 'TotalQueryScannedInBytes',
-            '#t': 'TotalQueryTimeInMillis',
+            '#qf': 'TotalQueryFailedCount',
+            '#qb': 'TotalQueryScannedInBytes',
+            '#qm': 'TotalQueryTimeInMillis',
+            '#ou': 'TotalObjectUpdatedCount',
+            '#of': 'TotalObjectUpdateFailedCount',
         },
         ExpressionAttributeValues={
-            ':q': 1,
-            ':qs': 1 if event_name == "QuerySucceeded" else 0,
-            ':f': 1 if event_name == "QueryFailed" else 0,
-            ':s': event_data.get("Statistics", {}).get("DataScannedInBytes", 0),
-            ':t': event_data.get("Statistics", {}).get("EngineExecutionTimeInMillis", 0),
-            ':z': 0,
-        },
-        ReturnValues="UPDATED_NEW"
-    )
-
-
-def _update_object_stats(job_id, event_name):
-    table.update_item(
-        Key={
-            'Id': job_id,
-            'Sk': job_id
-        },
-        UpdateExpression="set #c = if_not_exists(#c, :z) + :c, #f = if_not_exists(#f, :z) + :f",
-        ExpressionAttributeNames={
-            '#c': 'TotalObjectUpdatedCount',
-            '#f': 'TotalObjectUpdateFailedCount',
-        },
-        ExpressionAttributeValues={
-            ':c': 1 if event_name == "ObjectUpdated" else 0,
-            ':f': 1 if event_name == "ObjectUpdateFailed" else 0,
+            ':qt': stats.get("TotalQueryCount", 0),
+            ':qs': stats.get("TotalQuerySucceededCount", 0),
+            ':qf': stats.get("TotalQueryFailedCount", 0),
+            ':qb': stats.get("TotalQueryScannedInBytes", 0),
+            ':qm': stats.get("TotalQueryTimeInMillis", 0),
+            ':ou': stats.get("TotalObjectUpdatedCount", 0),
+            ':of': stats.get("TotalObjectUpdateFailedCount", 0),
             ':z': 0,
         },
         ReturnValues="UPDATED_NEW"

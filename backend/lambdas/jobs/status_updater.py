@@ -26,11 +26,18 @@ time_events = {
 }
 
 
-def update_status(event):
+def update_status(job_id, events):
+    status = None
+    for event in events:
+        status = _update_status(job_id, event)
+
+    return status
+
+
+def _update_status(job_id, event):
     event_name = event["EventName"]
     if event_name not in status_map:
         return
-    job_id = event["Id"]
     status = status_map[event_name]
     try:
         update_expression = "set #status = :s"
@@ -60,5 +67,7 @@ def update_status(event):
             },
             ReturnValues="UPDATED_NEW"
         )
+
+        return status
     except ddb.meta.client.exceptions.ConditionalCheckFailedException:
         logger.warning("Job {} is already in a status which cannot be updated".format(job_id))
