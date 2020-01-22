@@ -88,7 +88,7 @@ def list_job_events_handler(event, context):
     if not qs:
         qs = {}
     page_size = int(qs.get("page_size", 10))
-    start_at = int(qs.get("start_at", 0))
+    start_at = qs.get("start_at", 0)
     items = table.query(
         KeyConditionExpression=Key('Id').eq(job_id) & Key('Sk').gt(str(start_at)),
         ScanIndexForward=True,
@@ -98,11 +98,10 @@ def list_job_events_handler(event, context):
         ExpressionAttributeValues={":t": "JobEvent"}
     )["Items"]
 
-    items = sorted(items, key=lambda i: i['Sk'].split("#")[0], reverse=True)[:page_size]
     if len(items) < page_size:
         next_start = None
     else:
-        next_start = max([item['Sk'].split("#")[0] for item in items])
+        next_start = max(items, key=lambda i: i['Sk'].split("#"))["Sk"]
 
     return {
         "statusCode": 200,

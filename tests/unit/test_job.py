@@ -123,7 +123,7 @@ def test_it_paginates_jobs_events(table):
     resp_body = json.loads(response["body"])
     assert 200 == response["statusCode"]
     assert 3 == len(resp_body["JobEvents"])
-    assert isinstance(resp_body["NextStart"], int)
+    assert resp_body["NextStart"]
     table.query.assert_called_with(
         KeyConditionExpression=mock.ANY,
         ScanIndexForward=True,
