@@ -88,10 +88,10 @@ def list_job_events_handler(event, context):
     if not qs:
         qs = {}
     page_size = int(qs.get("page_size", 10))
-    start_at = int(qs.get("start_at", round(datetime.datetime.utcnow().timestamp())))
+    start_at = int(qs.get("start_at", 0))
     items = table.query(
-        KeyConditionExpression=Key('Id').eq(job_id) & Key('Sk').lt(str(start_at)),
-        ScanIndexForward=False,
+        KeyConditionExpression=Key('Id').eq(job_id) & Key('Sk').gt(str(start_at)),
+        ScanIndexForward=True,
         Limit=page_size,
         FilterExpression="#t = :t",
         ExpressionAttributeNames={"#t": "Type"},

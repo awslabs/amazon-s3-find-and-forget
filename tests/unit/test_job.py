@@ -102,6 +102,17 @@ def test_it_lists_jobs_events(table):
 
 
 @patch("backend.lambdas.jobs.handlers.table")
+@patch("backend.lambdas.jobs.handlers.Key")
+def test_it_starts_at_earliest_by_default(k, table):
+    stub = job_event_stub()
+    table.query.return_value = {"Items": [stub]}
+    response = handlers.list_job_events_handler({"pathParameters": {"job_id": "test"}}, SimpleNamespace())
+    assert 200 == response["statusCode"]
+    k.assert_called_with("Sk")
+    k().gt.assert_called_with("0")
+
+
+@patch("backend.lambdas.jobs.handlers.table")
 def test_it_paginates_jobs_events(table):
     stub = job_event_stub()
     table.query.return_value = {"Items": [stub for _ in range(0, 3)]}
@@ -115,7 +126,7 @@ def test_it_paginates_jobs_events(table):
     assert isinstance(resp_body["NextStart"], int)
     table.query.assert_called_with(
         KeyConditionExpression=mock.ANY,
-        ScanIndexForward=False,
+        ScanIndexForward=True,
         Limit=3,
         FilterExpression=mock.ANY,
         ExpressionAttributeNames=mock.ANY,
@@ -136,7 +147,7 @@ def test_it_handles_job_event_start_at(k, table):
     assert 200 == response["statusCode"]
     assert "NextStart" in resp_body
     k.assert_called_with("Sk")
-    k().lt.assert_called_with("12345")
+    k().gt.assert_called_with("12345")
 
 
 def job_stub(job_id="test", created_at=round(datetime.datetime.utcnow().timestamp()), **kwargs):
