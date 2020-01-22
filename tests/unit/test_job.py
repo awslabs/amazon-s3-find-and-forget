@@ -108,14 +108,23 @@ def test_it_starts_at_earliest_by_default(k, table):
     table.query.return_value = {"Items": [stub]}
     response = handlers.list_job_events_handler({"pathParameters": {"job_id": "test"}}, SimpleNamespace())
     assert 200 == response["statusCode"]
-    k.assert_called_with("Sk")
-    k().gt.assert_called_with("0")
+    table.query.assert_called_with(
+        KeyConditionExpression=mock.ANY,
+        ScanIndexForward=True,
+        Limit=mock.ANY,
+        ExclusiveStartKey={
+            "Id": "test",
+            "Sk": "0"
+        },
+        ExpressionAttributeNames=mock.ANY,
+        ExpressionAttributeValues=mock.ANY
+    )
 
 
 @patch("backend.lambdas.jobs.handlers.table")
 def test_it_paginates_jobs_events(table):
     stub = job_event_stub()
-    table.query.return_value = {"Items": [stub for _ in range(0, 3)]}
+    table.query.return_value = {"Items": [stub for _ in range(0, 3)], "LastEvaluatedKey": {"Id": "test", "Sk": "12345"}}
     response = handlers.list_job_events_handler({
         "pathParameters": {"job_id": "test"},
         "queryStringParameters": {"page_size": 3},
@@ -128,7 +137,7 @@ def test_it_paginates_jobs_events(table):
         KeyConditionExpression=mock.ANY,
         ScanIndexForward=True,
         Limit=3,
-        FilterExpression=mock.ANY,
+        ExclusiveStartKey=mock.ANY,
         ExpressionAttributeNames=mock.ANY,
         ExpressionAttributeValues=mock.ANY
     )
@@ -138,7 +147,7 @@ def test_it_paginates_jobs_events(table):
 @patch("backend.lambdas.jobs.handlers.Key")
 def test_it_handles_job_event_start_at(k, table):
     stub = job_event_stub()
-    table.query.return_value = {"Items": [stub]}
+    table.query.return_value = {"Items": [stub], "LastEvaluatedKey": {"Id": "test", "Sk": "12345"}}
     response = handlers.list_job_events_handler({
         "pathParameters": {"job_id": "test"},
         "queryStringParameters": {"start_at": "12345"},
@@ -146,8 +155,17 @@ def test_it_handles_job_event_start_at(k, table):
     resp_body = json.loads(response["body"])
     assert 200 == response["statusCode"]
     assert "NextStart" in resp_body
-    k.assert_called_with("Sk")
-    k().gt.assert_called_with("12345")
+    table.query.assert_called_with(
+        KeyConditionExpression=mock.ANY,
+        ScanIndexForward=mock.ANY,
+        Limit=mock.ANY,
+        ExclusiveStartKey={
+            "Id": "test",
+            "Sk": "12345"
+        },
+        ExpressionAttributeNames=mock.ANY,
+        ExpressionAttributeValues=mock.ANY
+    )
 
 
 def job_stub(job_id="test", created_at=round(datetime.datetime.utcnow().timestamp()), **kwargs):
