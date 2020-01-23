@@ -8,6 +8,7 @@ import sys
 from collections import defaultdict
 
 import boto3
+from boto_utils import convert_iso8601_to_epoch
 from decorators import with_logger
 
 logs = boto3.client("logs")
@@ -16,6 +17,7 @@ dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table(os.getenv("JobTableName", "S3F2_JobTable"))
 summary_report_keys = [
     'Id',
+    'Sk',
     'JobStartTime',
     'JobFinishTime',
     'JobStatus',
@@ -41,6 +43,7 @@ def handler(event, context):
     created_at = event["Input"].get("CreatedAt", round(datetime.datetime.now().timestamp()))
     gsi_bucket = event["Input"].get("GSIBucket", "0")
     report_data["Id"] = job_id
+    report_data["Sk"] = job_id
     report_data["Type"] = "Job"
     report_data["JobStartTime"] = job_start
     report_data["JobFinishTime"] = job_finished
@@ -142,7 +145,3 @@ def normalise_dates(data):
     elif isinstance(data, dict):
         return {k: normalise_dates(v) for k, v in data.items()}
     return data
-
-
-def convert_iso8601_to_epoch(iso_time: str):
-    return round(datetime.datetime.strptime(iso_time, "%Y-%m-%dT%H:%M:%S.%fZ").timestamp())

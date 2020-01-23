@@ -17,6 +17,7 @@ def test_it_gets_jobs(api_client, jobs_endpoint, job_factory, stack):
     assert response.status_code == 200
     assert {
         "Id": job_id,
+        "Sk": job_id,
         "Type": "Job",
         "JobStatus": mock.ANY,
         "GSIBucket": mock.ANY,
@@ -47,6 +48,7 @@ def test_it_lists_jobs_by_date(api_client, jobs_endpoint, job_factory, stack):
     assert response.status_code == 200
     assert {
         "Id": job_id_2,
+        "Sk": job_id_2,
         "Type": "Job",
         "JobStatus": mock.ANY,
         "GSIBucket": mock.ANY,
@@ -54,6 +56,7 @@ def test_it_lists_jobs_by_date(api_client, jobs_endpoint, job_factory, stack):
     } == response_body["Jobs"][0]
     assert {
         "Id": job_id_1,
+        "Sk": job_id_1,
         "Type": "Job",
         "JobStatus": mock.ANY,
         "GSIBucket": mock.ANY,

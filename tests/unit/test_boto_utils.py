@@ -5,7 +5,7 @@ import types
 import pytest
 from mock import MagicMock, ANY, patch
 
-from boto_utils import paginate, batch_sqs_msgs, read_queue, create_stream_if_not_exists, log_event, DecimalEncoder
+from boto_utils import convert_iso8601_to_epoch, paginate, batch_sqs_msgs, read_queue, create_stream_if_not_exists, log_event, DecimalEncoder
 
 pytestmark = [pytest.mark.unit, pytest.mark.layers]
 
@@ -184,3 +184,7 @@ def test_decimal_encoder():
 	res_b = json.dumps({"k": decimal.Decimal(1.5)}, cls=DecimalEncoder)
 	assert "{\"k\": 1}" == res_a
 	assert "{\"k\": 2}" == res_b
+
+
+def test_it_converts_sfn_datetimes_to_epoch():
+    assert 1578327177 == convert_iso8601_to_epoch("2020-01-06T16:12:57.092Z")

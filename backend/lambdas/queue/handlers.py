@@ -78,8 +78,10 @@ def cancel_handler(event, context):
 @add_cors_headers
 @catch_errors
 def process_handler(event, context):
+    job_id = str(uuid.uuid4())
     item = {
-        "Id": str(uuid.uuid4()),
+        "Id": job_id,
+        "Sk": job_id,
         "Type": "Job",
         "JobStatus": "QUEUED",
         "GSIBucket": str(random.randint(0, bucket_count - 1)),

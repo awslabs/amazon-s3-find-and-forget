@@ -8,7 +8,7 @@ from mock import patch
 
 with patch.dict(os.environ, {"QueryQueue": "test"}):
     from backend.lambdas.tasks.generate_report import handler, write_log, get_status, get_aggregated_query_stats, \
-    get_aggregated_object_stats, get_job_logs, write_summary, convert_iso8601_to_epoch, normalise_dates
+    get_aggregated_object_stats, get_job_logs, write_summary, normalise_dates
 
 pytestmark = [pytest.mark.unit, pytest.mark.task]
 
@@ -40,6 +40,7 @@ def test_it_generates_reports(mock_get_status, mock_query_stats, mock_object_sta
     mock_write_log.return_value = "s3://some_bucket/reports/123.json"
     mock_normalise_dates.return_value = {
         'Id': '123',
+        'Sk': '123',
         'Type': 'Job',
         'JobStartTime': 1578327177,
         'JobFinishTime': 1578327177,
@@ -69,6 +70,7 @@ def test_it_generates_reports(mock_get_status, mock_query_stats, mock_object_sta
     mock_write_summary.assert_called()
     mock_normalise_dates.assert_called_with({
         'Id': '123',
+        'Sk': '123',
         'Type': 'Job',
         'JobStartTime': '2019-12-05T13:38:02.858Z',
         'JobFinishTime': '2019-12-05T13:39:37.220Z',
@@ -86,6 +88,7 @@ def test_it_generates_reports(mock_get_status, mock_query_stats, mock_object_sta
     })
     assert {
         "Id": "123",
+        'Sk': '123',
         'Type': 'Job',
         "JobStartTime": 1578327177,
         "JobFinishTime": 1578327177,
@@ -204,10 +207,10 @@ def test_it_gets_aggregated_object_update_stats():
 
 def test_it_normalises_date_like_fields():
     assert {
-        "a": [{"a": 1578348777, "b": "string"}],
-        "b": [1578348777],
-        "c": {"a": 1578348777},
-        "d": 1578348777,
+        "a": [{"a": 1578327177, "b": "string"}],
+        "b": [1578327177],
+        "c": {"a": 1578327177},
+        "d": 1578327177,
         "e": "string",
         "f": 2,
     } == normalise_dates({
@@ -218,10 +221,6 @@ def test_it_normalises_date_like_fields():
         "e": "string",
         "f": 2,
     })
-
-
-def test_it_converts_sfn_datetimes_to_epoch():
-    assert 1578348777 == convert_iso8601_to_epoch("2020-01-06T16:12:57.092Z")
 
 
 def query_stub(**kwargs):
@@ -249,6 +248,7 @@ def report_stub(**kwargs):
         "JobStartTime": "2019-12-05T13:38:02.858Z",
         "JobFinishTime": "2019-12-05T13:39:37.220Z",
         "Id": "28921fc6-17ca-4a1b-bc1a-ffaf1a5a4bae",
+        "Sk": "28921fc6-17ca-4a1b-bc1a-ffaf1a5a4bae",
         'Type': 'Job',
         "JobStatus": "COMPLETED",
         "TotalQueryTimeInMillis": 100,

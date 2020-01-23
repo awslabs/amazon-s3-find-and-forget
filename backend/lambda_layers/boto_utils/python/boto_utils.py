@@ -1,3 +1,5 @@
+import calendar
+from datetime import datetime
 import decimal
 import json
 import os
@@ -94,3 +96,9 @@ class DecimalEncoder(json.JSONEncoder):
         if isinstance(o, decimal.Decimal):
             return round(o)
         return super(DecimalEncoder, self).default(o)
+
+
+def convert_iso8601_to_epoch(iso_time: str):
+    parsed = datetime.strptime(iso_time, "%Y-%m-%dT%H:%M:%S.%fZ")
+    unix_timestamp = calendar.timegm(parsed.timetuple())
+    return unix_timestamp
