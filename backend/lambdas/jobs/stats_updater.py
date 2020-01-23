@@ -6,7 +6,9 @@ import logging
 
 import boto3
 from os import getenv
-from collections import Counter, defaultdict
+from collections import Counter
+
+from boto_utils import DecimalEncoder
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -17,7 +19,7 @@ table = ddb.Table(getenv("JobTable", "S3F2_Jobs"))
 def update_stats(job_id, events):
     stats = _aggregate_stats(events)
     _update_job(job_id, stats)
-    logger.info("Updated Status for Job ID {}: {}".format(job_id, json.dumps(stats)))
+    logger.info("Updated Status for Job ID {}: {}".format(job_id, json.dumps(stats, cls=DecimalEncoder)))
     return stats
 
 

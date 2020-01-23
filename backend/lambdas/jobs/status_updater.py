@@ -7,6 +7,8 @@ import os
 
 import boto3
 
+from boto_utils import DecimalEncoder
+
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
@@ -78,6 +80,6 @@ def _update_item(job_id, attr_updates):
             },
             ReturnValues="UPDATED_NEW"
         )
-        logger.info("Updated Status for Job ID {}: {}".format(job_id, json.dumps(attr_updates)))
+        logger.info("Updated Status for Job ID {}: {}".format(job_id, json.dumps(attr_updates, cls=DecimalEncoder)))
     except ddb.meta.client.exceptions.ConditionalCheckFailedException:
         logger.warning("Job {} is already in a status which cannot be updated".format(job_id))
