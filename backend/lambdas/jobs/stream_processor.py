@@ -32,10 +32,8 @@ def handler(event, context):
         process_job(job)
 
     for job_id, group in grouped_events:
-        status = update_status(job_id, group)
-        context.logger.info("Updated Status for Job ID {}: {}".format(job_id, status))
-        stats = update_stats(job_id, group)
-        context.logger.info("Updated Stats for Job ID {}: {}".format(job_id, json.dumps(stats)))
+        update_status(job_id, group)
+        update_stats(job_id, group)
 
 
 def deserialize_item(record):

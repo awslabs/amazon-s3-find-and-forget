@@ -1,6 +1,7 @@
 """
 Job Status Updater
 """
+import json
 import logging
 import os
 
@@ -20,54 +21,63 @@ status_map = {
     "JobSucceeded": "COMPLETED",
 }
 
+unlocked_states = ["RUNNING", "QUEUED"]
+
 time_events = {
     "JobStarted": "JobStartTime",
-    "JobSucceeded": "JobFinishTime"
+    "JobSucceeded": "JobFinishTime",
 }
 
 
 def update_status(job_id, events):
-    status = None
+    attr_updates = {}
     for event in events:
-        status = _update_status(job_id, event)
+        # Ignore non status events
+        event_name = event["EventName"]
+        if event_name not in status_map:
+            continue
 
-    return status
+        new_status = status_map[event_name]
+        # Only change the status if it's still in an unlocked state
+        if not attr_updates.get("JobStatus") or attr_updates.get("JobStatus") in unlocked_states:
+            attr_updates["JobStatus"] = new_status
+
+        # Update any job time events
+        if event_name in time_events and not attr_updates.get(time_events[event_name]):
+            attr_updates[time_events[event_name]] = event["EventData"]
+
+    if len(attr_updates) > 0:
+        _update_item(job_id, attr_updates)
 
 
-def _update_status(job_id, event):
-    event_name = event["EventName"]
-    if event_name not in status_map:
-        return
-    status = status_map[event_name]
+def _update_item(job_id, attr_updates):
     try:
-        update_expression = "set #status = :s"
-        additional_attr_names = {}
-        additional_attr_values = {}
-        if event_name in time_events:
-            update_expression += ", #time_attr = :t"
-            additional_attr_names["#time_attr"] = time_events[event_name]
-            additional_attr_values[":t"] = event["EventData"]
+        update_expression = "set " + ", ".join(["#{k} = :{k}".format(k=k) for k, v in attr_updates.items()])
+        attr_names = {}
+        attr_values = {}
+
+        for k, v in attr_updates.items():
+            attr_names["#{}".format(k)] = k
+            attr_values[":{}".format(k)] = v
+
         table.update_item(
             Key={
                 'Id': job_id,
                 'Sk': job_id,
             },
             UpdateExpression=update_expression,
-            ConditionExpression="#status = :r OR #status = :c OR #status = :q",
+            ConditionExpression="#JobStatus = :r OR #JobStatus = :q",
             ExpressionAttributeNames={
-                '#status': 'JobStatus',
-                **additional_attr_names,
+                "#JobStatus": "JobStatus",
+                **attr_names
             },
             ExpressionAttributeValues={
-                ':s': status,
                 ':r': "RUNNING",
-                ':c': "COMPLETED",
                 ':q': "QUEUED",
-                **additional_attr_values,
+                **attr_values,
             },
             ReturnValues="UPDATED_NEW"
         )
-
-        return status
+        logger.info("Updated Status for Job ID {}: {}".format(job_id, json.dumps(attr_updates)))
     except ddb.meta.client.exceptions.ConditionalCheckFailedException:
         logger.warning("Job {} is already in a status which cannot be updated".format(job_id))

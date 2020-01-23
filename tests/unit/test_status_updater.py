@@ -10,7 +10,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.jobs]
 
 @patch("backend.lambdas.jobs.status_updater.table")
 def test_it_handles_job_started(table):
-    resp = update_status("job123", [{
+    update_status("job123", [{
         "Id": "job123",
         "Sk": "123456",
         "Type": "JobEvent",
@@ -23,28 +23,26 @@ def test_it_handles_job_started(table):
             'Id': "job123",
             'Sk': "job123",
         },
-        UpdateExpression="set #status = :s, #time_attr = :t",
-        ConditionExpression="#status = :r OR #status = :c OR #status = :q",
+        UpdateExpression="set #JobStatus = :JobStatus, #JobStartTime = :JobStartTime",
+        ConditionExpression="#JobStatus = :r OR #JobStatus = :q",
         ExpressionAttributeNames={
-            '#status': 'JobStatus',
-            '#time_attr': 'JobStartTime',
+            '#JobStatus': 'JobStatus',
+            '#JobStartTime': 'JobStartTime',
         },
         ExpressionAttributeValues={
-            ':s': "RUNNING",
             ':r': "RUNNING",
-            ':c': "COMPLETED",
             ':q': "QUEUED",
-            ':t': 12345,
+            ':JobStatus': "RUNNING",
+            ':JobStartTime': 12345,
         },
         ReturnValues="UPDATED_NEW"
     )
     assert 1 == table.update_item.call_count
-    assert "RUNNING" == resp
 
 
 @patch("backend.lambdas.jobs.status_updater.table")
 def test_it_handles_job_finished(table):
-    resp = update_status("job123", [{
+    update_status("job123", [{
         "Id": "job123",
         "Sk": "123456",
         "Type": "JobEvent",
@@ -57,28 +55,26 @@ def test_it_handles_job_finished(table):
             'Id': "job123",
             'Sk': "job123",
         },
-        UpdateExpression="set #status = :s, #time_attr = :t",
-        ConditionExpression="#status = :r OR #status = :c OR #status = :q",
+        UpdateExpression="set #JobStatus = :JobStatus, #JobFinishTime = :JobFinishTime",
+        ConditionExpression="#JobStatus = :r OR #JobStatus = :q",
         ExpressionAttributeNames={
-            '#status': 'JobStatus',
-            '#time_attr': 'JobFinishTime',
+            '#JobStatus': 'JobStatus',
+            '#JobFinishTime': 'JobFinishTime',
         },
         ExpressionAttributeValues={
-            ':s': "COMPLETED",
             ':r': "RUNNING",
-            ':c': "COMPLETED",
             ':q': "QUEUED",
-            ':t': 12345,
+            ':JobStatus': "COMPLETED",
+            ':JobFinishTime': 12345,
         },
         ReturnValues="UPDATED_NEW"
     )
     assert 1 == table.update_item.call_count
-    assert "COMPLETED" == resp
 
 
 @patch("backend.lambdas.jobs.status_updater.table")
 def test_it_handles_query_failed(table):
-    resp = update_status("job123", [{
+    update_status("job123", [{
         "Id": "job123",
         "Sk": "123456",
         "Type": "JobEvent",
@@ -91,26 +87,24 @@ def test_it_handles_query_failed(table):
             'Id': "job123",
             'Sk': "job123",
         },
-        UpdateExpression="set #status = :s",
-        ConditionExpression="#status = :r OR #status = :c OR #status = :q",
+        UpdateExpression="set #JobStatus = :JobStatus",
+        ConditionExpression="#JobStatus = :r OR #JobStatus = :q",
         ExpressionAttributeNames={
-            '#status': 'JobStatus',
+            '#JobStatus': 'JobStatus',
         },
         ExpressionAttributeValues={
-            ':s': "ABORTED",
+            ':JobStatus': "ABORTED",
             ':r': "RUNNING",
-            ':c': "COMPLETED",
             ':q': "QUEUED",
         },
         ReturnValues="UPDATED_NEW"
     )
     assert 1 == table.update_item.call_count
-    assert "ABORTED" == resp
 
 
 @patch("backend.lambdas.jobs.status_updater.table")
 def test_it_handles_obj_update_failed(table):
-    resp = update_status("job123", [{
+    update_status("job123", [{
         "Id": "job123",
         "Sk": "123456",
         "Type": "JobEvent",
@@ -123,26 +117,24 @@ def test_it_handles_obj_update_failed(table):
             'Id': "job123",
             'Sk': "job123",
         },
-        UpdateExpression="set #status = :s",
-        ConditionExpression="#status = :r OR #status = :c OR #status = :q",
+        UpdateExpression="set #JobStatus = :JobStatus",
+        ConditionExpression="#JobStatus = :r OR #JobStatus = :q",
         ExpressionAttributeNames={
-            '#status': 'JobStatus',
+            '#JobStatus': 'JobStatus',
         },
         ExpressionAttributeValues={
-            ':s': "COMPLETED_WITH_ERRORS",
+            ':JobStatus': "COMPLETED_WITH_ERRORS",
             ':r': "RUNNING",
-            ':c': "COMPLETED",
             ':q': "QUEUED",
         },
         ReturnValues="UPDATED_NEW"
     )
     assert 1 == table.update_item.call_count
-    assert "COMPLETED_WITH_ERRORS" == resp
 
 
 @patch("backend.lambdas.jobs.status_updater.table")
 def test_it_handles_exception(table):
-    resp = update_status("job123", [{
+    update_status("job123", [{
         "Id": "job123",
         "Sk": "123456",
         "Type": "JobEvent",
@@ -155,21 +147,19 @@ def test_it_handles_exception(table):
             'Id': "job123",
             'Sk': "job123",
         },
-        UpdateExpression="set #status = :s",
-        ConditionExpression="#status = :r OR #status = :c OR #status = :q",
+        UpdateExpression="set #JobStatus = :JobStatus",
+        ConditionExpression="#JobStatus = :r OR #JobStatus = :q",
         ExpressionAttributeNames={
-            '#status': 'JobStatus',
+            '#JobStatus': 'JobStatus',
         },
         ExpressionAttributeValues={
-            ':s': "FAILED",
+            ':JobStatus': "FAILED",
             ':r': "RUNNING",
-            ':c': "COMPLETED",
             ':q': "QUEUED",
         },
         ReturnValues="UPDATED_NEW"
     )
     assert 1 == table.update_item.call_count
-    assert "FAILED" == resp
 
 
 @patch("backend.lambdas.jobs.status_updater.ddb")
@@ -178,7 +168,7 @@ def test_it_handles_already_failed_jobs(table, ddb):
     e = boto3.client("dynamodb").exceptions.ConditionalCheckFailedException
     ddb.meta.client.exceptions.ConditionalCheckFailedException = e
     table.update_item.side_effect = e({}, "ConditionalCheckFailedException")
-    resp = update_status("job123", [{
+    update_status("job123", [{
         "Id": "job123",
         "Sk": "123456",
         "Type": "JobEvent",
@@ -187,14 +177,13 @@ def test_it_handles_already_failed_jobs(table, ddb):
         "EventData": {}
     }])
     table.update_item.assert_called()
-    assert not resp
 
 
 @patch("backend.lambdas.jobs.status_updater.table")
 def test_it_throws_for_non_condition_errors(table):
     table.update_item.side_effect = ClientError({"Error": {"Code": "AnError"}}, "update_item")
     with pytest.raises(ClientError):
-        resp = update_status("job123", [{
+        update_status("job123", [{
             "Id": "job123",
             "Sk": "123456",
             "Type": "JobEvent",
@@ -206,7 +195,7 @@ def test_it_throws_for_non_condition_errors(table):
 
 @patch("backend.lambdas.jobs.status_updater.table")
 def test_it_ignores_none_status_events(table):
-    resp = update_status("job123", [{
+    update_status("job123", [{
         "Id": "job123",
         "Sk": "123456",
         "Type": "JobEvent",
@@ -215,4 +204,3 @@ def test_it_ignores_none_status_events(table):
         "EventData": {}
     }])
     table.update_item.assert_not_called()
-    assert not resp

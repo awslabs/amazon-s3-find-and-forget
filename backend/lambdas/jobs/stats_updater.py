@@ -1,10 +1,15 @@
 """
 Job Stats Updater
 """
+import json
+import logging
+
 import boto3
 from os import getenv
 from collections import Counter, defaultdict
 
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 ddb = boto3.resource("dynamodb")
 table = ddb.Table(getenv("JobTable", "S3F2_Jobs"))
 
@@ -12,6 +17,7 @@ table = ddb.Table(getenv("JobTable", "S3F2_Jobs"))
 def update_stats(job_id, events):
     stats = _aggregate_stats(events)
     _update_job(job_id, stats)
+    logger.info("Updated Status for Job ID {}: {}".format(job_id, json.dumps(stats)))
     return stats
 
 
