@@ -69,11 +69,11 @@ def test_it_updates_job_in_response_to_events(job_factory, job_event_factory, jo
     job_id = job_factory()["Id"]
     execution_arn = "{}:{}".format(stack["StateMachineArn"].replace("stateMachine", "execution"), job_id)
     try:
-        job_event_factory(job_id, "QueryFailed", {"QueryStatus": {"Statistics": {
+        job_event_factory(job_id, "QueryFailed", {"Statistics": {
             "DataScannedInBytes": 1024,
             "EngineExecutionTimeInMillis": 100,
-        }}})
-        time.sleep(5)  # No item waiter therefore wait for stream processor
+        }})
+        time.sleep(6)  # No item waiter therefore wait for stream processor
         item = job_table.get_item(Key={"Id": job_id, "Sk": job_id})["Item"]
         assert "ABORTED" == item["JobStatus"]
         assert 1024.0 == item["TotalQueryScannedInBytes"]
