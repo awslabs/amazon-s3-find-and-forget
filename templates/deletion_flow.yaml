@@ -10,11 +10,10 @@ Globals:
     Environment:
       Variables:
         Cluster: !Ref ECSCluster
+        JobTableName: !Ref JobTableName
         LogLevel: !Ref LogLevel
 
 Parameters:
-  AuditLogGroup:
-    Type: String
   CommonLayers:
     Type: CommaDelimitedList
   LogLevel:
@@ -33,6 +32,9 @@ Parameters:
   DeletionTaskMemory:
     Type: String
   EnableContainerInsights:
+    Type: String
+  JobTableName:
+    Description: Table name for Jobs Table
     Type: String
   LogRetentionInDays:
     Type: Number
@@ -106,8 +108,8 @@ Resources:
               Value: !Ref DLQ
             - Name: ECS_ENABLE_CONTAINER_METADATA
               Value: 'true'
-            - Name: LogGroupName
-              Value: !Ref AuditLogGroup
+            - Name: JobTableName
+              Value: !Ref JobTableName
             - Name: MAX_FILE_SIZE_GB
               Value: "9"
 
@@ -147,6 +149,10 @@ Resources:
             - sqs:ReceiveMessage
             Effect: Allow 
             Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${DelObjQ.QueueName}
+          - Action:
+            - dynamodb:PutItem
+            Effect: Allow
+            Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${JobTableName}"
           - Action:
             - logs:DescribeLogStreams
             - logs:CreateLogStream

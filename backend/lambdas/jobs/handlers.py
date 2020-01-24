@@ -1,7 +1,7 @@
 """
 Job handlers
 """
-import datetime
+from datetime import datetime, timezone
 import json
 import os
 
@@ -52,7 +52,7 @@ def list_jobs_handler(event, context):
     if not qs:
         qs = {}
     page_size = int(qs.get("page_size", 10))
-    start_at = int(qs.get("start_at", round(datetime.datetime.now().timestamp())))
+    start_at = int(qs.get("start_at", round(datetime.now(timezone.utc).timestamp())))
 
     items = []
     for gsi_bucket in range(0, bucket_count):

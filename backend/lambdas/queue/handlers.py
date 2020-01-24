@@ -1,7 +1,7 @@
 """
 Queue handlers
 """
-import datetime
+from datetime import datetime, timezone
 import random
 import json
 import os
@@ -85,7 +85,7 @@ def process_handler(event, context):
         "Type": "Job",
         "JobStatus": "QUEUED",
         "GSIBucket": str(random.randint(0, bucket_count - 1)),
-        "CreatedAt": round(datetime.datetime.now().timestamp()),
+        "CreatedAt": round(datetime.now(timezone.utc).timestamp()),
     }
     jobs_table.put_item(Item=item)
 

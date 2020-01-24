@@ -109,7 +109,6 @@ Resources:
     Properties:
       TemplateURL: ./deletion_flow.yaml
       Parameters:
-        AuditLogGroup: !Ref AuditLogGroup
         CommonLayers: !Join
           - ","
           - - !GetAtt LayersStack.Outputs.AWSSDKLayer
@@ -118,6 +117,7 @@ Resources:
         DeletionTaskCPU: !Ref DeletionTaskCPU
         DeletionTaskMemory: !Ref DeletionTaskMemory
         EnableContainerInsights: !Ref EnableContainerInsights
+        JobTableName: !GetAtt DDBStack.Outputs.JobTable
         ResourcePrefix: !Ref ResourcePrefix
         VpcSecurityGroup: !GetAtt VpcStack.Outputs.SecurityGroup
         VpcSubnets: !GetAtt VpcStack.Outputs.Subnets
@@ -132,7 +132,6 @@ Resources:
       Parameters:
         AthenaConcurrencyLimit: !Ref AthenaConcurrencyLimit
         AthenaWorkGroup: !Ref AthenaWorkGroup
-        AuditLogGroup: !Ref AuditLogGroup
         CommonLayers: !Join
           - ","
           - - !GetAtt LayersStack.Outputs.AWSSDKLayer
@@ -182,12 +181,6 @@ Resources:
         Version: !FindInMap [Solution, Constants, Version]
         WebUIBucket: !GetAtt WebUIStack.Outputs.WebUIBucket
 
-  AuditLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: /aws/s3f2/
-      RetentionInDays: !Ref LogRetentionInDays
-
 Outputs:
   APIAccessControlAllowOriginHeader:
     Value: !GetAtt APIStack.Outputs.AccessControlAllowOriginHeader
@@ -199,8 +192,6 @@ Outputs:
     Value: !GetAtt StateMachineStack.Outputs.AthenaStateMachineArn
   AthenaExecutionRoleArn:
     Value: !GetAtt StateMachineStack.Outputs.AthenaExecutionRoleArn
-  AuditLogGroup:
-    Value: !Ref AuditLogGroup
   CognitoUserPoolClientId:
     Value: !GetAtt AuthStack.Outputs.CognitoUserPoolClientId
   CognitoUserPoolId:
