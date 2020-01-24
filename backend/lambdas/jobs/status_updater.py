@@ -16,16 +16,14 @@ ddb = boto3.resource("dynamodb")
 table = ddb.Table(os.getenv("JobTable", "S3F2_Jobs"))
 
 status_map = {
-    "QueryFailed": "FIND_FAILING",
-    "ObjectUpdateFailed": "FORGET_FAILING",
     "FindPhaseFailed": "FIND_FAILED",
-    "ForgetPhaseFailed": "FORGET_FAILED",
+    "ForgetPhaseFailed": "COMPLETED_WITH_ERRORS",
     "Exception": "FAILED",
     "JobStarted": "RUNNING",
     "JobSucceeded": "COMPLETED",
 }
 
-unlocked_states = ["RUNNING", "QUEUED", "FIND_FAILING", "FORGET_FAILING"]
+unlocked_states = ["RUNNING", "QUEUED"]
 
 time_events = {
     "JobStarted": "JobStartTime",
