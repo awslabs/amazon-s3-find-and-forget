@@ -32,6 +32,7 @@ def handler(event, context):
         process_job(job)
 
     for job_id, group in grouped_events:
+        group = [i for i in group]
         update_status(job_id, group)
         update_stats(job_id, group)
 

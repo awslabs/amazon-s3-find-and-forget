@@ -19,7 +19,7 @@ table = ddb.Table(getenv("JobTable", "S3F2_Jobs"))
 def update_stats(job_id, events):
     stats = _aggregate_stats(events)
     _update_job(job_id, stats)
-    logger.info("Updated Status for Job ID {}: {}".format(job_id, json.dumps(stats, cls=DecimalEncoder)))
+    logger.info("Updated Stats for Job ID {}: {}".format(job_id, json.dumps(stats, cls=DecimalEncoder)))
     return stats
 
 
