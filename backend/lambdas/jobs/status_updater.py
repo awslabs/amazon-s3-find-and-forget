@@ -17,7 +17,7 @@ table = ddb.Table(os.getenv("JobTable", "S3F2_Jobs"))
 
 status_map = {
     "FindPhaseFailed": "FIND_FAILED",
-    "ForgetPhaseFailed": "COMPLETED_WITH_ERRORS",
+    "ForgetPhaseFailed": "FORGET_FAILED",
     "Exception": "FAILED",
     "JobStarted": "RUNNING",
     "JobSucceeded": "COMPLETED",
@@ -42,7 +42,7 @@ def update_status(job_id, events):
         if event_name not in status_map:
             continue
 
-        new_status = status_map[event_name]
+        new_status = determine_status(job_id, event_name)
         # Only change the status if it's still in an unlocked state
         if not attr_updates.get("JobStatus") or attr_updates.get("JobStatus") in unlocked_states:
             attr_updates["JobStatus"] = new_status
@@ -53,6 +53,26 @@ def update_status(job_id, events):
 
     if len(attr_updates) > 0:
         _update_item(job_id, attr_updates)
+        logger.info("Updated Status for Job ID {}: {}".format(job_id, json.dumps(attr_updates, cls=DecimalEncoder)))
+
+
+def determine_status(job_id, event_name):
+    new_status = status_map[event_name]
+    if event_name == "JobSucceeded" and job_has_errors(job_id):
+        return "COMPLETED_WITH_ERRORS"
+
+    return new_status
+
+
+def job_has_errors(job_id):
+    item = table.get_item(
+        Key={
+            'Id': job_id,
+            'Sk': job_id,
+        },
+        ConsistentRead=True
+    )['Item']
+    return item.get("TotalObjectUpdateFailedCount", 0) > 0 or item.get("TotalQueryFailedCount") > 0
 
 
 def _update_item(job_id, attr_updates):
@@ -65,7 +85,7 @@ def _update_item(job_id, attr_updates):
             attr_names["#{}".format(k)] = k
             attr_values[":{}".format(k)] = v
 
-        table.update_item(
+        return table.update_item(
             Key={
                 'Id': job_id,
                 'Sk': job_id,
@@ -82,6 +102,5 @@ def _update_item(job_id, attr_updates):
             },
             ReturnValues="UPDATED_NEW"
         )
-        logger.info("Updated Status for Job ID {}: {}".format(job_id, json.dumps(attr_updates, cls=DecimalEncoder)))
     except ddb.meta.client.exceptions.ConditionalCheckFailedException:
         logger.warning("Job {} is already in a status which cannot be updated".format(job_id))

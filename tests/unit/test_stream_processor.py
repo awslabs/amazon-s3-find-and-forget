@@ -129,13 +129,13 @@ def test_it_handles_job_event_records(mock_deserializer, mock_stats, mock_status
 @patch("backend.lambdas.jobs.stream_processor.update_stats")
 @patch("backend.lambdas.jobs.stream_processor.should_process", Mock(return_value=True))
 @patch("backend.lambdas.jobs.stream_processor.deserialize_item")
-def test_it_does_not_update_stats_if_status_fails(mock_deserializer, mock_stats, mock_status):
+def test_it_does_not_update_status_if_stats_fails(mock_deserializer, mock_stats, mock_status):
     mock_deserializer.return_value = {
         "Id": "job123",
         "Sk": "123456",
         "Type": "JobEvent",
     }
-    mock_status.side_effect = ValueError
+    mock_stats.side_effect = ValueError
 
     with pytest.raises(ValueError):
         handler({
@@ -151,7 +151,7 @@ def test_it_does_not_update_stats_if_status_fails(mock_deserializer, mock_stats,
             }]
         }, SimpleNamespace())
 
-    mock_stats.assert_not_called()
+    mock_status.assert_not_called()
 
 
 @patch("backend.lambdas.jobs.stream_processor.should_process", Mock(return_value=True))

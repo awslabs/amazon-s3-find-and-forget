@@ -3,11 +3,57 @@ import pytest
 from botocore.exceptions import ClientError
 from mock import patch, Mock
 
-from backend.lambdas.jobs.status_updater import update_status
+from backend.lambdas.jobs.status_updater import update_status, determine_status, job_has_errors
 
 pytestmark = [pytest.mark.unit, pytest.mark.jobs]
 
 
+@patch("backend.lambdas.jobs.status_updater.job_has_errors", Mock(return_value=False))
+def test_it_determines_basic_statuses():
+    assert "FIND_FAILED" == determine_status("123", "FindPhaseFailed")
+    assert "FORGET_FAILED" == determine_status("123", "ForgetPhaseFailed")
+    assert "FAILED" == determine_status("123", "Exception")
+    assert "RUNNING" == determine_status("123", "JobStarted")
+    assert "COMPLETED" == determine_status("123", "JobSucceeded")
+
+
+@patch("backend.lambdas.jobs.status_updater.job_has_errors", Mock(return_value=True))
+def test_it_determines_completed_with_errors():
+    assert "COMPLETED_WITH_ERRORS" == determine_status("123", "JobSucceeded")
+
+
+@patch("backend.lambdas.jobs.status_updater.table")
+def test_it_determines_job_has_errors_for_failed_object_updates(table):
+    table.get_item.return_value = {
+        "Item": {
+            "TotalObjectUpdateFailedCount": 1
+        }
+    }
+    assert job_has_errors("test")
+
+
+@patch("backend.lambdas.jobs.status_updater.table")
+def test_it_determines_job_has_errors_for_failed_queries(table):
+    table.get_item.return_value = {
+        "Item": {
+            "TotalQueryFailedCount": 1
+        }
+    }
+    assert job_has_errors("test")
+
+
+@patch("backend.lambdas.jobs.status_updater.table")
+def test_it_determines_job_has_errors_for_failed_object_updates(table):
+    table.get_item.return_value = {
+        "Item": {
+            "TotalObjectUpdateFailedCount": 0,
+            "TotalQueryFailedCount": 0,
+        }
+    }
+    assert not job_has_errors("test")
+
+
+@patch("backend.lambdas.jobs.status_updater.determine_status", Mock(return_value="RUNNING"))
 @patch("backend.lambdas.jobs.status_updater.table")
 def test_it_handles_job_started(table):
     update_status("job123", [{
@@ -40,6 +86,7 @@ def test_it_handles_job_started(table):
     assert 1 == table.update_item.call_count
 
 
+@patch("backend.lambdas.jobs.status_updater.determine_status", Mock(return_value="COMPLETED"))
 @patch("backend.lambdas.jobs.status_updater.table")
 def test_it_handles_job_finished(table):
     update_status("job123", [{
@@ -72,6 +119,7 @@ def test_it_handles_job_finished(table):
     assert 1 == table.update_item.call_count
 
 
+@patch("backend.lambdas.jobs.status_updater.determine_status", Mock(return_value="FIND_FAILED"))
 @patch("backend.lambdas.jobs.status_updater.table")
 def test_it_handles_find_failed(table):
     update_status("job123", [{
@@ -104,6 +152,7 @@ def test_it_handles_find_failed(table):
     assert 1 == table.update_item.call_count
 
 
+@patch("backend.lambdas.jobs.status_updater.determine_status", Mock(return_value="FORGET_FAILED"))
 @patch("backend.lambdas.jobs.status_updater.table")
 def test_it_handles_forget_failed(table):
     update_status("job123", [{
@@ -126,7 +175,7 @@ def test_it_handles_forget_failed(table):
             '#JobFinishTime': 'JobFinishTime',
         },
         ExpressionAttributeValues={
-            ':JobStatus': "COMPLETED_WITH_ERRORS",
+            ':JobStatus': "FORGET_FAILED",
             ':RUNNING': 'RUNNING',
             ':QUEUED': 'QUEUED',
             ':JobFinishTime': 123.0,
@@ -136,6 +185,7 @@ def test_it_handles_forget_failed(table):
     assert 1 == table.update_item.call_count
 
 
+@patch("backend.lambdas.jobs.status_updater.determine_status", Mock(return_value="FAILED"))
 @patch("backend.lambdas.jobs.status_updater.table")
 def test_it_handles_exception(table):
     update_status("job123", [{
