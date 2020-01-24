@@ -646,7 +646,7 @@ Resources:
               "Catch": [{
                 "ErrorEquals": ["States.ALL"],
                 "ResultPath": "$.ErrorDetails",
-                "Next": "Handle Error"
+                "Next": "Handle Find Error"
               }]
             },
             "End Find Phase": {
@@ -699,7 +699,7 @@ Resources:
               "Catch": [{
                 "ErrorEquals": ["States.ALL"],
                 "ResultPath": "$.ErrorDetails",
-                "Next": "Handle Error"
+                "Next": "Handle Forget Error"
               }]
             },
             "End Forget Phase": {
@@ -712,12 +712,7 @@ Resources:
               },
               "Resource": "${EmitEvent.Arn}",
               "ResultPath": null,
-              "Next": "Delete Queue Items",
-              "Catch": [{
-                "ErrorEquals": ["States.ALL"],
-                "ResultPath": "$.ErrorDetails",
-                "Next": "Handle Error"
-              }]
+              "Next": "Delete Queue Items"
             },
             "Delete Queue Items": {
               "Comment": "Deletes all items from the deletion queue",
@@ -758,6 +753,27 @@ Resources:
             "Handle Error": {
               "Type": "Pass",
               "Parameters": {
+                "EventName": "Exception",
+                "Error.$": "$.ErrorDetails.Error",
+                "Cause.$": "$.ErrorDetails.Cause",
+                "State.$": "$"
+              },
+              "Next": "Emit Error"
+            },
+            "Handle Find Error": {
+              "Type": "Pass",
+              "Parameters": {
+                "EventName": "FindPhaseFailed",
+                "Error.$": "$.ErrorDetails.Error",
+                "Cause.$": "$.ErrorDetails.Cause",
+                "State.$": "$"
+              },
+              "Next": "Emit Error"
+            },
+            "Handle Forget Error": {
+              "Type": "Pass",
+              "Parameters": {
+                "EventName": "ForgetPhaseFailed",
                 "Error.$": "$.ErrorDetails.Error",
                 "Cause.$": "$.ErrorDetails.Cause",
                 "State.$": "$"
@@ -765,10 +781,10 @@ Resources:
               "Next": "Emit Error"
             },
             "Emit Error": {
-              "Comment": "Emit the failure event",
+              "Comment": "Emit the generic failure event",
               "Type": "Task",
               "Parameters": {
-                "EventName": "Exception",
+                "EventName.$": "$.EventName",
                 "EventData.$": "$",
                 "EmitterId": "StepFunctions",
                 "JobId.$": "$$.Execution.Name"
@@ -778,7 +794,7 @@ Resources:
               "End": true
             },
             "Job Succeeded": {
-              "Comment": "Emit the job success event",
+              "Comment": "Emit the job complete event",
               "Type": "Task",
               "Parameters": {
                 "EventName": "JobSucceeded",

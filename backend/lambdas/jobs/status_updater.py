@@ -16,18 +16,23 @@ ddb = boto3.resource("dynamodb")
 table = ddb.Table(os.getenv("JobTable", "S3F2_Jobs"))
 
 status_map = {
-    "QueryFailed": "ABORTED",
-    "ObjectUpdateFailed": "COMPLETED_WITH_ERRORS",
+    "QueryFailed": "FIND_FAILING",
+    "ObjectUpdateFailed": "FORGET_FAILING",
+    "FindPhaseFailed": "FIND_FAILED",
+    "ForgetPhaseFailed": "FORGET_FAILED",
     "Exception": "FAILED",
     "JobStarted": "RUNNING",
     "JobSucceeded": "COMPLETED",
 }
 
-unlocked_states = ["RUNNING", "QUEUED"]
+unlocked_states = ["RUNNING", "QUEUED", "FIND_FAILING", "FORGET_FAILING"]
 
 time_events = {
     "JobStarted": "JobStartTime",
     "JobSucceeded": "JobFinishTime",
+    "Exception": "JobFinishTime",
+    "FindPhaseFailed": "JobFinishTime",
+    "ForgetPhaseFailed": "JobFinishTime",
 }
 
 
@@ -46,7 +51,7 @@ def update_status(job_id, events):
 
         # Update any job time events
         if event_name in time_events and not attr_updates.get(time_events[event_name]):
-            attr_updates[time_events[event_name]] = event["EventData"]
+            attr_updates[time_events[event_name]] = event["CreatedAt"]
 
     if len(attr_updates) > 0:
         _update_item(job_id, attr_updates)
@@ -68,14 +73,13 @@ def _update_item(job_id, attr_updates):
                 'Sk': job_id,
             },
             UpdateExpression=update_expression,
-            ConditionExpression="#JobStatus = :r OR #JobStatus = :q",
+            ConditionExpression=" OR ".join(["#JobStatus = :{}".format(s) for s in unlocked_states]),
             ExpressionAttributeNames={
                 "#JobStatus": "JobStatus",
                 **attr_names
             },
             ExpressionAttributeValues={
-                ':r': "RUNNING",
-                ':q': "QUEUED",
+                **{":{}".format(s): s for s in unlocked_states},
                 **attr_values,
             },
             ReturnValues="UPDATED_NEW"

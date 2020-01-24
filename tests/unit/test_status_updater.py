@@ -16,7 +16,7 @@ def test_it_handles_job_started(table):
         "Type": "JobEvent",
         "CreatedAt": 123.0,
         "EventName": "JobStarted",
-        "EventData": 12345
+        "EventData": {}
     }])
     table.update_item.assert_called_with(
         Key={
@@ -24,16 +24,18 @@ def test_it_handles_job_started(table):
             'Sk': "job123",
         },
         UpdateExpression="set #JobStatus = :JobStatus, #JobStartTime = :JobStartTime",
-        ConditionExpression="#JobStatus = :r OR #JobStatus = :q",
+        ConditionExpression="#JobStatus = :RUNNING OR #JobStatus = :QUEUED OR #JobStatus = :FIND_FAILING OR #JobStatus = :FORGET_FAILING",
         ExpressionAttributeNames={
             '#JobStatus': 'JobStatus',
             '#JobStartTime': 'JobStartTime',
         },
         ExpressionAttributeValues={
-            ':r': "RUNNING",
-            ':q': "QUEUED",
+            ':RUNNING': 'RUNNING',
+            ':QUEUED': 'QUEUED',
+            ':FIND_FAILING': 'FIND_FAILING',
+            ':FORGET_FAILING': 'FORGET_FAILING',
             ':JobStatus': "RUNNING",
-            ':JobStartTime': 12345,
+            ':JobStartTime': 123.0,
         },
         ReturnValues="UPDATED_NEW"
     )
@@ -46,9 +48,9 @@ def test_it_handles_job_finished(table):
         "Id": "job123",
         "Sk": "123456",
         "Type": "JobEvent",
-        "CreatedAt": 123.0,
+        "CreatedAt": 123,
         "EventName": "JobSucceeded",
-        "EventData": 12345
+        "EventData": {}
     }])
     table.update_item.assert_called_with(
         Key={
@@ -56,16 +58,18 @@ def test_it_handles_job_finished(table):
             'Sk': "job123",
         },
         UpdateExpression="set #JobStatus = :JobStatus, #JobFinishTime = :JobFinishTime",
-        ConditionExpression="#JobStatus = :r OR #JobStatus = :q",
+        ConditionExpression="#JobStatus = :RUNNING OR #JobStatus = :QUEUED OR #JobStatus = :FIND_FAILING OR #JobStatus = :FORGET_FAILING",
         ExpressionAttributeNames={
             '#JobStatus': 'JobStatus',
             '#JobFinishTime': 'JobFinishTime',
         },
         ExpressionAttributeValues={
-            ':r': "RUNNING",
-            ':q': "QUEUED",
+            ':RUNNING': 'RUNNING',
+            ':QUEUED': 'QUEUED',
+            ':FIND_FAILING': 'FIND_FAILING',
+            ':FORGET_FAILING': 'FORGET_FAILING',
             ':JobStatus': "COMPLETED",
-            ':JobFinishTime': 12345,
+            ':JobFinishTime': 123.0,
         },
         ReturnValues="UPDATED_NEW"
     )
@@ -88,14 +92,16 @@ def test_it_handles_query_failed(table):
             'Sk': "job123",
         },
         UpdateExpression="set #JobStatus = :JobStatus",
-        ConditionExpression="#JobStatus = :r OR #JobStatus = :q",
+        ConditionExpression="#JobStatus = :RUNNING OR #JobStatus = :QUEUED OR #JobStatus = :FIND_FAILING OR #JobStatus = :FORGET_FAILING",
         ExpressionAttributeNames={
             '#JobStatus': 'JobStatus',
         },
         ExpressionAttributeValues={
-            ':JobStatus': "ABORTED",
-            ':r': "RUNNING",
-            ':q': "QUEUED",
+            ':JobStatus': "FIND_FAILING",
+            ':RUNNING': 'RUNNING',
+            ':QUEUED': 'QUEUED',
+            ':FIND_FAILING': 'FIND_FAILING',
+            ':FORGET_FAILING': 'FORGET_FAILING',
         },
         ReturnValues="UPDATED_NEW"
     )
@@ -118,14 +124,84 @@ def test_it_handles_obj_update_failed(table):
             'Sk': "job123",
         },
         UpdateExpression="set #JobStatus = :JobStatus",
-        ConditionExpression="#JobStatus = :r OR #JobStatus = :q",
+        ConditionExpression="#JobStatus = :RUNNING OR #JobStatus = :QUEUED OR #JobStatus = :FIND_FAILING OR #JobStatus = :FORGET_FAILING",
         ExpressionAttributeNames={
             '#JobStatus': 'JobStatus',
         },
         ExpressionAttributeValues={
-            ':JobStatus': "COMPLETED_WITH_ERRORS",
-            ':r': "RUNNING",
-            ':q': "QUEUED",
+            ':JobStatus': "FORGET_FAILING",
+            ':RUNNING': 'RUNNING',
+            ':QUEUED': 'QUEUED',
+            ':FIND_FAILING': 'FIND_FAILING',
+            ':FORGET_FAILING': 'FORGET_FAILING',
+        },
+        ReturnValues="UPDATED_NEW"
+    )
+    assert 1 == table.update_item.call_count
+
+
+@patch("backend.lambdas.jobs.status_updater.table")
+def test_it_handles_find_failed(table):
+    update_status("job123", [{
+        "Id": "job123",
+        "Sk": "123456",
+        "Type": "JobEvent",
+        "CreatedAt": 123.0,
+        "EventName": "FindPhaseFailed",
+        "EventData": {}
+    }])
+    table.update_item.assert_called_with(
+        Key={
+            'Id': "job123",
+            'Sk': "job123",
+        },
+        UpdateExpression="set #JobStatus = :JobStatus, #JobFinishTime = :JobFinishTime",
+        ConditionExpression="#JobStatus = :RUNNING OR #JobStatus = :QUEUED OR #JobStatus = :FIND_FAILING OR #JobStatus = :FORGET_FAILING",
+        ExpressionAttributeNames={
+            '#JobStatus': 'JobStatus',
+            '#JobFinishTime': 'JobFinishTime',
+        },
+        ExpressionAttributeValues={
+            ':JobStatus': "FIND_FAILED",
+            ':RUNNING': 'RUNNING',
+            ':QUEUED': 'QUEUED',
+            ':FIND_FAILING': 'FIND_FAILING',
+            ':FORGET_FAILING': 'FORGET_FAILING',
+            ':JobFinishTime': 123.0,
+        },
+        ReturnValues="UPDATED_NEW"
+    )
+    assert 1 == table.update_item.call_count
+
+
+@patch("backend.lambdas.jobs.status_updater.table")
+def test_it_handles_forget_failed(table):
+    update_status("job123", [{
+        "Id": "job123",
+        "Sk": "123456",
+        "Type": "JobEvent",
+        "CreatedAt": 123.0,
+        "EventName": "ForgetPhaseFailed",
+        "EventData": {}
+    }])
+    table.update_item.assert_called_with(
+        Key={
+            'Id': "job123",
+            'Sk': "job123",
+        },
+        UpdateExpression="set #JobStatus = :JobStatus, #JobFinishTime = :JobFinishTime",
+        ConditionExpression="#JobStatus = :RUNNING OR #JobStatus = :QUEUED OR #JobStatus = :FIND_FAILING OR #JobStatus = :FORGET_FAILING",
+        ExpressionAttributeNames={
+            '#JobStatus': 'JobStatus',
+            '#JobFinishTime': 'JobFinishTime',
+        },
+        ExpressionAttributeValues={
+            ':JobStatus': "FORGET_FAILED",
+            ':RUNNING': 'RUNNING',
+            ':QUEUED': 'QUEUED',
+            ':FIND_FAILING': 'FIND_FAILING',
+            ':FORGET_FAILING': 'FORGET_FAILING',
+            ':JobFinishTime': 123.0,
         },
         ReturnValues="UPDATED_NEW"
     )
@@ -147,15 +223,19 @@ def test_it_handles_exception(table):
             'Id': "job123",
             'Sk': "job123",
         },
-        UpdateExpression="set #JobStatus = :JobStatus",
-        ConditionExpression="#JobStatus = :r OR #JobStatus = :q",
+        UpdateExpression="set #JobStatus = :JobStatus, #JobFinishTime = :JobFinishTime",
+        ConditionExpression="#JobStatus = :RUNNING OR #JobStatus = :QUEUED OR #JobStatus = :FIND_FAILING OR #JobStatus = :FORGET_FAILING",
         ExpressionAttributeNames={
             '#JobStatus': 'JobStatus',
+            '#JobFinishTime': 'JobFinishTime',
         },
         ExpressionAttributeValues={
             ':JobStatus': "FAILED",
-            ':r': "RUNNING",
-            ':q': "QUEUED",
+            ':RUNNING': 'RUNNING',
+            ':QUEUED': 'QUEUED',
+            ':FIND_FAILING': 'FIND_FAILING',
+            ':FORGET_FAILING': 'FORGET_FAILING',
+            ':JobFinishTime': 123.0,
         },
         ReturnValues="UPDATED_NEW"
     )
