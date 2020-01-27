@@ -94,7 +94,7 @@ def list_job_events_handler(event, context):
         }
     )
 
-    watermark_boundary = job.get("JobFinishTime", round(datetime.now(timezone.utc).timestamp()))
+    watermark_boundary = job.get("JobFinishTime", round(datetime.now(timezone.utc).timestamp())) * 1000  # microseconds
 
     qs = event.get("queryStringParameters")
     if not qs:
