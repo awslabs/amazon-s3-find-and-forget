@@ -7,7 +7,7 @@ import os
 
 import boto3
 from aws_xray_sdk.core import xray_recorder
-from boto3.dynamodb.conditions import Key
+from boto3.dynamodb.conditions import Key, Attr
 
 from boto_utils import DecimalEncoder
 from decorators import with_logger, request_validator, catch_errors, load_schema, add_cors_headers
@@ -93,6 +93,7 @@ def list_job_events_handler(event, context):
         KeyConditionExpression=Key('Id').eq(job_id),
         ScanIndexForward=True,
         Limit=page_size,
+        FilterExpression=Attr('#t').eq(":t"),
         ExpressionAttributeNames={"#t": "Type"},
         ExpressionAttributeValues={":t": "JobEvent"},
         ExclusiveStartKey={

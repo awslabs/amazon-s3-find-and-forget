@@ -116,6 +116,7 @@ def test_it_starts_at_earliest_by_default(k, table):
             "Id": "test",
             "Sk": "0"
         },
+        FilterExpression=mock.ANY,
         ExpressionAttributeNames=mock.ANY,
         ExpressionAttributeValues=mock.ANY
     )
@@ -137,6 +138,7 @@ def test_it_paginates_jobs_events(table):
         KeyConditionExpression=mock.ANY,
         ScanIndexForward=True,
         Limit=3,
+        FilterExpression=mock.ANY,
         ExclusiveStartKey=mock.ANY,
         ExpressionAttributeNames=mock.ANY,
         ExpressionAttributeValues=mock.ANY
@@ -159,6 +161,7 @@ def test_it_handles_job_event_start_at(k, table):
         KeyConditionExpression=mock.ANY,
         ScanIndexForward=mock.ANY,
         Limit=mock.ANY,
+        FilterExpression=mock.ANY,
         ExclusiveStartKey={
             "Id": "test",
             "Sk": "12345"
