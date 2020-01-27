@@ -93,9 +93,7 @@ def list_job_events_handler(event, context):
         KeyConditionExpression=Key('Id').eq(job_id),
         ScanIndexForward=True,
         Limit=page_size,
-        FilterExpression=Attr('#t').eq(":t"),
-        ExpressionAttributeNames={"#t": "Type"},
-        ExpressionAttributeValues={":t": "JobEvent"},
+        FilterExpression=Attr('Type').eq("JobEvent"),
         ExclusiveStartKey={
             "Id": job_id,
             "Sk": str(start_at)
