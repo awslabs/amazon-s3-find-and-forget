@@ -93,6 +93,7 @@ def test_it_respects_list_job_page_size_with_multiple_buckets(table):
 @patch("backend.lambdas.jobs.handlers.table")
 def test_it_lists_jobs_events(table):
     stub = job_event_stub()
+    table.get_item.return_value = job_stub()
     table.query.return_value = {"Items": [stub]}
     response = handlers.list_job_events_handler({"pathParameters": {"job_id": "test"}}, SimpleNamespace())
     resp_body = json.loads(response["body"])
@@ -105,6 +106,7 @@ def test_it_lists_jobs_events(table):
 @patch("backend.lambdas.jobs.handlers.Key")
 def test_it_starts_at_earliest_by_default(k, table):
     stub = job_event_stub()
+    table.get_item.return_value = job_stub()
     table.query.return_value = {"Items": [stub]}
     response = handlers.list_job_events_handler({"pathParameters": {"job_id": "test"}}, SimpleNamespace())
     assert 200 == response["statusCode"]
@@ -123,6 +125,7 @@ def test_it_starts_at_earliest_by_default(k, table):
 @patch("backend.lambdas.jobs.handlers.table")
 def test_it_paginates_jobs_events(table):
     stub = job_event_stub()
+    table.get_item.return_value = job_stub()
     table.query.return_value = {"Items": [stub for _ in range(0, 3)], "LastEvaluatedKey": {"Id": "test", "Sk": "12345"}}
     response = handlers.list_job_events_handler({
         "pathParameters": {"job_id": "test"},
@@ -131,11 +134,11 @@ def test_it_paginates_jobs_events(table):
     resp_body = json.loads(response["body"])
     assert 200 == response["statusCode"]
     assert 3 == len(resp_body["JobEvents"])
-    assert resp_body["NextStart"]
+    assert "NextStart" in resp_body
     table.query.assert_called_with(
         KeyConditionExpression=mock.ANY,
         ScanIndexForward=True,
-        Limit=3,
+        Limit=4,
         FilterExpression=mock.ANY,
         ExclusiveStartKey=mock.ANY,
     )
@@ -145,6 +148,7 @@ def test_it_paginates_jobs_events(table):
 @patch("backend.lambdas.jobs.handlers.Key")
 def test_it_handles_job_event_start_at(k, table):
     stub = job_event_stub()
+    table.get_item.return_value = job_stub()
     table.query.return_value = {"Items": [stub], "LastEvaluatedKey": {"Id": "test", "Sk": "12345"}}
     response = handlers.list_job_events_handler({
         "pathParameters": {"job_id": "test"},
@@ -173,4 +177,4 @@ def job_event_stub(job_id="test", sk=None, **kwargs):
     now = round(datetime.datetime.utcnow().timestamp())
     if not sk:
         sk = "{}#{}".format(str(now), "12345")
-    return {"Id": job_id, "Sk": sk, "Type": "JobEvent", "CreatedAt": now, **kwargs}
+    return {"Id": job_id, "Sk": sk, "Type": "JobEvent", "CreatedAt": now, "EventName": "QuerySucceeded", **kwargs}

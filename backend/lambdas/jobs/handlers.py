@@ -17,6 +17,8 @@ table = ddb.Table(os.getenv("JobTable", "S3F2_Jobs"))
 index = os.getenv("JobTableDateGSI", "Date-GSI")
 bucket_count = int(os.getenv("GSIBucketCount", 1))
 
+end_events = ["FindPhaseFailed", "ForgetPhaseFailed", "Exception", "JobSucceeded"]
+
 
 @with_logger
 @xray_recorder.capture('GetJobHandler')
@@ -84,15 +86,31 @@ def list_jobs_handler(event, context):
 @catch_errors
 def list_job_events_handler(event, context):
     job_id = event["pathParameters"]["job_id"]
+    # Check the job exists
+    job = table.get_item(
+        Key={
+            'Id': job_id,
+            'Sk': job_id,
+        }
+    )
+
+    watermark_boundary = job.get("JobFinishTime", round(datetime.now(timezone.utc).timestamp()))
+
     qs = event.get("queryStringParameters")
     if not qs:
         qs = {}
     page_size = int(qs.get("page_size", 20))
-    start_at = qs.get("start_at", 0)
-    res = table.query(
+    start_at = qs.get("start_at", "0")
+
+    # Check the watermark is not "future"
+    if int(start_at.split("#")[0]) > watermark_boundary:
+        raise ValueError("Watermark {} is out of bounds for this job".format(start_at))
+
+    # Check the watermark is not "future"
+    results = table.query(
         KeyConditionExpression=Key('Id').eq(job_id),
         ScanIndexForward=True,
-        Limit=page_size,
+        Limit=page_size + 1,
         FilterExpression=Attr('Type').eq("JobEvent"),
         ExclusiveStartKey={
             "Id": job_id,
@@ -100,13 +118,18 @@ def list_job_events_handler(event, context):
         }
     )
 
-    items = res["Items"]
-    next_start = res.get("LastEvaluatedKey", {}).get("Sk")
+    items = results.get("Items", [])[:page_size]
+
+    resp = {
+        "JobEvents": items
+    }
+    if len(items) > 0:
+        if not any([i["EventName"] in end_events for i in items]):
+            resp["NextStart"] = items[len(items) - 1]["Sk"]
+    else:
+        resp["NextStart"] = start_at
 
     return {
         "statusCode": 200,
-        "body": json.dumps({
-            "JobEvents": items,
-            "NextStart": next_start,
-        }, cls=DecimalEncoder)
+        "body": json.dumps(resp, cls=DecimalEncoder)
     }
