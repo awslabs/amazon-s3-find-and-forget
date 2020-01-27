@@ -26,6 +26,7 @@ def test_it_handles_successful_queries(table):
             'Id': "job123",
             'Sk': "job123",
         },
+        ConditionExpression="#Id = :Id AND #Sk = :Sk",
         UpdateExpression="set #qt = if_not_exists(#qt, :z) + :qt, "
                          "#qs = if_not_exists(#qs, :z) + :qs, "
                          "#qf = if_not_exists(#qf, :z) + :qf, "
@@ -34,6 +35,8 @@ def test_it_handles_successful_queries(table):
                          "#ou = if_not_exists(#ou, :z) + :ou, "
                          "#of = if_not_exists(#of, :z) + :of",
         ExpressionAttributeNames={
+            "#Id": "Id",
+            "#Sk": "Sk",
             '#qt': 'TotalQueryCount',
             '#qs': 'TotalQuerySucceededCount',
             '#qf': 'TotalQueryFailedCount',
@@ -43,6 +46,8 @@ def test_it_handles_successful_queries(table):
             '#of': 'TotalObjectUpdateFailedCount',
         },
         ExpressionAttributeValues={
+            ":Id": "job123",
+            ":Sk": "job123",
             ':qt': 1,
             ':qs': 1,
             ':qf': 0,
@@ -77,6 +82,7 @@ def test_it_handles_failed_queries(table):
             'Id': "job123",
             'Sk': "job123",
         },
+        ConditionExpression="#Id = :Id AND #Sk = :Sk",
         UpdateExpression="set #qt = if_not_exists(#qt, :z) + :qt, "
                          "#qs = if_not_exists(#qs, :z) + :qs, "
                          "#qf = if_not_exists(#qf, :z) + :qf, "
@@ -85,6 +91,8 @@ def test_it_handles_failed_queries(table):
                          "#ou = if_not_exists(#ou, :z) + :ou, "
                          "#of = if_not_exists(#of, :z) + :of",
         ExpressionAttributeNames={
+            "#Id": "Id",
+            "#Sk": "Sk",
             '#qt': 'TotalQueryCount',
             '#qs': 'TotalQuerySucceededCount',
             '#qf': 'TotalQueryFailedCount',
@@ -94,6 +102,8 @@ def test_it_handles_failed_queries(table):
             '#of': 'TotalObjectUpdateFailedCount',
         },
         ExpressionAttributeValues={
+            ":Id": "job123",
+            ":Sk": "job123",
             ':qt': 1,
             ':qs': 0,
             ':qf': 1,
@@ -126,6 +136,7 @@ def test_it_handles_successful_updates(table):
             'Id': "job123",
             'Sk': 'job123'
         },
+        ConditionExpression="#Id = :Id AND #Sk = :Sk",
         UpdateExpression="set #qt = if_not_exists(#qt, :z) + :qt, "
                          "#qs = if_not_exists(#qs, :z) + :qs, "
                          "#qf = if_not_exists(#qf, :z) + :qf, "
@@ -134,6 +145,8 @@ def test_it_handles_successful_updates(table):
                          "#ou = if_not_exists(#ou, :z) + :ou, "
                          "#of = if_not_exists(#of, :z) + :of",
         ExpressionAttributeNames={
+            "#Id": "Id",
+            "#Sk": "Sk",
             '#qt': 'TotalQueryCount',
             '#qs': 'TotalQuerySucceededCount',
             '#qf': 'TotalQueryFailedCount',
@@ -143,6 +156,8 @@ def test_it_handles_successful_updates(table):
             '#of': 'TotalObjectUpdateFailedCount',
         },
         ExpressionAttributeValues={
+            ":Id": "job123",
+            ":Sk": "job123",
             ':qt': 0,
             ':qs': 0,
             ':qf': 0,
@@ -174,6 +189,7 @@ def test_it_handles_failed_updates(table):
             'Id': "job123",
             'Sk': 'job123'
         },
+        ConditionExpression="#Id = :Id AND #Sk = :Sk",
         UpdateExpression="set #qt = if_not_exists(#qt, :z) + :qt, "
                          "#qs = if_not_exists(#qs, :z) + :qs, "
                          "#qf = if_not_exists(#qf, :z) + :qf, "
@@ -182,6 +198,8 @@ def test_it_handles_failed_updates(table):
                          "#ou = if_not_exists(#ou, :z) + :ou, "
                          "#of = if_not_exists(#of, :z) + :of",
         ExpressionAttributeNames={
+            "#Id": "Id",
+            "#Sk": "Sk",
             '#qt': 'TotalQueryCount',
             '#qs': 'TotalQuerySucceededCount',
             '#qf': 'TotalQueryFailedCount',
@@ -191,6 +209,8 @@ def test_it_handles_failed_updates(table):
             '#of': 'TotalObjectUpdateFailedCount',
         },
         ExpressionAttributeValues={
+            ":Id": "job123",
+            ":Sk": "job123",
             ':qt': 0,
             ':qs': 0,
             ':qf': 0,
@@ -234,6 +254,7 @@ def test_it_handles_multiple_events(table):
             'Id': "job123",
             'Sk': 'job123'
         },
+        ConditionExpression="#Id = :Id AND #Sk = :Sk",
         UpdateExpression="set #qt = if_not_exists(#qt, :z) + :qt, "
                          "#qs = if_not_exists(#qs, :z) + :qs, "
                          "#qf = if_not_exists(#qf, :z) + :qf, "
@@ -242,6 +263,8 @@ def test_it_handles_multiple_events(table):
                          "#ou = if_not_exists(#ou, :z) + :ou, "
                          "#of = if_not_exists(#of, :z) + :of",
         ExpressionAttributeNames={
+            "#Id": "Id",
+            "#Sk": "Sk",
             '#qt': 'TotalQueryCount',
             '#qs': 'TotalQuerySucceededCount',
             '#qf': 'TotalQueryFailedCount',
@@ -251,6 +274,8 @@ def test_it_handles_multiple_events(table):
             '#of': 'TotalObjectUpdateFailedCount',
         },
         ExpressionAttributeValues={
+            ":Id": "job123",
+            ":Sk": "job123",
             ':qt': 1,
             ':qs': 1,
             ':qf': 0,

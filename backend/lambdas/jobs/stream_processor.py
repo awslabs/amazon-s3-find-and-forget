@@ -62,8 +62,8 @@ def should_process(record):
 
 
 def is_job(record):
-    return deserializer.deserialize(record["dynamodb"]["NewImage"]["Type"]) == "Job"
+    return deserializer.deserialize(record["dynamodb"]["NewImage"].get("Type")) == "Job"
 
 
 def is_job_event(record):
-    return deserializer.deserialize(record["dynamodb"]["NewImage"]["Type"]) == "JobEvent"
+    return deserializer.deserialize(record["dynamodb"]["NewImage"].get("Type")) == "JobEvent"

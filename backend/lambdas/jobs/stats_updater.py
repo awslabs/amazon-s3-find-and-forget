@@ -52,6 +52,7 @@ def _update_job(job_id, stats):
             'Id': job_id,
             'Sk': job_id,
         },
+        ConditionExpression="#Id = :Id AND #Sk = :Sk",
         UpdateExpression="set #qt = if_not_exists(#qt, :z) + :qt, "
                          "#qs = if_not_exists(#qs, :z) + :qs, "
                          "#qf = if_not_exists(#qf, :z) + :qf, "
@@ -60,6 +61,8 @@ def _update_job(job_id, stats):
                          "#ou = if_not_exists(#ou, :z) + :ou, "
                          "#of = if_not_exists(#of, :z) + :of",
         ExpressionAttributeNames={
+            "#Id": "Id",
+            "#Sk": "Sk",
             '#qt': 'TotalQueryCount',
             '#qs': 'TotalQuerySucceededCount',
             '#qf': 'TotalQueryFailedCount',
@@ -69,6 +72,8 @@ def _update_job(job_id, stats):
             '#of': 'TotalObjectUpdateFailedCount',
         },
         ExpressionAttributeValues={
+            ":Id": job_id,
+            ":Sk": job_id,
             ':qt': stats.get("TotalQueryCount", 0),
             ':qs': stats.get("TotalQuerySucceededCount", 0),
             ':qf': stats.get("TotalQueryFailedCount", 0),

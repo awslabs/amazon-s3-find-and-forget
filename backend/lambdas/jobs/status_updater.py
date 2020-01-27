@@ -85,18 +85,24 @@ def _update_item(job_id, attr_updates):
             attr_names["#{}".format(k)] = k
             attr_values[":{}".format(k)] = v
 
+        unlocked_states_condition = " OR ".join(["#JobStatus = :{}".format(s) for s in unlocked_states])
+
         return table.update_item(
             Key={
                 'Id': job_id,
                 'Sk': job_id,
             },
             UpdateExpression=update_expression,
-            ConditionExpression=" OR ".join(["#JobStatus = :{}".format(s) for s in unlocked_states]),
+            ConditionExpression="#Id = :Id AND #Sk = :Sk AND ({})".format(unlocked_states_condition),
             ExpressionAttributeNames={
+                "#Id": "Id",
+                "#Sk": "Sk",
                 "#JobStatus": "JobStatus",
                 **attr_names
             },
             ExpressionAttributeValues={
+                ":Id": job_id,
+                ":Sk": job_id,
                 **{":{}".format(s): s for s in unlocked_states},
                 **attr_values,
             },
