@@ -29,6 +29,7 @@ def test_it_skips_with_no_remaining_capacity(mock_load, sqs_mock, read_queue_moc
 
     read_queue_mock.assert_not_called()
     assert 20 == resp["Total"]
+    assert not resp["IsFailing"]
 
 
 @patch("backend.lambdas.tasks.work_query_queue.sf_client")
@@ -58,6 +59,7 @@ def test_it_starts_machine_as_expected(sqs_mock, read_queue_mock, sf_client_mock
 
     sf_client_mock.start_execution.assert_called_with(stateMachineArn=ANY, input=expected_call)
     assert 1 == resp["Total"]
+    assert not resp["IsFailing"]
 
 
 @patch("backend.lambdas.tasks.work_query_queue.sf_client")
@@ -84,6 +86,7 @@ def test_it_starts_state_machine_per_message(sqs_mock, read_queue_mock, sf_clien
 
     assert 2 == sf_client_mock.start_execution.call_count
     assert 2 == resp["Total"]
+    assert not resp["IsFailing"]
 
 
 @patch("backend.lambdas.tasks.work_query_queue.sf_client")
@@ -135,7 +138,7 @@ def test_it_recognises_completed_executions(clear_mock, load_mock, sqs_mock, rea
 
 @patch("backend.lambdas.tasks.work_query_queue.load_execution")
 @patch("backend.lambdas.tasks.work_query_queue.abandon_execution")
-def test_it_abandons_when_any_query_fails(mock_abandon, mock_load):
+def test_it_abandons_when_any_query_fails_and_no_running_in_current_loop(mock_abandon, mock_load):
     mock_load.return_value = execution_stub(status="FAILED")
     mock_abandon.side_effect = RuntimeError
     with pytest.raises(RuntimeError):
@@ -143,10 +146,52 @@ def test_it_abandons_when_any_query_fails(mock_abandon, mock_load):
             "ExecutionId": "1234",
             "ExecutionName": "4321",
             "RunningExecutions": {
+                "IsFailing": True,
                 "Data": [{}],
                 "Total": 1,
             }
         }, SimpleNamespace())
+
+
+@patch("backend.lambdas.tasks.work_query_queue.load_execution")
+@patch("backend.lambdas.tasks.work_query_queue.abandon_execution")
+@patch("backend.lambdas.tasks.work_query_queue.clear_completed")
+def test_it_abandons_when_previous_loop_found_failure(mock_clear, mock_abandon, mock_load):
+    mock_load.return_value = execution_stub(status="SUCCEEDED", ReceiptHandle="handle")
+    mock_abandon.side_effect = RuntimeError
+    with pytest.raises(RuntimeError):
+        handler({
+            "ExecutionId": "1234",
+            "ExecutionName": "4321",
+            "RunningExecutions": {
+                "IsFailing": True,
+                "Data": [{}],
+                "Total": 1,
+            }
+        }, SimpleNamespace())
+
+
+@patch("backend.lambdas.tasks.work_query_queue.load_execution")
+@patch("backend.lambdas.tasks.work_query_queue.abandon_execution")
+@patch("backend.lambdas.tasks.work_query_queue.sf_client")
+def test_it_waits_for_running_executions_before_abandoning(mock_sf, mock_abandon, mock_load):
+    mock_load.side_effect = [
+        execution_stub(status="FAILED", ReceiptHandle="handle1"),
+        execution_stub(status="RUNNING", ReceiptHandle="handle2")
+    ]
+    res = handler({
+        "ExecutionId": "1234",
+        "ExecutionName": "4321",
+        "RunningExecutions": {
+            "Data": [{}, {}],
+            "Total": 2,
+        }
+    }, SimpleNamespace())
+
+    mock_abandon.assert_not_called()
+    mock_sf.start_execution.assert_not_called()
+    assert 1 == res["Total"]
+    assert res["IsFailing"]
 
 
 def test_it_throws_to_abandon():
@@ -162,9 +207,9 @@ def test_it_loads_execution_from_state(sf_mock):
         "ReceiptHandle": "handle"
     })
     assert {
-        **execution_stub(),
-        "ReceiptHandle": "handle"
-    } == resp
+               **execution_stub(),
+               "ReceiptHandle": "handle"
+           } == resp
 
 
 @patch("backend.lambdas.tasks.work_query_queue.sqs")
