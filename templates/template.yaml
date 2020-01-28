@@ -61,8 +61,8 @@ Parameters:
   ResourcePrefix:
     Description: The prefix used for uniquely named resources, such as Dynamo DB Tables, State Machines, etc.
     Type: String
-    Default: s3f2
-    AllowedPattern: ^[a-z0-9]*$
+    Default: S3F2
+    AllowedPattern: ^[a-zA-Z0-9]*$
   VpcIpBlock:
     Description: CIDR block for the VPC
     Type: String
@@ -115,7 +115,7 @@ Resources:
   DelStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: ./deletion-flow.yaml
+      TemplateURL: ./deletion_flow.yaml
       Parameters:
         CommonLayers: !Join
           - ","
@@ -149,7 +149,7 @@ Resources:
   StateMachineStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: ./state-machine.yaml
+      TemplateURL: ./state_machine.yaml
       Parameters:
         AthenaConcurrencyLimit: !Ref AthenaConcurrencyLimit
         AthenaWorkGroup: !Ref AthenaWorkGroup
