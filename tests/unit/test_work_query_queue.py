@@ -183,6 +183,7 @@ def test_it_waits_for_running_executions_before_abandoning(mock_sf, mock_abandon
         "ExecutionId": "1234",
         "ExecutionName": "4321",
         "RunningExecutions": {
+            "IsFailing": False,
             "Data": [{}, {}],
             "Total": 2,
         }

@@ -200,10 +200,19 @@ Resources:
                     "StringEquals": "CANCELLED"
                   }
                 ],
-                "Next": "Handle Error"
+                "Next": "Raise Query Error"
               }
               ],
               "Default": "Wait for Query"
+            },
+            "Raise Query Error": {
+              "Type": "Pass",
+              "Parameters": {
+                "Cause.$": "$.QueryStatus.Reason",
+                "Error": "Query Failed"
+              },
+              "ResultPath": "$.ErrorDetails",
+              "Next": "Handle Error"
             },
             "Handle Error": {
               "Type": "Pass",
