@@ -342,6 +342,23 @@ def job_factory(job_table, sf_client, stack):
             logger.warning("Unable to stop execution: {}".format(str(e)))
 
 
+@pytest.fixture
+def job_event_factory(job_table):
+    def factory(job_id, event_name, event_data, created_at=round(datetime.datetime.now().timestamp()), **kwargs):
+        item = {
+            "Id": job_id,
+            "Sk": "{}#{}".format(created_at, str(uuid4())),
+            "Type": "JobEvent",
+            "EventName": event_name,
+            "EventData": event_data,
+            "CreatedAt": created_at,
+            **kwargs
+        }
+        job_table.put_item(Item=item)
+
+    return factory
+
+
 def get_waiter_model(config_file):
     waiter_dir = Path(__file__).parent.parent.joinpath("waiters")
     with open(waiter_dir.joinpath(config_file)) as f:

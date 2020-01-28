@@ -2,7 +2,7 @@
   "version": 2,
   "waiters": {
     "ExecutionExists": {
-      "delay": 5,
+      "delay": 2,
       "operation": "DescribeExecution",
       "maxAttempts": 30,
       "acceptors": [
@@ -26,8 +26,18 @@
     "ExecutionComplete": {
       "delay": 2,
       "operation": "DescribeExecution",
-      "maxAttempts": 100,
+      "maxAttempts": 30,
       "acceptors": [
+        {
+          "expected": 400,
+          "matcher": "status",
+          "state": "retry"
+        },
+        {
+          "expected": 404,
+          "matcher": "status",
+          "state": "retry"
+        },
         {
           "matcher": "path",
           "expected": "SUCCEEDED",

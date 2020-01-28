@@ -11,7 +11,7 @@ Globals:
     Environment:
       Variables:
         LogLevel: !Ref LogLevel
-        LogGroupName: !Ref AuditLogGroup
+        JobTableName: !Ref JobTableName
 
 Parameters:
   AthenaConcurrencyLimit:
@@ -22,8 +22,6 @@ Parameters:
     Description: WorkGroup to use for Athena queries
     Type: String
     Default: primary
-  AuditLogGroup:
-    Type: String
   CommonLayers:
     Type: CommaDelimitedList
     Description: Common layers supplied to all functions
@@ -100,8 +98,7 @@ Resources:
             - !GetAtt WorkQueryQueue.Arn
             - !GetAtt DeleteQueueMessage.Arn
             - !GetAtt PurgeQueue.Arn
-            - !GetAtt LogAuditEvent.Arn
-            - !GetAtt GenerateReport.Arn
+            - !GetAtt EmitEvent.Arn
           - Effect: Allow
             Action:
             - "dynamodb:Query"
@@ -190,7 +187,7 @@ Resources:
               {
                 "Variable": "$.QueryStatus.State",
                 "StringEquals": "SUCCEEDED",
-                "Next": "Query Succeeded"
+                "Next": "Submit Query Results"
               },
               {
                 "Or": [
@@ -208,11 +205,6 @@ Resources:
               ],
               "Default": "Wait for Query"
             },
-            "Query Succeeded": {
-              "Comment": "The query was successful",
-              "Type": "Pass",
-              "Next": "Submit Query Results"
-            },
             "Handle Error": {
               "Type": "Pass",
               "Parameters": {
@@ -220,18 +212,18 @@ Resources:
                 "Cause.$": "$.ErrorDetails.Cause",
                 "State.$": "$"
               },
-               "Next": "Log Error"
+               "Next": "Emit Error"
             },
-            "Log Error": {
-              "Comment": "Log the failure in the audit log",
+            "Emit Error": {
+              "Comment": "Emit the failure event",
               "Type": "Task",
               "Parameters": {
                 "EventName": "QueryFailed",
                 "EventData.$": "$",
-                "StreamSuffix.$": "$$.Execution.Name",
+                "EmitterId": "StepFunctions",
                 "JobId.$": "$.State.JobId"
               },
-              "Resource": "${LogAuditEvent.Arn}",
+              "Resource": "${EmitEvent.Arn}",
               "ResultPath": null,
               "Next": "Query Failed"
             },
@@ -244,7 +236,7 @@ Resources:
               "Type": "Task",
               "Resource": "${SubmitQueryResults.Arn}",
               "ResultPath": null,
-              "Next": "Log Success",
+              "Next": "Query Succeeded",
               "Retry": [{
                  "ErrorEquals": [ "States.ALL" ],
                  "IntervalSeconds": 5,
@@ -257,16 +249,29 @@ Resources:
                  "Next": "Handle Error"
               }]
             },
-            "Log Success": {
-              "Comment": "Log the success in the audit log",
+            "Query Succeeded": {
+              "Comment": "The query was successful",
+              "Type": "Pass",
+              "Parameters": {
+                "JobId.$": "$.JobId",
+                "QueryId.$": "$.QueryId",
+                "PartitionKeys.$": "$.PartitionKeys",
+                "Statistics.$": "$.QueryStatus.Statistics",
+                "DataMapperId.$": "$.DataMapperId",
+                "Table.$": "$.Table"
+              },
+              "Next": "Emit Success"
+            },
+            "Emit Success": {
+              "Comment": "Emit the successful query event",
               "Type": "Task",
               "Parameters": {
                 "EventName": "QuerySucceeded",
                 "EventData.$": "$",
-                "StreamSuffix.$": "$$.Execution.Name",
+                "EmitterId": "StepFunctions",
                 "JobId.$": "$.JobId"
               },
-              "Resource": "${LogAuditEvent.Arn}",
+              "Resource": "${EmitEvent.Arn}",
               "ResultPath": null,
               "End": true,
               "Retry": [{
@@ -417,7 +422,7 @@ Resources:
                 {
                   "Variable": "$.IsOldestExecution",
                   "BooleanEquals": true,
-                  "Next": "Update Job Status"
+                  "Next": "Emit Job Started"
                 },
                 {
                   "Variable": "$.IsOldestExecution",
@@ -427,37 +432,22 @@ Resources:
               ],
               "Default": "Handle Error"
             },
-            "Update Job Status": {
+            "Emit Job Started": {
               "Type": "Task",
-              "Resource": "arn:aws:states:::dynamodb:updateItem",
               "Parameters": {
-                "TableName": "${JobTableName}",
-                "Key": {
-                  "Id": {
-                    "S.$": "$$.Execution.Name"
-                  },
-                  "Sk": {
-                    "S.$": "$$.Execution.Name"
-                  }
-                },
-                "UpdateExpression": "SET JobStatus = :status",
-                "ExpressionAttributeValues": {
-                  ":status": {
-                    "S": "RUNNING"
-                  }
-                }
+                "EventName": "JobStarted",
+                "EventData.$": "$$.State.EnteredTime",
+                "EmitterId": "StepFunctions",
+                "JobId.$": "$$.Execution.Name"
               },
-              "Retry": [{
-                "ErrorEquals": [ "States.ALL" ],
-                "IntervalSeconds": 10,
-                "MaxAttempts": 1
-              }],
+              "Resource": "${EmitEvent.Arn}",
+              "ResultPath": null,
+              "Next": "Query Deletion Queue",
               "Catch": [{
-                "ErrorEquals": ["States.ALL"],
-                "ResultPath": "$.ErrorDetails",
-                "Next": "Handle Error"
-              }],
-              "Next": "Query Deletion Queue"
+                 "ErrorEquals": ["States.ALL"],
+                 "ResultPath": "$.ErrorDetails",
+                 "Next": "Handle Error"
+              }]
             },
             "Query Deletion Queue": {
               "Comment": "Scan the deletion queue table to obtain all users to be deleted ",
@@ -499,7 +489,7 @@ Resources:
             "No": {
               "Comment": "No work to be done.",
               "Type": "Pass",
-              "Next": "Generate Report"
+              "Next": "Job Succeeded"
             },
             "Yes": {
               "Comment": "Continue.",
@@ -578,10 +568,10 @@ Resources:
               "Parameters": {
                 "EventName": "FindPhaseStarted",
                 "EventData.$": "$$.State.EnteredTime",
-                "StreamSuffix.$": "$$.Execution.Name",
+                "EmitterId": "StepFunctions",
                 "JobId.$": "$$.Execution.Name"
               },
-              "Resource": "${LogAuditEvent.Arn}",
+              "Resource": "${EmitEvent.Arn}",
               "ResultPath": null,
               "Next": "Discover Files",
               "Catch": [{
@@ -656,7 +646,7 @@ Resources:
               "Catch": [{
                 "ErrorEquals": ["States.ALL"],
                 "ResultPath": "$.ErrorDetails",
-                "Next": "Handle Error"
+                "Next": "Handle Find Error"
               }]
             },
             "End Find Phase": {
@@ -664,10 +654,10 @@ Resources:
               "Parameters": {
                 "EventName": "FindPhaseEnded",
                 "EventData.$": "$$.State.EnteredTime",
-                "StreamSuffix.$": "$$.Execution.Name",
+                "EmitterId": "StepFunctions",
                 "JobId.$": "$$.Execution.Name"
               },
-              "Resource": "${LogAuditEvent.Arn}",
+              "Resource": "${EmitEvent.Arn}",
               "ResultPath": null,
               "Next": "Start Forget Phase",
               "Catch": [{
@@ -681,10 +671,10 @@ Resources:
               "Parameters": {
                 "EventName": "ForgetPhaseStarted",
                 "EventData.$": "$$.State.EnteredTime",
-                "StreamSuffix.$": "$$.Execution.Name",
+                "EmitterId": "StepFunctions",
                 "JobId.$": "$$.Execution.Name"
               },
-              "Resource": "${LogAuditEvent.Arn}",
+              "Resource": "${EmitEvent.Arn}",
               "ResultPath": null,
               "Next": "Start Fargate Workflow",
               "Catch": [{
@@ -709,7 +699,7 @@ Resources:
               "Catch": [{
                 "ErrorEquals": ["States.ALL"],
                 "ResultPath": "$.ErrorDetails",
-                "Next": "Handle Error"
+                "Next": "Handle Forget Error"
               }]
             },
             "End Forget Phase": {
@@ -717,22 +707,17 @@ Resources:
               "Parameters": {
                 "EventName": "ForgetPhaseEnded",
                 "EventData.$": "$$.State.EnteredTime",
-                "StreamSuffix.$": "$$.Execution.Name",
+                "EmitterId": "StepFunctions",
                 "JobId.$": "$$.Execution.Name"
               },
-              "Resource": "${LogAuditEvent.Arn}",
+              "Resource": "${EmitEvent.Arn}",
               "ResultPath": null,
-              "Next": "Delete Queue Items",
-              "Catch": [{
-                "ErrorEquals": ["States.ALL"],
-                "ResultPath": "$.ErrorDetails",
-                "Next": "Handle Error"
-              }]
+              "Next": "Delete Queue Items"
             },
             "Delete Queue Items": {
               "Comment": "Deletes all items from the deletion queue",
               "Type": "Map",
-              "Next": "Generate Report",
+              "Next": "Job Succeeded",
               "InputPath": "$.DeletionQueue.Items",
               "ItemsPath": "$",
               "ResultPath": null,
@@ -765,40 +750,61 @@ Resources:
                 "Next": "Handle Error"
               }]
             },
-            "Generate Report": {
-              "Comment": "Generates a report on the execution",
-              "Type": "Task",
-              "Parameters": {
-                "JobId.$": "$$.Execution.Name",
-                "JobStartTime.$": "$$.Execution.StartTime",
-                "JobFinishTime.$": "$$.State.EnteredTime",
-                "Bucket": "${ResultBucket}",
-                "Input.$": "$"
-              },
-              "Resource": "${GenerateReport.Arn}",
-              "End": true
-            },
             "Handle Error": {
               "Type": "Pass",
               "Parameters": {
+                "EventName": "Exception",
                 "Error.$": "$.ErrorDetails.Error",
                 "Cause.$": "$.ErrorDetails.Cause",
                 "State.$": "$"
               },
-              "Next": "Log Error"
+              "Next": "Emit Error"
             },
-            "Log Error": {
-              "Comment": "Log the failure in the audit log",
+            "Handle Find Error": {
+              "Type": "Pass",
+              "Parameters": {
+                "EventName": "FindPhaseFailed",
+                "Error.$": "$.ErrorDetails.Error",
+                "Cause.$": "$.ErrorDetails.Cause",
+                "State.$": "$"
+              },
+              "Next": "Emit Error"
+            },
+            "Handle Forget Error": {
+              "Type": "Pass",
+              "Parameters": {
+                "EventName": "ForgetPhaseFailed",
+                "Error.$": "$.ErrorDetails.Error",
+                "Cause.$": "$.ErrorDetails.Cause",
+                "State.$": "$"
+              },
+              "Next": "Emit Error"
+            },
+            "Emit Error": {
+              "Comment": "Emit the generic failure event",
               "Type": "Task",
               "Parameters": {
-                "EventName": "Exception",
+                "EventName.$": "$.EventName",
                 "EventData.$": "$",
-                "StreamSuffix.$": "$$.Execution.Name",
+                "EmitterId": "StepFunctions",
                 "JobId.$": "$$.Execution.Name"
               },
-              "Resource": "${LogAuditEvent.Arn}",
+              "Resource": "${EmitEvent.Arn}",
               "ResultPath": null,
-              "Next": "Generate Report"
+              "End": true
+            },
+            "Job Succeeded": {
+              "Comment": "Emit the job complete event",
+              "Type": "Task",
+              "Parameters": {
+                "EventName": "JobSucceeded",
+                "EventData.$": "$$.State.EnteredTime",
+                "EmitterId": "StepFunctions",
+                "JobId.$": "$$.Execution.Name"
+              },
+              "Resource": "${EmitEvent.Arn}",
+              "ResultPath": null,
+              "End": true
             }
           }
         }
@@ -1061,46 +1067,14 @@ Resources:
             - arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${QueueName}
             - QueueName: !Select [4, !Split ["/", !Ref DeleteQueueUrl]]
 
-  LogAuditEvent:
+  EmitEvent:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: log_audit_event.handler
+      Handler: emit_event.handler
       CodeUri: ../backend/lambdas/tasks/
       Policies:
-      - Statement:
-        - Action:
-            - "logs:CreateLogStream"
-            - "logs:DescribeLogStreams"
-            - "logs:PutLogEvents"
-          Effect: "Allow"
-          Resource: !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/s3f2*"
-
-  GenerateReport:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: generate_report.handler
-      CodeUri: ../backend/lambdas/tasks/
-      Environment:
-        Variables:
-          JobTableName: !Ref JobTableName
-      Policies:
-      - S3CrudPolicy:
-          BucketName: !Ref ResultBucket
       - DynamoDBCrudPolicy:
           TableName: !Ref JobTableName
-      - Statement:
-        - Action:
-          - "logs:DescribeLogGroups"
-          - "logs:DescribeLogStreams"
-          - "logs:DescribeQueries"
-          - "logs:FilterLogEvents"
-          - "logs:GetLogEvents"
-          - "logs:GetLogGroupFields"
-          - "logs:GetLogRecord"
-          - "logs:GetQueryResults"
-          - "logs:ListLogDeliveries"
-          Effect: "Allow"
-          Resource: !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/s3f2*"
 
 Outputs:
   AthenaExecutionRole:
@@ -1109,8 +1083,6 @@ Outputs:
     Value: !GetAtt ExecuteQueryRole.Arn
   AthenaStateMachineArn:
     Value: !Ref AthenaStateMachine
-  AuditLogGroup:
-    Value: !Ref AuditLogGroup
   QueryQueueUrl:
     Value: !Ref QueryQueue
   ResultBucket:

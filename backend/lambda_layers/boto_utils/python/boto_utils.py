@@ -1,12 +1,16 @@
 import calendar
-from datetime import datetime
+from datetime import datetime, timezone
 import decimal
 import json
 import os
-import time
 import uuid
 
+import boto3
+
 batch_size = 10  # SQS Max Batch Size
+
+ddb = boto3.resource("dynamodb")
+table = ddb.Table(os.getenv("JobTable", "S3F2_Jobs"))
 
 
 def paginate(client, method, iter_keys, **kwargs):
@@ -50,45 +54,21 @@ def batch_sqs_msgs(queue, messages, **kwargs):
         queue.send_messages(Entries=entries)
 
 
-def log_event(client, log_stream, event_name, event_data):
-    log_group = os.getenv("LogGroupName", "/aws/s3f2/")
-    kwargs = {
-        "logGroupName": log_group,
-        "logStreamName": log_stream,
-        "logEvents": [
-            {
-                'timestamp': int(round(time.time() * 1000)),
-                'message': json.dumps({
-                    "EventName": event_name,
-                    "EventData": event_data
-                })
-            },
-        ],
+def emit_event(job_id, event_name, event_data, emitter_id=None, created_at=None):
+    if not emitter_id:
+        emitter_id = str(uuid.uuid4())
+    if not created_at:
+        created_at = datetime.now(timezone.utc).timestamp()
+    item = {
+        "Id": job_id,
+        "Sk": "{}#{}".format(round(created_at * 1000), str(uuid.uuid4())),
+        "Type": "JobEvent",
+        "EventName": event_name,
+        "EventData": normalise_dates(event_data),
+        "EmitterId": emitter_id,
+        "CreatedAt": normalise_dates(round(created_at)),
     }
-    sequence_token = create_stream_if_not_exists(client, log_group, log_stream)
-    if sequence_token:
-        kwargs["sequenceToken"] = sequence_token
-
-    client.put_log_events(**kwargs)
-
-
-def create_stream_if_not_exists(client, log_group, log_stream):
-    """
-    Creates a log stream if it doesn't already exist
-    otherwise returns the sequence token needed to
-    write to the stream
-    """
-    response = client.describe_log_streams(
-        logGroupName=log_group,
-        logStreamNamePrefix=log_stream,
-    )["logStreams"]
-    if len(response) == 0:
-        client.create_log_stream(
-            logGroupName=log_group,
-            logStreamName=log_stream
-        )
-    else:
-        return response[0].get("uploadSequenceToken")
+    table.put_item(Item=item)
 
 
 class DecimalEncoder(json.JSONEncoder):
@@ -102,3 +82,16 @@ def convert_iso8601_to_epoch(iso_time: str):
     parsed = datetime.strptime(iso_time, "%Y-%m-%dT%H:%M:%S.%fZ")
     unix_timestamp = calendar.timegm(parsed.timetuple())
     return unix_timestamp
+
+
+def normalise_dates(data):
+    if isinstance(data, str):
+        try:
+            return convert_iso8601_to_epoch(data)
+        except ValueError:
+            return data
+    elif isinstance(data, list):
+        return [normalise_dates(i) for i in data]
+    elif isinstance(data, dict):
+        return {k: normalise_dates(v) for k, v in data.items()}
+    return data

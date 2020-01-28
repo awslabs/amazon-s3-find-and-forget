@@ -172,7 +172,7 @@ Resources:
           CidrIp: !Ref VpcIpBlock
 
   # Endpoints
-  
+
   CloudWatchEndpoint:
     Type: AWS::EC2::VPCEndpoint
     Properties:
@@ -233,6 +233,16 @@ Resources:
         - !Ref PrivateSubnet2
         - !If [HasThreeAZs, !Ref PrivateSubnet3, !Ref 'AWS::NoValue']
       VpcEndpointType: Interface
+      VpcId: !Ref VPC
+
+  DynamoEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      RouteTableIds:
+        - !Ref PrivateRouteTable1
+        - !Ref PrivateRouteTable2
+        - !If [HasThreeAZs, !Ref PrivateRouteTable3, !Ref 'AWS::NoValue']
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.dynamodb'
       VpcId: !Ref VPC
 
 Outputs:

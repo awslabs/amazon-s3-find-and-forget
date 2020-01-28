@@ -14,7 +14,7 @@ with patch.dict(os.environ, {
     "DLQ": "https://url/q"
 }):
     from backend.ecs_tasks.delete_files.delete_files import delete_and_write, execute, get_container_id, \
-        log_deletion, log_failed_deletion, check_file_size, get_max_file_size_bytes
+        emit_deletion_event, emit_failed_deletion_event, check_file_size, get_max_file_size_bytes
 
 pytestmark = [pytest.mark.unit]
 
@@ -24,7 +24,7 @@ pytestmark = [pytest.mark.unit]
 @patch("backend.ecs_tasks.delete_files.delete_files.pq.ParquetWriter")
 @patch("backend.ecs_tasks.delete_files.delete_files.load_parquet")
 @patch("backend.ecs_tasks.delete_files.delete_files.delete_and_write")
-@patch("backend.ecs_tasks.delete_files.delete_files.log_deletion")
+@patch("backend.ecs_tasks.delete_files.delete_files.emit_deletion_event")
 @patch("backend.ecs_tasks.delete_files.delete_files.s3")
 @patch("backend.ecs_tasks.delete_files.delete_files.queue", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.check_file_size", MagicMock())
@@ -56,7 +56,7 @@ def test_happy_path_when_queue_not_empty(mock_s3, mock_log, mock_delete_and_writ
 @patch("backend.ecs_tasks.delete_files.delete_files.pq.ParquetWriter")
 @patch("backend.ecs_tasks.delete_files.delete_files.load_parquet")
 @patch("backend.ecs_tasks.delete_files.delete_files.delete_and_write")
-@patch("backend.ecs_tasks.delete_files.delete_files.log_deletion")
+@patch("backend.ecs_tasks.delete_files.delete_files.emit_deletion_event")
 @patch("backend.ecs_tasks.delete_files.delete_files.s3")
 @patch("backend.ecs_tasks.delete_files.delete_files.queue", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.check_file_size", MagicMock())
@@ -95,29 +95,29 @@ def test_delete_correct_rows_from_dataframe(mock_pq_writer):
     assert arrow_table["customer_id"][0] == "34567"
 
 
-@patch("backend.ecs_tasks.delete_files.delete_files.log_event")
+@patch("backend.ecs_tasks.delete_files.delete_files.emit_event")
 @patch("backend.ecs_tasks.delete_files.delete_files.get_container_id")
-def test_it_logs_deletions(mock_get_container, mock_log):
+def test_it_emits_deletions(mock_get_container, mock_emit):
     mock_get_container.return_value = "4567"
     stats_stub = {"Some": "stats"}
     msg = json.loads(message_stub())
-    log_deletion(msg, stats_stub)
-    mock_log.assert_called_with(ANY, "1234-4567", "ObjectUpdated", {
+    emit_deletion_event(msg, stats_stub)
+    mock_emit.assert_called_with("1234", "ObjectUpdated", {
         "Statistics": stats_stub,
-        **msg
-    })
+        "Object": "s3://bucket/path/basic.parquet",
+    }, 'Task_4567')
 
 
-@patch("backend.ecs_tasks.delete_files.delete_files.log_event")
+@patch("backend.ecs_tasks.delete_files.delete_files.emit_event")
 @patch("backend.ecs_tasks.delete_files.delete_files.get_container_id")
-def test_it_logs_failed_deletions(mock_get_container, mock_log):
+def test_it_emits_failed_deletions(mock_get_container, mock_emit):
     mock_get_container.return_value = "4567"
     msg = json.loads(message_stub())
-    log_failed_deletion(msg, "Some error")
-    mock_log.assert_called_with(ANY, "1234-4567", "ObjectUpdateFailed", {
+    emit_failed_deletion_event(msg, "Some error")
+    mock_emit.assert_called_with("1234", "ObjectUpdateFailed", {
         "Error": "Some error",
         "Message": msg
-    })
+    }, 'Task_4567')
 
 
 @patch("os.getenv", MagicMock(return_value="/some/path"))
@@ -145,7 +145,7 @@ def test_it_returns_uuid_as_string():
 @patch("backend.ecs_tasks.delete_files.delete_files.pq.ParquetWriter", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.load_parquet")
 @patch("backend.ecs_tasks.delete_files.delete_files.delete_and_write")
-@patch("backend.ecs_tasks.delete_files.delete_files.log_failed_deletion")
+@patch("backend.ecs_tasks.delete_files.delete_files.emit_failed_deletion_event")
 @patch("backend.ecs_tasks.delete_files.delete_files.s3", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.queue")
 @patch("backend.ecs_tasks.delete_files.delete_files.dlq")
@@ -171,7 +171,7 @@ def test_it_handles_missing_col_exceptions(mock_dlq, mock_queue, mock_log, mock_
 @patch("backend.ecs_tasks.delete_files.delete_files.pq.ParquetWriter", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.load_parquet")
 @patch("backend.ecs_tasks.delete_files.delete_files.delete_and_write")
-@patch("backend.ecs_tasks.delete_files.delete_files.log_failed_deletion")
+@patch("backend.ecs_tasks.delete_files.delete_files.emit_failed_deletion_event")
 @patch("backend.ecs_tasks.delete_files.delete_files.s3", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.queue")
 @patch("backend.ecs_tasks.delete_files.delete_files.dlq")
@@ -193,7 +193,7 @@ def test_it_handles_arrow_exceptions(mock_dlq, mock_queue, mock_log, mock_load_p
 
 @patch("os.path.exists", MagicMock(return_value=False))
 @patch("os.remove", MagicMock())
-@patch("backend.ecs_tasks.delete_files.delete_files.log_failed_deletion")
+@patch("backend.ecs_tasks.delete_files.delete_files.emit_failed_deletion_event")
 @patch("backend.ecs_tasks.delete_files.delete_files.queue")
 @patch("backend.ecs_tasks.delete_files.delete_files.dlq")
 def test_it_validates_messages_with_missing_keys(mock_dlq, mock_queue, mock_log):
@@ -207,7 +207,7 @@ def test_it_validates_messages_with_missing_keys(mock_dlq, mock_queue, mock_log)
 
 @patch("os.path.exists", MagicMock(return_value=False))
 @patch("os.remove", MagicMock())
-@patch("backend.ecs_tasks.delete_files.delete_files.log_failed_deletion")
+@patch("backend.ecs_tasks.delete_files.delete_files.emit_failed_deletion_event")
 @patch("backend.ecs_tasks.delete_files.delete_files.queue")
 @patch("backend.ecs_tasks.delete_files.delete_files.dlq")
 def test_it_validates_messages_with_invalid_body(mock_dlq, mock_queue, mock_log):
@@ -221,7 +221,7 @@ def test_it_validates_messages_with_invalid_body(mock_dlq, mock_queue, mock_log)
 
 @patch("os.path.exists", MagicMock(return_value=False))
 @patch("os.remove", MagicMock())
-@patch("backend.ecs_tasks.delete_files.delete_files.log_failed_deletion")
+@patch("backend.ecs_tasks.delete_files.delete_files.emit_failed_deletion_event")
 @patch("backend.ecs_tasks.delete_files.delete_files.queue")
 @patch("backend.ecs_tasks.delete_files.delete_files.dlq")
 @patch("backend.ecs_tasks.delete_files.delete_files.s3")
@@ -239,7 +239,7 @@ def test_it_handles_s3_permission_issues(mock_s3, mock_dlq, mock_queue, mock_log
 
 @patch("os.path.exists", MagicMock(return_value=False))
 @patch("os.remove", MagicMock())
-@patch("backend.ecs_tasks.delete_files.delete_files.log_failed_deletion")
+@patch("backend.ecs_tasks.delete_files.delete_files.emit_failed_deletion_event")
 @patch("backend.ecs_tasks.delete_files.delete_files.check_file_size")
 @patch("backend.ecs_tasks.delete_files.delete_files.queue")
 @patch("backend.ecs_tasks.delete_files.delete_files.dlq")

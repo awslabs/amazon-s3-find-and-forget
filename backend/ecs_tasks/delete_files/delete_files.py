@@ -15,7 +15,7 @@ from multiprocessing import Pool, cpu_count
 from botocore.exceptions import ClientError
 from pyarrow.lib import ArrowException
 
-from boto_utils import log_event
+from boto_utils import emit_event
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -78,24 +78,22 @@ def get_container_id():
         return str(uuid4())
 
 
-def log_deletion(message_body, stats):
+def emit_deletion_event(message_body, stats):
     job_id = message_body["JobId"]
-    stream_name = "{}-{}".format(job_id, get_container_id())
     event_data = {
         "Statistics": stats,
-        **message_body,
+        "Object": message_body["Object"],
     }
-    log_event(cw_logs, stream_name, "ObjectUpdated", event_data)
+    emit_event(job_id, "ObjectUpdated", event_data, "Task_{}".format(get_container_id()))
 
 
-def log_failed_deletion(message_body, err_message):
+def emit_failed_deletion_event(message_body, err_message):
     job_id = message_body["JobId"]
-    stream_name = "{}-{}".format(job_id, get_container_id())
     event_data = {
         "Error": err_message,
         'Message': message_body,
     }
-    log_event(cw_logs, stream_name, "ObjectUpdateFailed", event_data)
+    emit_event(job_id, "ObjectUpdateFailed", event_data, "Task_{}".format(get_container_id()))
 
 
 def validate_message(message):
@@ -139,12 +137,12 @@ def execute(message, receipt_handle):
             save(s3, temp_dest, object_path)
         else:
             logger.warning("The object {} was processed successfully but no rows required deletion".format(object_path))
-        log_deletion(body, stats)
+        emit_deletion_event(body, stats)
         return object_path
     except (KeyError, ArrowException) as e:
         err_message = "Parquet processing error: {}".format(str(e))
         logger.error(err_message)
-        log_failed_deletion(json.loads(message), err_message)
+        emit_failed_deletion_event(json.loads(message), err_message)
         dlq.send_message(MessageBody=message)
     except (ValueError, TypeError) as e:
         err_message = "Invalid message received: {}".format(str(e))
@@ -153,7 +151,7 @@ def execute(message, receipt_handle):
     except (IOError, ClientError) as e:
         err_message = "Unable to retrieve object: {}".format(str(e))
         logger.error(err_message)
-        log_failed_deletion(json.loads(message), err_message)
+        emit_failed_deletion_event(json.loads(message), err_message)
         dlq.send_message(MessageBody=message)
     finally:
         msg = queue.Message(receipt_handle)
