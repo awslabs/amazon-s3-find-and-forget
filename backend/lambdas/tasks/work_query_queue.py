@@ -27,7 +27,9 @@ def handler(event, context):
     still_running = [execution for execution in executions if execution["status"] == "RUNNING"]
     failed = [execution for execution in executions if execution["status"] not in ["SUCCEEDED", "RUNNING"]]
     clear_completed(succeeded)
-    is_failing = previously_started.get("IsFailing", len(failed) > 0)
+    is_failing = previously_started.get("IsFailing", False)
+    if len(failed) > 0:
+        is_failing = True
     # Only abandon for failures once all running queries are done
     if is_failing and len(still_running) == 0:
         abandon_execution(failed)
