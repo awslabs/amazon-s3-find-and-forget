@@ -27,11 +27,14 @@ def handler(event, context):
     still_running = [execution for execution in executions if execution["status"] == "RUNNING"]
     failed = [execution for execution in executions if execution["status"] not in ["SUCCEEDED", "RUNNING"]]
     clear_completed(succeeded)
-    if len(failed) > 0:
+    is_failing = previously_started.get("IsFailing", len(failed) > 0)
+    # Only abandon for failures once all running queries are done
+    if is_failing and len(still_running) == 0:
         abandon_execution(failed)
 
     remaining_capacity = int(concurrency_limit) - len(still_running)
-    if remaining_capacity > 0:
+    # Only schedule new queries if there have been no errors
+    if remaining_capacity > 0 and not is_failing:
         msgs = read_queue(queue, remaining_capacity)
         started = []
         for msg in msgs:
@@ -48,6 +51,7 @@ def handler(event, context):
         still_running += started
 
     return {
+        "IsFailing": is_failing,
         "Data": [{
             "ExecutionArn": e["executionArn"],
             "ReceiptHandle": e["ReceiptHandle"]
