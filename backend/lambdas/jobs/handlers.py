@@ -94,7 +94,7 @@ def list_job_events_handler(event, context):
         }
     )
 
-    watermark_boundary = job.get("JobFinishTime", round(datetime.now(timezone.utc).timestamp())) * 1000  # microseconds
+    watermark_boundary_mu = job.get("JobFinishTime", round(datetime.now(timezone.utc).timestamp())) * 1000
 
     qs = event.get("queryStringParameters")
     if not qs:
@@ -103,10 +103,12 @@ def list_job_events_handler(event, context):
     start_at = qs.get("start_at", "0")
 
     # Check the watermark is not "future"
-    if int(start_at.split("#")[0]) > watermark_boundary:
+    if int(start_at.split("#")[0]) > watermark_boundary_mu:
         raise ValueError("Watermark {} is out of bounds for this job".format(start_at))
 
-    # Check the watermark is not "future"
+    # Because result may contain both JobEvent and Job items, we request page_size+1 items then apply the type
+    # filter as FilterExpression. We then limit the list size to the requested page size in case the number of
+    # items after filtering is still page_size+1 i.e. the Job item wasn't on the page.
     results = table.query(
         KeyConditionExpression=Key('Id').eq(job_id),
         ScanIndexForward=True,
