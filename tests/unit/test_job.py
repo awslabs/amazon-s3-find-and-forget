@@ -5,6 +5,7 @@ from types import SimpleNamespace
 
 import mock
 import pytest
+from botocore.exceptions import ClientError
 from mock import patch, ANY
 
 from backend.lambdas.jobs import handlers
@@ -103,8 +104,34 @@ def test_it_lists_jobs_events(table):
 
 
 @patch("backend.lambdas.jobs.handlers.table")
-@patch("backend.lambdas.jobs.handlers.Key")
-def test_it_starts_at_earliest_by_default(k, table):
+def test_it_respects_jobs_events_page_size(table):
+    table.get_item.return_value = job_stub()
+    table.query.return_value = {
+        "Items": [
+            job_event_stub(job_id="job123", sk=str(i)) for i in range(1, 5)
+        ],
+        "LastEvaluatedKey": {"Id": "test", "Sk": "12345"}
+    }
+    response = handlers.list_job_events_handler({
+        "pathParameters": {"job_id": "test"},
+        "queryStringParameters": {"page_size": 3},
+    }, SimpleNamespace())
+    resp_body = json.loads(response["body"])
+    table.query.assert_called_with(
+        KeyConditionExpression=mock.ANY,
+        ScanIndexForward=True,
+        Limit=4,
+        FilterExpression=mock.ANY,
+        ExclusiveStartKey=mock.ANY,
+    )
+    assert 200 == response["statusCode"]
+    assert 3 == len(resp_body["JobEvents"])
+    assert "3" == resp_body["JobEvents"][len(resp_body["JobEvents"]) - 1]["Sk"]
+    assert "NextStart" in resp_body
+
+
+@patch("backend.lambdas.jobs.handlers.table")
+def test_it_starts_at_earliest_by_default(table):
     stub = job_event_stub()
     table.get_item.return_value = job_stub()
     table.query.return_value = {"Items": [stub]}
@@ -123,30 +150,7 @@ def test_it_starts_at_earliest_by_default(k, table):
 
 
 @patch("backend.lambdas.jobs.handlers.table")
-def test_it_paginates_jobs_events(table):
-    stub = job_event_stub()
-    table.get_item.return_value = job_stub()
-    table.query.return_value = {"Items": [stub for _ in range(0, 3)], "LastEvaluatedKey": {"Id": "test", "Sk": "12345"}}
-    response = handlers.list_job_events_handler({
-        "pathParameters": {"job_id": "test"},
-        "queryStringParameters": {"page_size": 3},
-    }, SimpleNamespace())
-    resp_body = json.loads(response["body"])
-    assert 200 == response["statusCode"]
-    assert 3 == len(resp_body["JobEvents"])
-    assert "NextStart" in resp_body
-    table.query.assert_called_with(
-        KeyConditionExpression=mock.ANY,
-        ScanIndexForward=True,
-        Limit=4,
-        FilterExpression=mock.ANY,
-        ExclusiveStartKey=mock.ANY,
-    )
-
-
-@patch("backend.lambdas.jobs.handlers.table")
-@patch("backend.lambdas.jobs.handlers.Key")
-def test_it_handles_job_event_start_at(k, table):
+def test_it_starts_at_supplied_watermark(table):
     stub = job_event_stub()
     table.get_item.return_value = job_stub()
     table.query.return_value = {"Items": [stub], "LastEvaluatedKey": {"Id": "test", "Sk": "12345"}}
@@ -167,6 +171,74 @@ def test_it_handles_job_event_start_at(k, table):
             "Sk": "12345"
         },
     )
+
+
+@patch("backend.lambdas.jobs.handlers.table")
+def test_it_returns_provided_watermark_for_no_events_for_incomplete_job(table):
+    table.get_item.return_value = job_stub()
+    table.query.return_value = {"Items": []}
+    response = handlers.list_job_events_handler({
+        "pathParameters": {"job_id": "test"},
+        "queryStringParameters": {"start_at": "111111#trgwtrwgergewrgwgrw"},
+    }, SimpleNamespace())
+    resp_body = json.loads(response["body"])
+    assert 200 == response["statusCode"]
+    assert "111111#trgwtrwgergewrgwgrw" == resp_body["NextStart"]
+
+
+@patch("backend.lambdas.jobs.handlers.table")
+def test_it_returns_watermark_where_not_last_page_and_job_complete(table):
+    table.get_item.return_value = job_stub(JobFinishTime=12345)
+    table.query.return_value = {"Items": [job_event_stub(Sk=str(i)) for i in range(0, 20)]}
+    response = handlers.list_job_events_handler({
+        "pathParameters": {"job_id": "test"},
+    }, SimpleNamespace())
+    resp_body = json.loads(response["body"])
+    assert 200 == response["statusCode"]
+    assert "19" == resp_body["NextStart"]
+
+
+@patch("backend.lambdas.jobs.handlers.table")
+def test_it_does_not_return_watermark_if_last_page_reached(table):
+    table.get_item.return_value = job_stub(JobFinishTime=12345)
+    table.query.return_value = {"Items": [job_event_stub(EventName="FindPhaseFailed")]}
+    response = handlers.list_job_events_handler({
+        "pathParameters": {"job_id": "test"},
+        "queryStringParameters": {"start_at": "111111#trgwtrwgergewrgwgrw"},
+    }, SimpleNamespace())
+    resp_body = json.loads(response["body"])
+    assert 200 == response["statusCode"]
+    assert "NextStart" not in resp_body
+
+
+@patch("backend.lambdas.jobs.handlers.table")
+def test_it_errors_if_job_not_found(table):
+    table.get_item.side_effect = ClientError({"ResponseMetadata": {"HTTPStatusCode": 404}}, "get_item")
+    response = handlers.list_job_events_handler({
+        "pathParameters": {"job_id": "test"},
+        "queryStringParameters": {"start_at": "12345"},
+    }, SimpleNamespace())
+    assert 404 == response["statusCode"]
+
+
+@patch("backend.lambdas.jobs.handlers.table")
+def test_it_returns_error_if_invalid_watermark_supplied_for_completed_job(table):
+    table.get_item.return_value = job_stub(JobFinishTime=12345)
+    response = handlers.list_job_events_handler({
+        "pathParameters": {"job_id": "test"},
+        "queryStringParameters": {"start_at": "999999999999999"},
+    }, SimpleNamespace())
+    assert 400 == response["statusCode"]
+
+
+@patch("backend.lambdas.jobs.handlers.table")
+def test_it_returns_error_if_invalid_watermark_supplied_for_running_job(table):
+    table.get_item.return_value = job_stub()
+    response = handlers.list_job_events_handler({
+        "pathParameters": {"job_id": "test"},
+        "queryStringParameters": {"start_at": "999999999999999"},
+    }, SimpleNamespace())
+    assert 400 == response["statusCode"]
 
 
 def job_stub(job_id="test", created_at=round(datetime.datetime.utcnow().timestamp()), **kwargs):
