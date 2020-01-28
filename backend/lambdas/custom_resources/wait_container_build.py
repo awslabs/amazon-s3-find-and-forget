@@ -29,7 +29,7 @@ def poll(event, context):
     key = props.get("ArtefactName")
     repository = props.get("ECRRepository")
     obj = s3_client.Object(bucket, key)
-    last_modified = convert_iso8601_to_epoch(obj.last_modified)
+    last_modified = convert_iso8601_to_epoch(str(obj.last_modified))
     image_pushed_at=get_latest_image_push(repository)
     return image_pushed_at != None and last_modified < image_pushed_at
 
@@ -47,6 +47,6 @@ def get_latest_image_push(repository):
             }]
         )
 
-        return convert_iso8601_to_epoch(images['imageDetails'][0]['imagePushedAt'])
+        return convert_iso8601_to_epoch(str(images['imageDetails'][0]['imagePushedAt']))
     except:
         return None

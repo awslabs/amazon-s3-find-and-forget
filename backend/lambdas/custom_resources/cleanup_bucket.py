@@ -22,7 +22,7 @@ def create(event, context):
 @helper.delete
 def delete(event, context):
     props = event.get('ResourceProperties', None)
-    bucket = props.get("WebUIBucket")
+    bucket = props.get("Bucket")
     objects = s3_client.list_objects_v2(Bucket=bucket)
     for obj in objects.get("Contents"):
         s3_client.delete_object(

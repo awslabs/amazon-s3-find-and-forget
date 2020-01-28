@@ -35,6 +35,7 @@ Parameters:
 Resources:
   CodeBuildArtefactBucket:
     Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
     Properties:
       VersioningConfiguration:
         Status: Enabled
@@ -206,7 +207,7 @@ Resources:
             Resource: "*"
           - Effect: Allow
             Action: s3:GetObject*
-            Resource: !Sub "arn:aws:s3:::${PreBuiltArtefactsBucket}/*"
+            Resource: !Sub "arn:aws:s3:::${CodeBuildArtefactBucket}/*"
           - Effect: Allow
             Action: ecr:DescribeImages
             Resource: !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ECRRepository}

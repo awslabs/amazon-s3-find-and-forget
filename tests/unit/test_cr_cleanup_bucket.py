@@ -21,7 +21,7 @@ def test_it_does_nothing_on_create(mock_client):
 def test_it_removes_all_files_from_bucket(mock_client):
     event = {
         'ResourceProperties': {
-            'WebUIBucket': 'webuibucket'
+            'Bucket': 'webuibucket'
         }
     }
 

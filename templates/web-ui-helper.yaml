@@ -51,7 +51,6 @@ Resources:
       ApiUrl: !Ref ApiUrl
       AthenaExecutionRole: !Ref AthenaExecutionRole
       DeleteTaskRole: !Ref DeleteTaskRole
-      FromBucket: !Ref PreBuiltArtefactsBucket
       LogLevel: !Ref LogLevel
       CognitoIdentityPoolId: !Ref CognitoIdentityPoolId
       CognitoUserPoolId: !Ref CognitoUserPoolId
@@ -66,7 +65,7 @@ Resources:
     Properties:
       ServiceToken: !GetAtt RemoveAllObjects.Arn
       LogLevel: !Ref LogLevel
-      WebUIBucket: !Ref WebUIBucket
+      Bucket: !Ref WebUIBucket
 
   CreateSettingsFile:
     Type: AWS::Serverless::Function
@@ -82,9 +81,6 @@ Resources:
               - s3:PutObjectAcl
             Resource:
               - !Sub arn:aws:s3:::${WebUIBucket}/*
-          - Effect: Allow
-            Action: s3:GetObject
-            Resource: !Sub "arn:aws:s3:::solution-builders-${AWS::Region}/*"
 
   RemoveAllObjects:
     Type: AWS::Serverless::Function
@@ -101,7 +97,4 @@ Resources:
             Resource:
               - !Sub arn:aws:s3:::${WebUIBucket}
               - !Sub arn:aws:s3:::${WebUIBucket}/*
-          - Effect: Allow
-            Action: s3:GetObject
-            Resource: !Sub "arn:aws:s3:::solution-builders-${AWS::Region}/*"
           

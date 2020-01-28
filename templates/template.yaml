@@ -137,6 +137,7 @@ Resources:
         CommonLayers: !Join
           - ","
           - - !GetAtt LayersStack.Outputs.AWSSDKLayer
+            - !GetAtt LayersStack.Outputs.BotoUtils
             - !GetAtt LayersStack.Outputs.CustomResourceHelper
             - !GetAtt LayersStack.Outputs.Decorators
         ECRRepository: !GetAtt DelStack.Outputs.ECRRepository
