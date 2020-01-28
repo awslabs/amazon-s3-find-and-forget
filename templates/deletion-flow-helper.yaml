@@ -33,7 +33,7 @@ Parameters:
     Type: String
 
 Resources:
-  CodeBuildArtifactBucket:
+  CodeBuildArtefactBucket:
     Type: AWS::S3::Bucket
     Properties:
       VersioningConfiguration:
@@ -60,10 +60,9 @@ Resources:
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                   - ecr:GetAuthorizationToken
-              - Resource: !Sub arn:aws:s3:::${CodeBuildArtifactBucket}/*
+              - Resource: !Sub arn:aws:s3:::${CodeBuildArtefactBucket}/*
                 Effect: Allow
-                Action:
-                  - s3:*
+                Action: s3:*
               - Resource: !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ECRRepository}
                 Effect: Allow
                 Action:
@@ -141,7 +140,7 @@ Resources:
       RoleArn: !GetAtt CodePipelineServiceRole.Arn
       ArtifactStore:
         Type: S3
-        Location: !Ref CodeBuildArtifactBucket
+        Location: !Ref CodeBuildArtefactBucket
       Stages:
         - Name: Source
           Actions:
@@ -152,7 +151,7 @@ Resources:
                 Version: "1"
                 Provider: S3
               Configuration:
-                S3Bucket: !Ref CodeBuildArtifactBucket
+                S3Bucket: !Ref CodeBuildArtefactBucket
                 S3ObjectKey: !Ref ArtefactName
               OutputArtifacts:
                 - Name: S3F2
@@ -183,18 +182,52 @@ Resources:
         - Statement:
           - Effect: Allow
             Action: s3:PutObject*
-            Resource: !Sub arn:aws:s3:::${CodeBuildArtifactBucket}/*
+            Resource: !Sub arn:aws:s3:::${CodeBuildArtefactBucket}/*
           - Effect: Allow
             Action: s3:GetObject
             Resource: !Sub "arn:aws:s3:::${PreBuiltArtefactsBucket}/*"
+
+  WaitForContainerBuildFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: wait_container_build.handler
+      CodeUri: ../backend/lambdas/custom_resources/
+      Description: Custom Lambda resource for the Amazon S3 Find and Forget Cloudformation Stack
+      Policies:
+        - Statement:
+          - Effect: Allow
+            Action:
+              - lambda:AddPermission
+              - lambda:RemovePermission
+              - events:PutRule
+              - events:DeleteRule
+              - events:PutTargets
+              - events:RemoveTargets
+            Resource: "*"
+          - Effect: Allow
+            Action: s3:GetObject*
+            Resource: !Sub "arn:aws:s3:::${PreBuiltArtefactsBucket}/*"
+          - Effect: Allow
+            Action: ecr:DescribeImages
+            Resource: !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ECRRepository}
 
   CopyBackendArtefact:
     Type: Custom::Setup
     Properties:
       ServiceToken: !GetAtt CopyBackendArtefactFunction.Arn
       ArtefactName: !Ref ArtefactName
-      CodeBuildArtifactBucket: !Ref CodeBuildArtifactBucket
+      CodeBuildArtefactBucket: !Ref CodeBuildArtefactBucket
       LogLevel: !Ref LogLevel
       Region: !Ref AWS::Region
       PreBuiltArtefactsBucket: !Ref PreBuiltArtefactsBucket
       Version: !Ref Version
+
+  WaitForContainerBuild:
+    Type: Custom::Setup
+    DependsOn: CopyBackendArtefact
+    Properties:
+      ServiceToken: !GetAtt WaitForContainerBuildFunction.Arn
+      ArtefactName: !Ref ArtefactName
+      CodeBuildArtefactBucket: !Ref CodeBuildArtefactBucket
+      ECRRepository: !Ref ECRRepository
+      LogLevel: !Ref LogLevel

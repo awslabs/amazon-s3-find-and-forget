@@ -147,6 +147,12 @@ def test_decimal_encoder():
 
 def test_it_converts_sfn_datetimes_to_epoch():
     assert 1578327177 == convert_iso8601_to_epoch("2020-01-06T16:12:57.092Z")
+    assert 1578327177 == convert_iso8601_to_epoch("2020-01-06T16:12:57Z")
+    assert 1578327177 == convert_iso8601_to_epoch("2020-01-06T16:12:57+00:00")
+    assert 1578327177 == convert_iso8601_to_epoch("2020-01-06T16:12:57.092+00:00")
+    
+    assert 1578323577 == convert_iso8601_to_epoch("2020-01-06T16:12:57.092+01:00")
+    assert 1578323577 == convert_iso8601_to_epoch("2020-01-06T16:12:57+01:00")
 
 
 def test_it_normalises_date_like_fields():

@@ -14,7 +14,7 @@ def test_it_copies_file(mock_client):
     event = {
         'ResourceProperties': {
             'ArtefactName': 'build/s3f2.zip',
-            'CodeBuildArtifactBucket': 'codebuild-bucket',
+            'CodeBuildArtefactBucket': 'codebuild-bucket',
             'PreBuiltArtefactsBucket': 'source-bucket-eu-west-1',
             'Version': '1.0'
         }
@@ -35,7 +35,7 @@ def test_it_does_nothing_on_delete(mock_client):
     event = {
         'ResourceProperties': {
             'ArtefactName': 'build/s3f2.zip',
-            'CodeBuildArtifactBucket': 'source-bucket-eu-west-1',
+            'CodeBuildArtefactBucket': 'source-bucket-eu-west-1',
             'PreBuiltArtefactsBucket': 'codebuild-bucket',
             'Version': '1.0'
         }

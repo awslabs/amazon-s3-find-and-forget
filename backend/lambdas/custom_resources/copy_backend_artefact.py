@@ -17,7 +17,7 @@ def create(event, context):
     props = event.get('ResourceProperties', None)
     version = props.get("Version")
     destination_artefact = props.get("ArtefactName")
-    destination_bucket = props.get("CodeBuildArtifactBucket")
+    destination_bucket = props.get("CodeBuildArtefactBucket")
     source_bucket = props.get("PreBuiltArtefactsBucket")
     source_artefact = "{}/amazon-s3-find-and-forget/{}/backend.zip".format(source_bucket, version)
     
