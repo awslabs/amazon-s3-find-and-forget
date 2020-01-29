@@ -47,41 +47,44 @@ def _aggregate_stats(events):
 
 
 def _update_job(job_id, stats):
-    table.update_item(
-        Key={
-            'Id': job_id,
-            'Sk': job_id,
-        },
-        ConditionExpression="#Id = :Id AND #Sk = :Sk",
-        UpdateExpression="set #qt = if_not_exists(#qt, :z) + :qt, "
-                         "#qs = if_not_exists(#qs, :z) + :qs, "
-                         "#qf = if_not_exists(#qf, :z) + :qf, "
-                         "#qb = if_not_exists(#qb, :z) + :qb, "
-                         "#qm = if_not_exists(#qm, :z) + :qm, "
-                         "#ou = if_not_exists(#ou, :z) + :ou, "
-                         "#of = if_not_exists(#of, :z) + :of",
-        ExpressionAttributeNames={
-            "#Id": "Id",
-            "#Sk": "Sk",
-            '#qt': 'TotalQueryCount',
-            '#qs': 'TotalQuerySucceededCount',
-            '#qf': 'TotalQueryFailedCount',
-            '#qb': 'TotalQueryScannedInBytes',
-            '#qm': 'TotalQueryTimeInMillis',
-            '#ou': 'TotalObjectUpdatedCount',
-            '#of': 'TotalObjectUpdateFailedCount',
-        },
-        ExpressionAttributeValues={
-            ":Id": job_id,
-            ":Sk": job_id,
-            ':qt': stats.get("TotalQueryCount", 0),
-            ':qs': stats.get("TotalQuerySucceededCount", 0),
-            ':qf': stats.get("TotalQueryFailedCount", 0),
-            ':qb': stats.get("TotalQueryScannedInBytes", 0),
-            ':qm': stats.get("TotalQueryTimeInMillis", 0),
-            ':ou': stats.get("TotalObjectUpdatedCount", 0),
-            ':of': stats.get("TotalObjectUpdateFailedCount", 0),
-            ':z': 0,
-        },
-        ReturnValues="UPDATED_NEW"
-    )
+    try:
+        table.update_item(
+            Key={
+                'Id': job_id,
+                'Sk': job_id,
+            },
+            ConditionExpression="#Id = :Id AND #Sk = :Sk",
+            UpdateExpression="set #qt = if_not_exists(#qt, :z) + :qt, "
+                             "#qs = if_not_exists(#qs, :z) + :qs, "
+                             "#qf = if_not_exists(#qf, :z) + :qf, "
+                             "#qb = if_not_exists(#qb, :z) + :qb, "
+                             "#qm = if_not_exists(#qm, :z) + :qm, "
+                             "#ou = if_not_exists(#ou, :z) + :ou, "
+                             "#of = if_not_exists(#of, :z) + :of",
+            ExpressionAttributeNames={
+                "#Id": "Id",
+                "#Sk": "Sk",
+                '#qt': 'TotalQueryCount',
+                '#qs': 'TotalQuerySucceededCount',
+                '#qf': 'TotalQueryFailedCount',
+                '#qb': 'TotalQueryScannedInBytes',
+                '#qm': 'TotalQueryTimeInMillis',
+                '#ou': 'TotalObjectUpdatedCount',
+                '#of': 'TotalObjectUpdateFailedCount',
+            },
+            ExpressionAttributeValues={
+                ":Id": job_id,
+                ":Sk": job_id,
+                ':qt': stats.get("TotalQueryCount", 0),
+                ':qs': stats.get("TotalQuerySucceededCount", 0),
+                ':qf': stats.get("TotalQueryFailedCount", 0),
+                ':qb': stats.get("TotalQueryScannedInBytes", 0),
+                ':qm': stats.get("TotalQueryTimeInMillis", 0),
+                ':ou': stats.get("TotalObjectUpdatedCount", 0),
+                ':of': stats.get("TotalObjectUpdateFailedCount", 0),
+                ':z': 0,
+            },
+            ReturnValues="UPDATED_NEW"
+        )
+    except ddb.meta.client.exceptions.ConditionalCheckFailedException:
+        logger.warning("Job {} is already in a status which cannot be updated".format(job_id))

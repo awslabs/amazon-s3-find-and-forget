@@ -41,6 +41,8 @@ def test_it_skips_empty_deletion_queue(sf_client, execution, execution_waiter):
         execution_waiter.wait(executionArn=execution["executionArn"])
     except WaiterError as e:
         pytest.fail("Error waiting for execution to enter success state: {}".format(str(e)))
+    finally:
+        sf_client.stop_execution(executionArn=execution["executionArn"])
 
     history = sf_client.get_execution_history(executionArn=execution["executionArn"])
     did_enter_skip = next((event for event in history["events"]
