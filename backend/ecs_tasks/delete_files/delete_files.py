@@ -27,7 +27,6 @@ logger.addHandler(handler)
 cw_logs = boto3.client("logs")
 sqs = boto3.resource('sqs', endpoint_url="https://sqs.{}.amazonaws.com".format(os.getenv("AWS_DEFAULT_REGION")))
 queue = sqs.Queue(os.getenv("DELETE_OBJECTS_QUEUE"))
-dlq = sqs.Queue(os.getenv("DLQ"))
 s3 = s3fs.S3FileSystem()
 
 
@@ -116,13 +115,14 @@ def check_file_size(s3, object_path):
             object_path, round(object_size / math.pow(1024, 3), 2)))
 
 
-def execute(message, receipt_handle):
+def execute(message_body, receipt_handle):
     temp_dest = "/tmp/new.parquet"
+    msg = queue.Message(receipt_handle)
     try:
-        validate_message(message)
+        validate_message(message_body)
         stats = {"ProcessedRows": 0, "DeletedRows": 0}
-        logger.info("Message received: {0}".format(message))
-        body = json.loads(message)
+        logger.info("Message received: {0}".format(message_body))
+        body = json.loads(message_body)
         logger.info("Opening the file")
         object_path = body["Object"]
         check_file_size(s3, object_path)
@@ -137,25 +137,24 @@ def execute(message, receipt_handle):
             save(s3, temp_dest, object_path)
         else:
             logger.warning("The object {} was processed successfully but no rows required deletion".format(object_path))
+        msg.delete()
         emit_deletion_event(body, stats)
         return object_path
     except (KeyError, ArrowException) as e:
         err_message = "Parquet processing error: {}".format(str(e))
         logger.error(err_message)
-        emit_failed_deletion_event(json.loads(message), err_message)
-        dlq.send_message(MessageBody=message)
+        emit_failed_deletion_event(json.loads(message_body), err_message)
+        msg.change_visibility(VisibilityTimeout=0)
     except (ValueError, TypeError) as e:
         err_message = "Invalid message received: {}".format(str(e))
         logger.error(err_message)
-        dlq.send_message(MessageBody=message)
+        msg.change_visibility(VisibilityTimeout=0)
     except (IOError, ClientError) as e:
         err_message = "Unable to retrieve object: {}".format(str(e))
         logger.error(err_message)
-        emit_failed_deletion_event(json.loads(message), err_message)
-        dlq.send_message(MessageBody=message)
+        emit_failed_deletion_event(json.loads(message_body), err_message)
+        msg.change_visibility(VisibilityTimeout=0)
     finally:
-        msg = queue.Message(receipt_handle)
-        msg.delete()
         if os.path.exists(temp_dest):
             cleanup(temp_dest)
 

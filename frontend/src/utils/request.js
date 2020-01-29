@@ -4,9 +4,6 @@ import { retryWrapper } from "./retryWrapper";
 const settings = window.s3f2Settings || {};
 const region = settings.region || "eu-west-1";
 
-const EMPTY_BODY_SHA256 =
-  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
-
 const getRegionalConfig = serviceName => ({
   name: serviceName,
   endpoint: `https://${serviceName}.${region}.amazonaws.com`,
@@ -35,7 +32,6 @@ Amplify.configure({
         }
       },
       getRegionalConfig("glue"),
-      getRegionalConfig("s3"),
       getRegionalConfig("sts")
     ]
   }
@@ -61,11 +57,6 @@ export const glueGateway = (endpointName, data) =>
       "X-Amz-Target": `AWSGlue.${endpointName}`
     },
     method: "post"
-  });
-
-export const s3Gateway = endpoint =>
-  apiWrapper("s3", endpoint, {
-    headers: { "X-Amz-Content-Sha256": EMPTY_BODY_SHA256 }
   });
 
 export const stsGateway = endpoint =>

@@ -84,8 +84,7 @@ Resources:
             Version: "2012-10-17"
             Statement:
               - Effect: Allow
-                Action:
-                  - "sts:GetCallerIdentity"
+                Action: "sts:GetCallerIdentity"
                 Resource: "*"
               - Effect: "Allow"
                 Action:
@@ -98,10 +97,6 @@ Resources:
                   - !Sub "arn:${AWS::Partition}:glue:*:${AWS::AccountId}:database*"
                   - !Sub "arn:${AWS::Partition}:glue:*:${AWS::AccountId}:table*"
                   - !Sub "arn:${AWS::Partition}:glue:*:${AWS::AccountId}:partition*"
-              - Effect: Allow
-                Action: s3:GetObject
-                Resource: 
-                  - !Sub "arn:aws:s3:::${ReportsBucket}/reports/*"
 
 Outputs:
   CognitoIdentityPoolId:

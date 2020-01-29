@@ -79,7 +79,30 @@ Resources:
       ContentBasedDeduplication: true
       FifoQueue: true
       ReceiveMessageWaitTimeSeconds: 0
-      VisibilityTimeout: 43200
+      VisibilityTimeout: 10800
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt DLQ.Arn
+        maxReceiveCount: 1
+
+  DelObjQPolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !Ref DelObjQ
+      PolicyDocument:
+        Id: FargateConsumerPolicy
+        Statement:
+          - Sid: AllowFargateAccess
+            Effect: Allow
+            Principal:
+              AWS:
+                - !GetAtt DeleteTaskRole.Arn
+            Action:
+              - sqs:ChangeMessageVisibility
+              - sqs:DeleteMessage
+              - sqs:GetQueueAttributes
+              - sqs:ReceiveMessage
+            Resource: !GetAtt DelObjQ.Arn
 
   DeleteTaskDefinition:
     Type: AWS::ECS::TaskDefinition
@@ -104,8 +127,6 @@ Resources:
           Environment:
             - Name: DELETE_OBJECTS_QUEUE
               Value: !Ref DelObjQ
-            - Name: DLQ
-              Value: !Ref DLQ
             - Name: ECS_ENABLE_CONTAINER_METADATA
               Value: 'true'
             - Name: JobTableName
@@ -140,15 +161,6 @@ Resources:
         PolicyDocument:
           Version: "2012-10-17"
           Statement:
-          - Action: 
-            - sqs:ChangeMessageVisibiliy
-            - sqs:ChangeMessageVisibilityBatch 
-            - sqs:DeleteMessage 
-            - sqs:DeleteMessageBatch 
-            - sqs:GetQueueAttributes 
-            - sqs:ReceiveMessage
-            Effect: Allow 
-            Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${DelObjQ.QueueName}
           - Action:
             - dynamodb:PutItem
             Effect: Allow
@@ -167,6 +179,10 @@ Resources:
 
   DLQ:
     Type: AWS::SQS::Queue
+    Properties:
+      ContentBasedDeduplication: true
+      FifoQueue: true
+      ReceiveMessageWaitTimeSeconds: 0
 
   UpdateClusterConfig:
     Type: Custom::Setup

@@ -1,3 +1,4 @@
+import boto3
 import pytest
 from mock import patch
 
@@ -294,3 +295,25 @@ def test_it_handles_multiple_events(table):
         "TotalQueryTimeInMillis": 100,
         "TotalObjectUpdatedCount": 1,
     } == resp
+
+
+@patch("backend.lambdas.jobs.stats_updater.ddb")
+@patch("backend.lambdas.jobs.stats_updater.table")
+def test_it_handles_already_failed_jobs(table, ddb):
+    e = boto3.client("dynamodb").exceptions.ConditionalCheckFailedException
+    ddb.meta.client.exceptions.ConditionalCheckFailedException = e
+    table.update_item.side_effect = e({}, "ConditionalCheckFailedException")
+    update_stats("job123", [{
+        "Id": "job123",
+        "Sk": "123456",
+        "Type": "JobEvent",
+        "CreatedAt": 123.0,
+        "EventName": "QuerySucceeded",
+        "EventData": {
+            "Statistics": {
+                "DataScannedInBytes": 10,
+                "EngineExecutionTimeInMillis": 100
+            }
+        }
+    }])
+    table.update_item.assert_called()

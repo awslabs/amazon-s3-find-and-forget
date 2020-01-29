@@ -91,6 +91,7 @@ Resources:
             - !GetAtt CheckQueueSize.Arn
             - !GetAtt ExecuteQuery.Arn
             - !GetAtt CheckQueryStatus.Arn
+            - !GetAtt CheckTaskCount.Arn
             - !GetAtt SubmitQueryResults.Arn
             - !GetAtt GenerateQueries.Arn
             - !GetAtt OrchestrateECSServiceScaling.Arn
@@ -342,7 +343,7 @@ Resources:
                 {
                   "Variable": "$.DesiredCount",
                   "NumericEquals": 0,
-                  "Next": "No"
+                  "Next": "Fetch Task Count"
                 },
                 {
                   "Variable": "$.DesiredCount",
@@ -356,9 +357,9 @@ Resources:
               "Comment": "Waits before checking if the Object Deletion Queue is empty",
               "Type": "Wait",
               "SecondsPath": "$.WaitDuration",
-              "Next": "Fetch Queue Size again"
+              "Next": "Fetch Queue Size Again"
             },
-            "Fetch Queue Size again": {
+            "Fetch Queue Size Again": {
               "Comment": "Checks the number of messages in the Object Deletion Queue",
               "Type": "Task",
               "Resource": "${CheckQueueSize.Arn}",
@@ -390,10 +391,49 @@ Resources:
               ],
               "Default": "Not sure, fail"
             },
+            "Fetch Task Count": {
+              "Comment": "Checks the number of tasks for a service",
+              "Type": "Task",
+              "Resource": "${CheckTaskCount.Arn}",
+              "Parameters": {
+                "Cluster": "${ECSCluster}",
+                "ServiceName": "${DeleteServiceName}"
+              },
+              "ResultPath": "$.TaskCount",
+              "Next": "Has Fargate Shutdown?",
+              "Retry": [{
+                "ErrorEquals": [ "States.ALL" ],
+                "IntervalSeconds": 10,
+                "MaxAttempts": 1
+              }]
+            },
+            "Has Fargate Shutdown?": {
+              "Comment": "Checks if the remaining tasks is 0",
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.TaskCount.Total",
+                  "NumericEquals": 0,
+                  "Next": "Done"
+                },
+                {
+                  "Variable": "$.TaskCount.Total",
+                  "NumericGreaterThan": 0,
+                  "Next": "Wait for Fargate Shutdown"
+                }
+              ],
+              "Default": "Not sure, fail"
+            },
+            "Wait for Fargate Shutdown": {
+              "Comment": "Waits before checking if Fargate has reached the desired count",
+              "Type": "Wait",
+              "Seconds": 10,
+              "Next": "Fetch Task Count"
+            },
             "Not sure, fail": {
               "Type": "Fail"
             },
-            "No": {
+            "Done": {
               "Type": "Succeed"
             }
           }
@@ -895,6 +935,19 @@ Resources:
           - !Sub
             - arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${QueueName}
             - QueueName: !Select [4, !Split ["/", !Ref DeleteQueueUrl]]
+
+  CheckTaskCount:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: check_task_count.handler
+      CodeUri: ../backend/lambdas/tasks/
+      Policies:
+      - Statement:
+        - Action:
+          - "ecs:DescribeServices"
+          Effect: "Allow"
+          Resource:
+          - !Sub arn:${AWS::Partition}:ecs:${AWS::Region}:${AWS::AccountId}:service/${ECSCluster}/${DeleteServiceName}
 
   ExecuteQuery:
     Type: AWS::Serverless::Function

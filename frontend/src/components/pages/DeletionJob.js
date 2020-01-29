@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import ReactJson from "react-json-view";
-import { Button, Col, Row, Spinner } from "react-bootstrap";
+import { Button, Col, Form, Modal, Row, Spinner, Table } from "react-bootstrap";
 
 import Alert from "../Alert";
 import DetailsBox from "../DetailsBox";
@@ -11,6 +11,7 @@ import {
   formatErrorMessage,
   formatFileSize,
   isUndefined,
+  isEmpty,
   withDefault,
   successJobClass
 } from "../../utils";
@@ -18,18 +19,41 @@ import {
 const COUNTDOWN_INTERVAL = 10;
 
 export default ({ gateway, jobId }) => {
-  const [countDownLeft, setCoundDownLeft] = useState(COUNTDOWN_INTERVAL);
+  const [countDownLeft, setCountDownLeft] = useState(COUNTDOWN_INTERVAL);
   const [errorDetails, setErrorDetails] = useState(undefined);
+  const [eventsErrorDetails, setEventsErrorDetails] = useState(undefined);
+  const [eventsState, setEventsState] = useState("initial");
   const [formState, setFormState] = useState("initial");
   const [job, setJob] = useState(undefined);
+  const [jobEvents, setJobEvents] = useState([]);
+  const [nextStart, setNextStart] = useState(false);
   const [renderTableCount, setRenderTableCount] = useState(0);
-  const [report, setReport] = useState(undefined);
-  const [reportShown, showReport] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState(undefined);
 
   const refreshJob = useCallback(() => {
-    setCoundDownLeft(COUNTDOWN_INTERVAL);
+    setCountDownLeft(COUNTDOWN_INTERVAL);
     setRenderTableCount(renderTableCount + 1);
-  }, [renderTableCount, setCoundDownLeft, setRenderTableCount]);
+  }, [renderTableCount, setCountDownLeft, setRenderTableCount]);
+
+  const loadMoreEvents = useCallback(
+    watermark => {
+      const fetchJobEvents = async () => {
+        setEventsState("loading");
+        try {
+          const jobEventsList = await gateway.getJobEvents(jobId, watermark);
+          setJobEvents(j => j.concat(jobEventsList.JobEvents));
+          setNextStart(jobEventsList.NextStart);
+          setEventsState("loaded");
+        } catch (e) {
+          setEventsState("error");
+          setEventsErrorDetails(formatErrorMessage(e));
+        }
+      };
+
+      fetchJobEvents();
+    },
+    [gateway, jobId, setJobEvents, setNextStart]
+  );
 
   const withCountDown =
     job && (job.JobStatus === "RUNNING" || job.JobStatus === "QUEUED");
@@ -37,37 +61,12 @@ export default ({ gateway, jobId }) => {
   const errorCountClass = x =>
     x === 0 || isUndefined(x) ? "success" : "error";
 
-  const loadReport = async () => {
-    if (!report) {
-      setFormState("loading-report");
-      try {
-        const reportContent = await gateway.getObject(job.JobReportLocation);
-        setReport(reportContent);
-        setFormState("details");
-      } catch (e) {
-        setFormState("error");
-        setErrorDetails(formatErrorMessage(e));
-      }
-    }
-  };
-
-  const openReport = async () => {
-    await loadReport();
-    showReport(true);
-  };
-
-  const downloadReport = async () => {
-    await loadReport();
-    const el = document.getElementById("download-report-link");
-    if (el) el.click();
-  };
-
   useEffect(() => {
     if (withCountDown) {
       if (countDownLeft === 0) refreshJob();
       else {
         const timer = setInterval(
-          () => setCoundDownLeft(countDownLeft - 1),
+          () => setCountDownLeft(countDownLeft - 1),
           1000
         );
         return () => clearInterval(timer);
@@ -90,6 +89,10 @@ export default ({ gateway, jobId }) => {
 
     fetchJob();
   }, [gateway, jobId, renderTableCount]);
+
+  useEffect(() => {
+    loadMoreEvents();
+  }, [gateway, jobId, loadMoreEvents]);
 
   return (
     <>
@@ -184,59 +187,102 @@ export default ({ gateway, jobId }) => {
           </div>
         )}
       </div>
-      {job && job.JobReportLocation && (
+      {selectedEvent && (
+        <Modal
+          centered
+          show={selectedEvent}
+          size="lg"
+          onHide={() => setSelectedEvent(undefined)}
+        >
+          <Modal.Header closeButton>
+            <Modal.Title>Job Event: {selectedEvent.Sk}</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <ReactJson
+              displayDataTypes={false}
+              indentWidth={2}
+              name={false}
+              src={selectedEvent}
+            />
+          </Modal.Body>
+          <Modal.Footer>
+            <Button
+              className="aws-button cancel"
+              onClick={() => setSelectedEvent(undefined)}
+            >
+              Close
+            </Button>
+          </Modal.Footer>
+        </Modal>
+      )}
+      {eventsState === "error" && (
+        <Alert type="error" title={eventsErrorDetails}>
+          Unable to load Events
+        </Alert>
+      )}
+      {job && (
         <div className="page-table">
-          <Row className="header">
+          <Row>
             <Col>
-              <h2>Job Report</h2>
-            </Col>
-            <Col className="buttons-right" md="auto">
-              {!reportShown && (
-                <Button
-                  className="aws-button action-button"
-                  onClick={openReport}
-                >
-                  Open Report
-                </Button>
-              )}
-              <Button
-                className="aws-button action-button"
-                onClick={downloadReport}
-              >
-                Download Report
-              </Button>
-              <a
-                href={`data:text/json;charset=utf-8,${encodeURIComponent(
-                  JSON.stringify(report)
-                )}`}
-                id="download-report-link"
-                className="hide"
-                download={`${job.Id}.json`}
-              >
-                Download link
-              </a>
+              <h2>Job Events ({jobEvents.length})</h2>
             </Col>
           </Row>
-          <div className="details content">
-            <DetailsBox label="Report Location" fullWidth>
-              {job.JobReportLocation}
-            </DetailsBox>
-            {formState === "loading-report" && (
-              <Spinner animation="border" role="status" className="spinner" />
+
+          <Form>
+            <Table>
+              <thead>
+                <tr>
+                  <td></td>
+                  <td>Event Name</td>
+                  <td>Event Time</td>
+                  <td>Event Emitter</td>
+                  <td></td>
+                </tr>
+              </thead>
+              <tbody>
+                {jobEvents &&
+                  jobEvents.map((e, index) => (
+                    <tr key={index}>
+                      <td></td>
+                      <td>{withDefault(e.EventName)}</td>
+                      <td>{formatDateTime(e.CreatedAt)}</td>
+                      <td>{withDefault(e.EmitterId)}</td>
+                      <td>
+                        <Button
+                          variant="link"
+                          style={{ padding: 0 }}
+                          onClick={() => setSelectedEvent(e)}
+                        >
+                          View Event
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </Table>
+            {isEmpty(jobEvents) && eventsState !== "loading" && (
+              <div className="content centered">
+                <b>No events have been received yet</b>
+              </div>
             )}
-            {report && reportShown && (
-              <DetailsBox fullWidth className="json-visualiser">
-                <ReactJson
-                  displayDataTypes={false}
-                  indentWidth={2}
-                  name={false}
-                  src={report}
-                />
-              </DetailsBox>
-            )}
-          </div>
+          </Form>
         </div>
       )}
+      <div className="centered">
+        {eventsState === "loading" ? (
+          <Spinner animation="border" role="status" className="spinner" />
+        ) : nextStart ? (
+          <Button
+            disabled={eventsState === "loading"}
+            className="aws-button action-button"
+            onClick={() => loadMoreEvents(nextStart)}
+          >
+            Load More
+          </Button>
+        ) : (
+          <p>All events loaded</p>
+        )}
+      </div>
     </>
   );
 };

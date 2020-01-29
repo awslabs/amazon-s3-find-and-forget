@@ -288,6 +288,7 @@ def test_it_handles_unpartitioned_data(batch_sqs_msgs_mock, get_partitions_mock,
             'Database': 'test_db',
             'Table': 'test_table',
             'Columns': [{'Column': 'customer_id', 'MatchIds': ['123']}],
+            'PartitionKeys': []
         },
     ])
 
