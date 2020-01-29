@@ -1,4 +1,4 @@
-import { apiGateway, glueGateway, s3Gateway, stsGateway } from "./request";
+import { apiGateway, glueGateway, stsGateway } from "./request";
 
 export default {
   deleteDataMapper(id) {
@@ -89,8 +89,12 @@ export default {
     return { Jobs: allJobs };
   },
 
-  getObject(s3Path) {
-    return s3Gateway(s3Path.replace("s3:/", ""));
+  async getJobEvents(jobId, watermark=undefined, page_size=20) {
+    let qs = `?page_size=${page_size}`;
+    if (watermark) {
+      qs += `&start_at=${encodeURIComponent(watermark)}`;
+    }
+    return await apiGateway(`jobs/${jobId}/events${qs}`);
   },
 
   getQueue() {
