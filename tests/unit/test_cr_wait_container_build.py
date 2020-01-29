@@ -31,7 +31,7 @@ def test_it_signal_readiness_when_image_ready(mock_ecr_client, mock_s3_client):
 
     resp = poll(event, MagicMock())    
 
-    assert True == resp
+    assert resp
 
 
 @patch("backend.lambdas.custom_resources.wait_container_build.s3_client")
@@ -56,7 +56,7 @@ def test_it_keeps_polling_when_image_not_ready(mock_ecr_client, mock_s3_client):
 
     resp = poll(event, MagicMock())    
 
-    assert False == resp
+    assert not resp
 
 
 @patch("backend.lambdas.custom_resources.wait_container_build.s3_client")
@@ -77,7 +77,7 @@ def test_it_keeps_polling_when_no_latest_image_found(mock_ecr_client, mock_s3_cl
 
     resp = poll(event, MagicMock())    
 
-    assert False == resp
+    assert not resp
 
 
 @patch("backend.lambdas.custom_resources.wait_container_build.helper")

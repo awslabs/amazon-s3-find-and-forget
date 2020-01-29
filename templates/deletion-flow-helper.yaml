@@ -130,10 +130,18 @@ Resources:
                   - ecs:ListTasks
                   - ecs:RegisterTaskDefinition
                   - ecs:UpdateService
+                  - iam:PassRole
+              - Resource: !Sub arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${CodeBuildProject}
+                Effect: Allow
+                Action:
                   - codebuild:StartBuild
                   - codebuild:BatchGetBuilds
-                  - iam:PassRole
-                  - s3:*
+              - Resource: !Sub arn:aws:s3:::${CodeBuildArtefactBucket}
+                Effect: Allow
+                Action: s3:List*
+              - Resource: !Sub arn:aws:s3:::${CodeBuildArtefactBucket}/*
+                Effect: Allow
+                Action: s3:Get*
 
   CodePipeline:
     Type: AWS::CodePipeline::Pipeline
@@ -186,7 +194,7 @@ Resources:
             Resource: !Sub arn:aws:s3:::${CodeBuildArtefactBucket}/*
           - Effect: Allow
             Action: s3:GetObject
-            Resource: !Sub "arn:aws:s3:::${PreBuiltArtefactsBucket}/*"
+            Resource: !Sub arn:aws:s3:::${PreBuiltArtefactsBucket}/*
 
   WaitForContainerBuildFunction:
     Type: AWS::Serverless::Function

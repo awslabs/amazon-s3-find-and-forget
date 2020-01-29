@@ -31,7 +31,7 @@ def poll(event, context):
     obj = s3_client.Object(bucket, key)
     last_modified = convert_iso8601_to_epoch(str(obj.last_modified))
     image_pushed_at=get_latest_image_push(repository)
-    return image_pushed_at != None and last_modified < image_pushed_at
+    return image_pushed_at and last_modified < image_pushed_at
 
 
 def handler(event, context):
