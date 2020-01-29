@@ -91,6 +91,7 @@ Resources:
             - !GetAtt CheckQueueSize.Arn
             - !GetAtt ExecuteQuery.Arn
             - !GetAtt CheckQueryStatus.Arn
+            - !GetAtt CheckTaskCount.Arn
             - !GetAtt SubmitQueryResults.Arn
             - !GetAtt GenerateQueries.Arn
             - !GetAtt OrchestrateECSServiceScaling.Arn
@@ -427,7 +428,7 @@ Resources:
             "Wait for Fargate Shutdown": {
               "Comment": "Waits before checking if Fargate has reached the desired count",
               "Type": "Wait",
-              "Seconds": "10",
+              "Seconds": 10,
               "Next": "Fetch Task Count"
             },
             "Not sure, fail": {
@@ -947,7 +948,7 @@ Resources:
           - "ecs:DescribeServices"
           Effect: "Allow"
           Resource:
-          - !Sub arn:${AWS::Partition}:ecs:${AWS::Region}:${AWS::AccountId}:service/${DeleteServiceName}
+          - !Sub arn:${AWS::Partition}:ecs:${AWS::Region}:${AWS::AccountId}:service/${ECSCluster}/${DeleteServiceName}
 
   ExecuteQuery:
     Type: AWS::Serverless::Function
