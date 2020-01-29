@@ -400,7 +400,6 @@ Resources:
                 "ServiceName": "${DeleteServiceName}"
               },
               "ResultPath": "$.TaskCount",
-              "OutputPath": "$.Total",
               "Next": "Has Fargate Shutdown?",
               "Retry": [{
                 "ErrorEquals": [ "States.ALL" ],
@@ -413,12 +412,12 @@ Resources:
               "Type": "Choice",
               "Choices": [
                 {
-                  "Variable": "$.TaskCount",
+                  "Variable": "$.TaskCount.Total",
                   "NumericEquals": 0,
                   "Next": "Done"
                 },
                 {
-                  "Variable": "$.TaskCount",
+                  "Variable": "$.TaskCount.Total",
                   "NumericGreaterThan": 0,
                   "Next": "Wait for Fargate Shutdown"
                 }
