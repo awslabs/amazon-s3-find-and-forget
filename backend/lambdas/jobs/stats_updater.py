@@ -87,4 +87,4 @@ def _update_job(job_id, stats):
             ReturnValues="UPDATED_NEW"
         )
     except ddb.meta.client.exceptions.ConditionalCheckFailedException:
-        logger.warning("Job {} is already in a status which cannot be updated".format(job_id))
+        logger.warning("Job {} does not exist".format(job_id))
