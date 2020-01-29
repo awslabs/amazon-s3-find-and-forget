@@ -148,9 +148,8 @@ def test_it_returns_uuid_as_string():
 @patch("backend.ecs_tasks.delete_files.delete_files.emit_failed_deletion_event")
 @patch("backend.ecs_tasks.delete_files.delete_files.s3", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.queue")
-@patch("backend.ecs_tasks.delete_files.delete_files.dlq")
 @patch("backend.ecs_tasks.delete_files.delete_files.check_file_size", MagicMock())
-def test_it_handles_missing_col_exceptions(mock_dlq, mock_queue, mock_log, mock_load_parquet, mock_delete_write,
+def test_it_handles_missing_col_exceptions(mock_queue, mock_log, mock_load_parquet, mock_delete_write,
                                            mock_remove):
     # Arrange
     mock_delete_write.side_effect = KeyError("FAIL")
@@ -162,8 +161,7 @@ def test_it_handles_missing_col_exceptions(mock_dlq, mock_queue, mock_log, mock_
     # Assert
     mock_remove.assert_called()
     mock_log.assert_called_with(ANY, "Parquet processing error: 'FAIL'")
-    mock_dlq.send_message.assert_called()
-    mock_queue.Message().delete.assert_called()
+    mock_queue.Message().change_visibility.assert_called()
 
 
 @patch("os.path.exists", MagicMock(return_value=True))
@@ -174,9 +172,8 @@ def test_it_handles_missing_col_exceptions(mock_dlq, mock_queue, mock_log, mock_
 @patch("backend.ecs_tasks.delete_files.delete_files.emit_failed_deletion_event")
 @patch("backend.ecs_tasks.delete_files.delete_files.s3", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.queue")
-@patch("backend.ecs_tasks.delete_files.delete_files.dlq")
 @patch("backend.ecs_tasks.delete_files.delete_files.check_file_size", MagicMock())
-def test_it_handles_arrow_exceptions(mock_dlq, mock_queue, mock_log, mock_load_parquet, mock_delete_write, mock_remove):
+def test_it_handles_arrow_exceptions(mock_queue, mock_log, mock_load_parquet, mock_delete_write, mock_remove):
     # Arrange
     mock_delete_write.side_effect = ArrowException("FAIL")
     parquet_file = MagicMock()
@@ -187,54 +184,47 @@ def test_it_handles_arrow_exceptions(mock_dlq, mock_queue, mock_log, mock_load_p
     # Assert
     mock_remove.assert_called()
     mock_log.assert_called_with(ANY, "Parquet processing error: FAIL")
-    mock_dlq.send_message.assert_called()
-    mock_queue.Message().delete.assert_called()
+    mock_queue.Message().change_visibility.assert_called()
 
 
 @patch("os.path.exists", MagicMock(return_value=False))
 @patch("os.remove", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.emit_failed_deletion_event")
 @patch("backend.ecs_tasks.delete_files.delete_files.queue")
-@patch("backend.ecs_tasks.delete_files.delete_files.dlq")
-def test_it_validates_messages_with_missing_keys(mock_dlq, mock_queue, mock_log):
+def test_it_validates_messages_with_missing_keys(mock_queue, mock_log):
     # Act
     execute("{}", "receipt_handle")
     # Assert
     mock_log.assert_not_called()
-    mock_dlq.send_message.assert_called()
-    mock_queue.Message().delete.assert_called()
+    mock_queue.Message().change_visibility.assert_called()
 
 
 @patch("os.path.exists", MagicMock(return_value=False))
 @patch("os.remove", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.emit_failed_deletion_event")
 @patch("backend.ecs_tasks.delete_files.delete_files.queue")
-@patch("backend.ecs_tasks.delete_files.delete_files.dlq")
-def test_it_validates_messages_with_invalid_body(mock_dlq, mock_queue, mock_log):
+def test_it_validates_messages_with_invalid_body(mock_queue, mock_log):
     # Act
     execute("NOT JSON", "receipt_handle")
     # Assert
     mock_log.assert_not_called()
-    mock_dlq.send_message.assert_called()
-    mock_queue.Message().delete.assert_called()
+    mock_queue.Message().change_visibility.assert_called()
 
 
 @patch("os.path.exists", MagicMock(return_value=False))
 @patch("os.remove", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.emit_failed_deletion_event")
 @patch("backend.ecs_tasks.delete_files.delete_files.queue")
-@patch("backend.ecs_tasks.delete_files.delete_files.dlq")
 @patch("backend.ecs_tasks.delete_files.delete_files.s3")
 @patch("backend.ecs_tasks.delete_files.delete_files.check_file_size", MagicMock())
-def test_it_handles_s3_permission_issues(mock_s3, mock_dlq, mock_queue, mock_log):
+def test_it_handles_s3_permission_issues(mock_s3, mock_queue, mock_log):
     mock_s3.open.side_effect = ClientError({}, "GetObject")
     # Act
     execute(message_stub(), "receipt_handle")
     # Assert
     msg = mock_log.call_args[0][1]
     assert msg.startswith("Unable to retrieve object:")
-    mock_dlq.send_message.assert_called()
-    mock_queue.Message().delete.assert_called()
+    mock_queue.Message().change_visibility.assert_called()
 
 
 @patch("os.path.exists", MagicMock(return_value=False))
@@ -242,17 +232,15 @@ def test_it_handles_s3_permission_issues(mock_s3, mock_dlq, mock_queue, mock_log
 @patch("backend.ecs_tasks.delete_files.delete_files.emit_failed_deletion_event")
 @patch("backend.ecs_tasks.delete_files.delete_files.check_file_size")
 @patch("backend.ecs_tasks.delete_files.delete_files.queue")
-@patch("backend.ecs_tasks.delete_files.delete_files.dlq")
 @patch("backend.ecs_tasks.delete_files.delete_files.s3", MagicMock())
-def test_it_handles_file_too_big(mock_dlq, mock_queue, mock_check_size, mock_log):
+def test_it_handles_file_too_big(mock_queue, mock_check_size, mock_log):
     # Arrange
     mock_check_size.side_effect = IOError("Too big")
     # Act
     execute(message_stub(), "receipt_handle")
     # Assert
     mock_log.assert_called_with(ANY, "Unable to retrieve object: Too big")
-    mock_dlq.send_message.assert_called()
-    mock_queue.Message().delete.assert_called()
+    mock_queue.Message().change_visibility.assert_called()
 
 
 @patch("backend.ecs_tasks.delete_files.delete_files.get_max_file_size_bytes", MagicMock(return_value=9 * math.pow(
