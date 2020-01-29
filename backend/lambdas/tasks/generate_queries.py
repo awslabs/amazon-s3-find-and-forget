@@ -49,6 +49,7 @@ def handler(event, context):
                 "Database": db,
                 "Table": table_name,
                 "Columns": columns,
+                "PartitionKeys": []
             })
         else:
             partitions = get_partitions(db, table_name)
