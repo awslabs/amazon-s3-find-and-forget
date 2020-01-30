@@ -80,13 +80,11 @@ class DecimalEncoder(json.JSONEncoder):
 def convert_iso8601_to_epoch(iso_time: str):
     parsed = None
     normalised = iso_time.strip().replace(" ", "T")
-    try:
-        parsed = datetime.strptime(normalised, "%Y-%m-%dT%H:%M:%S.%f%z")
-    except:
-        parsed = datetime.strptime(normalised, "%Y-%m-%dT%H:%M:%S%z")       
+    with_ms = "." in normalised
+    regex = "%Y-%m-%dT%H:%M:%S.%f%z" if with_ms else "%Y-%m-%dT%H:%M:%S%z"
+    parsed = datetime.strptime(normalised, regex)
     unix_timestamp = round(parsed.timestamp())
     return unix_timestamp
-
 
 def normalise_dates(data):
     if isinstance(data, str):

@@ -1,8 +1,6 @@
 import decimal
 import json
-import os
 import types
-
 import mock
 import pytest
 from mock import MagicMock, ANY, patch
@@ -84,15 +82,15 @@ def test_it_truncates_received_messages_once_the_desired_amount_returned():
     mock_list = [MagicMock() for i in range(0, 10)]
     queue.receive_messages.return_value = mock_list
     result = read_queue(queue, 2)
-    assert 2 == len(result)
-    assert 1 == queue.receive_messages.call_count
+    assert len(result) == 2
+    assert queue.receive_messages.call_count == 1
 
 
 def test_it_handles_desired_number_of_msgs_greater_than_max_batch():
     queue = MagicMock()
     queue.receive_messages.side_effect = [list(range(0, 10)), list(range(0, 5))]
     read_queue(queue, 15)
-    assert 2 == queue.receive_messages.call_count
+    assert queue.receive_messages.call_count == 2
     queue.receive_messages.assert_any_call(MaxNumberOfMessages=10, AttributeNames=['All'])
     queue.receive_messages.assert_any_call(MaxNumberOfMessages=5, AttributeNames=['All'])
 
@@ -141,38 +139,38 @@ def test_it_provides_defaults(mock_table):
 def test_decimal_encoder():
     res_a = json.dumps({"k": decimal.Decimal(1.1)}, cls=DecimalEncoder)
     res_b = json.dumps({"k": decimal.Decimal(1.5)}, cls=DecimalEncoder)
-    assert "{\"k\": 1}" == res_a
-    assert "{\"k\": 2}" == res_b
+    assert res_a == "{\"k\": 1}"
+    assert res_b == "{\"k\": 2}"
 
 
 def test_it_converts_sfn_datetimes_to_epoch():
-    assert 1578327177 == convert_iso8601_to_epoch("2020-01-06T16:12:57.092Z")
-    assert 1578327177 == convert_iso8601_to_epoch("2020-01-06T16:12:57Z")
-    assert 1578327177 == convert_iso8601_to_epoch("2020-01-06T16:12:57+00:00")
-    assert 1578327177 == convert_iso8601_to_epoch("2020-01-06T16:12:57.092+00:00")
-    assert 1578327177 == convert_iso8601_to_epoch("2020-01-06 16:12:57.092Z")
-    assert 1578327177 == convert_iso8601_to_epoch("2020-01-06 16:12:57Z")
-    assert 1578327177 == convert_iso8601_to_epoch("2020-01-06 16:12:57+00:00")
-    assert 1578327177 == convert_iso8601_to_epoch("2020-01-06 16:12:57.092+00:00")
+    assert convert_iso8601_to_epoch("2020-01-06T16:12:57.092Z") == 1578327177
+    assert convert_iso8601_to_epoch("2020-01-06T16:12:57Z") == 1578327177
+    assert convert_iso8601_to_epoch("2020-01-06T16:12:57+00:00") == 1578327177
+    assert convert_iso8601_to_epoch("2020-01-06T16:12:57.092+00:00") == 1578327177
+    assert convert_iso8601_to_epoch("2020-01-06 16:12:57.092Z") == 1578327177
+    assert convert_iso8601_to_epoch("2020-01-06 16:12:57Z") == 1578327177
+    assert convert_iso8601_to_epoch("2020-01-06 16:12:57+00:00") == 1578327177
+    assert convert_iso8601_to_epoch("2020-01-06 16:12:57.092+00:00") == 1578327177
 
-    assert 1578323577 == convert_iso8601_to_epoch("2020-01-06T16:12:57.092+01:00")
-    assert 1578323577 == convert_iso8601_to_epoch("2020-01-06T16:12:57+01:00")
-    assert 1578323577 == convert_iso8601_to_epoch("2020-01-06 16:12:57.092+01:00")
-    assert 1578323577 == convert_iso8601_to_epoch("2020-01-06 16:12:57+01:00")
+    assert convert_iso8601_to_epoch("2020-01-06T16:12:57.092+01:00") == 1578323577
+    assert convert_iso8601_to_epoch("2020-01-06T16:12:57+01:00") == 1578323577
+    assert convert_iso8601_to_epoch("2020-01-06 16:12:57.092+01:00") == 1578323577
+    assert convert_iso8601_to_epoch("2020-01-06 16:12:57+01:00") == 1578323577
 
 def test_it_normalises_date_like_fields():
     assert {
-       "a": [{"a": 1578327177, "b": "string"}],
-       "b": [1578327177],
-       "c": {"a": 1578327177},
-       "d": 1578327177,
-       "e": "string",
-       "f": 2,
+        "a": [{"a": 1578327177, "b": "string"}],
+        "b": [1578327177],
+        "c": {"a": 1578327177},
+        "d": 1578327177,
+        "e": "string",
+        "f": 2,
     } == normalise_dates({
-       "a": [{"a": "2020-01-06T16:12:57.092Z", "b": "string"}],
-       "b": ["2020-01-06T16:12:57.092Z"],
-       "c": {"a": "2020-01-06T16:12:57.092Z"},
-       "d": "2020-01-06T16:12:57.092Z",
-       "e": "string",
-       "f": 2,
+        "a": [{"a": "2020-01-06T16:12:57.092Z", "b": "string"}],
+        "b": ["2020-01-06T16:12:57.092Z"],
+        "c": {"a": "2020-01-06T16:12:57.092Z"},
+        "d": "2020-01-06T16:12:57.092Z",
+        "e": "string",
+        "f": 2,
     })
