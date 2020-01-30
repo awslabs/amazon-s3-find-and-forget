@@ -1,8 +1,7 @@
 SHELL := /bin/bash
-VERSION := $(shell cat templates/template.yaml | shyaml get-value Mappings.Solution.Constants.Version)
 
 .PHONY : deploy deploy-containers pre-deploy setup test test-cov test-acceptance test-acceptance-cov test-no-state-machine test-no-state-machine-cov test-unit test-unit-cov
-
+	
 pre-deploy:
 ifndef TEMP_BUCKET
 	$(error TEMP_BUCKET is undefined)
@@ -28,6 +27,7 @@ deploy-cfn:
 	aws cloudformation deploy --template-file ./packaged.yaml --stack-name S3F2 --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND --parameter-overrides CreateCloudFrontDistribution=false EnableContainerInsights=true AdminEmail=$(ADMIN_EMAIL) AccessControlAllowOriginOverride=* PreBuiltArtefactsBucketOverride=$(TEMP_BUCKET)
 
 deploy-containers:
+	$(eval VERSION := $(shell cfn-flip templates/template.yaml | python -c 'import sys, json; print(json.load(sys.stdin)["Mappings"]["Solution"]["Constants"]["Version"])'))
 	zip -r backend.zip backend/lambda_layers backend/ecs_tasks/delete_files/ -x backend/ecs_tasks/delete_files/__pycache*
 	aws s3 cp backend.zip s3://$(TEMP_BUCKET)/amazon-s3-find-and-forget/$(VERSION)/backend.zip
 
@@ -41,6 +41,7 @@ deploy-containers-override:
 	docker push $(ACCOUNT_ID).dkr.ecr.$(REGION).amazonaws.com/$(ECR_REPOSITORY):latest
 
 deploy-frontend:
+	$(eval VERSION := $(shell cfn-flip templates/template.yaml | python -c 'import sys, json; print(json.load(sys.stdin)["Mappings"]["Solution"]["Constants"]["Version"])'))
 	cd frontend && npm run build
 	cd frontend/build && zip -r ../../frontend.zip . -x *settings.js
 	aws s3 cp frontend.zip s3://$(TEMP_BUCKET)/amazon-s3-find-and-forget/$(VERSION)/frontend.zip
