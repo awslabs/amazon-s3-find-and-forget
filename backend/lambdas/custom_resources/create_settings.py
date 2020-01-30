@@ -1,9 +1,8 @@
+import json
+import boto3
 from crhelper import CfnResource
 from decorators import with_logger
 
-import boto3
-import json
-import logging
 
 helper = CfnResource(json_logging=False, log_level='DEBUG',
                      boto_level='CRITICAL')

@@ -1,9 +1,7 @@
+import boto3
 from crhelper import CfnResource
 from decorators import with_logger
 
-import boto3
-import json
-import logging
 
 helper = CfnResource(json_logging=False, log_level='DEBUG',
                      boto_level='CRITICAL')
@@ -20,7 +18,7 @@ def create(event, context):
     destination_bucket = props.get("CodeBuildArtefactBucket")
     source_bucket = props.get("PreBuiltArtefactsBucket")
     source_artefact = "{}/amazon-s3-find-and-forget/{}/backend.zip".format(source_bucket, version)
-    
+
     s3_client.copy_object(
         Bucket=destination_bucket,
         CopySource=source_artefact,

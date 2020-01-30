@@ -138,10 +138,15 @@ Resources:
                   - codebuild:BatchGetBuilds
               - Resource: !Sub arn:aws:s3:::${CodeBuildArtefactBucket}
                 Effect: Allow
-                Action: s3:List*
+                Action:
+                  - s3:GetBucket*
+                  - s3:List*
               - Resource: !Sub arn:aws:s3:::${CodeBuildArtefactBucket}/*
                 Effect: Allow
-                Action: s3:Get*
+                Action:
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                  - s3:PutObject
 
   CodePipeline:
     Type: AWS::CodePipeline::Pipeline
@@ -222,6 +227,7 @@ Resources:
 
   CopyBackendArtefact:
     Type: Custom::Setup
+    DependsOn: CodePipeline
     Properties:
       ServiceToken: !GetAtt CopyBackendArtefactFunction.Arn
       ArtefactName: !Ref ArtefactName

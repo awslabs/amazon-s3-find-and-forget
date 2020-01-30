@@ -1,10 +1,8 @@
+import boto3
 from crhelper import CfnResource
 from boto_utils import convert_iso8601_to_epoch
 from decorators import with_logger
 
-import boto3
-import logging
-import os
 
 helper = CfnResource(json_logging=False, log_level='DEBUG',
                      boto_level='CRITICAL')
@@ -30,7 +28,7 @@ def poll(event, context):
     repository = props.get("ECRRepository")
     obj = s3_client.Object(bucket, key)
     last_modified = convert_iso8601_to_epoch(str(obj.last_modified))
-    image_pushed_at=get_latest_image_push(repository)
+    image_pushed_at = get_latest_image_push(repository)
     return image_pushed_at and last_modified < image_pushed_at
 
 
@@ -48,5 +46,5 @@ def get_latest_image_push(repository):
         )
 
         return convert_iso8601_to_epoch(str(images['imageDetails'][0]['imagePushedAt']))
-    except:
+    except ecr_client.exceptions.ImageNotFoundException:
         return None
