@@ -1138,6 +1138,29 @@ Resources:
       - DynamoDBCrudPolicy:
           TableName: !Ref JobTableName
 
+  HandleStateMachineFailure:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handle_failure.handler
+      CodeUri: ../backend/lambdas/tasks/
+      Events:
+        CWE:
+          Type: CloudWatchEvent
+          Properties:
+            Pattern:
+              source:
+                - aws.states
+              detail:
+                stateMachineArn:
+                  - !Ref StateMachine
+                status:
+                  - ABORTED
+                  - FAILED
+                  - TIMED_OUT
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref JobTableName
+
 Outputs:
   AthenaExecutionRole:
     Value: !Ref ExecuteQueryRole
