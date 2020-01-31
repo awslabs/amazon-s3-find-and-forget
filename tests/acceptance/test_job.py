@@ -4,7 +4,7 @@ import uuid
 import mock
 import pytest
 
-pytestmark = [pytest.mark.acceptance, pytest.mark.api, pytest.mark.jobs]
+pytestmark = [pytest.mark.acceptance, pytest.mark.api, pytest.mark.jobs, pytest.mark.usefixtures("empty_jobs")]
 
 
 def test_it_gets_jobs(api_client, jobs_endpoint, job_factory, stack, execution_exists_waiter, sf_client):

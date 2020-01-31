@@ -313,6 +313,11 @@ def job_table(ddb_resource, stack):
     return ddb_resource.Table(stack["JobTable"])
 
 
+@pytest.fixture(scope="module")
+def empty_jobs(job_table):
+    empty_table(job_table, "Id", "Sk")
+
+
 @pytest.fixture
 def job_factory(job_table, sf_client, stack):
     items = []

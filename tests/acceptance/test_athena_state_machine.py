@@ -5,7 +5,7 @@ from botocore.exceptions import WaiterError
 
 logger = logging.getLogger()
 
-pytestmark = [pytest.mark.acceptance, pytest.mark.athena, pytest.mark.usefixtures("empty_lake")]
+pytestmark = [pytest.mark.acceptance, pytest.mark.athena, pytest.mark.usefixtures("empty_lake", "empty_jobs")]
 
 
 def test_it_queries_unpartitioned_data(sf_client, dummy_lake, execution_waiter, stack, glue_data_mapper_factory,

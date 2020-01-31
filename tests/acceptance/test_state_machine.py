@@ -9,7 +9,7 @@ from . import query_parquet_file
 logger = logging.getLogger()
 
 pytestmark = [pytest.mark.acceptance, pytest.mark.state_machine, pytest.mark.usefixtures("empty_queue"),
-              pytest.mark.usefixtures("empty_lake")]
+              pytest.mark.usefixtures("empty_lake", "empty_jobs")]
 
 
 @pytest.mark.skip

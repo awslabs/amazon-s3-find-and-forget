@@ -1,5 +1,7 @@
 import math
 import sys
+from functools import lru_cache
+from urllib.parse import urlencode, quote_plus
 from uuid import uuid4
 
 import boto3
@@ -24,10 +26,13 @@ handler = logging.StreamHandler(stream=sys.stdout)
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
-cw_logs = boto3.client("logs")
 sqs = boto3.resource('sqs', endpoint_url="https://sqs.{}.amazonaws.com".format(os.getenv("AWS_DEFAULT_REGION")))
 queue = sqs.Queue(os.getenv("DELETE_OBJECTS_QUEUE"))
 s3 = s3fs.S3FileSystem()
+
+
+def _remove_none(d: dict):
+    return {k: v for k, v in d.items() if v is not None and v is not ''}
 
 
 def load_parquet(f, stats):
@@ -57,16 +62,118 @@ def delete_and_write(parquet_file, row_group, columns, writer, stats):
     logger.info("wrote table")
 
 
-def save(s3, new_parquet, destination):
-    logger.info("Saving to S3")
-    s3.put(new_parquet, destination)
-    logger.info("File {} complete".format(destination))
+def save(client, new_parquet, bucket, key):
+    # Get Object Settings
+    request_payer_args, _ = get_requester_payment(client, bucket)
+    object_info_args, _ = get_object_info(client, bucket, key)
+    tagging_args, _ = get_object_tags(client, bucket, key)
+    acl_args, acl_resp = get_object_acl(client, bucket, key)
+    extra_args = {**request_payer_args, **object_info_args, **tagging_args, **acl_args}
+    logger.info("Object settings: {}".format(extra_args))
+    # Write Object Back to S3
+    logger.info("Saving updated object to S3")
+    client.upload_file(new_parquet, bucket, key, ExtraArgs=extra_args)
+    logger.info("Object uploaded to S3")
+    # GrantWrite cannot be set whilst uploading therefore ACLs need to be restored separately
+    write_grantees = ",".join(get_grantees(acl_resp, "WRITE"))
+    if write_grantees:
+        logger.info("WRITE grant found. Restoring additional grantees for object {}: {}".format(key, write_grantees))
+        client.put_object_acl(Bucket=bucket, Key=key, **{
+            **request_payer_args,
+            **acl_args,
+            'GrantWrite': write_grantees,
+        })
+    logger.info("Processing of file s3://{}/{} complete".format(bucket, key))
+
+
+@lru_cache()
+def get_requester_payment(client, bucket):
+    """
+    Generates a dict containing the request payer args supported when calling S3.
+    GetBucketRequestPayment call will be cached
+    :returns tuple containing the info formatted for ExtraArgs and the raw response
+    """
+    request_payer = client.get_bucket_request_payment(Bucket=bucket)
+    return (_remove_none({
+        'RequestPayer': "requester" if request_payer["Payer"] == "Requester" else None,
+    }), request_payer)
+
+
+@lru_cache()
+def get_object_info(client, bucket, key):
+    """
+    Generates a dict containing the non-ACL/Tagging args supported when uploading to S3.
+    HeadObject call will be cached
+    :returns tuple containing the info formatted for ExtraArgs and the raw response
+    """
+    object_info = client.head_object(Bucket=bucket, Key=key, **get_requester_payment(client, bucket)[0])
+    return (_remove_none({
+        'CacheControl': object_info.get("CacheControl"),
+        'ContentDisposition': object_info.get("ContentDisposition"),
+        'ContentEncoding': object_info.get("ContentEncoding"),
+        'ContentLanguage': object_info.get("ContentLanguage"),
+        'ContentType': object_info.get("ContentType"),
+        'Expires': object_info.get("Expires"),
+        'Metadata': object_info.get("Metadata"),
+        'ServerSideEncryption': object_info.get("ServerSideEncryption"),
+        'StorageClass': object_info.get("StorageClass"),
+        'SSECustomerAlgorithm': object_info.get("SSECustomerAlgorithm"),
+        'SSEKMSKeyId': object_info.get("SSEKMSKeyId"),
+        'WebsiteRedirectLocation': object_info.get("WebsiteRedirectLocation")
+    }), object_info)
+
+
+@lru_cache()
+def get_object_tags(client, bucket, key):
+    """
+    Generates a dict containing the Tagging args supported when uploading to S3
+    GetObjectTagging call will be cached
+    :returns tuple containing tagging formatted for ExtraArgs and the raw response
+    """
+    tagging = client.get_object_tagging(Bucket=bucket, Key=key, **get_requester_payment(client, bucket)[0])
+    return (_remove_none({
+        "Tagging": urlencode({tag["Key"]: tag["Value"] for tag in tagging["TagSet"]}, quote_via=quote_plus)
+    }), tagging)
+
+
+@lru_cache()
+def get_object_acl(client, bucket, key):
+    """
+    Generates a dict containing the ACL args supported when uploading to S3
+    GetObjectAcl call will be cached
+    :returns tuple containing ACL formatted for ExtraArgs and the raw response
+    """
+    acl = client.get_object_acl(Bucket=bucket, Key=key, **get_requester_payment(client, bucket)[0])
+    existing_owner = {"id={}".format(acl["Owner"]["ID"])}
+    return (_remove_none({
+        'GrantFullControl': ",".join(existing_owner | get_grantees(acl, "FULL_CONTROL")),
+        'GrantRead': ",".join(get_grantees(acl, "READ")),
+        'GrantReadACP': ",".join(get_grantees(acl, "READ_ACP")),
+        'GrantWriteACP': ",".join(get_grantees(acl, "WRITE_ACP")),
+    }), acl)
+
+
+def get_grantees(acl, grant_type):
+    prop_map = {
+        'CanonicalUser': ('ID', "id"),
+        'AmazonCustomerByEmail': ('EmailAddress', "emailAddress"),
+        'Group': ('URI', "uri")
+    }
+    filtered = [grantee["Grantee"] for grantee in acl.get("Grants") if grantee["Permission"] == grant_type]
+    grantees = set()
+    for grantee in filtered:
+        identifier_type = grantee["Type"]
+        identifier_prop = prop_map[identifier_type]
+        grantees.add("{}={}".format(identifier_prop[1], grantee[identifier_prop[0]]))
+
+    return grantees
 
 
 def cleanup(new_parquet):
     os.remove(new_parquet)
 
 
+@lru_cache()
 def get_container_id():
     metadata_file = os.getenv("ECS_CONTAINER_METADATA_FILE")
     if metadata_file and os.path.isfile(metadata_file):
@@ -87,7 +194,9 @@ def emit_deletion_event(message_body, stats):
 
 
 def emit_failed_deletion_event(message_body, err_message):
-    job_id = message_body["JobId"]
+    job_id = message_body.get("JobId")
+    if not job_id:
+        raise ValueError("Unable to emit failure event without Job ID")
     event_data = {
         "Error": err_message,
         'Message': message_body,
@@ -108,24 +217,27 @@ def get_max_file_size_bytes():
     return max_gb * math.pow(1024, 3)
 
 
-def check_file_size(s3, object_path):
-    object_size = s3.size(object_path)
+def check_object_size(client, bucket, key):
+    _, resp = get_object_info(client, bucket, key)
+    object_size = resp["ContentLength"]
     if get_max_file_size_bytes() < object_size:
         raise IOError("Insufficient disk space available for object {}. Size: {} GB".format(
-            object_path, round(object_size / math.pow(1024, 3), 2)))
+            key, round(object_size / math.pow(1024, 3), 2)))
 
 
 def execute(message_body, receipt_handle):
+    logger.info("Message received: {0}".format(message_body))
+    client = boto3.client("s3")
     temp_dest = "/tmp/new.parquet"
     msg = queue.Message(receipt_handle)
     try:
         validate_message(message_body)
         stats = {"ProcessedRows": 0, "DeletedRows": 0}
-        logger.info("Message received: {0}".format(message_body))
         body = json.loads(message_body)
-        logger.info("Opening the file")
         object_path = body["Object"]
-        check_file_size(s3, object_path)
+        logger.info("Downloading and opening the object {}".format(object_path))
+        bucket, key = object_path.replace("s3://", "").split("/", 1)
+        check_object_size(client, bucket, key)
         with s3.open(object_path, "rb") as f:
             parquet_file = load_parquet(f, stats)
             schema = parquet_file.metadata.schema.to_arrow_schema().remove_metadata()
@@ -134,7 +246,7 @@ def execute(message_body, receipt_handle):
                     cols = body["Columns"]
                     delete_and_write(parquet_file, i, cols, writer, stats)
         if stats["DeletedRows"] > 0:
-            save(s3, temp_dest, object_path)
+            save(client, temp_dest, bucket, key)
         else:
             logger.warning("The object {} was processed successfully but no rows required deletion".format(object_path))
         msg.delete()
@@ -145,14 +257,26 @@ def execute(message_body, receipt_handle):
         logger.error(err_message)
         emit_failed_deletion_event(json.loads(message_body), err_message)
         msg.change_visibility(VisibilityTimeout=0)
-    except (ValueError, TypeError) as e:
-        err_message = "Invalid message received: {}".format(str(e))
-        logger.error(err_message)
-        msg.change_visibility(VisibilityTimeout=0)
-    except (IOError, ClientError) as e:
+    except IOError as e:
         err_message = "Unable to retrieve object: {}".format(str(e))
         logger.error(err_message)
         emit_failed_deletion_event(json.loads(message_body), err_message)
+        msg.change_visibility(VisibilityTimeout=0)
+    except ClientError as e:
+        err_message = "ClientError: {}".format(str(e))
+        if e.operation_name == "PutObjectAcl":
+            err_message += ". Redacted object uploaded successfully but unable to restore WRITE ACL"
+        logger.error(err_message)
+        emit_failed_deletion_event(json.loads(message_body), err_message)
+        msg.change_visibility(VisibilityTimeout=0)
+    except Exception as e:
+        err_message = "Unprocessable message: {}".format(str(e))
+        try:
+            json_body = json.loads(message_body)
+            emit_failed_deletion_event(json_body, err_message)
+        except Exception as e:
+            logger.warning("Failed to emit event for message {}: {}".format(message_body, str(e)))
+        logger.error(err_message)
         msg.change_visibility(VisibilityTimeout=0)
     finally:
         if os.path.exists(temp_dest):
