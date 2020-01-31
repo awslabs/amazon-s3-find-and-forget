@@ -1141,7 +1141,7 @@ Resources:
   EventRule:
     Type: AWS::Events::Rule
     Properties:
-      Description: "EventRule"
+      Description: "Event rule for emitting unknown Step Functions failures"
       EventPattern:
         source:
           - "aws.states"
@@ -1161,7 +1161,7 @@ Resources:
             InputPathsMap:
               job_id: "$.detail.name"
               status: "$.detail.status"
-            InputTemplate: '{"JobId": <job_id>, "EventName": "Exception", "EventData": {"Error": <status>, "Cause": "State Machine exited unexpectedly"}, "EmitterId": "CloudWatchEvents"}'
+            InputTemplate: '{"JobId": <job_id>, "EventName": "Exception", "EventData": {"Error": <status>, "Cause": "State Machine execution exited unexpectedly"}, "EmitterId": "CloudWatchEvents"}'
 
   PermissionForEventsToInvokeLambda:
     Type: AWS::Lambda::Permission
