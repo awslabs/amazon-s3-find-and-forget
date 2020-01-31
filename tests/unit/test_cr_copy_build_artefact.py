@@ -1,15 +1,12 @@
-from types import SimpleNamespace
-
-import json
 import pytest
-from mock import call, patch, MagicMock
+from mock import patch, MagicMock
 
-from backend.lambdas.custom_resources.copy_backend_artefact import create, delete, handler
+from backend.lambdas.custom_resources.copy_build_artefact import create, delete, handler
 
 pytestmark = [pytest.mark.unit, pytest.mark.task]
 
 
-@patch("backend.lambdas.custom_resources.copy_backend_artefact.s3_client")
+@patch("backend.lambdas.custom_resources.copy_build_artefact.s3_client")
 def test_it_copies_file(mock_client):
     event = {
         'ResourceProperties': {
@@ -24,13 +21,13 @@ def test_it_copies_file(mock_client):
 
     mock_client.copy_object.assert_called_with(
         Bucket="codebuild-bucket",
-        CopySource="source-bucket-eu-west-1/amazon-s3-find-and-forget/1.0/backend.zip",
+        CopySource="source-bucket-eu-west-1/amazon-s3-find-and-forget/1.0/build.zip",
         Key="build/s3f2.zip")
 
-    assert "arn:aws:s3:::codebuild-bucket/build/s3f2.zip" == resp
+    assert resp == "arn:aws:s3:::codebuild-bucket/build/s3f2.zip"
 
 
-@patch("backend.lambdas.custom_resources.copy_backend_artefact.s3_client")
+@patch("backend.lambdas.custom_resources.copy_build_artefact.s3_client")
 def test_it_does_nothing_on_delete(mock_client):
     event = {
         'ResourceProperties': {
@@ -45,7 +42,7 @@ def test_it_does_nothing_on_delete(mock_client):
     assert not resp
 
 
-@patch("backend.lambdas.custom_resources.copy_backend_artefact.helper")
+@patch("backend.lambdas.custom_resources.copy_build_artefact.helper")
 def test_it_delegates_to_cr_helper(cr_helper):
     handler(1, 2)
     cr_helper.assert_called_with(1, 2)

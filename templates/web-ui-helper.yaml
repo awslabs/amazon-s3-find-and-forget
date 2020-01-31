@@ -9,22 +9,8 @@ Globals:
     Layers: !Ref CommonLayers
 
 Parameters:
-  ApiUrl:
-    Type: String
-  AthenaExecutionRole:
-    Type: String
-  CognitoIdentityPoolId:
-    Type: String
-  CognitoUserPoolId:
-    Type: String
-  CognitoUserPoolClientId:
-    Type: String
-  CreateCloudFrontDistribution:
-    Type: String
   CommonLayers:
     Type: CommaDelimitedList
-  DeleteTaskRole:
-    Type: String
   LogLevel:
     Type: String
     Default: INFO
@@ -36,29 +22,10 @@ Parameters:
     - INFO
     - DEBUG
     - NOTSET
-  PreBuiltArtefactsBucket:
-    Type: String
-  Version:
-    Type: String
   WebUIBucket:
     Type: String
 
 Resources:
-  CreateWebUIConfig:
-    Type: Custom::Setup
-    Properties:
-      ServiceToken: !GetAtt CreateSettingsFile.Arn
-      ApiUrl: !Ref ApiUrl
-      AthenaExecutionRole: !Ref AthenaExecutionRole
-      DeleteTaskRole: !Ref DeleteTaskRole
-      LogLevel: !Ref LogLevel
-      CognitoIdentityPoolId: !Ref CognitoIdentityPoolId
-      CognitoUserPoolId: !Ref CognitoUserPoolId
-      CognitoUserPoolClientId: !Ref CognitoUserPoolClientId
-      CreateCloudFrontDistribution: !Ref CreateCloudFrontDistribution
-      Region: !Ref AWS::Region
-      Version: !Ref Version
-      WebUIBucket: !Ref WebUIBucket
 
   CleanupWebUI:
     Type: Custom::Setup
@@ -66,21 +33,6 @@ Resources:
       ServiceToken: !GetAtt RemoveAllObjects.Arn
       LogLevel: !Ref LogLevel
       Bucket: !Ref WebUIBucket
-
-  CreateSettingsFile:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: create_settings.handler
-      CodeUri: ../backend/lambdas/custom_resources/
-      Description: Custom Lambda resource for the Amazon S3 Find and Forget Cloudformation Stack
-      Policies:
-        - Statement:
-          - Effect: Allow
-            Action:
-              - s3:PutObject
-              - s3:PutObjectAcl
-            Resource:
-              - !Sub arn:aws:s3:::${WebUIBucket}/*
 
   RemoveAllObjects:
     Type: AWS::Serverless::Function

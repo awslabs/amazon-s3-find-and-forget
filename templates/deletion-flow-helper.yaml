@@ -9,11 +9,25 @@ Globals:
     Layers: !Ref CommonLayers
 
 Parameters:
+  ApiUrl:
+    Type: String
   ArtefactName:
     Type: String
     Default: build/s3f2.zip
+  AthenaExecutionRole:
+    Type: String
+  CognitoIdentityPoolId:
+    Type: String
+  CognitoUserPoolClientId:
+    Type: String
+  CognitoUserPoolId:
+    Type: String
   CommonLayers:
     Type: CommaDelimitedList
+  CreateCloudFrontDistribution:
+    Type: String
+  DeleteTaskRole:
+    Type: String
   ECRRepository:
     Type: String
   LogLevel:
@@ -29,7 +43,11 @@ Parameters:
     - NOTSET
   PreBuiltArtefactsBucket:
     Type: String
+  ResourcePrefix:
+    Type: String
   Version:
+    Type: String
+  WebUIBucket:
     Type: String
 
 Resources:
@@ -40,7 +58,7 @@ Resources:
       VersioningConfiguration:
         Status: Enabled
 
-  CodeBuildServiceRole:
+  CodeBuildBackendServiceRole:
     Type: AWS::IAM::Role
     Properties:
       Path: /
@@ -75,7 +93,34 @@ Resources:
                   - ecr:UploadLayerPart
                   - ecr:CompleteLayerUpload
 
-  CodeBuildProject:
+  CodeBuildFrontendServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Statement:
+              - Resource: "*"
+                Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+              - Resource: !Sub arn:aws:s3:::${CodeBuildArtefactBucket}/*
+                Effect: Allow
+                Action: s3:*
+              - Resource: !Sub arn:aws:s3:::${WebUIBucket}/*
+                Effect: Allow
+                Action: s3:PutObject*
+
+  CodeBuildBackend:
     Type: AWS::CodeBuild::Project
     Properties:
       Artifacts:
@@ -104,8 +149,57 @@ Resources:
             Value: !Ref AWS::Region
           - Name: REPOSITORY_URI
             Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECRRepository}
-      Name: !Ref AWS::StackName
-      ServiceRole: !Ref CodeBuildServiceRole
+      Name: !Sub ${ResourcePrefix}BackendBuild
+      ServiceRole: !Ref CodeBuildBackendServiceRole
+
+  CodeBuildFrontend:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            pre_build:
+              commands:
+                - BUCKET="${WEB_UI_BUCKET}"
+                - ACL="private"
+                - |
+                  if [ "${PRIVATE_ACL}" = "false" ]; then
+                    ACL="public-read"
+                  fi
+                - echo "${WEB_SETTINGS}" > frontend/build/settings.js
+            build:
+              commands:
+                - cd frontend/build
+                - aws s3 cp . s3://$BUCKET --acl $ACL --recursive
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/docker:18.09.0
+        Type: LINUX_CONTAINER
+        EnvironmentVariables:
+          - Name: AWS_DEFAULT_REGION
+            Value: !Ref AWS::Region
+          - Name: PRIVATE_ACL
+            Value: !Ref CreateCloudFrontDistribution
+          - Name: WEB_SETTINGS
+            Value:  !Sub |
+              window.s3f2Settings = {
+                apiUrl: "${ApiUrl}",
+                athenaExecutionRole: "${AthenaExecutionRole}",
+                cognitoIdentityPool: "${CognitoIdentityPoolId}",
+                cognitoUserPoolId: "${CognitoUserPoolId}",
+                cognitoUserPoolClientId: "${CognitoUserPoolClientId}",
+                deleteTaskRole: "${DeleteTaskRole}",
+                region: "${AWS::Region}",
+                version: "${Version}"
+              };
+          - Name: WEB_UI_BUCKET
+            Value: !Ref WebUIBucket
+      Name: !Sub ${ResourcePrefix}FrontendBuild
+      ServiceRole: !Ref CodeBuildFrontendServiceRole
 
   CodePipelineServiceRole:
     Type: AWS::IAM::Role
@@ -121,8 +215,8 @@ Resources:
         - PolicyName: root
           PolicyDocument:
             Statement:
-              - Resource: "*"
-                Effect: Allow
+              - Effect: Allow
+                Resource: "*"
                 Action:
                   - ecs:DescribeServices
                   - ecs:DescribeTaskDefinition
@@ -130,18 +224,20 @@ Resources:
                   - ecs:ListTasks
                   - ecs:RegisterTaskDefinition
                   - ecs:UpdateService
-              - Resource: !Sub arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${CodeBuildProject}
-                Effect: Allow
+              - Effect: Allow
+                Resource:
+                  - !Sub arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${CodeBuildBackend}
+                  - !Sub arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${CodeBuildFrontend}
                 Action:
                   - codebuild:BatchGetBuilds
                   - codebuild:StartBuild
-              - Resource: !Sub arn:aws:s3:::${CodeBuildArtefactBucket}
-                Effect: Allow
+              - Effect: Allow
+                Resource: !Sub arn:aws:s3:::${CodeBuildArtefactBucket}
                 Action:
                   - s3:GetBucket*
                   - s3:List*
-              - Resource: !Sub arn:aws:s3:::${CodeBuildArtefactBucket}/*
-                Effect: Allow
+              - Effect: Allow
+                Resource: !Sub arn:aws:s3:::${CodeBuildArtefactBucket}/*
                 Action:
                   - s3:GetObject
                   - s3:GetObjectVersion
@@ -169,7 +265,7 @@ Resources:
               OutputArtifacts:
                 - Name: S3F2
               RunOrder: 1
-        - Name: Build
+        - Name: Frontend
           Actions:
             - Name: Build
               ActionTypeId:
@@ -178,17 +274,32 @@ Resources:
                 Version: "1"
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Ref CodeBuildProject
+                ProjectName: !Ref CodeBuildFrontend
               InputArtifacts:
                 - Name: S3F2
               OutputArtifacts:
-                - Name: BuildOutput
+                - Name: BuildFrontendOutput
               RunOrder: 1
+        - Name: Backend
+          Actions:
+            - Name: Build
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: "1"
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref CodeBuildBackend
+              InputArtifacts:
+                - Name: S3F2
+              OutputArtifacts:
+                - Name: BuildBackendOutput
+              RunOrder: 2
 
-  CopyBackendArtefactFunction:
+  CopyBuildArtefactFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: copy_backend_artefact.handler
+      Handler: copy_build_artefact.handler
       CodeUri: ../backend/lambdas/custom_resources/
       Description: Custom Lambda resource for the Amazon S3 Find and Forget Cloudformation Stack
       Policies:
@@ -224,11 +335,11 @@ Resources:
             Action: ecr:DescribeImages
             Resource: !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ECRRepository}
 
-  CopyBackendArtefact:
+  CopyBuildArtefact:
     Type: Custom::Setup
     DependsOn: CodePipeline
     Properties:
-      ServiceToken: !GetAtt CopyBackendArtefactFunction.Arn
+      ServiceToken: !GetAtt CopyBuildArtefactFunction.Arn
       ArtefactName: !Ref ArtefactName
       CodeBuildArtefactBucket: !Ref CodeBuildArtefactBucket
       LogLevel: !Ref LogLevel
@@ -238,7 +349,7 @@ Resources:
 
   WaitForContainerBuild:
     Type: Custom::Setup
-    DependsOn: CopyBackendArtefact
+    DependsOn: CopyBuildArtefact
     Properties:
       ServiceToken: !GetAtt WaitForContainerBuildFunction.Arn
       ArtefactName: !Ref ArtefactName

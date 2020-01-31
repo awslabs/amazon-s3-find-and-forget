@@ -129,20 +129,29 @@ Resources:
         ResourcePrefix: !Ref ResourcePrefix
         VpcSecurityGroup: !GetAtt VpcStack.Outputs.SecurityGroup
         VpcSubnets: !GetAtt VpcStack.Outputs.Subnets
-  DelStackHelper:
+  DeployStack:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: ./deletion-flow-helper.yaml
       Parameters:
+        ApiUrl: !GetAtt APIStack.Outputs.ApiUrl
+        AthenaExecutionRole: !GetAtt StateMachineStack.Outputs.AthenaExecutionRole
+        CognitoIdentityPoolId: !GetAtt AuthStack.Outputs.CognitoIdentityPoolId
+        CognitoUserPoolId: !GetAtt AuthStack.Outputs.CognitoUserPoolId
+        CognitoUserPoolClientId: !GetAtt AuthStack.Outputs.CognitoUserPoolClientId
         CommonLayers: !Join
           - ","
           - - !GetAtt LayersStack.Outputs.AWSSDKLayer
             - !GetAtt LayersStack.Outputs.BotoUtils
             - !GetAtt LayersStack.Outputs.CustomResourceHelper
             - !GetAtt LayersStack.Outputs.Decorators
+        CreateCloudFrontDistribution: !Ref CreateCloudFrontDistribution
+        DeleteTaskRole: !GetAtt DelStack.Outputs.DeleteTaskRole
         ECRRepository: !GetAtt DelStack.Outputs.ECRRepository
         PreBuiltArtefactsBucket: !If [DefaultPreBuiltArtefactsBucket, !Sub "solution-builders-${AWS::Region}", !Ref PreBuiltArtefactsBucketOverride]
+        ResourcePrefix: !Ref ResourcePrefix
         Version: !FindInMap [Solution, Constants, Version]
+        WebUIBucket: !GetAtt WebUIStack.Outputs.WebUIBucket
   LayersStack:
     Type: AWS::CloudFormation::Stack
     Properties: 
@@ -188,20 +197,11 @@ Resources:
     Properties:
       TemplateURL: ./web-ui-helper.yaml
       Parameters:
-        ApiUrl: !GetAtt APIStack.Outputs.ApiUrl
-        AthenaExecutionRole: !GetAtt StateMachineStack.Outputs.AthenaExecutionRole
-        CognitoIdentityPoolId: !GetAtt AuthStack.Outputs.CognitoIdentityPoolId
-        CognitoUserPoolId: !GetAtt AuthStack.Outputs.CognitoUserPoolId
-        CognitoUserPoolClientId: !GetAtt AuthStack.Outputs.CognitoUserPoolClientId
         CommonLayers: !Join
           - ","
           - - !GetAtt LayersStack.Outputs.AWSSDKLayer
             - !GetAtt LayersStack.Outputs.CustomResourceHelper
             - !GetAtt LayersStack.Outputs.Decorators
-        CreateCloudFrontDistribution: !Ref CreateCloudFrontDistribution
-        DeleteTaskRole: !GetAtt DelStack.Outputs.DeleteTaskRole
-        PreBuiltArtefactsBucket: !If [DefaultPreBuiltArtefactsBucket, !Sub "solution-builders-${AWS::Region}", !Ref PreBuiltArtefactsBucketOverride]
-        Version: !FindInMap [Solution, Constants, Version]
         WebUIBucket: !GetAtt WebUIStack.Outputs.WebUIBucket
 
 Outputs:

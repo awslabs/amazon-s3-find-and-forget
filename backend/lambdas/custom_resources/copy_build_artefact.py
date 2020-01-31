@@ -17,7 +17,7 @@ def create(event, context):
     destination_artefact = props.get("ArtefactName")
     destination_bucket = props.get("CodeBuildArtefactBucket")
     source_bucket = props.get("PreBuiltArtefactsBucket")
-    source_artefact = "{}/amazon-s3-find-and-forget/{}/backend.zip".format(source_bucket, version)
+    source_artefact = "{}/amazon-s3-find-and-forget/{}/build.zip".format(source_bucket, version)
 
     s3_client.copy_object(
         Bucket=destination_bucket,

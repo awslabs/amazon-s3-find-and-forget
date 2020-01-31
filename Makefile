@@ -15,10 +15,12 @@ ifndef ROLE_NAME
 	$(error ROLE_NAME is undefined)
 endif
 
+build-frontend:
+	cd frontend && npm run build
+
 deploy:
 	make pre-deploy
-	make deploy-containers
-	make deploy-frontend
+	make deploy-artefacts
 	make deploy-cfn
 	make setup-frontend-local-dev
 
@@ -26,10 +28,11 @@ deploy-cfn:
 	aws cloudformation package --template-file templates/template.yaml --s3-bucket $(TEMP_BUCKET) --output-template-file packaged.yaml
 	aws cloudformation deploy --template-file ./packaged.yaml --stack-name S3F2 --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND --parameter-overrides CreateCloudFrontDistribution=false EnableContainerInsights=true AdminEmail=$(ADMIN_EMAIL) AccessControlAllowOriginOverride=* PreBuiltArtefactsBucketOverride=$(TEMP_BUCKET)
 
-deploy-containers:
+deploy-artefacts:
 	$(eval VERSION := $(shell cfn-flip templates/template.yaml | python -c 'import sys, json; print(json.load(sys.stdin)["Mappings"]["Solution"]["Constants"]["Version"])'))
-	zip -r backend.zip backend/lambda_layers backend/ecs_tasks/delete_files/ -x backend/ecs_tasks/delete_files/__pycache*
-	aws s3 cp backend.zip s3://$(TEMP_BUCKET)/amazon-s3-find-and-forget/$(VERSION)/backend.zip
+	make build-frontend
+	zip -r build.zip backend/lambda_layers backend/ecs_tasks/delete_files/ frontend/build -x backend/ecs_tasks/delete_files/__pycache* -x *settings.js
+	aws s3 cp build.zip s3://$(TEMP_BUCKET)/amazon-s3-find-and-forget/$(VERSION)/build.zip
 
 deploy-containers-override:
 	$(eval ACCOUNT_ID := $(shell aws sts get-caller-identity --query Account --output text))
@@ -40,15 +43,9 @@ deploy-containers-override:
 	docker tag $(ECR_REPOSITORY):latest $(ACCOUNT_ID).dkr.ecr.$(REGION).amazonaws.com/$(ECR_REPOSITORY):latest
 	docker push $(ACCOUNT_ID).dkr.ecr.$(REGION).amazonaws.com/$(ECR_REPOSITORY):latest
 
-deploy-frontend:
-	$(eval VERSION := $(shell cfn-flip templates/template.yaml | python -c 'import sys, json; print(json.load(sys.stdin)["Mappings"]["Solution"]["Constants"]["Version"])'))
-	cd frontend && npm run build
-	cd frontend/build && zip -r ../../frontend.zip . -x *settings.js
-	aws s3 cp frontend.zip s3://$(TEMP_BUCKET)/amazon-s3-find-and-forget/$(VERSION)/frontend.zip
-
 deploy-frontend-override:
 	$(eval WEBUI_BUCKET := $(shell aws cloudformation describe-stacks --stack-name S3F2 --query 'Stacks[0].Outputs[?OutputKey==`WebUIBucket`].OutputValue' --output text))
-	cd frontend && npm run build
+	make build-frontend
 	cd frontend/build && aws s3 cp --recursive . s3://$(WEBUI_BUCKET) --acl public-read --exclude *settings.js
 
 run-local-container:
