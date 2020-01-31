@@ -1138,28 +1138,38 @@ Resources:
       - DynamoDBCrudPolicy:
           TableName: !Ref JobTableName
 
-  HandleStateMachineFailure:
-    Type: AWS::Serverless::Function
+  EventRule:
+    Type: AWS::Events::Rule
     Properties:
-      Handler: handle_failure.handler
-      CodeUri: ../backend/lambdas/tasks/
-      Events:
-        CWE:
-          Type: CloudWatchEvent
-          Properties:
-            Pattern:
-              source:
-                - aws.states
-              detail:
-                stateMachineArn:
-                  - !Ref StateMachine
-                status:
-                  - ABORTED
-                  - FAILED
-                  - TIMED_OUT
-      Policies:
-      - DynamoDBCrudPolicy:
-          TableName: !Ref JobTableName
+      Description: "EventRule"
+      EventPattern:
+        source:
+          - "aws.states"
+        detail:
+          stateMachineArn:
+            - !Sub arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${StateMachinePrefix}-StateMachine
+          status:
+            - "ABORTED"
+            - "TIMED_OUT"
+            - "FAILED"
+      State: "ENABLED"
+      Targets:
+        -
+          Arn: !GetAtt EmitEvent.Arn
+          Id: "TargetEmitEvent"
+          InputTransformer:
+            InputPathsMap:
+              job_id: "$.detail.name"
+              status: "$.detail.status"
+            InputTemplate: '{"JobId": <job_id>, "EventName": "Exception", "EventData": {"Error": <status>, "Cause": "State Machine exited unexpectedly"}, "EmitterId": "CloudWatchEvents"}'
+
+  PermissionForEventsToInvokeLambda:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref EmitEvent
+      Action: "lambda:InvokeFunction"
+      Principal: "events.amazonaws.com"
+      SourceArn: !GetAtt EventRule.Arn
 
 Outputs:
   AthenaExecutionRole:
