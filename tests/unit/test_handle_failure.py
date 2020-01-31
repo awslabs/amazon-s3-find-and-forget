@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 from mock import patch
 import pytest
-from backend.lambdas.tasks.emit_event import handler
+from backend.lambdas.tasks.handle_failure import handler
 
 
 pytestmark = [pytest.mark.unit, pytest.mark.task]
