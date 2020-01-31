@@ -130,12 +130,11 @@ Resources:
                   - ecs:ListTasks
                   - ecs:RegisterTaskDefinition
                   - ecs:UpdateService
-                  - iam:PassRole
               - Resource: !Sub arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${CodeBuildProject}
                 Effect: Allow
                 Action:
-                  - codebuild:StartBuild
                   - codebuild:BatchGetBuilds
+                  - codebuild:StartBuild
               - Resource: !Sub arn:aws:s3:::${CodeBuildArtefactBucket}
                 Effect: Allow
                 Action:
