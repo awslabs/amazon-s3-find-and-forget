@@ -132,7 +132,7 @@ Resources:
   DeployStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: ./deletion-flow-helper.yaml
+      TemplateURL: ./deployment_helper.yaml
       Parameters:
         ApiUrl: !GetAtt APIStack.Outputs.ApiUrl
         AthenaExecutionRole: !GetAtt StateMachineStack.Outputs.AthenaExecutionRole
@@ -188,7 +188,7 @@ Resources:
   WebUIStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: ./web-ui.yaml
+      TemplateURL: ./web_ui.yaml
       Parameters:
         CreateCloudFrontDistribution: !Ref CreateCloudFrontDistribution
         ResourcePrefix: !Ref ResourcePrefix
