@@ -49,17 +49,47 @@ def test_it_starts_machine_as_expected(sqs_mock, read_queue_mock, sf_client_mock
         "hello": "world",
         "AWS_STEP_FUNCTIONS_STARTED_BY_EXECUTION_ID": "1234",
         "JobId": "4231",
-        "WaitDuration": 15
+        "WaitDuration": 5
     })
 
     resp = handler({
         "ExecutionId": "1234",
         "ExecutionName": "4231",
+        "AthenaConcurrencyLimit": 5,
+        "WaitDurationQueryExecution": 5,
     }, SimpleNamespace())
 
     sf_client_mock.start_execution.assert_called_with(stateMachineArn=ANY, input=expected_call)
     assert 1 == resp["Total"]
     assert not resp["IsFailing"]
+
+
+@patch("backend.lambdas.tasks.work_query_queue.sf_client")
+@patch("backend.lambdas.tasks.work_query_queue.read_queue")
+@patch("backend.lambdas.tasks.work_query_queue.sqs")
+def test_it_defaults_wait_duration(sqs_mock, read_queue_mock, sf_client_mock):
+    sqs_mock.Queue.return_value = sqs_mock
+    sf_client_mock.start_execution.return_value = execution_stub()
+
+    read_queue_mock.return_value = [
+        SimpleNamespace(
+            body=json.dumps({"hello": "world"}),
+            receipt_handle="1234",
+        )
+    ]
+    expected_call = json.dumps({
+        "hello": "world",
+        "AWS_STEP_FUNCTIONS_STARTED_BY_EXECUTION_ID": "1234",
+        "JobId": "4231",
+        "WaitDuration": 15
+    })
+
+    handler({
+        "ExecutionId": "1234",
+        "ExecutionName": "4231",
+    }, SimpleNamespace())
+
+    sf_client_mock.start_execution.assert_called_with(stateMachineArn=ANY, input=expected_call)
 
 
 @patch("backend.lambdas.tasks.work_query_queue.sf_client")
@@ -105,6 +135,7 @@ def test_limits_calls_to_capacity(sqs_mock, read_queue_mock, sf_client_mock):
     handler({
         "ExecutionId": "1234",
         "ExecutionName": "4231",
+        "AthenaConcurrencyLimit": 20,
     }, SimpleNamespace())
 
     read_queue_mock.assert_called_with(ANY, 20)
@@ -120,20 +151,20 @@ def test_it_recognises_completed_executions(clear_mock, load_mock, sqs_mock, rea
     sf_client_mock.start_execution.return_value = execution_stub()
     read_queue_mock.return_value = []
     load_mock.side_effect = [
-        *[execution_stub(status="SUCCEEDED") for _ in range(0, 15)],
-        *[execution_stub(status="RUNNING", ReceiptHandle="handle") for _ in range(15, 20)],
+        *[execution_stub(status="SUCCEEDED") for _ in range(0, 10)],
+        *[execution_stub(status="RUNNING", ReceiptHandle="handle") for _ in range(10, 15)],
     ]
 
     handler({
         "ExecutionId": "1234",
         "ExecutionName": "4231",
         "RunningExecutions": {
-            "Data": list(range(0, 20)),
+            "Data": list(range(0, 15)),
             "Total": 20
         }
     }, SimpleNamespace())
 
-    read_queue_mock.assert_called_with(ANY, 15)
+    read_queue_mock.assert_called_with(ANY, 10)
 
 
 @patch("backend.lambdas.tasks.work_query_queue.load_execution")

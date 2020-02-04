@@ -5,9 +5,7 @@ import boto3
 from decorators import with_logger
 from boto_utils import read_queue
 
-concurrency_limit = os.getenv("AthenaConcurrencyLimit", 20)
 queue_url = os.getenv("QueueUrl")
-wait_duration = os.getenv("WaitDuration", 15)
 state_machine_arn = os.getenv("StateMachineArn")
 sqs = boto3.resource("sqs")
 queue = sqs.Queue(queue_url)
@@ -16,6 +14,8 @@ sf_client = boto3.client("stepfunctions")
 
 @with_logger
 def handler(event, context):
+    concurrency_limit = int(event.get("AthenaConcurrencyLimit", 15))
+    wait_duration = int(event.get("WaitDurationQueryExecution", 15))
     execution_id = event["ExecutionId"]
     job_id = event["ExecutionName"]
     previously_started = event.get("RunningExecutions", {

@@ -14,10 +14,6 @@ Globals:
         JobTableName: !Ref JobTableName
 
 Parameters:
-  AthenaConcurrencyLimit:
-    Description: How many Athena queries should be scheduled concurrently
-    Type: Number
-    Default: 20
   AthenaWorkGroup:
     Description: WorkGroup to use for Athena queries
     Type: String
@@ -35,8 +31,6 @@ Parameters:
     Type: String
   DeleteServiceName:
     Type: String
-  DeletionTasksMaxNumber:
-    Type: Number
   ECSCluster:
     Type: String
   JobTableName:
@@ -325,7 +319,7 @@ Resources:
               "Parameters": {
                 "Cluster": "${ECSCluster}",
                 "DeleteService": "${DeleteServiceName}",
-                "DeletionTasksMaxNumber": ${DeletionTasksMaxNumber},
+                "DeletionTasksMaxNumber.$": "$.DeletionTasksMaxNumber",
                 "QueueSize.$": "$.Queue.Total"
               },
               "ResultPath": "$.DesiredCount",
@@ -461,7 +455,7 @@ Resources:
             "Wait": {
               "Comment": "Waits before checking again whether this is the current execution",
               "Type": "Wait",
-              "Seconds": 120,
+              "SecondsPath": "$.WaitDurationJobExecution",
               "Next": "Check is Oldest Execution"
             },
             "Should Start?": {
@@ -642,7 +636,10 @@ Resources:
                         "DataMappers.$": "$.DataMappers.Items[?(@.QueryExecutor=='athena')]",
                         "DeletionQueue.$": "$.DeletionQueue.Items",
                         "ExecutionId.$": "$$.Execution.Id",
-                        "ExecutionName.$": "$$.Execution.Name"
+                        "ExecutionName.$": "$$.Execution.Name",
+                        "AthenaConcurrencyLimit.$": "$.AthenaConcurrencyLimit",
+                        "WaitDurationQueryQueue.$": "$.WaitDurationQueryQueue",
+                        "WaitDurationQueryExecution.$": "$.WaitDurationQueryExecution"
                       },
                       "Comment": "Process Data Mappers with Athena as the query executor",
                       "Type": "Pass",
@@ -663,7 +660,7 @@ Resources:
                       "Next": "Outstanding Queries?"
                     },
                     "Outstanding Queries?": {
-                      "Comment": "Checks if any queries are yet to be ran or are in progress or if we need to wait for capacity",
+                      "Comment": "Checks if any queries are yet to be ran or are in progress",
                       "Type": "Choice",
                       "Choices": [
                         {
@@ -673,7 +670,7 @@ Resources:
                         },
                         {
                           "Variable": "$.RunningExecutions.Total",
-                          "NumericLessThan": ${AthenaConcurrencyLimit},
+                          "NumericGreaterThan": 0,
                           "Next": "Wait for Queries"
                         }
                       ],
@@ -682,7 +679,7 @@ Resources:
                     "Wait for Queries": {
                       "Comment": "Waits before rechecking if the Object Deletion Queue is empty",
                       "Type": "Wait",
-                      "Seconds": 5,
+                      "SecondsPath": "$.WaitDurationQueryQueue",
                       "Next": "Work Queue"
                     },
                     "Done": {
@@ -738,7 +735,8 @@ Resources:
               "Parameters":{
                 "Input":{
                   "AWS_STEP_FUNCTIONS_STARTED_BY_EXECUTION_ID.$": "$$.Execution.Id",
-                  "WaitDuration": 30
+                  "DeletionTasksMaxNumber.$": "$.DeletionTasksMaxNumber",
+                  "WaitDuration.$": "$.WaitDurationForgetQueue"
                 },
                 "StateMachineArn":"${DeleteStateMachine}",
                 "Name.$": "$$.Execution.Name"
@@ -1068,10 +1066,8 @@ Resources:
       CodeUri: ../backend/lambdas/tasks/
       Environment:
         Variables:
-          AthenaConcurrencyLimit: !Ref AthenaConcurrencyLimit
           StateMachineArn: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${StateMachinePrefix}-AthenaStateMachine"
           QueueUrl: !Ref QueryQueue
-          WaitDuration: 15
       Policies:
       - Statement:
         - Action:

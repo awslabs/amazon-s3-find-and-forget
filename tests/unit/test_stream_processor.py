@@ -161,6 +161,12 @@ def test_it_starts_state_machine(mock_client):
         "Id": "job123",
         "Sk": "job123",
         "Type": "Job",
+        "AthenaConcurrencyLimit": 15,
+        "DeletionTasksMaxNumber": 50,
+        "WaitDurationJobExecution": 120,
+        "WaitDurationQueryExecution": 5,
+        "WaitDurationQueryQueue": 5,
+        "WaitDurationForgetQueue": 30
     })
 
     mock_client.start_execution.assert_called()

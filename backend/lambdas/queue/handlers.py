@@ -1,19 +1,25 @@
 """
 Queue handlers
 """
+import logging
 from datetime import datetime, timezone
 import random
 import json
 import os
 import uuid
+from json import JSONDecodeError
 
 import boto3
 from aws_xray_sdk.core import xray_recorder
 from boto3.dynamodb.conditions import Attr
+from botocore.exceptions import ClientError
 
 from decorators import with_logger, request_validator, catch_errors, load_schema, add_cors_headers
 
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 sfn_client = boto3.client("stepfunctions")
+ssm = boto3.client('ssm')
 dynamodb_resource = boto3.resource("dynamodb")
 deletion_queue_table = dynamodb_resource.Table(os.getenv("DeletionQueueTable", "S3F2_DeletionQueue"))
 jobs_table = dynamodb_resource.Table(os.getenv("JobTable", "S3F2_Jobs"))
@@ -79,6 +85,7 @@ def cancel_handler(event, context):
 @catch_errors
 def process_handler(event, context):
     job_id = str(uuid.uuid4())
+    config = get_config()
     item = {
         "Id": job_id,
         "Sk": job_id,
@@ -86,6 +93,7 @@ def process_handler(event, context):
         "JobStatus": "QUEUED",
         "GSIBucket": str(random.randint(0, bucket_count - 1)),
         "CreatedAt": round(datetime.now(timezone.utc).timestamp()),
+        **config,
     }
     jobs_table.put_item(Item=item)
 
@@ -93,3 +101,18 @@ def process_handler(event, context):
         "statusCode": 202,
         "body": json.dumps(item)
     }
+
+
+def get_config():
+    try:
+        param_name = os.getenv("ConfigParam", "S3F2-Configuration")
+        return json.loads(ssm.get_parameter(Name=param_name, WithDecryption=True)["Parameter"]["Value"])
+    except (KeyError, ValueError) as e:
+        logger.error("Invalid configuration supplied: {}".format(str(e)))
+        raise e
+    except ClientError as e:
+        logger.error("Unable to retrieve config: {}".format(str(e)))
+        raise e
+    except Exception as e:
+        logger.error("Unknown error retrieving config: {}".format(str(e)))
+        raise e

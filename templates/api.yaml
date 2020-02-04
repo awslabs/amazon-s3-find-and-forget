@@ -14,6 +14,7 @@ Globals:
           - DefaultAccessControlOrigin
           - !Ref WebUIOrigin
           - !Ref AccessControlAllowOriginOverride
+        ConfigParam: !Ref ConfigParameter
         DeletionQueueTable: !Ref DeletionQueueTableName
         DataMapperTable: !Ref DataMapperTableName
         JobTable: !Ref JobTableName
@@ -38,6 +39,8 @@ Globals:
 
 Parameters:
   AccessControlAllowOriginOverride:
+    Type: String
+  ConfigParameter:
     Type: String
   CognitoUserPoolArn:
     Type: String
@@ -146,6 +149,10 @@ Resources:
             TableName: !Ref DeletionQueueTableName
         - DynamoDBCrudPolicy:
             TableName: !Ref JobTableName
+        - Statement:
+          - Action: "ssm:GetParameter"
+            Effect: "Allow"
+            Resource: !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${ConfigParameter}"
   # DataMappers
   CreateDataMapper:
     Type: AWS::Serverless::Function
