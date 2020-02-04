@@ -7,10 +7,8 @@ import random
 import json
 import os
 import uuid
-from json import JSONDecodeError
 
 import boto3
-from aws_xray_sdk.core import xray_recorder
 from boto3.dynamodb.conditions import Attr
 from botocore.exceptions import ClientError
 
@@ -27,7 +25,6 @@ bucket_count = int(os.getenv("GSIBucketCount", 1))
 
 
 @with_logger
-@xray_recorder.capture('EnqueueHandler')
 @add_cors_headers
 @request_validator(load_schema("queue_item"), "body")
 @catch_errors
@@ -48,7 +45,6 @@ def enqueue_handler(event, context):
 
 
 @with_logger
-@xray_recorder.capture('GetQueueHandler')
 @add_cors_headers
 @catch_errors
 def get_handler(event, context):
@@ -61,7 +57,6 @@ def get_handler(event, context):
 
 
 @with_logger
-@xray_recorder.capture('CancelDeletionHandler')
 @add_cors_headers
 @request_validator(load_schema("cancel_handler"), "body")
 @catch_errors
@@ -80,7 +75,6 @@ def cancel_handler(event, context):
 
 
 @with_logger
-@xray_recorder.capture('ProcessDeletionHandler')
 @add_cors_headers
 @catch_errors
 def process_handler(event, context):

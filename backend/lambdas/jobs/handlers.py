@@ -6,7 +6,6 @@ import json
 import os
 
 import boto3
-from aws_xray_sdk.core import xray_recorder
 from boto3.dynamodb.conditions import Key, Attr
 
 from boto_utils import DecimalEncoder
@@ -21,7 +20,6 @@ end_events = ["FindPhaseFailed", "ForgetPhaseFailed", "Exception", "JobSucceeded
 
 
 @with_logger
-@xray_recorder.capture('GetJobHandler')
 @add_cors_headers
 @request_validator(load_schema("get_job_handler"), "pathParameters")
 @catch_errors
@@ -46,7 +44,6 @@ def get_job_handler(event, context):
 
 
 @with_logger
-@xray_recorder.capture('ListJobsHandler')
 @add_cors_headers
 @catch_errors
 def list_jobs_handler(event, context):
@@ -81,7 +78,6 @@ def list_jobs_handler(event, context):
 
 
 @with_logger
-@xray_recorder.capture('ListJobEventsHandler')
 @add_cors_headers
 @catch_errors
 def list_job_events_handler(event, context):

@@ -5,7 +5,6 @@ import json
 import os
 
 import boto3
-from aws_xray_sdk.core import xray_recorder
 
 from decorators import with_logger, request_validator, catch_errors, load_schema, add_cors_headers
 
@@ -19,7 +18,6 @@ SUPPORTED_SERDE_LIBS = [
 
 
 @with_logger
-@xray_recorder.capture('GetDataMappersHandler')
 @add_cors_headers
 @catch_errors
 def get_data_mappers_handler(event, context):
@@ -32,7 +30,6 @@ def get_data_mappers_handler(event, context):
 
 
 @with_logger
-@xray_recorder.capture('CreateDataMapperHandler')
 @add_cors_headers
 @request_validator(load_schema("data_mapper"))
 @request_validator(load_schema("data_mapper_path_parameters"), "pathParameters")
@@ -57,7 +54,6 @@ def create_data_mapper_handler(event, context):
 
 
 @with_logger
-@xray_recorder.capture('DeleteDataMapperHandler')
 @add_cors_headers
 @request_validator(load_schema("delete_handler"), "pathParameters")
 @catch_errors

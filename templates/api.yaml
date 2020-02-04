@@ -6,7 +6,6 @@ Globals:
   Function:
     Runtime: python3.7
     Timeout: 180
-    Tracing: Active
     Layers: !Ref CommonLayers
     Environment:
       Variables:
@@ -22,7 +21,6 @@ Globals:
         LogLevel: !Ref LogLevel
   Api:
     EndpointConfiguration: REGIONAL
-    TracingEnabled: true
     Cors:
       AllowMethods: "'*'"
       AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"

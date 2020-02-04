@@ -8,7 +8,6 @@ from uuid import uuid4
 
 import boto3
 import pytest
-from aws_xray_sdk import global_sdk_config
 from botocore.exceptions import ClientError
 from botocore.waiter import WaiterModel, create_waiter_with_client
 from requests import Session
@@ -26,7 +25,6 @@ def pytest_configure(config):
     """
     Initial test env setup
     """
-    global_sdk_config.set_sdk_enabled(False)
     load_env()
 
 
