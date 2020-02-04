@@ -2,19 +2,25 @@ import React, { useState } from "react";
 import { Authenticator, Greetings, SignUp } from "aws-amplify-react";
 
 import AppLayout from "./components/AppLayout";
-import ConfigurationHelp from "./components/help/Configuration";
-import ConfigurationPage from "./components/pages/Configuration";
-import DashboardHelp from "./components/help/Dashboard";
-import DashboardPage from "./components/pages/Dashboard";
-import DeletionJob from "./components/pages/DeletionJob";
-import DeletionJobsHelp from "./components/help/DeletionJobs";
-import DeletionJobsPage from "./components/pages/DeletionJobs";
-import DeletionQueueHelp from "./components/help/DeletionQueue";
-import DeletionQueuePage from "./components/pages/DeletionQueue";
 import Header from "./components/Header";
-import NewConfiguration from "./components/pages/NewConfiguration";
-import NewDeletionQueueMatch from "./components/pages/NewDeletionQueueMatch";
-
+import {
+  DashboardHelp,
+  DataMappersHelp,
+  DeletionJobDetailsHelp,
+  DeletionJobsHelp,
+  DeletionQueueHelp,
+  NewDataMapperHelp,
+  NewDeletionQueueMatchHelp,
+} from "./components/help";
+import {
+  DashboardPage,
+  DataMappersPage,
+  DeletionJobPage,
+  DeletionJobsPage,
+  DeletionQueuePage,
+  NewDataMapperPage,
+  NewDeletionQueueMatchPage,
+} from "./components/pages";
 import gateway from "./utils/gateway";
 
 export default () => {
@@ -40,11 +46,11 @@ export default () => {
       help: <DashboardHelp />
     },
     {
-      title: "Configuration",
+      title: "Data Mappers",
       page: (
-        <ConfigurationPage gateway={gateway} onPageChange={setCurrentPage} />
+        <DataMappersPage gateway={gateway} onPageChange={setCurrentPage} />
       ),
-      help: <ConfigurationHelp />
+      help: <DataMappersHelp />
     },
     {
       title: "Deletion Queue",
@@ -63,32 +69,35 @@ export default () => {
     {
       title: "Create Data Mapper",
       page: (
-        <NewConfiguration
+        <NewDataMapperPage
           gateway={gateway}
           goToDataMappers={() => setCurrentPage(1)}
         />
       ),
+      help: <NewDataMapperHelp />,
       parent: 1
     },
     {
       title: "Add item to the Deletion Queue",
       page: (
-        <NewDeletionQueueMatch
+        <NewDeletionQueueMatchPage
           gateway={gateway}
           goToDeletionQueue={() => setCurrentPage(2)}
         />
       ),
+      help: <NewDeletionQueueMatchHelp />,
       parent: 2
     },
     {
       title: selectedJobId || "Deletion Job details",
       page: (
-        <DeletionJob
+        <DeletionJobPage
           gateway={gateway}
           goToJobsList={() => setCurrentPage(3)}
           jobId={selectedJobId}
         />
       ),
+      help: <DeletionJobDetailsHelp />,
       parent: 3
     }
   ];

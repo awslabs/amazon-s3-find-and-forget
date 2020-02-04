@@ -84,7 +84,7 @@ export default ({ gateway, goToDeletionQueue }) => {
 
   return (
     <Form>
-      <h1>New Deletion Queue item</h1>
+      <h1>Add a Match to the Deletion Queue</h1>
       <div className="form-container">
         <p>
           Items added to the Deletion Queue are picked for deletion on the next

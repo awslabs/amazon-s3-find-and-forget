@@ -7,7 +7,9 @@ import {
   isUndefined,
   last,
   sortBy,
-  withDefault
+  withDefault,
+  repoUrl,
+  docsUrl,
 } from "../utils";
 
 test("isEmpty", () => {
@@ -119,4 +121,28 @@ test("formatErrorMessage", () => {
       }
     })
   ).toEqual("Error from API");
+});
+
+
+describe("urls", () => {
+  const OLD_ENV = process.env;
+
+  beforeEach(() => {
+    jest.resetModules()
+    process.env = { ...OLD_ENV, REACT_APP_REPO_URL: "git+https://example.com" };
+  });
+
+  afterEach(() => {
+    process.env = OLD_ENV;
+  });
+
+  test("repoUrl", () => {
+      expect(repoUrl("/")).toEqual("https://example.com");
+      expect(repoUrl("test")).toEqual("https://example.com/test");
+  })
+
+  test("docsUrl", () => {
+      expect(docsUrl("/")).toEqual("https://example.com/blob/master/docs");
+      expect(docsUrl("test")).toEqual("https://example.com/blob/master/docs/test");
+  })
 });

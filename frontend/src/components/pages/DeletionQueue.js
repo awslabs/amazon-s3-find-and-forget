@@ -70,7 +70,7 @@ export default ({ gateway, onPageChange }) => {
             className="aws-button action-button"
             onClick={() => onPageChange(5)}
           >
-            Add item to the Deletion Queue
+            Add Match to the Deletion Queue
           </Button>
         </Col>
       </Row>
@@ -107,7 +107,7 @@ export default ({ gateway, onPageChange }) => {
               Cancel
             </Button>
             <Button className="aws-button" onClick={deleteQueueMatch}>
-              Remove Item from the Deletion Queue
+              Remove Match from the Deletion Queue
             </Button>
           </Modal.Footer>
         </Modal>
@@ -148,7 +148,7 @@ export default ({ gateway, onPageChange }) => {
             <b>The Deletion Queue is empty</b>
             <p>No items to display</p>
             <Button className="aws-button" onClick={() => onPageChange(5)}>
-              Add item to the Deletion Queue
+              Add Match to the Deletion Queue
             </Button>
           </div>
         )}

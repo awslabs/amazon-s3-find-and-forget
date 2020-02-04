@@ -94,8 +94,13 @@
 #layout h1,
 #layout h2,
 #layout h3,
-#layout ul {
+#layout ul,
+#layout .sidebar .content div {
   padding: 0.5rem 2rem 0.5rem 2rem;
+}
+
+#layout p {
+  margin-bottom: 0;
 }
 
 #layout .spinner {
@@ -106,12 +111,12 @@
   padding-top: 0;
 }
 
-.separator-top {
+#layout .separator-top {
   padding-top: 20px;
   border-top: 1px solid #eaeded;
 }
 
-.separator-bottom {
+#layout .separator-bottom {
   padding-bottom: 20px;
   border-bottom: 1px solid #eaeded;
 }

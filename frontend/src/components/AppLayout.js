@@ -15,13 +15,13 @@ export default ({ currentPage, onMenuClick, pages }) => {
 
   return (
     <div id="layout">
-      <div id="left" className={left}>
+      <div id="left" className={`sidebar ${left}`}>
         <div className="icon" onClick={() => setLeftOpen(!leftOpen)}>
           <Icon type={leftOpen ? "close" : "hamburger"} />
         </div>
         <div className="content">
           <h2>Amazon S3 Find &amp; Forget</h2>
-          <p className="separator-top separator-bottom">
+          <div className="separator-top separator-bottom">
             {pages
               .filter(p => !p.parent)
               .map((page, index) => {
@@ -40,7 +40,7 @@ export default ({ currentPage, onMenuClick, pages }) => {
                   </Button>
                 );
               })}
-          </p>
+          </div>
         </div>
       </div>
       <div id="main">
@@ -65,7 +65,7 @@ export default ({ currentPage, onMenuClick, pages }) => {
         <div className="content">{pages[currentPage].page}</div>
       </div>
       {pages[currentPage].help && (
-        <div id="right" className={right}>
+        <div id="right" className={`sidebar ${right}`}>
           <div className="icon" onClick={() => setRightOpen(!rightOpen)}>
             <Icon type={rightOpen ? "close" : "info"} />
           </div>

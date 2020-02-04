@@ -107,18 +107,7 @@ export default ({ gateway, goToDataMappers }) => {
 
   return (
     <Form>
-      <h1>New Data Mapper</h1>
-      <div className="form-container">
-        <p>
-          Data mappers allow you to connect data hosted in S3 to the Amazon S3
-          Find and Forget solution. You are responsible for setting up Data
-          Mappers correctly and make sure all the S3 buckets are mapped to the
-          solution. After creating a data mapper, you must update the S3 Bucket
-          Policy for the S3 Bucket referenced by the data mapper to grant read
-          permission (via Athena) and read/write permission (via Fargate) to the
-          Amazon S3 Find and Forget Solution.
-        </p>
-      </div>
+      <h1>Create Data Mapper</h1>
       {formState === "loading" && (
         <Spinner animation="border" role="status" className="spinner" />
       )}

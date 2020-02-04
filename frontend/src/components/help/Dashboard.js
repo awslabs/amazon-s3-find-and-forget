@@ -1,37 +1,38 @@
 import React from "react";
 
 import Icon from "../Icon";
+import {repoUrl, docsUrl} from "../../utils";
 
 const links = [
   {
     title: "Getting Started",
-    url: "https://github.com/awslabs/amazon-s3-find-and-forget"
+    url: docsUrl("OVERVIEW.md")
   },
   {
-    title: "Setup Data Mappers",
-    url: "https://github.com/awslabs/amazon-s3-find-and-forget"
+    title: "Add a Data Mapper",
+    url: docsUrl("OVERVIEW.md#configuring-data-mappers")
+  },
+  {
+    title: "Add a Match to the Deletion Queue",
+    url: docsUrl("OVERVIEW.md#adding-a-match-to-the-queue")
   },
   {
     title: "Start a Deletion Job",
-    url: "https://github.com/awslabs/amazon-s3-find-and-forget"
-  },
-  {
-    title: "Troubleshooting",
-    url: "https://github.com/awslabs/amazon-s3-find-and-forget"
+    url: docsUrl("OVERVIEW.md#starting-a-job")
   },
   {
     title: "Github Repository",
-    url: "https://github.com/awslabs/amazon-s3-find-and-forget"
+    url: repoUrl("/")
   }
 ];
 
 export default () => (
   <>
     <h2>Dashboard</h2>
-
     <p className="separator-top separator-bottom">
-      Here you can view some metrics about your solution and start a new
-      deletion job. Use the menu on the left to access the appropriate section.
+      You can view key metrics about this deployment of the Amazon S3 Find and
+      Forget solution. Choose <strong>Start a Deletion Job</strong> to execute
+      a deletion job for the matches currently in the deletion queue.
     </p>
     <h3>
       Learn more <Icon type="new-window" />
