@@ -36,18 +36,18 @@ for a given service, view the relevant Monitoring docs for that service. The
 key services used by the solution:
 
 - [Lambda Metrics] / [Lambda Logging]
-- [ECS Metrics] / [ECS Logging] <sup>*</sup>
-- [Athena Metrics] <sup>**</sup>
+- [ECS Metrics] / [ECS Logging] <sup>1</sup>
+- [Athena Metrics] <sup>2</sup>
 - [Step Functions Metrics]
 - [SQS Metrics]
 - [DynamoDB Metrics]
 - [S3 Metrics]
 
-<sup>*</sup> CloudWatch Container Insights can be be enabled when deploying
+<sup>1</sup> CloudWatch Container Insights can be be enabled when deploying
 the solution by setting `EnableContainerInsights` to `true`. Using Container
 Insights will incur additional charges. It is disabled by default.
 
-<sup>**</sup> To obtain Athena metrics, you will need to enable metrics for the
+<sup>2</sup> To obtain Athena metrics, you will need to enable metrics for the
 workgroup you are using to execute the queries as described
 [in the Athena docs][Athena Metrics]. By default the solution uses the
 **primary** workgroup, however you can change this when deploying the stack
