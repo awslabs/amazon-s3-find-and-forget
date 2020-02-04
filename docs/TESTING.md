@@ -7,31 +7,25 @@ make setup
 
 ### Unit Tests
 
-Unit tests can be ran by running
+Unit tests are ran using the following command:
 ```bash
 make test-unit
 ```
 
-To get coverage stats using `pytest-cov` run:
-```bash
-make test-unit-cov
-```
-
 ### API Acceptance Tests
 
-> **Important**: Acceptance tests require the full AWS stack to be deployed.
+> **Important**: Acceptance tests require the full CloudFormation stack to be
+> deployed. 
 
-To run the full acceptance test suite run:
+Acceptance tests are ran using the following command:
 ```bash
 make test-acceptance
 ```
 
-To get coverage stats using `pytest-cov` run:
-```bash
-make test-acceptance-cov
-```
+Because the state machine tests involve running full end to end
+job executions, tests can take >20s each. Therefore if you wish
+to skip these tests, run `make test-no-state-machine`.
 
-> **Important**: The state machine tests are quite slow as they involve running end to end state machines. Therefore if you wish to skip these tests, run `make test-no-state-machine`.
 
 #### Test Data
 Available test data files:

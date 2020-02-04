@@ -28,7 +28,7 @@ export default () => (
       of a specific customer.
     </p>
     <p className="separator-bottom">
-      To add a new match to the deletion queue, choose <strong>Add Item
+      To add a new match to the deletion queue, choose <strong>Add Match
       to the Deletion Queue</strong>. To remove a Match from the Deletion
       Queue, choose the match from the list and then choose <strong>Remove
       </strong>. Once you have started a Deletion Job, you should
