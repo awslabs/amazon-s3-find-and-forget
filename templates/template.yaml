@@ -179,6 +179,7 @@ Resources:
         ECRRepository: !GetAtt DelStack.Outputs.ECRRepository
         PreBuiltArtefactsBucket: !If [DefaultPreBuiltArtefactsBucket, !Sub "solution-builders-${AWS::Region}", !Ref PreBuiltArtefactsBucketOverride]
         ResourcePrefix: !Ref ResourcePrefix
+        ResultBucket: !GetAtt StateMachineStack.Outputs.ResultBucket
         Version: !FindInMap [Solution, Constants, Version]
         WebUIBucket: !GetAtt WebUIStack.Outputs.WebUIBucket
   LayersStack:
@@ -219,17 +220,6 @@ Resources:
       Parameters:
         CreateCloudFrontDistribution: !Ref CreateCloudFrontDistribution
         ResourcePrefix: !Ref ResourcePrefix
-  WebUIHelperStack:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: ./web-ui-helper.yaml
-      Parameters:
-        CommonLayers: !Join
-          - ","
-          - - !GetAtt LayersStack.Outputs.AWSSDKLayer
-            - !GetAtt LayersStack.Outputs.CustomResourceHelper
-            - !GetAtt LayersStack.Outputs.Decorators
-        WebUIBucket: !GetAtt WebUIStack.Outputs.WebUIBucket
 
 Outputs:
   APIAccessControlAllowOriginHeader:

@@ -6,7 +6,7 @@ from decorators import with_logger
 helper = CfnResource(json_logging=False, log_level='DEBUG',
                      boto_level='CRITICAL')
 
-s3_client = boto3.client("s3")
+s3 = boto3.resource("s3")
 
 
 @with_logger
@@ -19,14 +19,10 @@ def create(event, context):
 @with_logger
 @helper.delete
 def delete(event, context):
-    props = event.get('ResourceProperties', None)
-    bucket = props.get("Bucket")
-    objects = s3_client.list_objects_v2(Bucket=bucket)
-    for obj in objects.get("Contents"):
-        s3_client.delete_object(
-            Bucket=bucket,
-            Key=obj.get("Key")
-        )
+    props = event['ResourceProperties']
+    bucket = s3.Bucket(props["Bucket"])
+    bucket.objects.all().delete()
+    bucket.object_versions.all().delete()
     return None
 
 
