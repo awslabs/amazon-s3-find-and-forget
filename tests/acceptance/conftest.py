@@ -52,6 +52,11 @@ def ddb_resource():
 
 
 @pytest.fixture(scope="session")
+def ddb_client():
+    return boto3.client("dynamodb")
+
+
+@pytest.fixture(scope="session")
 def s3_resource():
     return boto3.resource("s3")
 
@@ -385,6 +390,18 @@ def execution_waiter(sf_client):
 def execution_exists_waiter(sf_client):
     waiter_model = get_waiter_model("stepfunctions.json")
     return create_waiter_with_client("ExecutionExists", waiter_model, sf_client)
+
+
+@pytest.fixture(scope="session")
+def job_complete_waiter(ddb_client):
+    waiter_model = get_waiter_model("jobs.json")
+    return create_waiter_with_client("JobComplete", waiter_model, ddb_client)
+
+
+@pytest.fixture(scope="session")
+def job_finished_waiter(ddb_client):
+    waiter_model = get_waiter_model("jobs.json")
+    return create_waiter_with_client("JobFinished", waiter_model, ddb_client)
 
 
 @pytest.fixture(scope="function")

@@ -79,7 +79,6 @@ Resources:
             Action:
             - "lambda:InvokeFunction"
             Resource:
-            - !GetAtt OldestExecutionCheck.Arn
             - !GetAtt ScanTable.Arn
             - !GetAtt ParseStateMachineOutput.Arn
             - !GetAtt CheckQueueSize.Arn
@@ -440,41 +439,8 @@ Resources:
       DefinitionString: !Sub |-
         {
           "Comment": "State machine for processing the S3 Find and Forget deletion queue.",
-          "StartAt": "Check is Oldest Execution",
+          "StartAt": "Emit Job Started",
           "States": {
-            "Check is Oldest Execution": {
-              "Comment": "Queries the Step Functions API to check if the current executions is the oldest",
-              "Type": "Task",
-              "Resource": "${OldestExecutionCheck.Arn}",
-              "Parameters": {
-                "ExecutionId.$": "$$.Execution.Id"
-              },
-              "ResultPath": "$.IsOldestExecution",
-              "Next": "Should Start?"
-            },
-            "Wait": {
-              "Comment": "Waits before checking again whether this is the current execution",
-              "Type": "Wait",
-              "SecondsPath": "$.WaitDurationJobExecution",
-              "Next": "Check is Oldest Execution"
-            },
-            "Should Start?": {
-              "Comment": "Check if this execution is the oldest running execution and proceed if so.",
-              "Type": "Choice",
-              "Choices": [
-                {
-                  "Variable": "$.IsOldestExecution",
-                  "BooleanEquals": true,
-                  "Next": "Emit Job Started"
-                },
-                {
-                  "Variable": "$.IsOldestExecution",
-                  "BooleanEquals": false,
-                  "Next": "Wait"
-                }
-              ],
-              "Default": "Handle Error"
-            },
             "Emit Job Started": {
               "Type": "Task",
               "Parameters": {
@@ -890,21 +856,6 @@ Resources:
       VisibilityTimeout: 120
 
   # Tasks
-  OldestExecutionCheck:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: oldest_execution.handler
-      CodeUri: ../backend/lambdas/tasks/
-      Environment:
-        Variables:
-          StateMachineArn: !Sub arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${StateMachinePrefix}-StateMachine
-      Policies:
-      - Statement:
-        - Action:
-          - "states:ListExecutions"
-          Effect: "Allow"
-          Resource: !Sub arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${StateMachinePrefix}*
-
   ScanTable:
     Type: AWS::Serverless::Function
     Properties:

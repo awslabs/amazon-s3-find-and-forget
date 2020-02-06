@@ -20,11 +20,9 @@ export default () => (
     <p className="separator-top">
       Items in the Deletion Queue are known as <strong>matches</strong>. A
       match is used by Amazon S3 Find and Forget to identify rows in your
-      data to delete. When you start a deletion job, the matches in the
-      Deletion Queue at the time the job starts will be deleted. Once a job,
-      completes, the matches processed by the job will be removed from
-      the queue automatically. If a job does not complete successfully,
-      the matches will remain in the Deletion Queue.
+      data to delete. Once a job completes, the matches processed by the job
+      will be removed from the queue automatically. If a job does not complete
+      successfully, the matches will remain in the Deletion Queue.
     </p>
     <p className="separator-bottom">
       When adding a match to the Deletion Queue you must first enter the match

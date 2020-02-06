@@ -125,6 +125,8 @@ Resources:
             Path: /queue/matches
             Method: delete
       Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref JobTableName
         - DynamoDBCrudPolicy:
             TableName: !Ref DeletionQueueTableName
   ProcessQueue:

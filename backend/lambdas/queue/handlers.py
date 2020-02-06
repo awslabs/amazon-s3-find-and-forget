@@ -9,7 +9,7 @@ import os
 import uuid
 
 import boto3
-from boto3.dynamodb.conditions import Attr
+from boto3.dynamodb.conditions import Attr, Key
 from botocore.exceptions import ClientError
 
 from decorators import with_logger, request_validator, catch_errors, load_schema, add_cors_headers
@@ -21,6 +21,7 @@ ssm = boto3.client('ssm')
 dynamodb_resource = boto3.resource("dynamodb")
 deletion_queue_table = dynamodb_resource.Table(os.getenv("DeletionQueueTable", "S3F2_DeletionQueue"))
 jobs_table = dynamodb_resource.Table(os.getenv("JobTable", "S3F2_Jobs"))
+index = os.getenv("JobTableDateGSI", "Date-GSI")
 bucket_count = int(os.getenv("GSIBucketCount", 1))
 
 
@@ -61,6 +62,8 @@ def get_handler(event, context):
 @request_validator(load_schema("cancel_handler"), "body")
 @catch_errors
 def cancel_handler(event, context):
+    if running_job_exists():
+        raise ValueError("Cannot delete matches whilst there is a job in progress")
     body = json.loads(event["body"])
     match_ids = body["MatchIds"]
     with deletion_queue_table.batch_writer() as batch:
@@ -78,6 +81,9 @@ def cancel_handler(event, context):
 @add_cors_headers
 @catch_errors
 def process_handler(event, context):
+    if running_job_exists():
+        raise ValueError("There is already a job in progress")
+
     job_id = str(uuid.uuid4())
     config = get_config()
     item = {
@@ -89,12 +95,35 @@ def process_handler(event, context):
         "CreatedAt": round(datetime.now(timezone.utc).timestamp()),
         **config,
     }
+
     jobs_table.put_item(Item=item)
 
     return {
         "statusCode": 202,
         "body": json.dumps(item)
     }
+
+
+def running_job_exists():
+    jobs = []
+    for gsi_bucket in range(0, bucket_count):
+        response = jobs_table.query(
+            IndexName=index,
+            KeyConditionExpression=Key('GSIBucket').eq(str(gsi_bucket)),
+            ScanIndexForward=False,
+            FilterExpression="(#s = :r) or (#s = :q)",
+            ExpressionAttributeNames={
+                "#s": "JobStatus"
+            },
+            ExpressionAttributeValues={
+                ":r": "RUNNING",
+                ":q": "QUEUED",
+            },
+            Limit=1,
+        )
+        jobs += response.get("Items", [])
+
+    return len(jobs) > 0
 
 
 def get_config():

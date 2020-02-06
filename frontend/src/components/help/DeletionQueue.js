@@ -31,9 +31,8 @@ export default () => (
       To add a new match to the deletion queue, choose <strong>Add Match
       to the Deletion Queue</strong>. To remove a Match from the Deletion
       Queue, choose the match from the list and then choose <strong>Remove
-      </strong>. Once you have started a Deletion Job, you should
-      not remove any items from the Deletion Queue which were present when
-      you started the job.
+      </strong>. You cannot remove items from the Deletion Queue whilst
+      there is a job in progress.
     </p>
     <h3>
       Learn more <Icon type="new-window" />
