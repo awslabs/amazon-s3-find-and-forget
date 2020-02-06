@@ -62,6 +62,8 @@ def get_handler(event, context):
 @request_validator(load_schema("cancel_handler"), "body")
 @catch_errors
 def cancel_handler(event, context):
+    if running_job_exists():
+        raise ValueError("Cannot delete matches whilst is a job in progress")
     body = json.loads(event["body"])
     match_ids = body["MatchIds"]
     with deletion_queue_table.batch_writer() as batch:

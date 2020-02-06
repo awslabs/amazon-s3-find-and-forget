@@ -398,6 +398,12 @@ def job_complete_waiter(ddb_client):
     return create_waiter_with_client("JobComplete", waiter_model, ddb_client)
 
 
+@pytest.fixture(scope="session")
+def job_finished_waiter(ddb_client):
+    waiter_model = get_waiter_model("jobs.json")
+    return create_waiter_with_client("JobFinished", waiter_model, ddb_client)
+
+
 @pytest.fixture(scope="function")
 def execution(sf_client, stack):
     """

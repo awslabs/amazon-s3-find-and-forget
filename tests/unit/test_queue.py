@@ -54,8 +54,10 @@ def test_it_provides_default_data_mappers(table):
     } == json.loads(response["body"])
 
 
+@patch("backend.lambdas.queue.handlers.running_job_exists")
 @patch("backend.lambdas.queue.handlers.deletion_queue_table")
-def test_it_cancels_deletions(table):
+def test_it_cancels_deletions(table, mock_running_job):
+    mock_running_job.return_value = False
     response = handlers.cancel_handler({
         "body": json.dumps({
             "MatchIds": ["test"],
@@ -65,6 +67,19 @@ def test_it_cancels_deletions(table):
         "statusCode": 204,
         "headers": ANY
     } == response
+
+
+@patch("backend.lambdas.queue.handlers.running_job_exists")
+def test_it_prevents_cancelling_whilst_running_jobs(mock_running_job):
+    mock_running_job.return_value = True
+    response = handlers.cancel_handler({
+        "body": json.dumps({
+            "MatchIds": ["test"],
+        })
+    }, SimpleNamespace())
+
+    assert 400 == response["statusCode"]
+    assert "headers" in response
 
 
 @patch("backend.lambdas.queue.handlers.bucket_count", 1)
