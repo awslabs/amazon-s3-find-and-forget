@@ -162,9 +162,11 @@ def empty_queue(queue_table):
 
 @pytest.fixture
 def del_queue_factory(queue_table):
-    def factory(match_id="testId", data_mappers=[]):
+    def factory(match_id="testId", created_at=round(datetime.datetime.now(datetime.timezone.utc).timestamp()),
+                data_mappers=[]):
         item = {
             "MatchId": match_id,
+            "CreatedAt": created_at,
             "DataMappers": data_mappers,
         }
         queue_table.put_item(Item=item)
@@ -172,7 +174,7 @@ def del_queue_factory(queue_table):
 
     yield factory
 
-    empty_table(queue_table, "MatchId")
+    empty_table(queue_table, "MatchId", "CreatedAt")
 
 
 @pytest.fixture(scope="module")

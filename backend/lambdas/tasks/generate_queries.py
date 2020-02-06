@@ -5,14 +5,14 @@ Requires a state object as the event which looks like:
 
 {
   "DeletionQueue": [{
-    "MatchId": "123",
-    "DataMappers": ["mapper_a"]
+    "MatchId": {"S": "123"},
+    "DataMappers": {"L": [{"S": "mapper_a"}]}
   }],
   "DataMappers": [
     {
-      "Database": "db"
-      "Table": "table"
-      "Columns" ["a_column"]
+      "Database": {"S": "db"}
+      "Table": {"S": "table"}
+      "Columns" {"L": [{"S": "a_column"}]}
     }
   ]
 """
@@ -20,7 +20,7 @@ import os
 
 import boto3
 
-from boto_utils import paginate, batch_sqs_msgs
+from boto_utils import paginate, batch_sqs_msgs, deserialize_item
 from decorators import with_logger
 
 glue_client = boto3.client("glue")
@@ -30,8 +30,8 @@ queue = sqs.Queue(os.getenv("QueryQueue"))
 
 @with_logger
 def handler(event, context):
-    data_mappers = event["DataMappers"]
-    deletion_items = event["DeletionQueue"]
+    data_mappers = [deserialize_item(item) for item in event["DataMappers"]]
+    deletion_items = [deserialize_item(item) for item in event["DeletionQueue"]]
     # For every partition combo of every table, create a query
     for data_mapper in data_mappers:
         queries = []

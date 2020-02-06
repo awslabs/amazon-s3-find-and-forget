@@ -599,7 +599,7 @@ Resources:
                   "States": {
                     "Filter Athena Data Mappers": {
                       "Parameters": {
-                        "DataMappers.$": "$.DataMappers.Items[?(@.QueryExecutor=='athena')]",
+                        "DataMappers.$": "$.DataMappers.Items[?(@.QueryExecutor.S=='athena')]",
                         "DeletionQueue.$": "$.DeletionQueue.Items",
                         "ExecutionId.$": "$$.Execution.Id",
                         "ExecutionName.$": "$$.Execution.Name",
@@ -744,7 +744,8 @@ Resources:
                     "Parameters": {
                       "TableName": "${DeletionQueueTableName}",
                       "Key": {
-                        "MatchId": {"S.$": "$.MatchId"}
+                        "MatchId.$": "$.MatchId",
+                        "CreatedAt.$": "$.CreatedAt"
                       }
                     },
                     "ResultPath": null,

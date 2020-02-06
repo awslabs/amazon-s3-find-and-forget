@@ -4,7 +4,9 @@ import { Button, Col, Form, Modal, Row, Spinner, Table } from "react-bootstrap";
 import Alert from "../Alert";
 import Icon from "../Icon";
 
-import { formatErrorMessage, isEmpty, isUndefined, sortBy } from "../../utils";
+import {
+    formatErrorMessage, isEmpty, isUndefined, sortBy, formatDateTime
+} from "../../utils";
 
 export default ({ gateway, onPageChange }) => {
   const [deleting, setDeleting] = useState(false);
@@ -27,7 +29,10 @@ export default ({ gateway, onPageChange }) => {
     setDeleting(false);
     setFormState("initial");
     try {
-      await gateway.deleteQueueMatches([queue[selectedRow].MatchId]);
+      await gateway.deleteQueueMatches([{
+        MatchId: queue[selectedRow].MatchId,
+        CreatedAt: queue[selectedRow].CreatedAt,
+      }]);
       refreshQueue();
     } catch (e) {
       setFormState("error");
@@ -118,6 +123,7 @@ export default ({ gateway, onPageChange }) => {
             <tr>
               <td></td>
               <td>Match Id</td>
+              <td>Date Added</td>
               <td>Data Mappers</td>
             </tr>
           </thead>
@@ -138,6 +144,7 @@ export default ({ gateway, onPageChange }) => {
                     />
                   </td>
                   <td>{queueMatch.MatchId}</td>
+                  <td>{formatDateTime(queueMatch.CreatedAt)}</td>
                   <td>{queueMatch.DataMappers.join(", ") || "*"}</td>
                 </tr>
               ))}

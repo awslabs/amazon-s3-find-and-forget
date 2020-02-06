@@ -15,4 +15,4 @@ def handler(event, context):
         message = sqs.Message(queue_url, receipt_handle)
         message.delete()
     else:
-        context.logger.warn("No receipt handle found in event. Skipping")
+        context.logger.warning("No receipt handle found in event. Skipping")
