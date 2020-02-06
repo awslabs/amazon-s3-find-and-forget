@@ -28,14 +28,9 @@ export default () => (
       details of a job, choose the <strong>Job ID</strong> from the Deletion
       Job list.
     </p>
-    <p>
-      Only one deletion job can be running at any given time.
-      Jobs started whilst there is already another job running will be
-      queued and executed in the order which they were started.
-    </p>
     <p className="separator-bottom">
-      Before you retry a failed job, be sure to troubleshoot and fix problems
-      first.
+      Only one deletion job can be running at any given time. Before you retry
+      a failed job, be sure to troubleshoot and fix problems first.
     </p>
     <h3>
       Learn more <Icon type="new-window" />
