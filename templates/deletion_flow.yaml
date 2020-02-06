@@ -129,7 +129,7 @@ Resources:
               Value: !Ref DelObjQ
             - Name: ECS_ENABLE_CONTAINER_METADATA
               Value: 'true'
-            - Name: JobTableName
+            - Name: JobTable
               Value: !Ref JobTableName
             - Name: MAX_FILE_SIZE_GB
               Value: "9"
