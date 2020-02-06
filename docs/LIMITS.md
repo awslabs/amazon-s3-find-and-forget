@@ -22,6 +22,14 @@ supported:
 | --- | --- |
 | AWS Glue | Amazon Athena |
 
+#### Concurrency Limits
+
+| Catalog Provider | Query Executor |
+| --- | --- |
+| Max Concurrent Jobs | 1 |
+| Max Athena Concurrency | See account service quota |
+| Max Fargate Concurrency | See account service quota |
+
 #### Other Limitations
 
 - Individual objects processed by the solution must be **less than 8GB** 
