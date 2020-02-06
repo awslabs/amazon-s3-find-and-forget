@@ -334,6 +334,20 @@ Resources:
               - !Sub arn:aws:s3:::${WebUIBucket}
               - !Sub arn:aws:s3:::${WebUIBucket}/*
 
+  CleanupRepositoryFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: cleanup_repository.handler
+      CodeUri: ../backend/lambdas/custom_resources/
+      Description: Custom Lambda resource for the Amazon S3 Find and Forget Cloudformation Stack
+      Policies:
+        - Statement:
+          - Effect: Allow
+            Action:
+              - ecr:BatchDeleteImage
+              - ecr:ListImages
+            Resource: !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ECRRepository}
+
   WaitForContainerBuildFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -378,6 +392,13 @@ Resources:
       ServiceToken: !GetAtt CleanupBucketFunction.Arn
       LogLevel: !Ref LogLevel
       Bucket: !Ref WebUIBucket
+
+  CleanupECRRepository:
+    Type: Custom::Setup
+    Properties:
+      ServiceToken: !GetAtt CleanupRepositoryFunction.Arn
+      LogLevel: !Ref LogLevel
+      Repository: !Ref ECRRepository
       
   CopyBuildArtefact:
     Type: Custom::Setup

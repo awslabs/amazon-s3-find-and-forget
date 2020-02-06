@@ -56,7 +56,6 @@ Resources:
 
   ECRRepository:
     Type: AWS::ECR::Repository
-    DeletionPolicy: Retain
 
   ECSTaskExecutionRole:
     Type: AWS::IAM::Role
