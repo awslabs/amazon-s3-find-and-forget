@@ -11,7 +11,7 @@ Globals:
     Environment:
       Variables:
         LogLevel: !Ref LogLevel
-        JobTableName: !Ref JobTableName
+        JobTable: !Ref JobTableName
 
 Parameters:
   AthenaWorkGroup:

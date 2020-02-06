@@ -55,7 +55,7 @@ Parameters:
     Type: String
     Default: "10.0.0.0/22, 10.0.4.0/22, 10.0.8.0/22"
   ResourcePrefix:
-    Description: The prefix used for uniquely named resources, such as Dynamo DB Tables, State Machines, etc.
+    Description: The prefix used for uniquely named resources, such as State Machines, etc.
     Type: String
     Default: S3F2
     AllowedPattern: ^[a-zA-Z0-9]*$
@@ -139,8 +139,6 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: ./ddb.yaml
-      Parameters:
-        DynamoDBTablePrefix: !Ref ResourcePrefix
   DelStack:
     Type: AWS::CloudFormation::Stack
     Properties:

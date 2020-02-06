@@ -10,7 +10,7 @@ Globals:
     Environment:
       Variables:
         Cluster: !Ref ECSCluster
-        JobTableName: !Ref JobTableName
+        JobTable: !Ref JobTableName
         LogLevel: !Ref LogLevel
 
 Parameters:
