@@ -63,7 +63,7 @@ def get_handler(event, context):
 @catch_errors
 def cancel_handler(event, context):
     if running_job_exists():
-        raise ValueError("Cannot delete matches whilst is a job in progress")
+        raise ValueError("Cannot delete matches whilst there is a job in progress")
     body = json.loads(event["body"])
     match_ids = body["MatchIds"]
     with deletion_queue_table.batch_writer() as batch:
