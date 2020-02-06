@@ -13,7 +13,6 @@ Resources:
   DeletionQueueTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: !Sub ${DynamoDBTablePrefix}_DeletionQueue
       AttributeDefinitions: 
         - 
           AttributeName: MatchId
@@ -27,7 +26,6 @@ Resources:
   DataMapperTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: !Sub ${DynamoDBTablePrefix}_DataMappers
       AttributeDefinitions:
         -
           AttributeName: DataMapperId
@@ -41,7 +39,6 @@ Resources:
   JobTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: !Sub ${DynamoDBTablePrefix}_Jobs
       StreamSpecification:
         StreamViewType: NEW_IMAGE
       AttributeDefinitions:

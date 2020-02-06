@@ -296,6 +296,8 @@ Resources:
 
   EventsDLQ:
     Type: AWS::SQS::Queue
+    Properties:
+      KmsMasterKeyId: alias/aws/sqs
 
 Outputs:
   AccessControlAllowOriginHeader:

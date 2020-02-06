@@ -56,6 +56,10 @@ Resources:
   CodeBuildArtefactBucket:
     Type: AWS::S3::Bucket
     Properties:
+      BucketEncryption: 
+        ServerSideEncryptionConfiguration: 
+        - ServerSideEncryptionByDefault:
+            SSEAlgorithm: AES256
       VersioningConfiguration:
         Status: Enabled
 

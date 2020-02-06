@@ -861,6 +861,10 @@ Resources:
   ResultBucket:
     Type: AWS::S3::Bucket
     Properties:
+      BucketEncryption: 
+        ServerSideEncryptionConfiguration: 
+        - ServerSideEncryptionByDefault:
+            SSEAlgorithm: AES256
       LifecycleConfiguration:
         Rules:
         - Id: ExpireQueryResults
@@ -882,6 +886,7 @@ Resources:
   QueryQueue:
     Type: AWS::SQS::Queue
     Properties:
+      KmsMasterKeyId: alias/aws/sqs
       VisibilityTimeout: 120
 
   # Tasks
