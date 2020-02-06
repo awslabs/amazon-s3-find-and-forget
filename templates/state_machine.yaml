@@ -79,7 +79,6 @@ Resources:
             Action:
             - "lambda:InvokeFunction"
             Resource:
-            - !GetAtt OldestExecutionCheck.Arn
             - !GetAtt ScanTable.Arn
             - !GetAtt ParseStateMachineOutput.Arn
             - !GetAtt CheckQueueSize.Arn
@@ -852,21 +851,6 @@ Resources:
       VisibilityTimeout: 120
 
   # Tasks
-  OldestExecutionCheck:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: oldest_execution.handler
-      CodeUri: ../backend/lambdas/tasks/
-      Environment:
-        Variables:
-          StateMachineArn: !Sub arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${StateMachinePrefix}-StateMachine
-      Policies:
-      - Statement:
-        - Action:
-          - "states:ListExecutions"
-          Effect: "Allow"
-          Resource: !Sub arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${StateMachinePrefix}*
-
   ScanTable:
     Type: AWS::Serverless::Function
     Properties:
