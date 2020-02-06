@@ -1,8 +1,7 @@
 import logging
 import tempfile
-import time
 import pytest
-from botocore.exceptions import WaiterError, ClientError
+from botocore.exceptions import WaiterError
 
 from . import query_parquet_file
 
@@ -48,27 +47,3 @@ def test_it_skips_empty_deletion_queue(sf_client, execution, execution_waiter):
     did_enter_skip = next((event for event in history["events"]
                            if event.get("stateEnteredEventDetails", {}).get("name") == "No"), False)
     assert did_enter_skip, "Did not enter the success state associated with an empty deletion queue"
-
-
-def test_it_only_permits_single_executions(stack, sf_client, del_queue_factory):
-    # Start 2 concurrent executions
-    del_queue_factory("12345")
-    first_execution = sf_client.start_execution(stateMachineArn=stack["StateMachineArn"])
-    second_execution = sf_client.start_execution(stateMachineArn=stack["StateMachineArn"])
-
-    # Check if the second execution entered wait state. Timeout 5 seconds
-    did_wait = False
-    limit = time.time() + 5
-    while time.time() < limit:
-        history = sf_client.get_execution_history(executionArn=second_execution["executionArn"])
-        did_wait = next((event for event in history["events"] if event["type"] == "WaitStateEntered"), False)
-
-    # Cleanup and perform the assertion
-    try:
-        sf_client.stop_execution(executionArn=first_execution["executionArn"])
-        sf_client.stop_execution(executionArn=second_execution["executionArn"])
-    except ClientError as e:
-        logger.warning("Unable to stop execution: %s", str(e))
-    finally:
-        assert did_wait, "Did not enter the wait state associated with concurrent executions"
-

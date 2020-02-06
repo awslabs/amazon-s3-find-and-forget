@@ -79,7 +79,7 @@ def test_it_handles_not_found(api_client, del_queue_factory, queue_base_endpoint
     assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
 
 
-def test_it_processes_queue(api_client, queue_base_endpoint, sf_client, job_table, stack, execution_exists_waiter):
+def test_it_processes_queue(api_client, queue_base_endpoint, sf_client, job_table, stack, job_complete_waiter):
     # Arrange
     # Act
     response = api_client.delete(queue_base_endpoint)
@@ -91,10 +91,30 @@ def test_it_processes_queue(api_client, queue_base_endpoint, sf_client, job_tabl
         assert 202 == response.status_code
         assert "Id" in response_body
         # Check the job was written to DynamoDB
-        query_result = job_table.query(KeyConditionExpression=Key("Id").eq(job_id))
+        job_complete_waiter.wait(TableName=job_table.name, Key={"Id": {"S": job_id}, "Sk": {"S": job_id}})
+        query_result = job_table.query(KeyConditionExpression=Key("Id").eq(job_id) & Key("Sk").eq(job_id))
         assert 1 == len(query_result["Items"])
-        # Verify the job started from the DynamoDB stream
-        execution_exists_waiter.wait(executionArn=execution_arn)
+        # Verify the ran from the DynamoDB stream
         assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
     finally:
+        sf_client.stop_execution(executionArn=execution_arn)
+
+
+def test_it_only_allows_one_concurrent_execution(api_client, queue_base_endpoint, sf_client, stack,
+                                                 execution_exists_waiter):
+    # Arrange
+    # Start a job
+    response = api_client.delete(queue_base_endpoint)
+    response_body = response.json()
+    job_id = response_body["Id"]
+    execution_arn = "{}:{}".format(stack["StateMachineArn"].replace("stateMachine", "execution"), job_id)
+    # Act
+    # Start a second job
+    response = api_client.delete(queue_base_endpoint)
+    try:
+        # Assert
+        assert 400 == response.status_code
+        assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
+    finally:
+        execution_exists_waiter.wait(executionArn=execution_arn)
         sf_client.stop_execution(executionArn=execution_arn)

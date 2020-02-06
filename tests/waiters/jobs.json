@@ -1,0 +1,53 @@
+{
+  "version": 2,
+  "waiters": {
+    "JobComplete": {
+      "delay": 2,
+      "operation": "GetItem",
+      "maxAttempts": 30,
+      "acceptors": [
+        {
+          "expected": "COMPLETED",
+          "matcher": "path",
+          "state": "success",
+          "argument": "Item.JobStatus.S"
+        },
+        {
+          "expected": "RUNNING",
+          "matcher": "path",
+          "state": "retry",
+          "argument": "Item.JobStatus.S"
+        },
+        {
+          "expected": "QUEUED",
+          "matcher": "path",
+          "state": "retry",
+          "argument": "Item.JobStatus.S"
+        },
+        {
+          "expected": "FAILED",
+          "matcher": "path",
+          "state": "retry",
+          "argument": "Item.JobStatus.S"
+        },
+        {
+          "expected": "FIND_FAILED",
+          "matcher": "path",
+          "state": "retry",
+          "argument": "Item.JobStatus.S"
+        },
+        {
+          "expected": "FORGET_FAILED",
+          "matcher": "path",
+          "state": "retry",
+          "argument": "Item.JobStatus.S"
+        },
+        {
+          "expected": 404,
+          "matcher": "status",
+          "state": "retry"
+        }
+      ]
+    }
+  }
+}

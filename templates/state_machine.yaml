@@ -440,41 +440,8 @@ Resources:
       DefinitionString: !Sub |-
         {
           "Comment": "State machine for processing the S3 Find and Forget deletion queue.",
-          "StartAt": "Check is Oldest Execution",
+          "StartAt": "Emit Job Started",
           "States": {
-            "Check is Oldest Execution": {
-              "Comment": "Queries the Step Functions API to check if the current executions is the oldest",
-              "Type": "Task",
-              "Resource": "${OldestExecutionCheck.Arn}",
-              "Parameters": {
-                "ExecutionId.$": "$$.Execution.Id"
-              },
-              "ResultPath": "$.IsOldestExecution",
-              "Next": "Should Start?"
-            },
-            "Wait": {
-              "Comment": "Waits before checking again whether this is the current execution",
-              "Type": "Wait",
-              "SecondsPath": "$.WaitDurationJobExecution",
-              "Next": "Check is Oldest Execution"
-            },
-            "Should Start?": {
-              "Comment": "Check if this execution is the oldest running execution and proceed if so.",
-              "Type": "Choice",
-              "Choices": [
-                {
-                  "Variable": "$.IsOldestExecution",
-                  "BooleanEquals": true,
-                  "Next": "Emit Job Started"
-                },
-                {
-                  "Variable": "$.IsOldestExecution",
-                  "BooleanEquals": false,
-                  "Next": "Wait"
-                }
-              ],
-              "Default": "Handle Error"
-            },
             "Emit Job Started": {
               "Type": "Task",
               "Parameters": {
