@@ -27,19 +27,19 @@
         {
           "expected": "FAILED",
           "matcher": "path",
-          "state": "retry",
+          "state": "failure",
           "argument": "Item.JobStatus.S"
         },
         {
           "expected": "FIND_FAILED",
           "matcher": "path",
-          "state": "retry",
+          "state": "failure",
           "argument": "Item.JobStatus.S"
         },
         {
           "expected": "FORGET_FAILED",
           "matcher": "path",
-          "state": "retry",
+          "state": "failure",
           "argument": "Item.JobStatus.S"
         },
         {
