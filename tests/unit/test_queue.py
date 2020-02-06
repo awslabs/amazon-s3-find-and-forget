@@ -35,6 +35,7 @@ def test_it_add_to_queue(table):
     assert 201 == response["statusCode"]
     assert {
         "MatchId": "test",
+        "CreatedAt": ANY,
         "DataMappers": ["a"],
     } == json.loads(response["body"])
 
@@ -43,13 +44,14 @@ def test_it_add_to_queue(table):
 def test_it_provides_default_data_mappers(table):
     response = handlers.enqueue_handler({
         "body": json.dumps({
-            "MatchId": "test"
+            "MatchId": "test",
         })
     }, SimpleNamespace())
 
     assert 201 == response["statusCode"]
     assert {
         "MatchId": "test",
+        "CreatedAt": ANY,
         "DataMappers": [],
     } == json.loads(response["body"])
 
@@ -60,7 +62,10 @@ def test_it_cancels_deletions(table, mock_running_job):
     mock_running_job.return_value = False
     response = handlers.cancel_handler({
         "body": json.dumps({
-            "MatchIds": ["test"],
+            "Matches": [{
+                "MatchId": "test",
+                "CreatedAt": 123456789,
+            }],
         })
     }, SimpleNamespace())
     assert {
@@ -69,12 +74,31 @@ def test_it_cancels_deletions(table, mock_running_job):
     } == response
 
 
+@patch("backend.lambdas.queue.handlers.deletion_queue_table")
+def test_it_rejects_invalid_delete_requests(table):
+    response = handlers.cancel_handler({
+        "body": json.dumps({
+            "Matches": [{
+                "MatchId": "test"
+            }],
+        })
+    }, SimpleNamespace())
+    assert {
+        "statusCode": 422,
+        "headers": ANY,
+        "body": ANY
+    } == response
+
+
 @patch("backend.lambdas.queue.handlers.running_job_exists")
 def test_it_prevents_cancelling_whilst_running_jobs(mock_running_job):
     mock_running_job.return_value = True
     response = handlers.cancel_handler({
         "body": json.dumps({
-            "MatchIds": ["test"],
+            "Matches": [{
+                "MatchId": "test",
+                "CreatedAt": 123456789,
+            }],
         })
     }, SimpleNamespace())
 

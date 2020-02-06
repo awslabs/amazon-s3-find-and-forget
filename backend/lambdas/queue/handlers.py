@@ -9,9 +9,10 @@ import os
 import uuid
 
 import boto3
-from boto3.dynamodb.conditions import Attr, Key
+from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
 
+from boto_utils import DecimalEncoder
 from decorators import with_logger, request_validator, catch_errors, load_schema, add_cors_headers
 
 logger = logging.getLogger()
@@ -35,13 +36,14 @@ def enqueue_handler(event, context):
     data_mappers = body.get("DataMappers", [])
     item = {
         "MatchId": match_id,
+        "CreatedAt": round(datetime.now(timezone.utc).timestamp()),
         "DataMappers": data_mappers,
     }
-    deletion_queue_table.put_item(Item=item, ConditionExpression=Attr("MatchId").not_exists())
+    deletion_queue_table.put_item(Item=item)
 
     return {
         "statusCode": 201,
-        "body": json.dumps(item)
+        "body": json.dumps(item, cls=DecimalEncoder)
     }
 
 
@@ -53,7 +55,7 @@ def get_handler(event, context):
 
     return {
         "statusCode": 200,
-        "body": json.dumps({"MatchIds": items})
+        "body": json.dumps({"MatchIds": items}, cls=DecimalEncoder)
     }
 
 
@@ -65,11 +67,12 @@ def cancel_handler(event, context):
     if running_job_exists():
         raise ValueError("Cannot delete matches whilst there is a job in progress")
     body = json.loads(event["body"])
-    match_ids = body["MatchIds"]
+    matches = body["Matches"]
     with deletion_queue_table.batch_writer() as batch:
-        for match_id in match_ids:
+        for match in matches:
             batch.delete_item(Key={
-                "MatchId": match_id
+                "MatchId": match["MatchId"],
+                "CreatedAt": match["CreatedAt"],
             })
 
     return {

@@ -5,6 +5,9 @@ import os
 import uuid
 
 import boto3
+from boto3.dynamodb.types import TypeDeserializer
+
+deserializer = TypeDeserializer()
 
 batch_size = 10  # SQS Max Batch Size
 
@@ -85,6 +88,7 @@ def convert_iso8601_to_epoch(iso_time: str):
     unix_timestamp = round(parsed.timestamp())
     return unix_timestamp
 
+
 def normalise_dates(data):
     if isinstance(data, str):
         try:
@@ -96,3 +100,9 @@ def normalise_dates(data):
     elif isinstance(data, dict):
         return {k: normalise_dates(v) for k, v in data.items()}
     return data
+
+
+def deserialize_item(item):
+    return {
+        k: deserializer.deserialize(v) for k, v in item.items()
+    }

@@ -47,13 +47,12 @@ def test_it_handles_unknown_jobs(api_client, jobs_endpoint, stack):
     assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
 
 
-def test_it_lists_jobs_by_date(api_client, jobs_endpoint, job_factory, stack, sf_client, execution_waiter):
+def test_it_lists_jobs_by_date(api_client, jobs_endpoint, job_factory, stack, sf_client, execution_exists_waiter):
     # Arrange
     job_id_1 = job_factory(job_id=str(uuid.uuid4()), created_at=1576861489)["Id"]
     job_id_2 = job_factory(job_id=str(uuid.uuid4()), created_at=1576861490)["Id"]
     execution_arn_1 = "{}:{}".format(stack["StateMachineArn"].replace("stateMachine", "execution"), job_id_1)
     execution_arn_2 = "{}:{}".format(stack["StateMachineArn"].replace("stateMachine", "execution"), job_id_2)
-    execution_waiter.wait(executionArn=execution_arn_1)
     try:
         # Act
         response = api_client.get(jobs_endpoint)
@@ -63,6 +62,8 @@ def test_it_lists_jobs_by_date(api_client, jobs_endpoint, job_factory, stack, sf
         assert response_body["Jobs"][0]["CreatedAt"] >= response_body["Jobs"][1]["CreatedAt"]
         assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
     finally:
+        execution_exists_waiter.wait(executionArn=execution_arn_1)
+        execution_exists_waiter.wait(executionArn=execution_arn_1)
         sf_client.stop_execution(executionArn=execution_arn_1)
         sf_client.stop_execution(executionArn=execution_arn_2)
 
@@ -86,11 +87,12 @@ def test_it_lists_job_events_by_date(api_client, jobs_endpoint, job_factory, sta
         sf_client.stop_execution(executionArn=execution_arn)
 
 
-def test_it_updates_job_in_response_to_events(job_factory, job_event_factory, job_table, stack, sf_client, execution_exists_waiter):
+def test_it_updates_job_in_response_to_events(job_factory, job_event_factory, job_table, stack, sf_client,
+                                              job_finished_waiter):
     job_id = job_factory()["Id"]
     job_event_factory(job_id, "FindPhaseFailed", {})
     execution_arn = "{}:{}".format(stack["StateMachineArn"].replace("stateMachine", "execution"), job_id)
-    execution_exists_waiter.wait(executionArn=execution_arn)
+    job_finished_waiter.wait(TableName=job_table.name, Key={"Id": {"S": job_id}, "Sk": {"S": job_id}})
     try:
         item = job_table.get_item(Key={"Id": job_id, "Sk": job_id})["Item"]
         time.sleep(5)  # No item waiter so have to sleep
@@ -99,10 +101,11 @@ def test_it_updates_job_in_response_to_events(job_factory, job_event_factory, jo
         sf_client.stop_execution(executionArn=execution_arn)
 
 
-def test_it_locks_job_status_for_failed_jobs(job_factory, job_event_factory, job_table, stack, sf_client, execution_exists_waiter):
+def test_it_locks_job_status_for_failed_jobs(job_factory, job_event_factory, job_table, stack, sf_client,
+                                             job_finished_waiter):
     job_id = job_factory(JobStatus="FAILED")["Id"]
     execution_arn = "{}:{}".format(stack["StateMachineArn"].replace("stateMachine", "execution"), job_id)
-    execution_exists_waiter.wait(executionArn=execution_arn)
+    job_finished_waiter.wait(TableName=job_table.name, Key={"Id": {"S": job_id}, "Sk": {"S": job_id}})
     try:
         job_event_factory(job_id, "JobSucceeded", {})
         item = job_table.get_item(Key={"Id": job_id, "Sk": job_id})["Item"]

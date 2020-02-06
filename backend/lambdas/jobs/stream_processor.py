@@ -8,7 +8,7 @@ from operator import itemgetter
 
 from stats_updater import update_stats
 from status_updater import update_status
-from boto_utils import DecimalEncoder
+from boto_utils import DecimalEncoder, deserialize_item
 from decorators import with_logger
 
 deserializer = TypeDeserializer()
@@ -20,11 +20,12 @@ state_machine_arn = getenv("StateMachineArn")
 
 @with_logger
 def handler(event, context):
+    records = [r["dynamodb"]["NewImage"] for r in event["Records"] if should_process(r)]
     jobs = [
-        deserialize_item(r) for r in event["Records"] if should_process(r) and is_job(r)
+        deserialize_item(r) for r in records if is_job(r)
     ]
     events = [
-        deserialize_item(r) for r in event["Records"] if should_process(r) and is_job_event(r)
+        deserialize_item(r) for r in records if is_job_event(r)
     ]
     grouped_events = groupby(sorted(events, key=itemgetter("Id")), key=itemgetter("Id"))
 
@@ -35,14 +36,6 @@ def handler(event, context):
         group = [i for i in group]
         update_stats(job_id, group)
         update_status(job_id, group)
-
-
-def deserialize_item(record):
-    new_image = record["dynamodb"]["NewImage"]
-    deserialized = {}
-    for key in new_image:
-        deserialized[key] = deserializer.deserialize(new_image[key])
-    return deserialized
 
 
 def process_job(job):
@@ -62,8 +55,8 @@ def should_process(record):
 
 
 def is_job(record):
-    return deserializer.deserialize(record["dynamodb"]["NewImage"].get("Type")) == "Job"
+    return record.get("Type") and deserializer.deserialize(record.get("Type")) == "Job"
 
 
 def is_job_event(record):
-    return deserializer.deserialize(record["dynamodb"]["NewImage"].get("Type")) == "JobEvent"
+    return record.get("Type") and deserializer.deserialize(record.get("Type")) == "JobEvent"

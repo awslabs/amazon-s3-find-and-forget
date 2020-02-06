@@ -5,11 +5,11 @@ export default {
     return apiGateway(`data_mappers/${id}`, { method: "del" });
   },
 
-  deleteQueueMatches(ids) {
+  deleteQueueMatches(matches) {
     return apiGateway(`queue/matches`, {
       method: "del",
       data: {
-        MatchIds: ids
+        Matches: matches
       }
     })
   },

@@ -3,13 +3,18 @@
     "title": "CancelHandlerPath",
     "type": "object",
     "properties": {
-        "MatchIds": {
+        "Matches": {
             "type": "array",
             "items": {
-                "type": "string"
+                "type": "object",
+                "properties": {
+                    "MatchId": {"type": "string"},
+                    "CreatedAt": {"type": "integer"}
+                },
+                "required": ["MatchId", "CreatedAt"]
             }
         }
     },
-    "required": ["MatchIds"]
+    "required": ["Matches"]
 }
 

@@ -1,30 +1,31 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: Amazon S3 Find and Forget DDB Tables
 
-Parameters:
-
-  DynamoDBTablePrefix:
-    Description: The prefix usesed to name the DynamoDB tables on creation
-    Type: String
-    Default: S3F2
-
 Resources:
 
   DeletionQueueTable:
     Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
     Properties:
       AttributeDefinitions: 
         - 
           AttributeName: MatchId
           AttributeType: S
+        -
+          AttributeName: CreatedAt
+          AttributeType: N
       KeySchema: 
         - 
           AttributeName: MatchId
           KeyType: HASH
+        -
+          AttributeName: CreatedAt
+          KeyType: RANGE
       BillingMode: PAY_PER_REQUEST
 
   DataMapperTable:
     Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
     Properties:
       AttributeDefinitions:
         -
@@ -38,6 +39,7 @@ Resources:
 
   JobTable:
     Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
     Properties:
       StreamSpecification:
         StreamViewType: NEW_IMAGE

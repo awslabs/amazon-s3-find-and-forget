@@ -6,7 +6,7 @@ import pytest
 from mock import MagicMock, ANY, patch
 
 from boto_utils import convert_iso8601_to_epoch, paginate, batch_sqs_msgs, read_queue, emit_event, DecimalEncoder, \
-    normalise_dates
+    normalise_dates, deserialize_item
 
 pytestmark = [pytest.mark.unit, pytest.mark.layers]
 
@@ -158,6 +158,7 @@ def test_it_converts_sfn_datetimes_to_epoch():
     assert convert_iso8601_to_epoch("2020-01-06 16:12:57.092+01:00") == 1578323577
     assert convert_iso8601_to_epoch("2020-01-06 16:12:57+01:00") == 1578323577
 
+
 def test_it_normalises_date_like_fields():
     assert {
         "a": [{"a": 1578327177, "b": "string"}],
@@ -174,3 +175,20 @@ def test_it_normalises_date_like_fields():
         "e": "string",
         "f": 2,
     })
+
+
+def test_it_deserializes_items():
+    result = deserialize_item({
+      "DataMappers": {
+        "L": [
+          {
+            "S": "test"
+          }
+        ]
+      },
+      "MatchId": {
+        "S": "test"
+      }
+    })
+
+    assert {"MatchId": "test", "DataMappers": ["test"]} == result
