@@ -27,7 +27,6 @@ def test_it_gets_jobs(api_client, jobs_endpoint, job_factory, stack, execution_e
             "CreatedAt": mock.ANY,
             "AthenaConcurrencyLimit": mock.ANY,
             "DeletionTasksMaxNumber": mock.ANY,
-            "WaitDurationJobExecution": mock.ANY,
             "WaitDurationQueryExecution": mock.ANY,
             "WaitDurationQueryQueue": mock.ANY,
             "WaitDurationForgetQueue": mock.ANY,

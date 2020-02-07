@@ -5,14 +5,12 @@ Forget solution.
 
 ## Deploying the Solution
 
-To deploy the sample application you will require an AWS account. If you
-don’t already have an AWS account, create one at <https://aws.amazon.com> by
-following the on-screen instructions. Your access to the AWS account must have
-IAM permissions to launch AWS CloudFormation templates that create IAM roles and
-to create the solution resources.
-
-The demo application is deployed as an
+The solution is deployed as an
 [AWS CloudFormation](https://aws.amazon.com/cloudformation) template.
+
+Your access to the AWS account must have IAM permissions to launch AWS
+CloudFormation templates that create IAM roles and to create the solution
+resources.
 
 > **Note** You are responsible for the cost of the AWS services used while
 > running this solution. For full details, see the pricing pages for each AWS
@@ -35,12 +33,46 @@ your preferred AWS region:
 3. You should see a screen titled "*Create Stack*" at the "*Specify template*"
    step. The fields specifying the CloudFormation template are pre-populated.
    Click the *Next* button at the bottom of the page.
-4. On the "*Specify stack details*" screen you may customize the following
-   parameters of the CloudFormation stack:
+4. On the "*Specify stack details*" screen you should provide values for the
+   following parameters of the CloudFormation stack:
    * **Stack Name:** (Default: S3F2) This is the name that is used to refer to
    this stack in CloudFormation once deployed.
    * **AdminEmail:** The email address you wish to setup as the initial
-   user of this Amazon S3 Find and Forget deployment
+   user of this Amazon S3 Find and Forget deployment.
+   
+   The following parameters are optional and allow further customisation of the
+   solution if required:
+   
+   * **VpcIpBlock:** (Default: 10.0.0.0/16) CIDR range to use for the VPC.
+   * **PrivateSubnetIpBlocks:** (Default: "10.0.0.0/22, 10.0.4.0/22, 10.0.8.0/22")
+   CIDR ranges to assign to private subnets.
+   * **CreateCloudFrontDistribution:** (Default: false) Creates a CloudFront
+   distribution for accessing the web interface of the solution.
+   * **AccessControlAllowOriginOverride:** (Default: false) Allows overriding
+   the origin from which the API can be called. If 'false' is provided, the
+   API will only accept requests from the Web UI origin.
+   * **AthenaConcurrencyLimit:** (Default: 20) The number of concurrent Athena
+   queries the solution will run when scanning your data lake.
+   * **DeletionTasksMaxNumber:** (Default: 3)  Max number of concurrent.
+   * **DeletionTaskCPU:** (Default: 4096) Fargate task CPU limit.
+   Fargate tasks to run when performing deletions.
+   * **DeletionTaskMemory:** (Default: 30720) Fargate task memory limit.
+   * **WaitDurationQueryExecution:** (Default: 3) How long to wait when
+   checking if an Athena Query has completed.
+   * **WaitDurationQueryQueue:** (Default: 3)  How long to wait when
+   checking if there the current number of executing queries is less than the
+   specified concurrency limit.
+   * **WaitDurationForgetQueue:** (Default: 30) How long to wait when
+   checking if the Forget phase is complete
+   * **AthenaWorkGroup:** (Default: primary) The Athena work group that should
+   be used for when the solution runs Athena queries.
+   * **EnableContainerInsights:** (Default: false) Whether to enable CloudWatch
+   Container Insights.
+   * **PreBuiltArtefactsBucketOverride:** (Default: false) Overrides the default
+   Bucket containing Front-end and Back-end pre-built artefacts. Use this
+   if you are using a customised version of these artefacts.
+   * **ResourcePrefix:** (Default: S3F2) Resource prefix to apply to resource
+   names when creating statically named resources.
 
    When completed, click *Next*
 5. [Configure stack options](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-add-tags.html) if desired, then click *Next*.
@@ -62,22 +94,22 @@ your preferred AWS region:
    to access the application.
 
 ## Configuring Data Mappers
-TODO
+*TODO*
 
 ## Granting Access to Data
-TODO
+*TODO*
 
 ## Adding to the Deletion Queue
-TODO
+*TODO*
 
 ## Running a Deletion Job
-TODO
+*TODO*
 
 ## Disabling Dummy Mode
-TODO
+*TODO*
 
 ## Adjusting Performance Configuration
-TODO
+*TODO*
 
 ## Updating the Stack
-TODO
+*TODO*

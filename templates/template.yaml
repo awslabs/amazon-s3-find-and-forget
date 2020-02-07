@@ -22,7 +22,7 @@ Parameters:
   CreateCloudFrontDistribution:
     Description: Creates a CloudFront distribution for accessing the web interface of the solution. This must be enabled if S3 Block Public Access is enabled at an account level.
     Type: String
-    Default: "true"
+    Default: "false"
     AllowedValues:
       - "true"
       - "false"
@@ -64,10 +64,6 @@ Parameters:
     Type: String
     Default: 10.0.0.0/16
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
-  WaitDurationJobExecution:
-    Description: Wait interval for checking if a queued job can be started
-    Type: Number
-    Default: 120
   WaitDurationQueryExecution:
     Description: Wait interval for checking if a query has completed
     Type: Number
@@ -99,7 +95,6 @@ Resources:
         {
           "AthenaConcurrencyLimit": ${AthenaConcurrencyLimit},
           "DeletionTasksMaxNumber": ${DeletionTasksMaxNumber},
-          "WaitDurationJobExecution": ${WaitDurationJobExecution},
           "WaitDurationQueryExecution": ${WaitDurationQueryExecution},
           "WaitDurationQueryQueue": ${WaitDurationQueryQueue},
           "WaitDurationForgetQueue": ${WaitDurationForgetQueue}
@@ -283,13 +278,12 @@ Metadata:
           default: "Performance Configuration"
         Parameters:
           - AthenaConcurrencyLimit
+          - DeletionTasksMaxNumber
           - DeletionTaskCPU
           - DeletionTaskMemory
-          - DeletionTasksMaxNumber
       - Label:
           default: "Waiter Configuration"
         Parameters:
-          - WaitDurationJobExecution
           - WaitDurationQueryExecution
           - WaitDurationQueryQueue
           - WaitDurationForgetQueue

@@ -116,7 +116,6 @@ def test_it_process_queue(mock_config, mock_running_job, table, uuid):
     mock_config.return_value = {
         "AthenaConcurrencyLimit": 15,
         "DeletionTasksMaxNumber": 50,
-        "WaitDurationJobExecution": 120,
         "WaitDurationQueryExecution": 5,
         "WaitDurationQueryQueue": 5,
         "WaitDurationForgetQueue": 30
@@ -134,7 +133,6 @@ def test_it_process_queue(mock_config, mock_running_job, table, uuid):
         "CreatedAt": ANY,
         "AthenaConcurrencyLimit": 15,
         "DeletionTasksMaxNumber": 50,
-        "WaitDurationJobExecution": 120,
         "WaitDurationQueryExecution": 5,
         "WaitDurationQueryQueue": 5,
         "WaitDurationForgetQueue": 30
@@ -150,7 +148,6 @@ def test_it_process_queue(mock_config, mock_running_job, table, uuid):
         "CreatedAt": ANY,
         "AthenaConcurrencyLimit": 15,
         "DeletionTasksMaxNumber": 50,
-        "WaitDurationJobExecution": 120,
         "WaitDurationQueryExecution": 5,
         "WaitDurationQueryQueue": 5,
         "WaitDurationForgetQueue": 30
@@ -215,7 +212,6 @@ def test_it_retrieves_config(mock_client):
             "Value": json.dumps({
                 "AthenaConcurrencyLimit": 1,
                 "DeletionTasksMaxNumber": 1,
-                "WaitDurationJobExecution": 1,
                 "WaitDurationQueryExecution": 1,
                 "WaitDurationQueryQueue": 1,
                 "WaitDurationForgetQueue": 1
@@ -227,7 +223,6 @@ def test_it_retrieves_config(mock_client):
     assert {
         "AthenaConcurrencyLimit": 1,
         "DeletionTasksMaxNumber": 1,
-        "WaitDurationJobExecution": 1,
         "WaitDurationQueryExecution": 1,
         "WaitDurationQueryQueue": 1,
         "WaitDurationForgetQueue": 1
