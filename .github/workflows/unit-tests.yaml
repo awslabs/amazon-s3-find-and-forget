@@ -1,0 +1,28 @@
+---
+
+name: Unit Tests
+on: [push, pull_request]
+jobs:
+  unit_tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.7
+      - name: Set up Nodejs 12
+        uses: actions/setup-node@v1
+        with:
+          node-version: 12
+      - name: Install virtualenv
+        run: pip install virtualenv
+      - name: Install dependencies
+        run: make setup
+      - name: Backend unit tests
+        run: make test-unit
+        env:
+          AWS_DEFAULT_REGION: eu-west-1
+      - name: Frontend unit tests
+        run: make test-frontend
