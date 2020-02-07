@@ -6,7 +6,7 @@ import {docsUrl} from "../../utils";
 const links = [
   {
     title: "Add a Data Mapper",
-    url: docsUrl("OVERVIEW.md#configuring-data-mappers")
+    url: docsUrl("USER_GUIDE.md#configuring-data-mappers")
   },
   {
     title: "Troubleshooting",

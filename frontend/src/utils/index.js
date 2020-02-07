@@ -72,7 +72,7 @@ const trimTrailingSlash = x => x.replace(/\/+$/, '');
 const trimLeadingSlash = x => x.replace(/\/+$/, '');
 
 export const repoUrl = x => {
-  const baseUrl = trimTrailingSlash(process.env.REACT_APP_REPO_URL.replace("git+", ""));
+  const baseUrl = trimTrailingSlash(process.env.REACT_APP_REPO_URL.replace("git+", "").replace(".git", ""));
   const path = trimLeadingSlash(x);
   return trimTrailingSlash(`${baseUrl}/${path}`);
 }

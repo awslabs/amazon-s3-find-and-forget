@@ -6,11 +6,11 @@ import {docsUrl} from "../../utils";
 const links = [
   {
     title: "Deletion Job Status Reference",
-    url: docsUrl("OVERVIEW.md#deletion-job-statuses")
+    url: docsUrl("USER_GUIDE.md#deletion-job-statuses")
   },
   {
     title: "Understanding Deletion Job Events",
-    url: docsUrl("OVERVIEW.md#deletion-job-events")
+    url: docsUrl("USER_GUIDE.md#deletion-job-events")
   },
   {
     title: "Troubleshooting",
@@ -23,7 +23,7 @@ export default () => (
     <h2>Deletion Job Details</h2>
     <p className="separator-top">
       You can view the current status and associated stats for the Deletion Job.
-      Consult the <a href={docsUrl("OVERVIEW.md#deletion-job-statuses")} target="_blank" rel="noopener noreferrer" className="learnMoreLink">job status</a> documentation
+      Consult the <a href={docsUrl("USER_GUIDE.md#deletion-job-statuses")} target="_blank" rel="noopener noreferrer" className="learnMoreLink">job status</a> documentation
       for more information on possible job statuses and their
       meaning. You can use the Job Events list to see all the events that
       have occurred for the current job. To view the raw event data,

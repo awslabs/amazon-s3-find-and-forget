@@ -6,7 +6,7 @@ import {docsUrl} from "../../utils";
 const links = [
   {
     title: "Add a Match to the Deletion Queue",
-    url: docsUrl("OVERVIEW.md#adding-a-match-to-the-queue")
+    url: docsUrl("USER_GUIDE.md#adding-to-the-deletion-queue")
   },
   {
     title: "Troubleshooting",

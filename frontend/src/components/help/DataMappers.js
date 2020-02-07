@@ -6,15 +6,15 @@ import {docsUrl} from "../../utils";
 const links = [
   {
     title: "Working with Data Mappers",
-    url: docsUrl("OVERVIEW.md#data-mappers")
+    url: docsUrl("USER_GUIDE.md#data-mappers")
   },
   {
     title: "Add a Data Mapper",
-    url: docsUrl("OVERVIEW.md#configuring-data-mappers")
+    url: docsUrl("USER_GUIDE.md#configuring-data-mappers")
   },
   {
     title: "Setup and Test Data Access",
-    url: docsUrl("OVERVIEW.md#granting-access-to-the-data")
+    url: docsUrl("USER_GUIDE.md#granting-access-to-data")
   },
   {
     title: "Troubleshooting",
