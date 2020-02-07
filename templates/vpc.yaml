@@ -165,8 +165,15 @@ Resources:
     Properties:
       GroupDescription: !Ref AWS::StackName
       VpcId: !Ref VPC
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          Description: Egress Rule for VPC Endpoints
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
       SecurityGroupIngress:
         - IpProtocol: tcp
+          Description: Ingress Rule
           FromPort: 443
           ToPort: 443
           CidrIp: !Ref VpcIpBlock

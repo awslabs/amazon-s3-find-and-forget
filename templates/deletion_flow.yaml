@@ -78,6 +78,7 @@ Resources:
       ContentBasedDeduplication: true
       FifoQueue: true
       ReceiveMessageWaitTimeSeconds: 0
+      KmsMasterKeyId: alias/aws/sqs
       VisibilityTimeout: 10800
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt DLQ.Arn
@@ -181,6 +182,7 @@ Resources:
     Properties:
       ContentBasedDeduplication: true
       FifoQueue: true
+      KmsMasterKeyId: alias/aws/sqs
       ReceiveMessageWaitTimeSeconds: 0
 
   UpdateClusterConfig:
