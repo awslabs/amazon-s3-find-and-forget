@@ -90,8 +90,8 @@ your preferred AWS region:
 9. Wait for the CloudFormation stack to launch. Completion is indicated when
    the "Stack status" is "*CREATE_COMPLETE*".
    * You can monitor the stack creation progress in the "Events" tab.
-10. Note the *url* displayed in the *Outputs* tab for the stack. This is used
-   to access the application.
+10. Note the *WebUIUrl* displayed in the *Outputs* tab for the stack. This is
+   used to access the application.
 
 ## Configuring Data Mappers
 *TODO*
