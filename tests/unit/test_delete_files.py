@@ -11,7 +11,8 @@ from pyarrow.lib import ArrowException
 
 with patch.dict(os.environ, {
     "DELETE_OBJECTS_QUEUE": "https://url/q.fifo",
-    "DLQ": "https://url/q"
+    "DLQ": "https://url/q",
+    "JobTable": "test",
 }):
     from backend.ecs_tasks.delete_files.delete_files import delete_and_write, execute, get_container_id, \
     emit_deletion_event, emit_failed_deletion_event, check_object_size, get_max_file_size_bytes, save, get_grantees, \
@@ -21,6 +22,7 @@ pytestmark = [pytest.mark.unit]
 
 
 @patch("os.path.exists", MagicMock(return_value=True))
+@patch("backend.ecs_tasks.delete_files.delete_files.safe_mode", MagicMock(return_value=False))
 @patch("os.remove")
 @patch("backend.ecs_tasks.delete_files.delete_files.pq.ParquetWriter")
 @patch("backend.ecs_tasks.delete_files.delete_files.load_parquet")
@@ -53,6 +55,7 @@ def test_happy_path_when_queue_not_empty(mock_save, mock_s3, mock_emit, mock_del
 
 
 @patch("os.path.exists", MagicMock(return_value=True))
+@patch("backend.ecs_tasks.delete_files.delete_files.safe_mode", MagicMock(return_value=False))
 @patch("os.remove")
 @patch("backend.ecs_tasks.delete_files.delete_files.logger")
 @patch("backend.ecs_tasks.delete_files.delete_files.pq.ParquetWriter")
@@ -152,6 +155,7 @@ def test_it_returns_uuid_as_string():
 
 @patch("os.path.exists", MagicMock(return_value=True))
 @patch("os.remove")
+@patch("backend.ecs_tasks.delete_files.delete_files.safe_mode", MagicMock(return_value=False))
 @patch("backend.ecs_tasks.delete_files.delete_files.pq.ParquetWriter", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.load_parquet")
 @patch("backend.ecs_tasks.delete_files.delete_files.delete_and_write")
@@ -176,6 +180,7 @@ def test_it_handles_missing_col_exceptions(mock_queue, mock_emit, mock_load_parq
 
 @patch("os.path.exists", MagicMock(return_value=True))
 @patch("os.remove")
+@patch("backend.ecs_tasks.delete_files.delete_files.safe_mode", MagicMock(return_value=False))
 @patch("backend.ecs_tasks.delete_files.delete_files.pq.ParquetWriter", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.load_parquet")
 @patch("backend.ecs_tasks.delete_files.delete_files.delete_and_write")
@@ -199,6 +204,7 @@ def test_it_handles_arrow_exceptions(mock_queue, mock_emit, mock_load_parquet, m
 
 @patch("os.path.exists", MagicMock(return_value=False))
 @patch("os.remove", MagicMock())
+@patch("backend.ecs_tasks.delete_files.delete_files.safe_mode", MagicMock(return_value=False))
 @patch("backend.ecs_tasks.delete_files.delete_files.emit_failed_deletion_event")
 @patch("backend.ecs_tasks.delete_files.delete_files.queue")
 def test_it_validates_messages_with_missing_keys(mock_queue, mock_emit):
@@ -211,6 +217,7 @@ def test_it_validates_messages_with_missing_keys(mock_queue, mock_emit):
 
 @patch("os.path.exists", MagicMock(return_value=False))
 @patch("os.remove", MagicMock())
+@patch("backend.ecs_tasks.delete_files.delete_files.safe_mode", MagicMock(return_value=False))
 @patch("backend.ecs_tasks.delete_files.delete_files.emit_failed_deletion_event")
 @patch("backend.ecs_tasks.delete_files.delete_files.queue")
 def test_it_validates_messages_with_invalid_body(mock_queue, mock_emit):
@@ -223,6 +230,7 @@ def test_it_validates_messages_with_invalid_body(mock_queue, mock_emit):
 
 @patch("os.path.exists", MagicMock(return_value=False))
 @patch("os.remove", MagicMock())
+@patch("backend.ecs_tasks.delete_files.delete_files.safe_mode", MagicMock(return_value=False))
 @patch("backend.ecs_tasks.delete_files.delete_files.emit_failed_deletion_event")
 @patch("backend.ecs_tasks.delete_files.delete_files.queue")
 @patch("backend.ecs_tasks.delete_files.delete_files.s3")
@@ -239,6 +247,7 @@ def test_it_handles_s3_permission_issues(mock_s3, mock_queue, mock_emit):
 
 @patch("os.path.exists", MagicMock(return_value=False))
 @patch("os.remove", MagicMock())
+@patch("backend.ecs_tasks.delete_files.delete_files.safe_mode", MagicMock(return_value=False))
 @patch("backend.ecs_tasks.delete_files.delete_files.emit_failed_deletion_event")
 @patch("backend.ecs_tasks.delete_files.delete_files.check_object_size")
 @patch("backend.ecs_tasks.delete_files.delete_files.queue")
@@ -471,6 +480,7 @@ def test_it_restores_write_permissions(mock_grantees, mock_acl, mock_tagging, mo
 
 @patch("os.path.exists", MagicMock(return_value=True))
 @patch("os.remove")
+@patch("backend.ecs_tasks.delete_files.delete_files.safe_mode", MagicMock(return_value=False))
 @patch("backend.ecs_tasks.delete_files.delete_files.pq.ParquetWriter")
 @patch("backend.ecs_tasks.delete_files.delete_files.load_parquet")
 @patch("backend.ecs_tasks.delete_files.delete_files.delete_and_write")
