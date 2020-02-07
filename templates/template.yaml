@@ -59,6 +59,13 @@ Parameters:
     Type: String
     Default: S3F2
     AllowedPattern: ^[a-zA-Z0-9]*$
+  SafeMode:
+    Description: Whether to enable safe mode. When enabled, the solution will not overwrite the original object when forgetting but instead save a copy
+    Type: String
+    Default: "true"
+    AllowedValues:
+      - "true"
+      - "false"
   VpcIpBlock:
     Description: CIDR block for the VPC
     Type: String
@@ -95,6 +102,7 @@ Resources:
         {
           "AthenaConcurrencyLimit": ${AthenaConcurrencyLimit},
           "DeletionTasksMaxNumber": ${DeletionTasksMaxNumber},
+          "SafeMode": ${SafeMode},
           "WaitDurationQueryExecution": ${WaitDurationQueryExecution},
           "WaitDurationQueryQueue": ${WaitDurationQueryQueue},
           "WaitDurationForgetQueue": ${WaitDurationForgetQueue}

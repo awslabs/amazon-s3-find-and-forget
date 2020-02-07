@@ -26,6 +26,8 @@ handler = logging.StreamHandler(stream=sys.stdout)
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
+ddb = boto3.resource("dynamodb")
+table = ddb.Table(os.getenv("JobTable"))
 sqs = boto3.resource('sqs', endpoint_url="https://sqs.{}.amazonaws.com".format(os.getenv("AWS_DEFAULT_REGION")))
 queue = sqs.Queue(os.getenv("DELETE_OBJECTS_QUEUE"))
 s3 = s3fs.S3FileSystem()
@@ -184,6 +186,11 @@ def get_container_id():
         return str(uuid4())
 
 
+@lru_cache()
+def safe_mode(job_id):
+    return table.get_item(Key={"Id": job_id, "Sk": job_id})["SafeMode"]
+
+
 def emit_deletion_event(message_body, stats):
     job_id = message_body["JobId"]
     event_data = {
@@ -234,10 +241,15 @@ def execute(message_body, receipt_handle):
         validate_message(message_body)
         stats = {"ProcessedRows": 0, "DeletedRows": 0}
         body = json.loads(message_body)
+        job_id = body["JobId"]
+        in_safe_mode = safe_mode(job_id)
         object_path = body["Object"]
+        input_bucket, input_key = object_path.replace("s3://", "").split("/", 1)
+        output_bucket = input_bucket
+        output_key = input_key
+        check_object_size(client, input_bucket, input_key)
+        logger.info("Using safe mode: {}".format(in_safe_mode))
         logger.info("Downloading and opening the object {}".format(object_path))
-        bucket, key = object_path.replace("s3://", "").split("/", 1)
-        check_object_size(client, bucket, key)
         with s3.open(object_path, "rb") as f:
             parquet_file = load_parquet(f, stats)
             schema = parquet_file.metadata.schema.to_arrow_schema().remove_metadata()
@@ -246,7 +258,7 @@ def execute(message_body, receipt_handle):
                     cols = body["Columns"]
                     delete_and_write(parquet_file, i, cols, writer, stats)
         if stats["DeletedRows"] > 0:
-            save(client, temp_dest, bucket, key)
+            save(client, temp_dest, output_bucket, output_key)
         else:
             logger.warning("The object {} was processed successfully but no rows required deletion".format(object_path))
         msg.delete()
