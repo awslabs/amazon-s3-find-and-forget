@@ -1,11 +1,29 @@
 Amazon S3 Find and Forget
 =========================
 
-> Warning: This project is currently being developed and the code shouldn't be used in production.
+> Warning: This project is currently in beta and should not be used for
+> production purposes.
 
-Amazon S3 Find and Forget is a solution for helping customers to find and delete user data in Amazon S3.
-It is designed to help customers to fulfil their GDPR’s Right To Be Forgotten obligations when operating in a large Data Lake in a performant, reliable, secure and cost-effective way.
+Amazon S3 Find and Forget is a solution to the need to selectively erase
+records from data lakes stored on Amazon Simple Storage Service (Amazon S3).
+This solution can assist data lake operators to fulfill their obligations to
+handle erasure requests such as those that can be made under the European
+General Data Protection Regulation (GDPR).
 
+The Amazon S3 Find and Forget solution can be used with Parquet-format data
+stored in Amazon S3 buckets. Your data lake is connected to the solution via an
+AWS Glue table and specifying which columns in the table contain user
+identifiers.
+
+Once configured, you can queue record identifiers that you want the
+corresponding data erased for. You can then run a deletion job to remove the
+data corresponding to the records specified from the objects in the data lake.
+A report log is provided of all the S3 objects modified.
+
+The solution provides a web user interface, and a REST API to allow you to
+integrate it in your own applications.
+
+## Documentation
 - [Deployment](#deploy)
 - [Monitoring the Solution](docs/MONITORING.md)
 - [Automated Tests](docs/TESTING.md)
