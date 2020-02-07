@@ -1,7 +1,8 @@
 Amazon S3 Find and Forget
 =========================
 
-> Warning: This project is currently being developed and the code shouldn't be used in production.
+> Warning: This project is currently in beta and should not be used for
+> production purposes.
 
 Amazon S3 Find and Forget is a solution to the need to selectively erase
 records from data lakes stored on Amazon Simple Storage Service (Amazon S3).
