@@ -26,7 +26,8 @@ integrate it in your own applications.
 ## Documentation
 - [Deployment](#deploy)
 - [Monitoring the Solution](docs/MONITORING.md)
-- [Automated Tests](docs/TESTING.md)
+- [Local Development](docs/LOCAL_DEVELOPMENT.md)
+- [Limits](docs/LIMITS.md)
 
 ## Getting Started
 
