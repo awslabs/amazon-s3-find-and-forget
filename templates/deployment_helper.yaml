@@ -47,24 +47,12 @@ Parameters:
     Type: String
   ResourcePrefix:
     Type: String
-  TempBucket:
-    Type: String
   Version:
     Type: String
   WebUIBucket:
     Type: String
 
 Resources:
-  CodeBuildArtefactBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketEncryption: 
-        ServerSideEncryptionConfiguration: 
-        - ServerSideEncryptionByDefault:
-            SSEAlgorithm: AES256
-      VersioningConfiguration:
-        Status: Enabled
-
   CodeBuildBackendServiceRole:
     Type: AWS::IAM::Role
     Properties:
@@ -331,12 +319,10 @@ Resources:
               - s3:DeleteObject*
               - s3:GetBucketVersioning
               - s3:ListBucket*
-              - s3:ListObjectVersions
+              - s3:ListObject*
             Resource:
               - !Sub arn:aws:s3:::${CodeBuildArtefactBucket}
               - !Sub arn:aws:s3:::${CodeBuildArtefactBucket}/*
-              - !Sub arn:aws:s3:::${TempBucket}
-              - !Sub arn:aws:s3:::${TempBucket}/*
               - !Sub arn:aws:s3:::${WebUIBucket}
               - !Sub arn:aws:s3:::${WebUIBucket}/*
 
@@ -378,19 +364,12 @@ Resources:
             Action: ecr:DescribeImages
             Resource: !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ECRRepository}
 
-  CleanupCodeBuildBucket:
+  CleanupCodeBuildArtefactBucket:
     Type: Custom::Setup
     Properties:
       ServiceToken: !GetAtt CleanupBucketFunction.Arn
       LogLevel: !Ref LogLevel
       Bucket: !Ref CodeBuildArtefactBucket
-
-  CleanupTempBucket:
-    Type: Custom::Setup
-    Properties:
-      ServiceToken: !GetAtt CleanupBucketFunction.Arn
-      LogLevel: !Ref LogLevel
-      Bucket: !Ref TempBucket
 
   CleanupWebUIBucket:
     Type: Custom::Setup

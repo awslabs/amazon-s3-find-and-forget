@@ -30,6 +30,8 @@ ddb = boto3.resource("dynamodb")
 table = ddb.Table(os.getenv("JobTable"))
 sqs = boto3.resource('sqs', endpoint_url="https://sqs.{}.amazonaws.com".format(os.getenv("AWS_DEFAULT_REGION")))
 queue = sqs.Queue(os.getenv("DELETE_OBJECTS_QUEUE"))
+safe_mode_bucket = os.getenv("SAFE_MODE_BUCKET")
+safe_mode_prefix = os.getenv("SAFE_MODE_PREFIX")
 s3 = s3fs.S3FileSystem()
 
 
@@ -188,7 +190,7 @@ def get_container_id():
 
 @lru_cache()
 def safe_mode(job_id):
-    return table.get_item(Key={"Id": job_id, "Sk": job_id})["SafeMode"]
+    return table.get_item(Key={"Id": job_id, "Sk": job_id}).get("SafeMode", True)
 
 
 def emit_deletion_event(message_body, stats):
@@ -245,10 +247,10 @@ def execute(message_body, receipt_handle):
         in_safe_mode = safe_mode(job_id)
         object_path = body["Object"]
         input_bucket, input_key = object_path.replace("s3://", "").split("/", 1)
-        output_bucket = input_bucket
-        output_key = input_key
+        output_bucket = input_bucket if not in_safe_mode else safe_mode_bucket
+        output_key = input_key if not in_safe_mode else safe_mode_prefix + input_key
         check_object_size(client, input_bucket, input_key)
-        logger.info("Using safe mode: {}".format(in_safe_mode))
+        logger.info("Safe mode is {}. Writing object to s3://{}/{}".format(in_safe_mode, output_bucket, output_key))
         logger.info("Downloading and opening the object {}".format(object_path))
         with s3.open(object_path, "rb") as f:
             parquet_file = load_parquet(f, stats)
