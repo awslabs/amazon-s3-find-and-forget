@@ -66,7 +66,7 @@ def delete_and_write(parquet_file, row_group, columns, writer, stats):
     logger.info("wrote table")
 
 
-def save(client, new_parquet, bucket, key):
+def save(client, new_parquet, bucket, key, in_safe_mode=True):
     # Get Object Settings
     request_payer_args, _ = get_requester_payment(client, bucket)
     object_info_args, _ = get_object_info(client, bucket, key)
@@ -75,14 +75,16 @@ def save(client, new_parquet, bucket, key):
     extra_args = {**request_payer_args, **object_info_args, **tagging_args, **acl_args}
     logger.info("Object settings: {}".format(extra_args))
     # Write Object Back to S3
-    logger.info("Saving updated object to S3")
-    client.upload_file(new_parquet, bucket, key, ExtraArgs=extra_args)
+    output_bucket = bucket if not in_safe_mode else safe_mode_bucket
+    output_key = key if not in_safe_mode else safe_mode_prefix + key
+    logger.info("Safe mode is {}. Saving updated object to s3://{}/{}".format(in_safe_mode, output_bucket, output_key))
+    client.upload_file(new_parquet, output_bucket, output_key, ExtraArgs=extra_args)
     logger.info("Object uploaded to S3")
     # GrantWrite cannot be set whilst uploading therefore ACLs need to be restored separately
     write_grantees = ",".join(get_grantees(acl_resp, "WRITE"))
     if write_grantees:
-        logger.info("WRITE grant found. Restoring additional grantees for object {}: {}".format(key, write_grantees))
-        client.put_object_acl(Bucket=bucket, Key=key, **{
+        logger.info("WRITE grant found. Restoring additional grantees for object")
+        client.put_object_acl(Bucket=output_bucket, Key=output_key, **{
             **request_payer_args,
             **acl_args,
             'GrantWrite': write_grantees,
@@ -247,10 +249,7 @@ def execute(message_body, receipt_handle):
         in_safe_mode = safe_mode(job_id)
         object_path = body["Object"]
         input_bucket, input_key = object_path.replace("s3://", "").split("/", 1)
-        output_bucket = input_bucket if not in_safe_mode else safe_mode_bucket
-        output_key = input_key if not in_safe_mode else safe_mode_prefix + input_key
         check_object_size(client, input_bucket, input_key)
-        logger.info("Safe mode is {}. Writing object to s3://{}/{}".format(in_safe_mode, output_bucket, output_key))
         logger.info("Downloading and opening the object {}".format(object_path))
         with s3.open(object_path, "rb") as f:
             parquet_file = load_parquet(f, stats)
@@ -260,7 +259,7 @@ def execute(message_body, receipt_handle):
                     cols = body["Columns"]
                     delete_and_write(parquet_file, i, cols, writer, stats)
         if stats["DeletedRows"] > 0:
-            save(client, temp_dest, output_bucket, output_key)
+            save(client, temp_dest, input_bucket, input_key, in_safe_mode)
         else:
             logger.warning("The object {} was processed successfully but no rows required deletion".format(object_path))
         msg.delete()

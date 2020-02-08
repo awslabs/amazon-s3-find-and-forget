@@ -13,10 +13,12 @@ with patch.dict(os.environ, {
     "DELETE_OBJECTS_QUEUE": "https://url/q.fifo",
     "DLQ": "https://url/q",
     "JobTable": "test",
+    "SAFE_MODE_BUCKET": "test",
+    "SAFE_MODE_PREFIX": "results/",
 }):
     from backend.ecs_tasks.delete_files.delete_files import delete_and_write, execute, get_container_id, \
     emit_deletion_event, emit_failed_deletion_event, check_object_size, get_max_file_size_bytes, save, get_grantees, \
-    get_object_info, get_object_tags, get_object_acl, get_requester_payment
+    get_object_info, get_object_tags, get_object_acl, get_requester_payment, safe_mode
 
 pytestmark = [pytest.mark.unit]
 
@@ -50,7 +52,7 @@ def test_happy_path_when_queue_not_empty(mock_save, mock_s3, mock_emit, mock_del
     mock_s3.open.assert_called_with(object_path, "rb")
     mock_delete_and_write.assert_called_with(
         ANY, 0, [column], ANY, ANY)
-    mock_save.assert_called_with(ANY, tmp_file, "bucket", "path/basic.parquet")
+    mock_save.assert_called_with(ANY, tmp_file, "bucket", "path/basic.parquet", False)
     mock_remove.assert_called_with(tmp_file)
 
 
@@ -415,6 +417,23 @@ def test_it_gets_grantees_by_type():
 @patch("backend.ecs_tasks.delete_files.delete_files.get_object_tags")
 @patch("backend.ecs_tasks.delete_files.delete_files.get_object_acl")
 @patch("backend.ecs_tasks.delete_files.delete_files.get_grantees")
+def test_it_applies_safe_mode(mock_grantees, mock_acl, mock_tagging, mock_standard, mock_requester):
+    mock_client = MagicMock()
+    mock_requester.return_value = ({}, {})
+    mock_standard.return_value = ({}, {})
+    mock_tagging.return_value = ({}, {})
+    mock_acl.return_value = ({}, {})
+    mock_grantees.return_value = ''
+    save(mock_client, "filepath", "bucket", "key", True)
+    mock_client.upload_file.assert_called_with("filepath", "test", "results/key", ExtraArgs={})
+    mock_client.put_object_acl.assert_not_called()
+
+
+@patch("backend.ecs_tasks.delete_files.delete_files.get_requester_payment")
+@patch("backend.ecs_tasks.delete_files.delete_files.get_object_info")
+@patch("backend.ecs_tasks.delete_files.delete_files.get_object_tags")
+@patch("backend.ecs_tasks.delete_files.delete_files.get_object_acl")
+@patch("backend.ecs_tasks.delete_files.delete_files.get_grantees")
 def test_it_applies_settings_when_saving(mock_grantees, mock_acl, mock_tagging, mock_standard, mock_requester):
     mock_client = MagicMock()
     mock_requester.return_value = {"RequestPayer": "requester"}, {"Payer": "Requester"}
@@ -434,7 +453,7 @@ def test_it_applies_settings_when_saving(mock_grantees, mock_acl, mock_tagging, 
         ]
     })
     mock_grantees.return_value = ''
-    save(mock_client, "filepath", "bucket", "key")
+    save(mock_client, "filepath", "bucket", "key", False)
     mock_client.upload_file.assert_called_with("filepath", "bucket", "key", ExtraArgs={
         "Expires": "123",
         "Metadata": {},
@@ -466,7 +485,7 @@ def test_it_restores_write_permissions(mock_grantees, mock_acl, mock_tagging, mo
         ]
     })
     mock_grantees.return_value = {"id=123"}
-    save(mock_client, "filepath", "bucket", "key")
+    save(mock_client, "filepath", "bucket", "key", False)
     mock_client.upload_file.assert_called_with("filepath", "bucket", "key", ExtraArgs={
         "GrantFullControl": "id=abc",
     })
@@ -505,6 +524,14 @@ def test_it_provides_logs_for_acl_fail(mock_save, mock_s3, mock_emit, mock_delet
     mock_emit.assert_called_with(ANY, "ClientError: An error occurred (Unknown) when calling the PutObjectAcl "
                                       "operation: Unknown. Redacted object uploaded successfully but unable to "
                                       "restore WRITE ACL")
+
+
+@patch("backend.ecs_tasks.delete_files.delete_files.table")
+def test_it_passes_through_safe_mode(table):
+    table.get_item.return_value = {"SafeMode": True}
+    assert safe_mode("123")
+    table.get_item.return_value = {"SafeMode": False}
+    assert not safe_mode("456")
 
 
 def message_stub(**kwargs):
