@@ -22,7 +22,7 @@ Parameters:
   CreateCloudFrontDistribution:
     Description: Creates a CloudFront distribution for accessing the web interface of the solution. This must be enabled if S3 Block Public Access is enabled at an account level.
     Type: String
-    Default: "false"
+    Default: "true"
     AllowedValues:
       - "true"
       - "false"

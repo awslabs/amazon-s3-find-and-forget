@@ -46,17 +46,19 @@ your preferred AWS region:
    * **VpcIpBlock:** (Default: 10.0.0.0/16) CIDR range to use for the VPC.
    * **PrivateSubnetIpBlocks:** (Default: "10.0.0.0/22, 10.0.4.0/22, 10.0.8.0/22")
    CIDR ranges to assign to private subnets.
-   * **CreateCloudFrontDistribution:** (Default: false) Creates a CloudFront
+   * **CreateCloudFrontDistribution:** (Default: true) Creates a CloudFront
    distribution for accessing the web interface of the solution.
    * **AccessControlAllowOriginOverride:** (Default: false) Allows overriding
    the origin from which the API can be called. If 'false' is provided, the
    API will only accept requests from the Web UI origin.
    * **AthenaConcurrencyLimit:** (Default: 20) The number of concurrent Athena
    queries the solution will run when scanning your data lake.
-   * **DeletionTasksMaxNumber:** (Default: 3)  Max number of concurrent.
-   * **DeletionTaskCPU:** (Default: 4096) Fargate task CPU limit.
+   * **DeletionTasksMaxNumber:** (Default: 3)  Max number of concurrent 
    Fargate tasks to run when performing deletions.
-   * **DeletionTaskMemory:** (Default: 30720) Fargate task memory limit.
+   * **DeletionTaskCPU:** (Default: 4096) Fargate task CPU limit. For more info
+   see [Fargate Configuration]
+   * **DeletionTaskMemory:** (Default: 30720) Fargate task memory limit. For
+   more info see [Fargate Configuration]
    * **WaitDurationQueryExecution:** (Default: 3) How long to wait when
    checking if an Athena Query has completed.
    * **WaitDurationQueryQueue:** (Default: 3)  How long to wait when
@@ -113,3 +115,5 @@ your preferred AWS region:
 
 ## Updating the Stack
 *TODO*
+
+[Fargate Configuration]: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html#fargate-tasks-size
