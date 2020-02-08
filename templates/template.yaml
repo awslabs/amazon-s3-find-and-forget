@@ -93,6 +93,22 @@ Mappings:
       Version: '0.1'
 
 Resources:
+  TempBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: ExpireQueryResults
+            Prefix: queries
+            Status: Enabled
+            ExpirationInDays: '1'
+          - Id: ExpireQueryResults
+            Prefix: results
+            Status: Enabled
+            ExpirationInDays: '1'
+
   ConfigParameter:
     Type: AWS::SSM::Parameter
     Properties:
@@ -127,7 +143,6 @@ Resources:
         JobTableDateGSI: !GetAtt DDBStack.Outputs.JobTableDateGSI
         JobTableName: !GetAtt DDBStack.Outputs.JobTable
         JobTableStreamArn: !GetAtt DDBStack.Outputs.JobTableStreamArn
-        ResultBucket: !GetAtt StateMachineStack.Outputs.ResultBucket
         StateMachineArn: !GetAtt StateMachineStack.Outputs.StateMachineArn
         WebUIOrigin: !GetAtt WebUIStack.Outputs.Origin
   AuthStack:
@@ -136,7 +151,6 @@ Resources:
       TemplateURL: ./auth.yaml
       Parameters:
         AdminEmail: !Ref AdminEmail
-        ReportsBucket: !GetAtt StateMachineStack.Outputs.ResultBucket
         ResourcePrefix: !Ref ResourcePrefix
   DDBStack:
     Type: AWS::CloudFormation::Stack
@@ -180,7 +194,7 @@ Resources:
         ECRRepository: !GetAtt DelStack.Outputs.ECRRepository
         PreBuiltArtefactsBucket: !If [DefaultPreBuiltArtefactsBucket, !Sub "solution-builders-${AWS::Region}", !Ref PreBuiltArtefactsBucketOverride]
         ResourcePrefix: !Ref ResourcePrefix
-        ResultBucket: !GetAtt StateMachineStack.Outputs.ResultBucket
+        TempBucket: !Ref TempBucket
         Version: !FindInMap [Solution, Constants, Version]
         WebUIBucket: !GetAtt WebUIStack.Outputs.WebUIBucket
   LayersStack:
@@ -205,6 +219,7 @@ Resources:
         ECSCluster: !GetAtt DelStack.Outputs.ECSCluster
         JobTableName: !GetAtt DDBStack.Outputs.JobTable
         ReportsAccessControlAllowOriginOverride: !Ref AccessControlAllowOriginOverride
+        ResultBucket: !Ref TempBucket
         StateMachinePrefix: !Ref ResourcePrefix
         WebUIOrigin: !GetAtt WebUIStack.Outputs.Origin
   VpcStack:
@@ -257,12 +272,12 @@ Outputs:
     Value: !GetAtt DDBStack.Outputs.JobTable
   QueryQueueUrl:
      Value: !GetAtt StateMachineStack.Outputs.QueryQueueUrl
-  ResultBucket:
-    Value: !GetAtt StateMachineStack.Outputs.ResultBucket
   StateMachineArn:
     Value: !GetAtt StateMachineStack.Outputs.StateMachineArn
   StateMachineRoleArn:
     Value: !GetAtt StateMachineStack.Outputs.StateMachineRoleArn
+  TempBucket:
+    Value: !Ref TempBucket
   WebUIBucket:
     Value: !GetAtt WebUIStack.Outputs.WebUIBucket
   WebUIUrl:

@@ -71,9 +71,6 @@ Parameters:
       - INFO
       - DEBUG
       - NOTSET
-  ResultBucket:
-    Description: Bucket where job reports are stored
-    Type: String
   StateMachineArn:
     Description: State Machine to invoke to process the deletion queue
     Type: String
@@ -217,7 +214,6 @@ Resources:
       Environment:
         Variables:
           StateMachineArn: !Ref StateMachineArn
-          ResultBucket: !Ref ResultBucket
       Events:
         Get:
           Type: Api

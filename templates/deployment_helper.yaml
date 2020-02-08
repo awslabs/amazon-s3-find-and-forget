@@ -16,6 +16,8 @@ Parameters:
     Default: build/s3f2.zip
   AthenaExecutionRole:
     Type: String
+  CodeBuildArtefactBucket:
+    Type: String
   CognitoIdentityPoolId:
     Type: String
   CognitoUserPoolClientId:
@@ -45,7 +47,7 @@ Parameters:
     Type: String
   ResourcePrefix:
     Type: String
-  ResultBucket:
+  TempBucket:
     Type: String
   Version:
     Type: String
@@ -333,8 +335,8 @@ Resources:
             Resource:
               - !Sub arn:aws:s3:::${CodeBuildArtefactBucket}
               - !Sub arn:aws:s3:::${CodeBuildArtefactBucket}/*
-              - !Sub arn:aws:s3:::${ResultBucket}
-              - !Sub arn:aws:s3:::${ResultBucket}/*
+              - !Sub arn:aws:s3:::${TempBucket}
+              - !Sub arn:aws:s3:::${TempBucket}/*
               - !Sub arn:aws:s3:::${WebUIBucket}
               - !Sub arn:aws:s3:::${WebUIBucket}/*
 
@@ -383,12 +385,12 @@ Resources:
       LogLevel: !Ref LogLevel
       Bucket: !Ref CodeBuildArtefactBucket
 
-  CleanupResultBucket:
+  CleanupTempBucket:
     Type: Custom::Setup
     Properties:
       ServiceToken: !GetAtt CleanupBucketFunction.Arn
       LogLevel: !Ref LogLevel
-      Bucket: !Ref ResultBucket
+      Bucket: !Ref TempBucket
 
   CleanupWebUIBucket:
     Type: Custom::Setup
@@ -403,7 +405,7 @@ Resources:
       ServiceToken: !GetAtt CleanupRepositoryFunction.Arn
       LogLevel: !Ref LogLevel
       Repository: !Ref ECRRepository
-      
+
   CopyBuildArtefact:
     Type: Custom::Setup
     DependsOn: CodePipeline

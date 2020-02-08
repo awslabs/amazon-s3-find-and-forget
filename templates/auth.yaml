@@ -7,8 +7,6 @@ Parameters:
     Type: String
   ResourcePrefix:
     Type: String
-  ReportsBucket:
-    Type: String
 
 Resources:
   CognitoIdentityPool:
