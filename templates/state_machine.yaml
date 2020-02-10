@@ -76,52 +76,52 @@ Resources:
           Version: "2012-10-17"
           Statement:
           - Effect: Allow
-            Action:
-            - "lambda:InvokeFunction"
+            Action: "lambda:InvokeFunction"
             Resource:
-            - !GetAtt ScanTable.Arn
-            - !GetAtt ParseStateMachineOutput.Arn
-            - !GetAtt CheckQueueSize.Arn
-            - !GetAtt ExecuteQuery.Arn
-            - !GetAtt CheckQueryStatus.Arn
-            - !GetAtt CheckTaskCount.Arn
-            - !GetAtt SubmitQueryResults.Arn
-            - !GetAtt GenerateQueries.Arn
-            - !GetAtt OrchestrateECSServiceScaling.Arn
-            - !GetAtt AggregateResults.Arn
-            - !GetAtt WorkQueryQueue.Arn
-            - !GetAtt DeleteQueueMessage.Arn
-            - !GetAtt PurgeQueue.Arn
-            - !GetAtt EmitEvent.Arn
+              - !GetAtt ScanTable.Arn
+              - !GetAtt ParseStateMachineOutput.Arn
+              - !GetAtt CheckQueueSize.Arn
+              - !GetAtt ExecuteQuery.Arn
+              - !GetAtt CheckQueryStatus.Arn
+              - !GetAtt CheckTaskCount.Arn
+              - !GetAtt SubmitQueryResults.Arn
+              - !GetAtt GenerateQueries.Arn
+              - !GetAtt OrchestrateECSServiceScaling.Arn
+              - !GetAtt AggregateResults.Arn
+              - !GetAtt WorkQueryQueue.Arn
+              - !GetAtt DeleteQueueMessage.Arn
+              - !GetAtt PurgeQueue.Arn
+              - !GetAtt EmitEvent.Arn
           - Effect: Allow
             Action:
-            - "dynamodb:Query"
-            - "dynamodb:GetItem"
-            - "dynamodb:PutItem"
-            - "dynamodb:DeleteItem"
-            - "dynamodb:UpdateItem"
+              - "dynamodb:Query"
+              - "dynamodb:GetItem"
+              - "dynamodb:PutItem"
+              - "dynamodb:DeleteItem"
+              - "dynamodb:UpdateItem"
             Resource:
-            - !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${JobTableName}"
-            - !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DeletionQueueTableName}"
+              - !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${JobTableName}"
+              - !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DeletionQueueTableName}"
           - Effect: Allow
             Action:
-            - "events:PutTargets"
-            - "events:PutRule"
-            - "events:DescribeRule"
+              - "events:PutTargets"
+              - "events:PutRule"
+              - "events:DescribeRule"
+            Resource: "*"
+          - Effect: Allow
+            Action: "states:ListStateMachines"
             Resource: "*"
           - Effect: Allow
             Action:
-            - "states:DescribeExecution"
-            - "states:DescribeStateMachine"
-            - "states:DescribeStateMachineForExecution"
-            - "states:ListStateMachines"
-            - "states:ListExecutions"
-            Resource: "*"
+              - "states:DescribeExecution"
+              - "states:DescribeStateMachineForExecution"
+            Resource: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:execution:${StateMachinePrefix}*:*"
           - Effect: Allow
             Action:
-            - "states:StartExecution"
-            Resource:
-            - !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${StateMachinePrefix}*"
+              - "states:DescribeStateMachine"
+              - "states:ListExecutions"
+              - "states:StartExecution"
+            Resource: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${StateMachinePrefix}*"
 
   AthenaStateMachine:
     Type: AWS::StepFunctions::StateMachine
@@ -837,7 +837,7 @@ Resources:
         - Id: ExpireQueryResults
           Prefix: queries
           Status: Enabled
-          ExpirationInDays: '1'
+          ExpirationInDays: 1
       CorsConfiguration:
         CorsRules:
           - AllowedHeaders: ["*"]

@@ -47,7 +47,7 @@ Parameters:
       - "true"
       - "false"
   PreBuiltArtefactsBucketOverride:
-    Description: Overrides the default Bucket containing Front-end and Back-end pre-built artefacts. When false, the default is used (solution-builders-${AWS::Region})
+    Description: Overrides the default Bucket containing Front-end and Back-end pre-built artefacts. When false, the default is used for the given region (for example solution-builders-us-west-1)
     Type: String
     Default: "false"
   PrivateSubnetIpBlocks:

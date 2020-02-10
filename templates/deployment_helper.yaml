@@ -81,12 +81,17 @@ Resources:
                 Effect: Allow
                 Action:
                   - logs:CreateLogGroup
+                  - ecr:GetAuthorizationToken
+              - Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:*
+                Effect: Allow
+                Action:
                   - logs:CreateLogStream
                   - logs:PutLogEvents
-                  - ecr:GetAuthorizationToken
               - Resource: !Sub arn:aws:s3:::${CodeBuildArtefactBucket}/*
                 Effect: Allow
-                Action: s3:*
+                Action:
+                  - s3:Get*
+                  - s3:List*
               - Resource: !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ECRRepository}
                 Effect: Allow
                 Action:
@@ -114,13 +119,17 @@ Resources:
             Statement:
               - Resource: "*"
                 Effect: Allow
+                Action: logs:CreateLogGroup
+              - Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:*
+                Effect: Allow
                 Action:
-                  - logs:CreateLogGroup
                   - logs:CreateLogStream
                   - logs:PutLogEvents
               - Resource: !Sub arn:aws:s3:::${CodeBuildArtefactBucket}/*
                 Effect: Allow
-                Action: s3:*
+                Action:
+                  - s3:Get*
+                  - s3:List*
               - Resource: !Sub arn:aws:s3:::${WebUIBucket}/*
                 Effect: Allow
                 Action: s3:PutObject*
