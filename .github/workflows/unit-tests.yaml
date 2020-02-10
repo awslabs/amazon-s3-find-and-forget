@@ -24,6 +24,8 @@ jobs:
         run: pip install virtualenv
       - name: Install dependencies
         run: make setup
+      - name: CloudFormation unit tests
+        run: make test-cfn
       - name: Backend unit tests
         run: make test-unit
         env:

@@ -73,6 +73,9 @@ start-frontend-remote:
 	$(eval WEBUI_URL := $(shell aws cloudformation describe-stacks --stack-name S3F2 --query 'Stacks[0].Outputs[?OutputKey==`WebUIUrl`].OutputValue' --output text))
 	open $(WEBUI_URL)
 
+test-cfn:
+	cfn_nag templates/* --blacklist-path ci/cfn_nag_blacklist.yaml
+
 test-frontend:
 	cd frontend && npm t
 
@@ -86,6 +89,6 @@ test-no-state-machine:
 	pytest -m "not state_machine" --log-cli-level info  --cov=backend.lambdas --cov=decorators --cov backend.ecs_tasks
 
 test:
-	cfn_nag templates/* --blacklist-path ci/cfn_nag_blacklist.yaml
+	make test-cfn
 	pytest --log-cli-level info --cov=backend.lambdas --cov=decorators --cov backend.ecs_tasks
 	make test-frontend
