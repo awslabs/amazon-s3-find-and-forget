@@ -76,7 +76,7 @@ def save(client, new_parquet, bucket, key, in_safe_mode=True):
     logger.info("Object settings: {}".format(extra_args))
     # Write Object Back to S3
     output_bucket = bucket if not in_safe_mode else safe_mode_bucket
-    output_key = key if not in_safe_mode else safe_mode_prefix + key
+    output_key = key if not in_safe_mode else "{}{}/{}".format(safe_mode_prefix, bucket, key)
     logger.info("Safe mode is {}. Saving updated object to s3://{}/{}".format(in_safe_mode, output_bucket, output_key))
     client.upload_file(new_parquet, output_bucket, output_key, ExtraArgs=extra_args)
     logger.info("Object uploaded to S3")

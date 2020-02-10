@@ -107,6 +107,7 @@ Resources:
           - Id: ExpireContents
             Status: Enabled
             ExpirationInDays: '1'
+            NoncurrentVersionExpirationInDays: '1'
 
   ConfigParameter:
     Type: AWS::SSM::Parameter
@@ -290,6 +291,7 @@ Metadata:
           default: "Required"
         Parameters:
           - AdminEmail
+          - SafeMode
       - Label:
           default: "Network Configuration"
         Parameters:

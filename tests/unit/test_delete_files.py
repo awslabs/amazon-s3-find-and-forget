@@ -425,7 +425,7 @@ def test_it_applies_safe_mode(mock_grantees, mock_acl, mock_tagging, mock_standa
     mock_acl.return_value = ({}, {})
     mock_grantees.return_value = ''
     save(mock_client, "filepath", "bucket", "key", True)
-    mock_client.upload_file.assert_called_with("filepath", "test", "results/key", ExtraArgs={})
+    mock_client.upload_file.assert_called_with("filepath", "test", "results/bucket/key", ExtraArgs={})
     mock_client.put_object_acl.assert_not_called()
 
 
