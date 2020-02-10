@@ -16,10 +16,16 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: 12
+      - name: Set up ruby 2.6
+        uses: actions/setup-ruby@v1
+        with:
+          ruby-version: '2.6'
       - name: Install virtualenv
         run: pip install virtualenv
       - name: Install dependencies
         run: make setup
+      - name: CloudFormation unit tests
+        run: make test-cfn
       - name: Backend unit tests
         run: make test-unit
         env:

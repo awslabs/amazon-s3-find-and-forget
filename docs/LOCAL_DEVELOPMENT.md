@@ -10,6 +10,7 @@ The following dependencies must be installed:
 * Python >=3.7 and pip
 * node.js >= v12
 * virtualenv
+* Ruby >= 2.6
 
 Once you have installed all pre-requisites, you must run the following
 command to create a `virtualenv` and install all frontend/backend
