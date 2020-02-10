@@ -39,6 +39,10 @@ your preferred AWS region:
    this stack in CloudFormation once deployed.
    * **AdminEmail:** The email address you wish to setup as the initial
    user of this Amazon S3 Find and Forget deployment.
+   * **SafeMode:** (Default: true) Whether to operate in safe mode. Whilst Safe
+   Mode is set to true, updated objects will be written to a temporary bucket
+   instead of overwriting the original object. For more information see
+   [Disabling Safe Mode](#disabling-safe-mode)
    
    The following parameters are optional and allow further customisation of the
    solution if required:
@@ -107,7 +111,7 @@ your preferred AWS region:
 ## Running a Deletion Job
 *TODO*
 
-## Disabling Dummy Mode
+## Disabling Safe Mode
 *TODO*
 
 ## Adjusting Performance Configuration

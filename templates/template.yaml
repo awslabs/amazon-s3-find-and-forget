@@ -59,6 +59,13 @@ Parameters:
     Type: String
     Default: S3F2
     AllowedPattern: ^[a-zA-Z0-9]*$
+  SafeMode:
+    Description: Whether to enable safe mode. When enabled, the solution will not overwrite the original object when forgetting but instead save a copy
+    Type: String
+    Default: "true"
+    AllowedValues:
+      - "true"
+      - "false"
   VpcIpBlock:
     Description: CIDR block for the VPC
     Type: String
@@ -86,6 +93,22 @@ Mappings:
       Version: '0.1'
 
 Resources:
+  TempBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      LifecycleConfiguration:
+        Rules:
+          - Id: ExpireContents
+            Status: Enabled
+            ExpirationInDays: '1'
+            NoncurrentVersionExpirationInDays: '1'
+
   ConfigParameter:
     Type: AWS::SSM::Parameter
     Properties:
@@ -95,6 +118,7 @@ Resources:
         {
           "AthenaConcurrencyLimit": ${AthenaConcurrencyLimit},
           "DeletionTasksMaxNumber": ${DeletionTasksMaxNumber},
+          "SafeMode": ${SafeMode},
           "WaitDurationQueryExecution": ${WaitDurationQueryExecution},
           "WaitDurationQueryQueue": ${WaitDurationQueryQueue},
           "WaitDurationForgetQueue": ${WaitDurationForgetQueue}
@@ -119,7 +143,6 @@ Resources:
         JobTableDateGSI: !GetAtt DDBStack.Outputs.JobTableDateGSI
         JobTableName: !GetAtt DDBStack.Outputs.JobTable
         JobTableStreamArn: !GetAtt DDBStack.Outputs.JobTableStreamArn
-        ResultBucket: !GetAtt StateMachineStack.Outputs.ResultBucket
         StateMachineArn: !GetAtt StateMachineStack.Outputs.StateMachineArn
         WebUIOrigin: !GetAtt WebUIStack.Outputs.Origin
   AuthStack:
@@ -128,7 +151,6 @@ Resources:
       TemplateURL: ./auth.yaml
       Parameters:
         AdminEmail: !Ref AdminEmail
-        ReportsBucket: !GetAtt StateMachineStack.Outputs.ResultBucket
         ResourcePrefix: !Ref ResourcePrefix
   DDBStack:
     Type: AWS::CloudFormation::Stack
@@ -149,6 +171,7 @@ Resources:
         EnableContainerInsights: !Ref EnableContainerInsights
         JobTableName: !GetAtt DDBStack.Outputs.JobTable
         ResourcePrefix: !Ref ResourcePrefix
+        SafeModeBucket: !Ref TempBucket
         VpcSecurityGroup: !GetAtt VpcStack.Outputs.SecurityGroup
         VpcSubnets: !GetAtt VpcStack.Outputs.Subnets
   DeployStack:
@@ -158,6 +181,7 @@ Resources:
       Parameters:
         ApiUrl: !GetAtt APIStack.Outputs.ApiUrl
         AthenaExecutionRole: !GetAtt StateMachineStack.Outputs.AthenaExecutionRole
+        CodeBuildArtefactBucket: !Ref TempBucket
         CognitoIdentityPoolId: !GetAtt AuthStack.Outputs.CognitoIdentityPoolId
         CognitoUserPoolId: !GetAtt AuthStack.Outputs.CognitoUserPoolId
         CognitoUserPoolClientId: !GetAtt AuthStack.Outputs.CognitoUserPoolClientId
@@ -172,7 +196,6 @@ Resources:
         ECRRepository: !GetAtt DelStack.Outputs.ECRRepository
         PreBuiltArtefactsBucket: !If [DefaultPreBuiltArtefactsBucket, !Sub "solution-builders-${AWS::Region}", !Ref PreBuiltArtefactsBucketOverride]
         ResourcePrefix: !Ref ResourcePrefix
-        ResultBucket: !GetAtt StateMachineStack.Outputs.ResultBucket
         Version: !FindInMap [Solution, Constants, Version]
         WebUIBucket: !GetAtt WebUIStack.Outputs.WebUIBucket
   LayersStack:
@@ -197,6 +220,7 @@ Resources:
         ECSCluster: !GetAtt DelStack.Outputs.ECSCluster
         JobTableName: !GetAtt DDBStack.Outputs.JobTable
         ReportsAccessControlAllowOriginOverride: !Ref AccessControlAllowOriginOverride
+        ResultBucket: !Ref TempBucket
         StateMachinePrefix: !Ref ResourcePrefix
         WebUIOrigin: !GetAtt WebUIStack.Outputs.Origin
   VpcStack:
@@ -249,12 +273,12 @@ Outputs:
     Value: !GetAtt DDBStack.Outputs.JobTable
   QueryQueueUrl:
      Value: !GetAtt StateMachineStack.Outputs.QueryQueueUrl
-  ResultBucket:
-    Value: !GetAtt StateMachineStack.Outputs.ResultBucket
   StateMachineArn:
     Value: !GetAtt StateMachineStack.Outputs.StateMachineArn
   StateMachineRoleArn:
     Value: !GetAtt StateMachineStack.Outputs.StateMachineRoleArn
+  TempBucket:
+    Value: !Ref TempBucket
   WebUIBucket:
     Value: !GetAtt WebUIStack.Outputs.WebUIBucket
   WebUIUrl:
@@ -267,6 +291,7 @@ Metadata:
           default: "Required"
         Parameters:
           - AdminEmail
+          - SafeMode
       - Label:
           default: "Network Configuration"
         Parameters:

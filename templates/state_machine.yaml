@@ -49,6 +49,8 @@ Parameters:
     - NOTSET
   ReportsAccessControlAllowOriginOverride:
     Type: String
+  ResultBucket:
+    Type: String
   StateMachinePrefix:
     Type: String
   WebUIOrigin:
@@ -825,31 +827,6 @@ Resources:
       RoleArn: !GetAtt StatesExecutionRole.Arn
 
   # Supporting Resources
-  ResultBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketEncryption: 
-        ServerSideEncryptionConfiguration: 
-        - ServerSideEncryptionByDefault:
-            SSEAlgorithm: AES256
-      LifecycleConfiguration:
-        Rules:
-        - Id: ExpireQueryResults
-          Prefix: queries
-          Status: Enabled
-          ExpirationInDays: 1
-      CorsConfiguration:
-        CorsRules:
-          - AllowedHeaders: ["*"]
-            AllowedMethods: [GET]
-            AllowedOrigins:
-              - !If
-                - DefaultAccessControlOrigin
-                - !Ref WebUIOrigin
-                - !Ref ReportsAccessControlAllowOriginOverride
-            Id: !Sub ${StateMachinePrefix}CorsRule
-            MaxAge: 3600
-
   QueryQueue:
     Type: AWS::SQS::Queue
     Properties:
@@ -1132,8 +1109,6 @@ Outputs:
     Value: !Ref AthenaStateMachine
   QueryQueueUrl:
     Value: !Ref QueryQueue
-  ResultBucket:
-    Value: !Ref ResultBucket
   StateMachineArn:
     Value: !Ref StateMachine
   StateMachineRoleArn:
