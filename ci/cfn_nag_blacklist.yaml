@@ -1,0 +1,4 @@
+---
+RulesToSuppress:
+- id: W35
+  reason: Bucket Logging should be left to the customer to enable as it is subject to additional costs
