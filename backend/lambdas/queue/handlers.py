@@ -96,6 +96,7 @@ def process_handler(event, context):
         "JobStatus": "QUEUED",
         "GSIBucket": str(random.randint(0, bucket_count - 1)),
         "CreatedAt": round(datetime.now(timezone.utc).timestamp()),
+        "DeletionQueue": deletion_queue_table.scan()["Items"],
         **config,
     }
 
@@ -103,7 +104,7 @@ def process_handler(event, context):
 
     return {
         "statusCode": 202,
-        "body": json.dumps(item)
+        "body": json.dumps(item, cls=DecimalEncoder)
     }
 
 
