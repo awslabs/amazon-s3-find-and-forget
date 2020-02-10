@@ -47,6 +47,7 @@ The following commands are also available:
 - `make deploy-artefacts`: Packages and uploads the Forget task Docker image
 and frontend React app to the solution bucket. This will trigger CodePipeline
 to automatically deploy these artefacts 
+- `make deploy-vpc`: Deploys only the VPC CloudFormation template
 - `make deploy-cfn`: Deploys only the CloudFormation template
 - `make deploy-containers-override`: Manually packages and deploys the
 Forget task Docker image to ECR via the AWS CLI rather than using CodePipeline.

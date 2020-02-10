@@ -6,7 +6,7 @@ Forget solution.
 ## Pre-requisite: Configuring a VPC for the Solution
 
 The Fargate tasks used by this solution to perform deletions must be able to
-access the following AWS services, either via an Internet Gateway or a
+access the following AWS services, either via an Internet Gateway or via
 [VPC Endpoints]:
 - Amazon S3
 - Amazon DynamoDB
@@ -20,7 +20,7 @@ If you do not have an existing VPC you wish to use, a VPC template is available
 as part of this solution which can be deployed separately to the main stack.
 This template will create a VPC with private subnets and all the relevant VPC
 Endpoints required by the Amazon S3 Find and Forget solution. To deploy this
-template, use the VPC Template Deploy to AWS button in
+template, use the VPC Template "Deploy to AWS button" in
 [Deploying the Solution](#deploying-the-solution) then follow steps 5-9. The
 **Outputs** tab will contain the subnet and security group IDs to use an inputs
 for the main stack.

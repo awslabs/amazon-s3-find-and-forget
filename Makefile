@@ -24,6 +24,9 @@ deploy:
 	make deploy-cfn
 	make setup-frontend-local-dev
 
+deploy-vpc:
+	aws cloudformation create-stack --template-body file://templates/vpc.yaml --stack-name S3F2-VPC
+
 deploy-cfn:
 	aws cloudformation package --template-file templates/template.yaml --s3-bucket $(TEMP_BUCKET) --output-template-file packaged.yaml
 	aws cloudformation deploy --template-file ./packaged.yaml --stack-name S3F2 --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND \
