@@ -134,7 +134,7 @@ Resources:
       Environment:
         Variables:
           StateMachineArn: !Ref StateMachineArn
-          GSIBucketCount: 1
+          GSIBucketCount: "1"
       Events:
         Get:
           Type: Api
@@ -231,7 +231,7 @@ Resources:
       CodeUri: ../backend/lambdas/jobs/
       Environment:
         Variables:
-          GSIBucketCount: 1
+          GSIBucketCount: "1"
       Events:
         List:
           Type: Api

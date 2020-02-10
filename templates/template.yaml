@@ -47,7 +47,7 @@ Parameters:
       - "true"
       - "false"
   PreBuiltArtefactsBucketOverride:
-    Description: Overrides the default Bucket containing Front-end and Back-end pre-built artefacts. When false, the default is used (solution-builders-${AWS::Region})
+    Description: Overrides the default Bucket containing Front-end and Back-end pre-built artefacts. When false, the default is used for the given region (for example solution-builders-us-west-1)
     Type: String
     Default: "false"
   PrivateSubnetIpBlocks:
@@ -106,8 +106,8 @@ Resources:
         Rules:
           - Id: ExpireContents
             Status: Enabled
-            ExpirationInDays: '1'
-            NoncurrentVersionExpirationInDays: '1'
+            ExpirationInDays: 1
+            NoncurrentVersionExpirationInDays: 1
 
   ConfigParameter:
     Type: AWS::SSM::Parameter
@@ -219,10 +219,8 @@ Resources:
         DeleteQueueUrl: !GetAtt DelStack.Outputs.DeleteObjectsQueueUrl
         ECSCluster: !GetAtt DelStack.Outputs.ECSCluster
         JobTableName: !GetAtt DDBStack.Outputs.JobTable
-        ReportsAccessControlAllowOriginOverride: !Ref AccessControlAllowOriginOverride
         ResultBucket: !Ref TempBucket
         StateMachinePrefix: !Ref ResourcePrefix
-        WebUIOrigin: !GetAtt WebUIStack.Outputs.Origin
   VpcStack:
     Type: AWS::CloudFormation::Stack
     Properties:

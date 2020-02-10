@@ -71,12 +71,17 @@ Resources:
                 Effect: Allow
                 Action:
                   - logs:CreateLogGroup
+                  - ecr:GetAuthorizationToken
+              - Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:*
+                Effect: Allow
+                Action:
                   - logs:CreateLogStream
                   - logs:PutLogEvents
-                  - ecr:GetAuthorizationToken
               - Resource: !Sub arn:aws:s3:::${CodeBuildArtefactBucket}/*
                 Effect: Allow
-                Action: s3:*
+                Action:
+                  - s3:Get*
+                  - s3:List*
               - Resource: !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ECRRepository}
                 Effect: Allow
                 Action:
@@ -104,13 +109,17 @@ Resources:
             Statement:
               - Resource: "*"
                 Effect: Allow
+                Action: logs:CreateLogGroup
+              - Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:*
+                Effect: Allow
                 Action:
-                  - logs:CreateLogGroup
                   - logs:CreateLogStream
                   - logs:PutLogEvents
               - Resource: !Sub arn:aws:s3:::${CodeBuildArtefactBucket}/*
                 Effect: Allow
-                Action: s3:*
+                Action:
+                  - s3:Get*
+                  - s3:List*
               - Resource: !Sub arn:aws:s3:::${WebUIBucket}/*
                 Effect: Allow
                 Action: s3:PutObject*
@@ -135,6 +144,7 @@ Resources:
             post_build:
               commands:
                 - docker push "$IMAGE_URI"
+      EncryptionKey: alias/aws/s3
       Environment:
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/docker:18.09.0
@@ -170,6 +180,7 @@ Resources:
               commands:
                 - cd frontend/build
                 - aws s3 cp . s3://$BUCKET --acl $ACL --recursive
+      EncryptionKey: alias/aws/s3
       Environment:
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/docker:18.09.0
