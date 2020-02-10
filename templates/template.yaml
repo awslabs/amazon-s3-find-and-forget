@@ -98,18 +98,13 @@ Resources:
     Properties:
       VersioningConfiguration:
         Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
       LifecycleConfiguration:
         Rules:
-          - Id: ExpireQueryResults
-            Prefix: queries/
-            Status: Enabled
-            ExpirationInDays: '1'
-          - Id: ExpireSafeModeResults
-            Prefix: results/
-            Status: Enabled
-            ExpirationInDays: '1'
-          - Id: ExpireBuildArtefacts
-            Prefix: build/
+          - Id: ExpireContents
             Status: Enabled
             ExpirationInDays: '1'
 
