@@ -13,7 +13,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 ddb = boto3.resource("dynamodb")
-table = ddb.Table(os.getenv("JobTable", "S3F2_Jobs"))
+table = ddb.Table(os.getenv("JobTable"))
 
 status_map = {
     "FindPhaseFailed": "FIND_FAILED",
@@ -52,7 +52,7 @@ def update_status(job_id, events):
             attr_updates[time_events[event_name]] = event["CreatedAt"]
 
     if len(attr_updates) > 0:
-        _update_item(job_id, attr_updates)
+        updated_job = _update_item(job_id, attr_updates)
         logger.info("Updated Status for Job ID {}: {}".format(job_id, json.dumps(attr_updates, cls=DecimalEncoder)))
 
 

@@ -16,26 +16,35 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 client = boto3.client('stepfunctions')
 state_machine_arn = getenv("StateMachineArn")
+ddb = boto3.resource("dynamodb")
+q_table = ddb.Table(getenv("DeletionQueueTable"))
 
 
 @with_logger
 def handler(event, context):
-    records = [r["dynamodb"]["NewImage"] for r in event["Records"] if should_process(r)]
-    jobs = [
-        deserialize_item(r) for r in records if is_job(r)
+    records = event["Records"]
+    updated_jobs = [
+        deserialize_item(r["dynamodb"]["NewImage"]) for r in records if is_job(r) and is_operation(r, "MODIFY")
+    ]
+    new_jobs = [
+        deserialize_item(r["dynamodb"]["NewImage"]) for r in records if is_job(r) and is_operation(r, "INSERT")
     ]
     events = [
-        deserialize_item(r) for r in records if is_job_event(r)
+        deserialize_item(r["dynamodb"]["NewImage"]) for r in records if is_job_event(r) and is_operation(r, "INSERT")
     ]
     grouped_events = groupby(sorted(events, key=itemgetter("Id")), key=itemgetter("Id"))
 
-    for job in jobs:
+    for job in new_jobs:
         process_job(job)
 
     for job_id, group in grouped_events:
         group = [i for i in group]
         update_stats(job_id, group)
         update_status(job_id, group)
+
+    for job in updated_jobs:
+        if job.get("JobStatus") == "COMPLETED":
+            clear_deletion_queue(job)
 
 
 def process_job(job):
@@ -50,13 +59,25 @@ def process_job(job):
         logger.warning("Execution {} already exists".format(job_id))
 
 
-def should_process(record):
-    return record.get("eventName") == "INSERT"
+def clear_deletion_queue(job):
+    logger.info("Clearing successfully deleted matches")
+    for item in job.get("DeletionQueue", []):
+        with q_table.batch_writer() as batch:
+            batch.delete_item(Key={
+                "MatchId": item["MatchId"],
+                "CreatedAt": item["CreatedAt"]
+            })
+
+
+def is_operation(record, operation):
+    return record.get("eventName") == operation
 
 
 def is_job(record):
-    return record.get("Type") and deserializer.deserialize(record.get("Type")) == "Job"
+    item = deserialize_item(record["dynamodb"]["NewImage"])
+    return item.get("Type") and item.get("Type") == "Job"
 
 
 def is_job_event(record):
-    return record.get("Type") and deserializer.deserialize(record.get("Type")) == "JobEvent"
+    item = deserialize_item(record["dynamodb"]["NewImage"])
+    return item.get("Type") and item.get("Type") == "JobEvent"

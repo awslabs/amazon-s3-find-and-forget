@@ -1,9 +1,12 @@
+import os
+
 import boto3
 import pytest
 from botocore.exceptions import ClientError
 from mock import patch, Mock
 
-from backend.lambdas.jobs.status_updater import update_status, determine_status, job_has_errors
+with patch.dict(os.environ, {"JobTable": "test"}):
+    from backend.lambdas.jobs.status_updater import update_status, determine_status, job_has_errors
 
 pytestmark = [pytest.mark.unit, pytest.mark.jobs]
 

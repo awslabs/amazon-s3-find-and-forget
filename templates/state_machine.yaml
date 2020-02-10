@@ -92,7 +92,6 @@ Resources:
               - "dynamodb:Query"
               - "dynamodb:GetItem"
               - "dynamodb:PutItem"
-              - "dynamodb:DeleteItem"
               - "dynamodb:UpdateItem"
             Resource:
               - !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${JobTableName}"
@@ -720,44 +719,7 @@ Resources:
               },
               "Resource": "${EmitEvent.Arn}",
               "ResultPath": null,
-              "Next": "Delete Queue Items"
-            },
-            "Delete Queue Items": {
-              "Comment": "Deletes all items from the deletion queue",
-              "Type": "Map",
-              "Next": "Job Succeeded",
-              "InputPath": "$.DeletionQueue.Items",
-              "ItemsPath": "$",
-              "ResultPath": null,
-              "MaxConcurrency": 10,
-              "Iterator": {
-                "StartAt": "Delete Queue Item",
-                "States": {
-                  "Delete Queue Item": {
-                    "Type": "Task",
-                    "Resource": "arn:aws:states:::dynamodb:deleteItem",
-                    "Parameters": {
-                      "TableName": "${DeletionQueueTableName}",
-                      "Key": {
-                        "MatchId.$": "$.MatchId",
-                        "CreatedAt.$": "$.CreatedAt"
-                      }
-                    },
-                    "ResultPath": null,
-                    "End": true,
-                    "Retry": [{
-                      "ErrorEquals": [ "States.ALL" ],
-                      "IntervalSeconds": 10,
-                      "MaxAttempts": 1
-                    }]
-                  }
-                }
-              },
-              "Catch": [{
-                "ErrorEquals": ["States.ALL"],
-                "ResultPath": "$.ErrorDetails",
-                "Next": "Handle Error"
-              }]
+              "Next": "Job Succeeded"
             },
             "Handle Error": {
               "Type": "Pass",
