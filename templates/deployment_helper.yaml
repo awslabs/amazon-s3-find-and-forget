@@ -144,6 +144,7 @@ Resources:
             post_build:
               commands:
                 - docker push "$IMAGE_URI"
+      EncryptionKey: alias/aws/s3
       Environment:
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/docker:18.09.0
@@ -179,6 +180,7 @@ Resources:
               commands:
                 - cd frontend/build
                 - aws s3 cp . s3://$BUCKET --acl $ACL --recursive
+      EncryptionKey: alias/aws/s3
       Environment:
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/docker:18.09.0

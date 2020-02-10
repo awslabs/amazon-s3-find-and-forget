@@ -47,17 +47,10 @@ Parameters:
     - INFO
     - DEBUG
     - NOTSET
-  ReportsAccessControlAllowOriginOverride:
-    Type: String
   ResultBucket:
     Type: String
   StateMachinePrefix:
     Type: String
-  WebUIOrigin:
-    Type: String
-
-Conditions:
-  DefaultAccessControlOrigin: !Equals [!Ref ReportsAccessControlAllowOriginOverride, "false"]
 
 Resources:
   StatesExecutionRole:
@@ -109,7 +102,7 @@ Resources:
               - "events:PutTargets"
               - "events:PutRule"
               - "events:DescribeRule"
-            Resource: "*"
+            Resource: !Sub arn:aws:events:${AWS::Region}:${AWS::AccountId}:rule/*
           - Effect: Allow
             Action: "states:ListStateMachines"
             Resource: "*"
