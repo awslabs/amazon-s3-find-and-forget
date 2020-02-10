@@ -3,6 +3,56 @@
 This section describes how to install, configure and use the Amazon S3 Find and
 Forget solution.
 
+## Pre-requisite: Configuring a VPC for the Solution
+
+The Fargate tasks used by this solution to perform deletions must be able to
+access the following AWS services, either via an Internet Gateway or a
+[VPC Endpoints]:
+- Amazon S3
+- Amazon DynamoDB
+- Amazon CloudWatch (monitoring and logs)
+- AWS ECR
+- Amazon SQS
+
+### Creating a New VPC
+
+If you do not have an existing VPC you wish to use, a VPC template is available
+as part of this solution which can be deployed separately to the main stack.
+This template will create a VPC with private subnets and all the relevant VPC
+Endpoints required by the Amazon S3 Find and Forget solution. To deploy this
+template, use the VPC Template Deploy to AWS button in
+[Deploying the Solution](#deploying-the-solution) then follow steps 5-9. The
+**Outputs** tab will contain the subnet and security group IDs to use an inputs
+for the main stack.
+
+### Using an Existing VPC
+
+If you wish to use an existing VPC in your account with the Amazon S3 Find and
+Forget solution, you must ensure that when deploying the solution you select
+subnets and security groups which permit access to these services.
+
+You can obtain your subnet and security group IDs from the AWS Console or by
+using the AWS CLI. If using the AWS CLI, you can use the following command
+to get a list of VPCs:
+
+```bash
+aws ec2 describe-vpcs \
+  --query 'Vpcs[*].{ID:VpcId,Name:Tags[?Key==`Name`].Value | [0], IsDefault: IsDefault}'
+```
+
+Once you have found the VPC you wish to use, to get a list of subnets and
+security groups in that VPC:
+
+```bash
+export VPC_ID=<chosen-vpc-id>
+aws ec2 describe-subnets \
+  --filter Name=vpc-id,Values="$VPC_ID" \
+  --query 'Subnets[*].{ID:SubnetId,Name:Tags[?Key==`Name`].Value | [0],AZ:AvailabilityZone}'
+aws ec2 describe-security-groups \
+  --filter Name=vpc-id,Values="$VPC_ID" \
+  --query 'SecurityGroups[*].{ID:GroupId,Name:GroupName}'
+```
+
 ## Deploying the Solution
 
 The solution is deployed as an
@@ -19,15 +69,15 @@ resources.
 1. Deploy the latest CloudFormation template by following the link below for
 your preferred AWS region:
 
-|Region|Launch Template|
-|------|---------------|
-|**US East (N. Virginia)** (us-east-1) | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=S3F2&templateURL=https://solution-builders-us-east-1.s3.us-east-1.amazonaws.com/amazon-s3-find-and-forget/latest/main.template)|
-|**US East (Ohio)** (us-east-2) | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-2#/stacks/new?stackName=S3F2&templateURL=https://solution-builders-us-east-2.s3.us-east-2.amazonaws.com/amazon-s3-find-and-forget/latest/main.template)|
-|**US West (Oregon)** (us-west-2) | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=S3F2&templateURL=https://solution-builders-us-west-2.s3.us-west-2.amazonaws.com/amazon-s3-find-and-forget/latest/main.template)|
-|**Asia Pacific (Seoul)** (ap-northeast-2) | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-northeast-2#/stacks/new?stackName=S3F2&templateURL=https://solution-builders-ap-northeast-2.s3.ap-northeast-2.amazonaws.com/amazon-s3-find-and-forget/latest/main.template)|
-|**Asia Pacific (Sydney)** (ap-southeast-2) | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-2#/stacks/new?stackName=S3F2&templateURL=https://solution-builders-ap-southeast-2.s3.ap-southeast-2.amazonaws.com/amazon-s3-find-and-forget/latest/main.template)|
-|**Asia Pacific (Tokyo)** (ap-northeast-1) | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-northeast-1#/stacks/new?stackName=S3F2&templateURL=https://solution-builders-ap-northeast-1.s3.ap-northeast-1.amazonaws.com/amazon-s3-find-and-forget/latest/main.template)|
-|**EU (Ireland)** (eu-west-1) | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-west-1#/stacks/new?stackName=S3F2&templateURL=https://solution-builders-eu-west-1.s3.eu-west-1.amazonaws.com/amazon-s3-find-and-forget/latest/main.template)|
+|Region|Launch Template|VPC Template|
+|------|---------------|------------|
+|**US East (N. Virginia)** (us-east-1) | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=S3F2&templateURL=https://solution-builders-us-east-1.s3.us-east-1.amazonaws.com/amazon-s3-find-and-forget/latest/main.template)| [![Launch the Amazon S3 Find and Forget VPC Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=S3F2-VPC&templateURL=https://solution-builders-us-east-1.s3.us-east-1.amazonaws.com/amazon-s3-find-and-forget/latest/vpc.yaml)|
+|**US East (Ohio)** (us-east-2) | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-2#/stacks/new?stackName=S3F2&templateURL=https://solution-builders-us-east-2.s3.us-east-2.amazonaws.com/amazon-s3-find-and-forget/latest/main.template)| [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-2#/stacks/new?stackName=S3F2-VPC&templateURL=https://solution-builders-us-east-2.s3.us-east-2.amazonaws.com/amazon-s3-find-and-forget/latest/vpc.yaml)|
+|**US West (Oregon)** (us-west-2) | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=S3F2&templateURL=https://solution-builders-us-west-2.s3.us-west-2.amazonaws.com/amazon-s3-find-and-forget/latest/main.template)| [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=S3F2-VPC&templateURL=https://solution-builders-us-west-2.s3.us-west-2.amazonaws.com/amazon-s3-find-and-forget/latest/vpc.yaml)|
+|**Asia Pacific (Seoul)** (ap-northeast-2) | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-northeast-2#/stacks/new?stackName=S3F2&templateURL=https://solution-builders-ap-northeast-2.s3.ap-northeast-2.amazonaws.com/amazon-s3-find-and-forget/latest/main.template)| [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-northeast-2#/stacks/new?stackName=S3F2-VPC&templateURL=https://solution-builders-ap-northeast-2.s3.ap-northeast-2.amazonaws.com/amazon-s3-find-and-forget/latest/vpc.yaml)|
+|**Asia Pacific (Sydney)** (ap-southeast-2) | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-2#/stacks/new?stackName=S3F2&templateURL=https://solution-builders-ap-southeast-2.s3.ap-southeast-2.amazonaws.com/amazon-s3-find-and-forget/latest/main.template)| [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-2#/stacks/new?stackName=S3F2-VPC&templateURL=https://solution-builders-ap-southeast-2.s3.ap-southeast-2.amazonaws.com/amazon-s3-find-and-forget/latest/vpc.yaml)|
+|**Asia Pacific (Tokyo)** (ap-northeast-1) | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-northeast-1#/stacks/new?stackName=S3F2&templateURL=https://solution-builders-ap-northeast-1.s3.ap-northeast-1.amazonaws.com/amazon-s3-find-and-forget/latest/main.template)| [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-northeast-1#/stacks/new?stackName=S3F2-VPC&templateURL=https://solution-builders-ap-northeast-1.s3.ap-northeast-1.amazonaws.com/amazon-s3-find-and-forget/latest/vpc.yaml)|
+|**EU (Ireland)** (eu-west-1) | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-west-1#/stacks/new?stackName=S3F2&templateURL=https://solution-builders-eu-west-1.s3.eu-west-1.amazonaws.com/amazon-s3-find-and-forget/latest/main.template)| [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-west-1#/stacks/new?stackName=S3F2-VPC&templateURL=https://solution-builders-eu-west-1.s3.eu-west-1.amazonaws.com/amazon-s3-find-and-forget/latest/vpc.yaml)|
 
 2. If prompted, login using your AWS account credentials.
 3. You should see a screen titled "*Create Stack*" at the "*Specify template*"
@@ -43,13 +93,16 @@ your preferred AWS region:
    Mode is set to true, updated objects will be written to a temporary bucket
    instead of overwriting the original object. For more information see
    [Disabling Safe Mode](#disabling-safe-mode)
+   * **VpcSecurityGroups:** List of security group IDs to apply to Fargate
+   deletion tasks. For more information on how to obtain these IDs, see
+   [Obtaining VPC Information](#obtaining-vpc-information)
+   * **VpcSubnets:** List of subnets to run Fargate deletion tasks in.
+   For more information on how to obtain these IDs, see
+   [Obtaining VPC Information](#obtaining-vpc-information)
    
    The following parameters are optional and allow further customisation of the
    solution if required:
    
-   * **VpcIpBlock:** (Default: 10.0.0.0/16) CIDR range to use for the VPC.
-   * **PrivateSubnetIpBlocks:** (Default: "10.0.0.0/22, 10.0.4.0/22, 10.0.8.0/22")
-   CIDR ranges to assign to private subnets.
    * **CreateCloudFrontDistribution:** (Default: true) Creates a CloudFront
    distribution for accessing the web interface of the solution.
    * **AccessControlAllowOriginOverride:** (Default: false) Allows overriding
@@ -121,3 +174,4 @@ your preferred AWS region:
 *TODO*
 
 [Fargate Configuration]: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html#fargate-tasks-size
+[VPC Endpoints]: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-endpoints.html

@@ -37,7 +37,7 @@ make deploy \
 ```
 
 > For information on how to obtain your subnet and security group IDs, see
-> [Obtaining VPC Information](#obtaining-vpc-information).
+> [Obtaining VPC Information](USER_GUIDE.md#obtaining-vpc-information).
 
 This will deploy the Amazon S3 Find and Forget solution using the AWS CLI
 profile of the current shell. By default this will be the profile `default`.
@@ -54,30 +54,6 @@ Forget task Docker image to ECR via the AWS CLI rather than using CodePipeline.
 frontend React app to S3 via the AWS CLI rather than using CodePipeline.
 - `make start-frontend-remote`: Opens the frontend of the deployed Amazon S3
 Find and Forget solution
-
-### Obtaining VPC Information
-
-You can obtain your subnet and security group IDs from the AWS Console or by
-using the AWS CLI. If using the AWS CLI, you can use the following command
-to get a list of VPCs:
-
-```bash
-aws ec2 describe-vpcs \
-  --query 'Vpcs[*].{ID:VpcId,Name:Tags[?Key==`Name`].Value | [0], IsDefault: IsDefault}'
-```
-
-Once you have found the VPC you wish to use, to get a list of subnets and
-security groups in that VPC:
-
-```bash
-export VPC_ID=<chosen-vpc-id>
-aws ec2 describe-subnets \
-  --filter Name=vpc-id,Values="$VPC_ID" \
-  --query 'Subnets[*].{ID:SubnetId,Name:Tags[?Key==`Name`].Value | [0],AZ:AvailabilityZone}'
-aws ec2 describe-security-groups \
-  --filter Name=vpc-id,Values="$VPC_ID" \
-  --query 'SecurityGroups[*].{ID:GroupId,Name:GroupName}'
-```
 
 ## Running Locally
 
