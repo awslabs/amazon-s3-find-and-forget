@@ -62,6 +62,10 @@ required for the frontend app to run locally
 - `make start-frontend-local`: Runs the frontend app locally on
 `localhost:3000`
 
+> In order to allow your locally running frontend to connect to the deployed
+> API, you will need to set the `AccessControlAllowOriginOverride` parameter
+> to * when deploying the solution stack
+
 To run the "Forget" task locally using Docker, run the following command:
 ```bash
 docker build -f backend/ecs_tasks/delete_files/Dockerfile -t s3f2 .

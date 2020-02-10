@@ -24,46 +24,8 @@ The solution provides a web user interface, and a REST API to allow you to
 integrate it in your own applications.
 
 ## Documentation
-- [Deployment](#deploy)
+- [User Guide](docs/USER_GUIDE.md)
+- [Deployment](docs/USER_GUIDE.md#deploying-the-solution)
 - [Monitoring the Solution](docs/MONITORING.md)
 - [Local Development](docs/LOCAL_DEVELOPMENT.md)
 - [Limits](docs/LIMITS.md)
-
-## Getting Started
-
-### Deploy
-
-Pre-requirements:
-* AWS CLI
-* Python 3.7.5 and pip
-* virtualenv
-* node.js >= v12
-
-1. Install all the dependencies
-
-```bash
-make setup
-```
-
-2. Deploy
-
-```bash
-make deploy
-```
-
-### Local Development
-
-#### Deletion Task
-1. Build the image locally
-```bash
-docker build -f backend/ecs_tasks/delete_files/Dockerfile -t s3f2 .
-```
-
-2. Run the container using Make
-```bash
-make run-local-container
-```
-If you wish to override the default profile being used:
-```bash
-make run-local-container AWS_PROFILE=my-profile
-```

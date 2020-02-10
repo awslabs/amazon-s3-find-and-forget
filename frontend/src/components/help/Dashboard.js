@@ -6,19 +6,19 @@ import {repoUrl, docsUrl} from "../../utils";
 const links = [
   {
     title: "Getting Started",
-    url: docsUrl("OVERVIEW.md")
+    url: repoUrl("README.md")
   },
   {
     title: "Add a Data Mapper",
-    url: docsUrl("OVERVIEW.md#configuring-data-mappers")
+    url: docsUrl("USER_GUIDE.md#configuring-data-mappers")
   },
   {
     title: "Add a Match to the Deletion Queue",
-    url: docsUrl("OVERVIEW.md#adding-a-match-to-the-queue")
+    url: docsUrl("USER_GUIDE.md#adding-to-the-deletion-queue")
   },
   {
     title: "Start a Deletion Job",
-    url: docsUrl("OVERVIEW.md#starting-a-job")
+    url: docsUrl("USER_GUIDE.md#running-a-deletion-job")
   },
   {
     title: "Github Repository",

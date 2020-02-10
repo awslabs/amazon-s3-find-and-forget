@@ -1,16 +1,16 @@
 import React from "react";
 
 import Icon from "../Icon";
-import {docsUrl} from "../../utils";
+import {docsUrl, repoUrl} from "../../utils";
 
 const links = [
   {
     title: "Deletion Job Architecture",
-    url: docsUrl("OVERVIEW.md#solution-architecture")
+    url: repoUrl("README.md#solution-architecture")
   },
   {
     title: "Start a Deletion Job",
-    url: docsUrl("TROUBLESHOOTING.md#starting-a-deletion-job")
+    url: docsUrl("USER_GUIDE.md#running-a-deletion-job")
   },
   {
     title: "Troubleshooting",
