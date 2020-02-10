@@ -16,6 +16,8 @@ Parameters:
     Default: build/s3f2.zip
   AthenaExecutionRole:
     Type: String
+  CodeBuildArtefactBucket:
+    Type: String
   CognitoIdentityPoolId:
     Type: String
   CognitoUserPoolClientId:
@@ -45,24 +47,12 @@ Parameters:
     Type: String
   ResourcePrefix:
     Type: String
-  ResultBucket:
-    Type: String
   Version:
     Type: String
   WebUIBucket:
     Type: String
 
 Resources:
-  CodeBuildArtefactBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketEncryption: 
-        ServerSideEncryptionConfiguration: 
-        - ServerSideEncryptionByDefault:
-            SSEAlgorithm: AES256
-      VersioningConfiguration:
-        Status: Enabled
-
   CodeBuildBackendServiceRole:
     Type: AWS::IAM::Role
     Properties:
@@ -329,12 +319,10 @@ Resources:
               - s3:DeleteObject*
               - s3:GetBucketVersioning
               - s3:ListBucket*
-              - s3:ListObjectVersions
+              - s3:ListObject*
             Resource:
               - !Sub arn:aws:s3:::${CodeBuildArtefactBucket}
               - !Sub arn:aws:s3:::${CodeBuildArtefactBucket}/*
-              - !Sub arn:aws:s3:::${ResultBucket}
-              - !Sub arn:aws:s3:::${ResultBucket}/*
               - !Sub arn:aws:s3:::${WebUIBucket}
               - !Sub arn:aws:s3:::${WebUIBucket}/*
 
@@ -376,19 +364,12 @@ Resources:
             Action: ecr:DescribeImages
             Resource: !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ECRRepository}
 
-  CleanupCodeBuildBucket:
+  CleanupCodeBuildArtefactBucket:
     Type: Custom::Setup
     Properties:
       ServiceToken: !GetAtt CleanupBucketFunction.Arn
       LogLevel: !Ref LogLevel
       Bucket: !Ref CodeBuildArtefactBucket
-
-  CleanupResultBucket:
-    Type: Custom::Setup
-    Properties:
-      ServiceToken: !GetAtt CleanupBucketFunction.Arn
-      LogLevel: !Ref LogLevel
-      Bucket: !Ref ResultBucket
 
   CleanupWebUIBucket:
     Type: Custom::Setup
@@ -403,7 +384,7 @@ Resources:
       ServiceToken: !GetAtt CleanupRepositoryFunction.Arn
       LogLevel: !Ref LogLevel
       Repository: !Ref ECRRepository
-      
+
   CopyBuildArtefact:
     Type: Custom::Setup
     DependsOn: CodePipeline

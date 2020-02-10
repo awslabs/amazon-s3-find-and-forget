@@ -26,8 +26,12 @@ handler = logging.StreamHandler(stream=sys.stdout)
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
+ddb = boto3.resource("dynamodb")
+table = ddb.Table(os.getenv("JobTable"))
 sqs = boto3.resource('sqs', endpoint_url="https://sqs.{}.amazonaws.com".format(os.getenv("AWS_DEFAULT_REGION")))
 queue = sqs.Queue(os.getenv("DELETE_OBJECTS_QUEUE"))
+safe_mode_bucket = os.getenv("SAFE_MODE_BUCKET")
+safe_mode_prefix = os.getenv("SAFE_MODE_PREFIX")
 s3 = s3fs.S3FileSystem()
 
 
@@ -62,7 +66,7 @@ def delete_and_write(parquet_file, row_group, columns, writer, stats):
     logger.info("wrote table")
 
 
-def save(client, new_parquet, bucket, key):
+def save(client, new_parquet, bucket, key, in_safe_mode=True):
     # Get Object Settings
     request_payer_args, _ = get_requester_payment(client, bucket)
     object_info_args, _ = get_object_info(client, bucket, key)
@@ -71,14 +75,16 @@ def save(client, new_parquet, bucket, key):
     extra_args = {**request_payer_args, **object_info_args, **tagging_args, **acl_args}
     logger.info("Object settings: {}".format(extra_args))
     # Write Object Back to S3
-    logger.info("Saving updated object to S3")
-    client.upload_file(new_parquet, bucket, key, ExtraArgs=extra_args)
+    output_bucket = bucket if not in_safe_mode else safe_mode_bucket
+    output_key = key if not in_safe_mode else "{}{}/{}".format(safe_mode_prefix, bucket, key)
+    logger.info("Safe mode is {}. Saving updated object to s3://{}/{}".format(in_safe_mode, output_bucket, output_key))
+    client.upload_file(new_parquet, output_bucket, output_key, ExtraArgs=extra_args)
     logger.info("Object uploaded to S3")
     # GrantWrite cannot be set whilst uploading therefore ACLs need to be restored separately
     write_grantees = ",".join(get_grantees(acl_resp, "WRITE"))
     if write_grantees:
-        logger.info("WRITE grant found. Restoring additional grantees for object {}: {}".format(key, write_grantees))
-        client.put_object_acl(Bucket=bucket, Key=key, **{
+        logger.info("WRITE grant found. Restoring additional grantees for object")
+        client.put_object_acl(Bucket=output_bucket, Key=output_key, **{
             **request_payer_args,
             **acl_args,
             'GrantWrite': write_grantees,
@@ -184,6 +190,11 @@ def get_container_id():
         return str(uuid4())
 
 
+@lru_cache()
+def safe_mode(job_id):
+    return table.get_item(Key={"Id": job_id, "Sk": job_id}).get("SafeMode", True)
+
+
 def emit_deletion_event(message_body, stats):
     job_id = message_body["JobId"]
     event_data = {
@@ -234,10 +245,12 @@ def execute(message_body, receipt_handle):
         validate_message(message_body)
         stats = {"ProcessedRows": 0, "DeletedRows": 0}
         body = json.loads(message_body)
+        job_id = body["JobId"]
+        in_safe_mode = safe_mode(job_id)
         object_path = body["Object"]
+        input_bucket, input_key = object_path.replace("s3://", "").split("/", 1)
+        check_object_size(client, input_bucket, input_key)
         logger.info("Downloading and opening the object {}".format(object_path))
-        bucket, key = object_path.replace("s3://", "").split("/", 1)
-        check_object_size(client, bucket, key)
         with s3.open(object_path, "rb") as f:
             parquet_file = load_parquet(f, stats)
             schema = parquet_file.metadata.schema.to_arrow_schema().remove_metadata()
@@ -246,7 +259,7 @@ def execute(message_body, receipt_handle):
                     cols = body["Columns"]
                     delete_and_write(parquet_file, i, cols, writer, stats)
         if stats["DeletedRows"] > 0:
-            save(client, temp_dest, bucket, key)
+            save(client, temp_dest, input_bucket, input_key, in_safe_mode)
         else:
             logger.warning("The object {} was processed successfully but no rows required deletion".format(object_path))
         msg.delete()
