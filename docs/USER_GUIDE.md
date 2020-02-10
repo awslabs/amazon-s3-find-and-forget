@@ -22,7 +22,7 @@ This template will create a VPC with private subnets and all the relevant VPC
 Endpoints required by the Amazon S3 Find and Forget solution. To deploy this
 template, use the VPC Template "Deploy to AWS button" in
 [Deploying the Solution](#deploying-the-solution) then follow steps 5-9. The
-**Outputs** tab will contain the subnet and security group IDs to use an inputs
+**Outputs** tab will contain the subnets and security group IDs to use as inputs
 for the main stack.
 
 ### Using an Existing VPC
