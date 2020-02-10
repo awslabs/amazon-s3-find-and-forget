@@ -43,10 +43,10 @@ Parameters:
     Type: String
   SafeModeBucket:
     Type: String
-  VpcSecurityGroup:
-    Type: String
+  VpcSecurityGroups:
+    Type: CommaDelimitedList
   VpcSubnets:
-    Type: String
+    Type: CommaDelimitedList
 
 Conditions:
   WithContainerInsights: !Equals [!Ref EnableContainerInsights, "true"]
@@ -148,8 +148,8 @@ Resources:
       LaunchType: FARGATE
       NetworkConfiguration:
         AwsvpcConfiguration:
-          SecurityGroups: [!Ref VpcSecurityGroup]
-          Subnets: !Split [",", !Ref VpcSubnets]
+          SecurityGroups: !Ref VpcSecurityGroups
+          Subnets: !Ref VpcSubnets
       TaskDefinition: !Ref DeleteTaskDefinition
 
   DeleteTaskRole:
