@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="drawio.corp.amazon.com" modified="2020-02-11T17:53:13.288Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36" version="12.4.8" etag="hTuGLAc14jVjOJ36NFgq" type="browser">
+  <diagram id="PatBH1WYE2-xdnCt3cnd">
+    <mxGraphModel dx="976" dy="1082" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="2" value="Removal Job Workflow" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=#ffffff;html=1;whiteSpace=wrap;fontSize=12;fontStyle=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_aws_step_functions_workflow;strokeColor=#CD2264;fillColor=#e6e6e6;verticalAlign=top;align=left;spacingLeft=30;fontColor=#CD2264;dashed=0;shadow=0;container=0;gradientDirection=west;" vertex="1" parent="1">
+          <mxGeometry x="10" y="320" width="790" height="520" as="geometry"/>
+        </mxCell>
+        <mxCell id="3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fillColor=#f8cecc;strokeColor=#b85450;" edge="1" source="37" target="31" parent="1">
+          <mxGeometry x="0.5122" y="-50" relative="1" as="geometry">
+            <mxPoint x="690" y="529" as="targetPoint"/>
+            <Array as="points">
+              <mxPoint x="540" y="630"/>
+              <mxPoint x="540" y="630"/>
+            </Array>
+            <mxPoint as="offset"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" edge="1" source="5" target="20" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="768.5" y="542" as="targetPoint"/>
+            <Array as="points">
+              <mxPoint x="231" y="830"/>
+              <mxPoint x="231" y="830"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="5" value="&lt;b&gt;Find Workflow&lt;/b&gt;" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=#ffcccc;html=1;whiteSpace=wrap;fontSize=12;fontStyle=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_aws_step_functions_workflow;strokeColor=#CD2264;fillColor=#ffffff;verticalAlign=top;align=left;spacingLeft=30;fontColor=#CD2264;dashed=0;gradientDirection=north;" vertex="1" parent="1">
+          <mxGeometry x="101" y="670" width="240" height="140" as="geometry"/>
+        </mxCell>
+        <mxCell id="6" value="&lt;b&gt;Forget Workflow&lt;/b&gt;" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=#ffffff;html=1;whiteSpace=wrap;fontSize=12;fontStyle=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_aws_step_functions_workflow;strokeColor=#CD2264;fillColor=#ffcccc;verticalAlign=top;align=left;spacingLeft=30;fontColor=#CD2264;dashed=0;" vertex="1" parent="1">
+          <mxGeometry x="492" y="360" width="300" height="180" as="geometry"/>
+        </mxCell>
+        <mxCell id="7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" edge="1" source="42" target="28" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="237" y="178" as="sourcePoint"/>
+            <mxPoint x="123.5" y="28" as="targetPoint"/>
+            <Array as="points">
+              <mxPoint x="280" y="60"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="8" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fillColor=#f8cecc;strokeColor=#b85450;jumpStyle=none;" edge="1" source="39" target="2" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="460" y="158"/>
+              <mxPoint x="460" y="300"/>
+              <mxPoint x="20" y="300"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" edge="1" source="27" target="15" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="590" y="162" as="targetPoint"/>
+            <Array as="points">
+              <mxPoint x="743" y="100"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="10" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" edge="1" source="28" target="27" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="348" y="9" as="targetPoint"/>
+            <mxPoint x="470" y="50" as="sourcePoint"/>
+            <Array as="points">
+              <mxPoint x="330" y="169"/>
+              <mxPoint x="330" y="169"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="11" value="&lt;b&gt;Cognito User pool&lt;/b&gt;" style="outlineConnect=0;fontColor=#232F3E;gradientColor=#F54749;gradientDirection=north;fillColor=#C7131F;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.cognito;" vertex="1" parent="1">
+          <mxGeometry x="23" y="130" width="78" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="12" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" edge="1" source="6" target="16" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="669.5" y="469" as="targetPoint"/>
+            <Array as="points">
+              <mxPoint x="780" y="909"/>
+            </Array>
+            <mxPoint x="720" y="580" as="sourcePoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="13" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fillColor=#f8cecc;strokeColor=#b85450;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="610" y="606" as="targetPoint"/>
+            <Array as="points">
+              <mxPoint x="610" y="560"/>
+              <mxPoint x="610" y="560"/>
+            </Array>
+            <mxPoint x="610" y="540" as="sourcePoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="14" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fillColor=#f8cecc;strokeColor=#b85450;" edge="1" source="31" target="29" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="978" y="558" as="sourcePoint"/>
+            <mxPoint x="819" y="527" as="targetPoint"/>
+            <Array as="points">
+              <mxPoint x="709" y="629"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="15" value="&lt;b&gt;DynamoDB&lt;/b&gt;&lt;br&gt;For storing Deletion&lt;br&gt;Queue,&amp;nbsp;Data Mappers&lt;br&gt;and Job Events" style="outlineConnect=0;fontColor=#232F3E;gradientColor=#4D72F3;gradientDirection=north;fillColor=#3334B9;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.dynamodb;" vertex="1" parent="1">
+          <mxGeometry x="704" y="130" width="78" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="16" value="&lt;b&gt;S3 Buckets&lt;br&gt;(Data Lake)&lt;/b&gt;" style="outlineConnect=0;fontColor=#232F3E;gradientColor=#60A337;gradientDirection=north;fillColor=#277116;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.s3;" vertex="1" parent="1">
+          <mxGeometry x="430" y="870" width="78" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="17" value="&lt;b&gt;Glue Data Catalog&lt;/b&gt;&lt;br&gt;Used to map relations&lt;br&gt;between data lake&amp;nbsp;&lt;br&gt;and users&#39; data" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#5A30B5;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.glue_data_catalog;" vertex="1" parent="1">
+          <mxGeometry x="36" y="870" width="72" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="18" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" edge="1" source="20" target="17" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="339" y="1068" as="targetPoint"/>
+            <Array as="points">
+              <mxPoint x="180" y="919"/>
+              <mxPoint x="180" y="919"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="19" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" edge="1" source="20" target="16" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="339" y="1068" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="20" value="&lt;b&gt;Athena&lt;/b&gt;&lt;br&gt;Used to find the objects&lt;br&gt;containing the&lt;br&gt;users&#39; data" style="outlineConnect=0;fontColor=#232F3E;gradientColor=#945DF2;gradientDirection=north;fillColor=#5A30B5;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.athena;" vertex="1" parent="1">
+          <mxGeometry x="192" y="870" width="78" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="21" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" edge="1" source="23" target="17" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="378" y="379" as="targetPoint"/>
+            <Array as="points">
+              <mxPoint x="62" y="399"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="22" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fillColor=#f8cecc;strokeColor=#b85450;" edge="1" source="23" target="38" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="140" y="1060" as="sourcePoint"/>
+            <mxPoint x="140" y="1140" as="targetPoint"/>
+            <Array as="points">
+              <mxPoint x="260" y="389"/>
+              <mxPoint x="260" y="389"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="23" value="&lt;b&gt;Query Planner&lt;/b&gt;&lt;br&gt;Queries Dynamo to fetch&lt;br&gt;the Users queue. Then&lt;br&gt;queries Glue to compile&lt;br&gt;a list of unique partitions&lt;br&gt;where to run the Athena&lt;br&gt;Queries. Then puts the list&lt;br&gt;in the Query Queue." style="outlineConnect=0;fontColor=#232F3E;gradientColor=#F78E04;gradientDirection=north;fillColor=#D05C17;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" vertex="1" parent="1">
+          <mxGeometry x="107" y="360" width="78" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="24" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fillColor=#f8cecc;strokeColor=#b85450;" edge="1" source="23" target="33" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="380" y="410" as="targetPoint"/>
+            <Array as="points">
+              <mxPoint x="250" y="399"/>
+              <mxPoint x="250" y="534"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="25" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" edge="1" source="23" target="15" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="230" y="380"/>
+              <mxPoint x="230" y="340"/>
+              <mxPoint x="660" y="340"/>
+              <mxPoint x="660" y="190"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="26" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" edge="1" source="23" target="37" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="747" y="829" as="targetPoint"/>
+            <Array as="points">
+              <mxPoint x="230" y="410"/>
+              <mxPoint x="230" y="610"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="27" value="&lt;b&gt;API Handlers&lt;/b&gt;&lt;br&gt;For input validation&lt;br&gt;and logging" style="outlineConnect=0;fontColor=#232F3E;gradientColor=#F78E04;gradientDirection=north;fillColor=#D05C17;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" vertex="1" parent="1">
+          <mxGeometry x="351" y="130" width="78" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="28" value="&lt;b&gt;API Gateway&lt;/b&gt;" style="outlineConnect=0;fontColor=#232F3E;gradientColor=#945DF2;gradientDirection=north;fillColor=#5A30B5;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.api_gateway;" vertex="1" parent="1">
+          <mxGeometry x="230" y="130" width="78" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="29" value="&lt;b&gt;Object Deletion&lt;br&gt;DLQ&lt;/b&gt;" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#BC1356;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.queue;" vertex="1" parent="1">
+          <mxGeometry x="670" y="606.5" width="78" height="47" as="geometry"/>
+        </mxCell>
+        <mxCell id="30" value="The Forget Step Function workflow consumes the Object Deletion Queue and orchestrates a pool of Fargate Tasks that directly interact with S3 to delete content from Objects. In case of non retriable failures, the queue messages are moved to the Object Deletion Dead Letter Queue. The Fargate service instance count is orchestrated by a Lambda and when the deletion completes, the instance count goes back to 0." style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="502" y="390" width="280" height="140" as="geometry"/>
+        </mxCell>
+        <mxCell id="31" value="&lt;b&gt;Object Deletion&lt;br&gt;Queue&lt;br&gt;&lt;/b&gt;" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#BC1356;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.queue;" vertex="1" parent="1">
+          <mxGeometry x="570" y="605.5" width="78" height="47" as="geometry"/>
+        </mxCell>
+        <mxCell id="32" value="The Athena Find Step Function workflow executes an Athena query for given Glue table and partitions. A Step Function wait handler periodically checks for completion, and when done deletes the query from the Athena Query Queue." style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="111" y="707" width="220" height="93" as="geometry"/>
+        </mxCell>
+        <mxCell id="33" value="&lt;b&gt;Athena Query&lt;br&gt;Queue&lt;br&gt;&lt;/b&gt;" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#BC1356;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.queue;" vertex="1" parent="1">
+          <mxGeometry x="312" y="510" width="78" height="47" as="geometry"/>
+        </mxCell>
+        <mxCell id="34" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fillColor=#f8cecc;strokeColor=#b85450;" edge="1" source="37" target="33" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="562" y="529" as="targetPoint"/>
+            <Array as="points">
+              <mxPoint x="450" y="534"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="35" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fillColor=#f8cecc;strokeColor=#b85450;" edge="1" source="37" target="5" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="562" y="529" as="targetPoint"/>
+            <Array as="points">
+              <mxPoint x="231" y="630"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="36" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fillColor=#f8cecc;strokeColor=#b85450;" edge="1" source="37" target="6" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="771" y="1120" as="targetPoint"/>
+            <Array as="points">
+              <mxPoint x="460" y="370"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="37" value="&lt;div&gt;&lt;b&gt;Orchestrator&amp;nbsp;&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;span&gt;Polls the Query Queue and&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span&gt;orchestrates the Athena Find&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span&gt;workflows according to Athena&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span&gt;account limits. When queries&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span&gt;complete, the results are put&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span&gt;into the object deletion queue&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span&gt;and new Find workflows are&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span&gt;started. When the queue is empty,&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span&gt;it starts the Forget Workflow&amp;nbsp;&lt;/span&gt;&lt;/div&gt;" style="outlineConnect=0;fontColor=#232F3E;gradientColor=#F78E04;gradientDirection=north;fillColor=#D05C17;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" vertex="1" parent="1">
+          <mxGeometry x="420" y="580" width="78" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="38" value="&lt;b&gt;Parameter Store&lt;br&gt;&lt;/b&gt;Used to store configurable&lt;br&gt;solution parameters related&lt;br&gt;to Find &amp;amp; Forget workflows" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#BC1356;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.parameter_store;" vertex="1" parent="1">
+          <mxGeometry x="331" y="350" width="75" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="39" value="&lt;b&gt;Job Stream Processor&lt;/b&gt;&lt;br&gt;&lt;div&gt;Orchestrates async actions&lt;/div&gt;&lt;div&gt;such&amp;nbsp;&lt;span&gt;as starting the Removal&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span&gt;Workflow&amp;nbsp;&lt;/span&gt;&lt;span&gt;and cleanup the Users&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span&gt;queue.&amp;nbsp;&lt;/span&gt;&lt;span&gt;Also handles Job Events&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span&gt;that&amp;nbsp;&lt;/span&gt;&lt;span&gt;affect state such as&lt;/span&gt;&lt;/div&gt;&lt;div&gt;metrics and status&lt;/div&gt;" style="outlineConnect=0;fontColor=#232F3E;gradientColor=#F78E04;gradientDirection=north;fillColor=#D05C17;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" vertex="1" parent="1">
+          <mxGeometry x="528" y="130" width="78" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="40" value="" style="endArrow=classic;startArrow=classic;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" edge="1" source="15" target="39" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="680" y="30" as="sourcePoint"/>
+            <mxPoint x="730" y="-20" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="41" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" edge="1" source="6" target="15" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="670" y="200"/>
+            </Array>
+            <mxPoint x="156" y="330" as="sourcePoint"/>
+            <mxPoint x="570" y="190" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="42" value="&lt;b&gt;Web UI&lt;/b&gt;" style="pointerEvents=1;shadow=0;dashed=0;html=1;strokeColor=none;fillColor=#505050;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;outlineConnect=0;align=center;shape=mxgraph.office.concepts.website;" vertex="1" parent="1">
+          <mxGeometry x="211" y="26" width="59" height="49" as="geometry"/>
+        </mxCell>
+        <mxCell id="43" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" source="46" target="42" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="158" y="-101.5" as="targetPoint"/>
+            <Array as="points">
+              <mxPoint x="180" y="45"/>
+              <mxPoint x="180" y="45"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="44" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fillColor=#f8cecc;strokeColor=#b85450;" edge="1" source="46" target="11" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="50" y="120" as="targetPoint"/>
+            <Array as="points">
+              <mxPoint x="62" y="45"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="45" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" edge="1" source="46" target="28" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="368" y="-101.5" as="targetPoint"/>
+            <Array as="points">
+              <mxPoint x="150" y="169"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="46" value="" style="pointerEvents=1;shadow=0;dashed=0;html=1;strokeColor=none;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;align=center;fillColor=#505050;shape=mxgraph.mscae.intune.user_group" vertex="1" parent="1">
+          <mxGeometry x="121" y="26" width="50" height="37" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

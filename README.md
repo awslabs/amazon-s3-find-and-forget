@@ -25,6 +25,7 @@ integrate it in your own applications.
 
 ## Documentation
 - [User Guide](docs/USER_GUIDE.md)
+- [Architecture](docs/ARCHITECTURE.md)
 - [Deployment](docs/USER_GUIDE.md#deploying-the-solution)
 - [Monitoring the Solution](docs/MONITORING.md)
 - [Local Development](docs/LOCAL_DEVELOPMENT.md)
