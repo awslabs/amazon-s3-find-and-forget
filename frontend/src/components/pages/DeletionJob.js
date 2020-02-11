@@ -56,7 +56,11 @@ export default ({ gateway, jobId }) => {
   );
 
   const withCountDown =
-    job && (job.JobStatus === "RUNNING" || job.JobStatus === "QUEUED");
+    job && ([
+      "RUNNING",
+      "QUEUED",
+      "FORGET_COMPLETED_CLEANUP_IN_PROGRESS"
+    ].indexOf(job.JobStatus) !== -1)
 
   const errorCountClass = x =>
     x === 0 || isUndefined(x) ? "success" : "error";

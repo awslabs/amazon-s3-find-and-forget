@@ -177,13 +177,14 @@ def test_it_returns_true_where_jobs_running(mock_table):
         IndexName=ANY,
         KeyConditionExpression=ANY,
         ScanIndexForward=False,
-        FilterExpression="(#s = :r) or (#s = :q)",
+        FilterExpression="(#s = :r) or (#s = :q) or (#s = :c)",
         ExpressionAttributeNames={
             "#s": "JobStatus"
         },
         ExpressionAttributeValues={
             ":r": "RUNNING",
             ":q": "QUEUED",
+            ":c": "FORGET_COMPLETED_CLEANUP_IN_PROGRESS",
         },
         Limit=1
     )
@@ -197,13 +198,14 @@ def test_it_returns_true_where_jobs_not_running(mock_table):
         IndexName=ANY,
         KeyConditionExpression=ANY,
         ScanIndexForward=False,
-        FilterExpression="(#s = :r) or (#s = :q)",
+        FilterExpression="(#s = :r) or (#s = :q) or (#s = :c)",
         ExpressionAttributeNames={
             "#s": "JobStatus"
         },
         ExpressionAttributeValues={
             ":r": "RUNNING",
             ":q": "QUEUED",
+            ":c": "FORGET_COMPLETED_CLEANUP_IN_PROGRESS",
         },
         Limit=1
     )

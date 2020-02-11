@@ -460,7 +460,7 @@ Resources:
                 "TableName": "${DeletionQueueTableName}"
               },
               "ResultPath": "$.DeletionQueue",
-              "Next": "Users in Queue?",
+              "Next": "Purge Queues",
               "Retry": [{
                 "ErrorEquals": [ "States.ALL" ],
                 "IntervalSeconds": 10,
@@ -471,33 +471,6 @@ Resources:
                 "ResultPath": "$.ErrorDetails",
                 "Next": "Handle Error"
               }]
-            },
-            "Users in Queue?": {
-              "Comment": "If the deletion queue is empty, exit gracefully. Otherwise, proceed to processing the queue.",
-              "Type": "Choice",
-              "Choices": [
-                {
-                  "Variable": "$.DeletionQueue.Count",
-                  "NumericGreaterThan": 0,
-                  "Next": "Yes"
-                },
-                {
-                  "Variable": "$.DeletionQueue.Count",
-                  "NumericEquals": 0,
-                  "Next": "No"
-                }
-              ],
-              "Default": "No"
-            },
-            "No": {
-              "Comment": "No work to be done.",
-              "Type": "Pass",
-              "Next": "End Forget Phase"
-            },
-            "Yes": {
-              "Comment": "Continue.",
-              "Type": "Pass",
-              "Next": "Purge Queues"
             },
             "Purge Queues": {
               "Type": "Parallel",

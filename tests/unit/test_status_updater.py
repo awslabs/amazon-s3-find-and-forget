@@ -17,14 +17,14 @@ def test_it_determines_basic_statuses():
     assert "FORGET_FAILED" == determine_status("123", "ForgetPhaseFailed")
     assert "FAILED" == determine_status("123", "Exception")
     assert "RUNNING" == determine_status("123", "JobStarted")
-    assert "FORGET_COMPLETED_CLEANUP_IN_PROGRESS" == determine_status("123", "ForgetPhaseSucceeded")
+    assert "FORGET_COMPLETED_CLEANUP_IN_PROGRESS" == determine_status("123", "ForgetPhaseEnded")
     assert "COMPLETED_CLEANUP_FAILED" == determine_status("123", "CleanupFailed")
     assert "COMPLETED" == determine_status("123", "CleanupSucceeded")
 
 
 @patch("backend.lambdas.jobs.status_updater.job_has_errors", Mock(return_value=True))
 def test_it_determines_completed_with_errors():
-    assert "FORGET_PARTIALLY_FAILED" == determine_status("123", "ForgetPhaseSucceeded")
+    assert "FORGET_PARTIALLY_FAILED" == determine_status("123", "ForgetPhaseEnded")
 
 
 @patch("backend.lambdas.jobs.status_updater.table")
@@ -91,7 +91,7 @@ def test_it_handles_job_started(table):
             ':JobStatus': "RUNNING",
             ':JobStartTime': 123.0,
         },
-        ReturnValues="UPDATED_NEW"
+        ReturnValues="ALL_NEW"
     )
     assert 1 == table.update_item.call_count
 
@@ -104,7 +104,7 @@ def test_it_handles_forget_finished(table):
         "Sk": "123456",
         "Type": "JobEvent",
         "CreatedAt": 123,
-        "EventName": "ForgetPhaseSucceeded",
+        "EventName": "ForgetPhaseEnded",
         "EventData": {}
     }])
     table.update_item.assert_called_with(
@@ -127,7 +127,7 @@ def test_it_handles_forget_finished(table):
             ':FORGET_COMPLETED_CLEANUP_IN_PROGRESS': 'FORGET_COMPLETED_CLEANUP_IN_PROGRESS',
             ':JobStatus': "FORGET_COMPLETED_CLEANUP_IN_PROGRESS",
         },
-        ReturnValues="UPDATED_NEW"
+        ReturnValues="ALL_NEW"
     )
     assert 1 == table.update_item.call_count
 
@@ -165,7 +165,7 @@ def test_it_handles_cleanup_success(table):
             ':JobStatus': "COMPLETED",
             ':JobFinishTime': 123.0,
         },
-        ReturnValues="UPDATED_NEW"
+        ReturnValues="ALL_NEW"
     )
     assert 1 == table.update_item.call_count
 
@@ -174,9 +174,11 @@ def test_it_handles_cleanup_success(table):
 @patch("backend.lambdas.jobs.status_updater.table")
 def test_it_handles_emits_cleanup_failed_events(table):
     table.update_item.return_value = {
-        "Id": "job123",
-        "Sk": "123456",
-        "JobStatus": "FORGET_COMPLETED_CLEANUP_IN_PROGRESS"
+        "Attributes": {
+            "Id": "job123",
+            "Sk": "123456",
+            "JobStatus": "FORGET_COMPLETED_CLEANUP_IN_PROGRESS"
+        }
     }
     update_status("job123", [{
         "Id": "job123",
@@ -208,7 +210,7 @@ def test_it_handles_emits_cleanup_failed_events(table):
             ':JobStatus': "COMPLETED",
             ':JobFinishTime': 123.0,
         },
-        ReturnValues="UPDATED_NEW"
+        ReturnValues="ALL_NEW"
     )
     assert 1 == table.update_item.call_count
     # mock_emit.assert_called_with(ANY, "CleanupFailed", ANY, ANY)
@@ -247,7 +249,7 @@ def test_it_handles_cleanup_failed(table):
             ':JobStatus': "COMPLETED_WITHOUT_CLEANUP",
             ':JobFinishTime': 123.0,
         },
-        ReturnValues="UPDATED_NEW"
+        ReturnValues="ALL_NEW"
     )
     assert 1 == table.update_item.call_count
 
@@ -285,7 +287,7 @@ def test_it_handles_find_failed(table):
             ':FORGET_COMPLETED_CLEANUP_IN_PROGRESS': 'FORGET_COMPLETED_CLEANUP_IN_PROGRESS',
             ':JobFinishTime': 123.0,
         },
-        ReturnValues="UPDATED_NEW"
+        ReturnValues="ALL_NEW"
     )
     assert 1 == table.update_item.call_count
 
@@ -323,7 +325,7 @@ def test_it_handles_forget_failed(table):
             ':FORGET_COMPLETED_CLEANUP_IN_PROGRESS': 'FORGET_COMPLETED_CLEANUP_IN_PROGRESS',
             ':JobFinishTime': 123.0,
         },
-        ReturnValues="UPDATED_NEW"
+        ReturnValues="ALL_NEW"
     )
     assert 1 == table.update_item.call_count
 
@@ -361,7 +363,7 @@ def test_it_handles_exception(table):
             ':FORGET_COMPLETED_CLEANUP_IN_PROGRESS': 'FORGET_COMPLETED_CLEANUP_IN_PROGRESS',
             ':JobFinishTime': 123.0,
         },
-        ReturnValues="UPDATED_NEW"
+        ReturnValues="ALL_NEW"
     )
     assert 1 == table.update_item.call_count
 

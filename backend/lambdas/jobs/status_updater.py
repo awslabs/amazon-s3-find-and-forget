@@ -20,7 +20,7 @@ status_map = {
     "ForgetPhaseFailed": "FORGET_FAILED",
     "Exception": "FAILED",
     "JobStarted": "RUNNING",
-    "ForgetPhaseSucceeded": "FORGET_COMPLETED_CLEANUP_IN_PROGRESS",
+    "ForgetPhaseEnded": "FORGET_COMPLETED_CLEANUP_IN_PROGRESS",
     "CleanupFailed": "COMPLETED_CLEANUP_FAILED",
     "CleanupSucceeded": "COMPLETED",
 }
@@ -62,7 +62,7 @@ def update_status(job_id, events):
 
 def determine_status(job_id, event_name):
     new_status = status_map[event_name]
-    if event_name == "ForgetPhaseSucceeded" and job_has_errors(job_id):
+    if event_name == "ForgetPhaseEnded" and job_has_errors(job_id):
         return "FORGET_PARTIALLY_FAILED"
 
     return new_status
@@ -110,7 +110,7 @@ def _update_item(job_id, attr_updates):
                 **{":{}".format(s): s for s in unlocked_states},
                 **attr_values,
             },
-            ReturnValues="UPDATED_NEW"
-        )
+            ReturnValues="ALL_NEW"
+        )["Attributes"]
     except ddb.meta.client.exceptions.ConditionalCheckFailedException:
         logger.warning("Job {} is already in a status which cannot be updated".format(job_id))

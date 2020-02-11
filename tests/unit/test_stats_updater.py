@@ -58,7 +58,7 @@ def test_it_handles_successful_queries(table):
             ':of': 0,
             ':z': 0,
         },
-        ReturnValues="UPDATED_NEW"
+        ReturnValues="ALL_NEW"
     )
 
 
@@ -108,7 +108,7 @@ def test_it_handles_failed_queries(table):
             ':of': 0,
             ':z': 0,
         },
-        ReturnValues="UPDATED_NEW"
+        ReturnValues="ALL_NEW"
     )
 
 
@@ -158,7 +158,7 @@ def test_it_handles_successful_updates(table):
             ':of': 0,
             ':z': 0,
         },
-        ReturnValues="UPDATED_NEW"
+        ReturnValues="ALL_NEW"
     )
 
 
@@ -208,7 +208,7 @@ def test_it_handles_failed_updates(table):
             ':of': 1,
             ':z': 0,
         },
-        ReturnValues="UPDATED_NEW"
+        ReturnValues="ALL_NEW"
     )
 
 
@@ -270,7 +270,7 @@ def test_it_handles_multiple_events(table):
             ':of': 0,
             ':z': 0,
         },
-        ReturnValues="UPDATED_NEW"
+        ReturnValues="ALL_NEW"
     )
 
 

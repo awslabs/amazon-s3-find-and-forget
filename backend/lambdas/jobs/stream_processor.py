@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timezone
 from os import getenv
 import json
 import boto3
@@ -38,11 +39,10 @@ def handler(event, context):
         group = [i for i in group]
         update_stats(job_id, group)
         updated_job = update_status(job_id, group)
-
         if updated_job and updated_job.get("JobStatus") == "FORGET_COMPLETED_CLEANUP_IN_PROGRESS":
             try:
                 clear_deletion_queue(updated_job)
-                emit_event(job_id, "CleanupSucceeded", {}, "StreamProcessor")
+                emit_event(job_id, "CleanupSucceeded", round(datetime.now(timezone.utc).timestamp()), "StreamProcessor")
             except Exception as e:
                 emit_event(job_id, "CleanupFailed", {
                     "Error": "Unable to clear deletion queue: {}".format(str(e))
@@ -76,10 +76,16 @@ def is_operation(record, operation):
 
 
 def is_job(record):
-    item = deserialize_item(record["dynamodb"]["NewImage"])
+    new_image = record["dynamodb"].get("NewImage")
+    if not new_image:
+        return False
+    item = deserialize_item(new_image)
     return item.get("Type") and item.get("Type") == "Job"
 
 
 def is_job_event(record):
-    item = deserialize_item(record["dynamodb"]["NewImage"])
+    new_image = record["dynamodb"].get("NewImage")
+    if not new_image:
+        return False
+    item = deserialize_item(new_image)
     return item.get("Type") and item.get("Type") == "JobEvent"

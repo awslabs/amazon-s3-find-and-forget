@@ -84,7 +84,7 @@ def _update_job(job_id, stats):
                 ':of': stats.get("TotalObjectUpdateFailedCount", 0),
                 ':z': 0,
             },
-            ReturnValues="UPDATED_NEW"
-        )
+            ReturnValues="ALL_NEW"
+        )["Attributes"]
     except ddb.meta.client.exceptions.ConditionalCheckFailedException:
         logger.warning("Job {} does not exist".format(job_id))
