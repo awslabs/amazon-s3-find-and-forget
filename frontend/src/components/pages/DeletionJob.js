@@ -12,8 +12,8 @@ import {
   formatFileSize,
   isUndefined,
   isEmpty,
-  withDefault,
-  successJobClass
+  successJobClass,
+  withDefault
 } from "../../utils";
 
 const COUNTDOWN_INTERVAL = 10;
@@ -190,7 +190,7 @@ export default ({ gateway, jobId }) => {
       {selectedEvent && (
         <Modal
           centered
-          show={selectedEvent}
+          show={!isEmpty(selectedEvent)}
           size="lg"
           onHide={() => setSelectedEvent(undefined)}
         >

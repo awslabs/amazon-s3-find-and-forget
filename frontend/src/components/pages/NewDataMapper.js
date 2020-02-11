@@ -4,7 +4,6 @@ import { Button, Form, Spinner } from "react-bootstrap";
 import Alert from "../Alert";
 
 import { formatErrorMessage, isEmpty, isIdValid } from "../../utils";
-
 import { glueSerializer } from "../../utils/glueSerializer";
 
 const region = window.s3f2Settings.region;
@@ -65,7 +64,6 @@ export default ({ gateway, goToDataMappers }) => {
           columns
         );
         setFormState("saved");
-        goToDataMappers();
       } catch (e) {
         setFormState("error");
         setErrorDetails(formatErrorMessage(e));
@@ -107,7 +105,11 @@ export default ({ gateway, goToDataMappers }) => {
 
   return (
     <Form>
-      <h1>Create Data Mapper</h1>
+      <h1>
+        {formState === "saved"
+          ? "Data Mapper successfully created"
+          : "Create Data Mapper"}
+      </h1>
       {formState === "loading" && (
         <Spinner animation="border" role="status" className="spinner" />
       )}
@@ -116,6 +118,26 @@ export default ({ gateway, goToDataMappers }) => {
           <div className="form-container">
             <Alert type="error" title="An error happened">
               {errorDetails}
+            </Alert>
+          </div>
+          <div className="form-container submit-container">
+            <Button className="aws-button" onClick={goToDataMappers}>
+              Return to Data Mappers
+            </Button>
+          </div>
+        </>
+      )}
+      {formState === "saved" && (
+        <>
+          <div className="form-container">
+            <Alert type="info" title="Action needed">
+              You must update the S3 Bucket Policy for the S3 Bucket
+              referenced by the data mapper to grant read permission to the IAM
+              role assumed by the query executor (e.g. Amazon Athena), and
+              read/write permission to the IAM role used by AWS Fargate to
+              perform any required deletions. On the Data Mappers page you can
+              see the required policies by choosing a Data Mapper from the list
+              and then choosing <strong>View S3 Bucket Policy</strong>.
             </Alert>
           </div>
           <div className="form-container submit-container">
