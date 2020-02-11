@@ -9,6 +9,12 @@ endif
 ifndef ADMIN_EMAIL
 	$(error ADMIN_EMAIL is undefined)
 endif
+ifndef SUBNETS
+	$(error SUBNETS is undefined)
+endif
+ifndef SEC_GROUPS
+	$(error SEC_GROUPS is undefined)
+endif
 
 pre-run:
 ifndef ROLE_NAME
