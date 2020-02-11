@@ -3,9 +3,13 @@ Description: Amazon S3 Find and Forget VPC
 
 Parameters:
   PrivateSubnetIpBlocks:
+    Description: Comma-delimited list of CIDR blocks for the private subnets
     Type: CommaDelimitedList
+    Default: "10.0.0.0/22,10.0.4.0/22,10.0.8.0/22"
   VpcIpBlock:
+    Description: CIDR block for the VPC
     Type: String
+    Default: 10.0.0.0/16
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
 
 Mappings:

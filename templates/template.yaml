@@ -50,10 +50,6 @@ Parameters:
     Description: Overrides the default Bucket containing Front-end and Back-end pre-built artefacts. When false, the default is used for the given region (for example solution-builders-us-west-1)
     Type: String
     Default: "false"
-  PrivateSubnetIpBlocks:
-    Description: Comma-delimited list of CIDR blocks for the private subnets
-    Type: String
-    Default: "10.0.0.0/22, 10.0.4.0/22, 10.0.8.0/22"
   ResourcePrefix:
     Description: The prefix used for uniquely named resources, such as State Machines, etc.
     Type: String
@@ -66,11 +62,12 @@ Parameters:
     AllowedValues:
       - "true"
       - "false"
-  VpcIpBlock:
-    Description: CIDR block for the VPC
-    Type: String
-    Default: 10.0.0.0/16
-    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+  VpcSecurityGroups:
+    Description: List of security groups to apply to Fargate tasks
+    Type: CommaDelimitedList
+  VpcSubnets:
+    Description: List of subnets to deploy Fargate tasks in
+    Type: CommaDelimitedList
   WaitDurationQueryExecution:
     Description: Wait interval for checking if a query has completed
     Type: Number
@@ -172,8 +169,8 @@ Resources:
         JobTableName: !GetAtt DDBStack.Outputs.JobTable
         ResourcePrefix: !Ref ResourcePrefix
         SafeModeBucket: !Ref TempBucket
-        VpcSecurityGroup: !GetAtt VpcStack.Outputs.SecurityGroup
-        VpcSubnets: !GetAtt VpcStack.Outputs.Subnets
+        VpcSecurityGroups: !Join [",", !Ref VpcSecurityGroups]
+        VpcSubnets: !Join [",", !Ref VpcSubnets]
   DeployStack:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -221,13 +218,6 @@ Resources:
         JobTableName: !GetAtt DDBStack.Outputs.JobTable
         ResultBucket: !Ref TempBucket
         StateMachinePrefix: !Ref ResourcePrefix
-  VpcStack:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: ./vpc.yaml
-      Parameters:
-        PrivateSubnetIpBlocks: !Ref PrivateSubnetIpBlocks
-        VpcIpBlock: !Ref VpcIpBlock
   WebUIStack:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -293,8 +283,8 @@ Metadata:
       - Label:
           default: "Network Configuration"
         Parameters:
-          - VpcIpBlock
-          - PrivateSubnetIpBlocks
+          - VpcSecurityGroups
+          - VpcSubnets
           - CreateCloudFrontDistribution
           - AccessControlAllowOriginOverride
       - Label:

@@ -31,8 +31,13 @@ the following command:
 make deploy \
   REGION=<aws-region> \
   ADMIN_EMAIL=<your-email-address> \
-  TEMP_BUCKET=<temp-bucket-name>
+  TEMP_BUCKET=<temp-bucket-name> \
+  SUBNETS=<comma-separated-subnet-ids> \
+  SEC_GROUPS=<comma-separated-security-group-ids>
 ```
+
+> For information on how to obtain your subnet and security group IDs, see
+> [Obtaining VPC Information](USER_GUIDE.md#obtaining-vpc-information).
 
 This will deploy the Amazon S3 Find and Forget solution using the AWS CLI
 profile of the current shell. By default this will be the profile `default`.
@@ -42,6 +47,7 @@ The following commands are also available:
 - `make deploy-artefacts`: Packages and uploads the Forget task Docker image
 and frontend React app to the solution bucket. This will trigger CodePipeline
 to automatically deploy these artefacts 
+- `make deploy-vpc`: Deploys only the VPC CloudFormation template
 - `make deploy-cfn`: Deploys only the CloudFormation template
 - `make deploy-containers-override`: Manually packages and deploys the
 Forget task Docker image to ECR via the AWS CLI rather than using CodePipeline.
