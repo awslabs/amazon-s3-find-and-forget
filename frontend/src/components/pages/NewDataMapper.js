@@ -135,7 +135,7 @@ export default ({ gateway, goToDataMappers }) => {
               referenced by the data mapper to grant read permission to the IAM
               role assumed by the query executor (e.g. Amazon Athena), and
               read/write permission to the IAM role used by AWS Fargate to
-              perform any required deletions. In the Data Mappers page you can
+              perform any required deletions. On the Data Mappers page you can
               see the required policies by choosing a Data Mapper from the list
               and then choosing <strong>View S3 Bucket Policy</strong>.
             </Alert>
