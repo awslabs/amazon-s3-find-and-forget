@@ -218,7 +218,6 @@ Resources:
         JobTableName: !GetAtt DDBStack.Outputs.JobTable
         ResultBucket: !Ref TempBucket
         StateMachinePrefix: !Ref ResourcePrefix
-        WebUIOrigin: !GetAtt WebUIStack.Outputs.Origin
   WebUIStack:
     Type: AWS::CloudFormation::Stack
     Properties:
