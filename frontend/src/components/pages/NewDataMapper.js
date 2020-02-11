@@ -137,7 +137,7 @@ export default ({ gateway, goToDataMappers }) => {
               read/write permission to the IAM role used by AWS Fargate to
               perform any required deletions. In the Data Mappers page you can
               see the required policies by choosing a Data Mapper from the list
-              and then clicking <strong>View S3 Bucket Policy</strong>.
+              and then choosing <strong>View S3 Bucket Policy</strong>.
             </Alert>
           </div>
           <div className="form-container submit-container">
