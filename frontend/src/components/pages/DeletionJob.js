@@ -221,52 +221,80 @@ export default ({ gateway, jobId }) => {
         </Alert>
       )}
       {job && (
-        <div className="page-table">
-          <Row>
-            <Col>
-              <h2>Job Events ({jobEvents.length})</h2>
-            </Col>
-          </Row>
-
-          <Form>
-            <Table>
-              <thead>
-                <tr>
-                  <td></td>
-                  <td>Event Name</td>
-                  <td>Event Time</td>
-                  <td>Event Emitter</td>
-                  <td></td>
-                </tr>
-              </thead>
-              <tbody>
-                {jobEvents &&
-                  jobEvents.map((e, index) => (
-                    <tr key={index}>
-                      <td></td>
-                      <td>{withDefault(e.EventName)}</td>
-                      <td>{formatDateTime(e.CreatedAt)}</td>
-                      <td>{withDefault(e.EmitterId)}</td>
-                      <td>
-                        <Button
-                          variant="link"
-                          style={{ padding: 0 }}
-                          onClick={() => setSelectedEvent(e)}
-                        >
-                          View Event
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </Table>
-            {isEmpty(jobEvents) && eventsState !== "loading" && (
-              <div className="content centered">
-                <b>No events have been received yet</b>
-              </div>
-            )}
-          </Form>
-        </div>
+        <>
+          <div className="page-table">
+            <Row>
+              <Col>
+                <h2>Job Settings</h2>
+              </Col>
+            </Row>
+            <div className="details content">
+              <DetailsBox label="Safe Mode">
+                {job.SafeMode.toString().toUpperCase()}
+              </DetailsBox>
+              <DetailsBox label="Athena Concurrency Limit">
+                {job.AthenaConcurrencyLimit}
+              </DetailsBox>
+              <DetailsBox label="Wait Duration Query Execution">
+                {job.WaitDurationQueryExecution}
+              </DetailsBox>
+              <DetailsBox label="Wait Duration Query Queue">
+                {job.WaitDurationQueryQueue}
+              </DetailsBox>
+              <DetailsBox label="Deletion Tasks Max Number">
+                {job.DeletionTasksMaxNumber}
+              </DetailsBox>
+              <DetailsBox label="Wait Duration Forget Queue">
+                {job.WaitDurationForgetQueue}
+              </DetailsBox>
+            </div>
+          </div>
+          <div className="page-table">
+            <Row>
+              <Col>
+                <h2>Job Events ({jobEvents.length})</h2>
+              </Col>
+            </Row>
+            <Form>
+              <Table>
+                <thead>
+                  <tr>
+                    <td></td>
+                    <td>Event Name</td>
+                    <td>Event Time</td>
+                    <td>Event Emitter</td>
+                    <td></td>
+                  </tr>
+                </thead>
+                <tbody>
+                  {jobEvents &&
+                    jobEvents.map((e, index) => (
+                      <tr key={index}>
+                        <td></td>
+                        <td>{withDefault(e.EventName)}</td>
+                        <td>{formatDateTime(e.CreatedAt)}</td>
+                        <td>{withDefault(e.EmitterId)}</td>
+                        <td>
+                          <Button
+                            variant="link"
+                            style={{ padding: 0 }}
+                            onClick={() => setSelectedEvent(e)}
+                          >
+                            View Event
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </Table>
+              {isEmpty(jobEvents) && eventsState !== "loading" && (
+                <div className="content centered">
+                  <b>No events have been received yet</b>
+                </div>
+              )}
+            </Form>
+          </div>
+        </>
       )}
       <div className="centered">
         {eventsState === "loading" ? (
