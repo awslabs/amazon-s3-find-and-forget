@@ -173,5 +173,30 @@ your preferred AWS region:
 ## Updating the Stack
 *TODO*
 
+## Deletion Job Statuses
+
+The list of possible job statuses is as follows:
+
+- `QUEUED`: The job has been accepted but has yet to start. Jobs are started
+  asynchronously by a Lambda invoked by the [DynamoDB event stream][DynamoDB Streams]
+  for the Jobs table.
+- `RUNNING`: The job is still in progress.
+- `COMPLETED`: The job finished successfully.
+- `COMPLETED_WITH_ERRORS`: The job finished but one or more objects could not
+  be updated. The Deletion DLQ for messages will contain a message per object
+  that could not be updated.
+- `FIND_FAILED`: The job failed during the Find phase as there was an issue
+  querying one or more data mappers.
+- `FORGET_FAILED`: The job failed during the Forget phase as there was an issue
+  running the Fargate tasks.
+- `FAILED`: An unknown error occurred during the Find and Forget workflow, for
+  example, the Step Functions execution timed out or the execution was manually
+  cancelled.
+
+For more information on how to resolve statuses indicative of errors, consult
+the [Troubleshooting] guide.
+
+[Troubleshooting]: TROUBLESHOOTING.md
 [Fargate Configuration]: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html#fargate-tasks-size
 [VPC Endpoints]: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-endpoints.html
+[DynamoDB Streams]: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Streams.html
