@@ -131,7 +131,7 @@ export default ({ gateway, goToDataMappers }) => {
         <>
           <div className="form-container">
             <Alert type="info" title="Action needed">
-              Now you must update the S3 Bucket Policy for the S3 Bucket
+              You must update the S3 Bucket Policy for the S3 Bucket
               referenced by the data mapper to grant read permission to the IAM
               role assumed by the query executor (e.g. Amazon Athena), and
               read/write permission to the IAM role used by AWS Fargate to
