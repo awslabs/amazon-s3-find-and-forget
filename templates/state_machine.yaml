@@ -492,7 +492,7 @@ Resources:
             "No": {
               "Comment": "No work to be done.",
               "Type": "Pass",
-              "Next": "Job Succeeded"
+              "Next": "End Forget Phase"
             },
             "Yes": {
               "Comment": "Continue.",
@@ -719,7 +719,7 @@ Resources:
               },
               "Resource": "${EmitEvent.Arn}",
               "ResultPath": null,
-              "Next": "Job Succeeded"
+              "End": true
             },
             "Handle Error": {
               "Type": "Pass",
@@ -757,19 +757,6 @@ Resources:
               "Parameters": {
                 "EventName.$": "$.EventName",
                 "EventData.$": "$",
-                "EmitterId": "StepFunctions",
-                "JobId.$": "$$.Execution.Name"
-              },
-              "Resource": "${EmitEvent.Arn}",
-              "ResultPath": null,
-              "End": true
-            },
-            "Job Succeeded": {
-              "Comment": "Emit the job complete event",
-              "Type": "Task",
-              "Parameters": {
-                "EventName": "JobSucceeded",
-                "EventData.$": "$$.State.EnteredTime",
                 "EmitterId": "StepFunctions",
                 "JobId.$": "$$.Execution.Name"
               },

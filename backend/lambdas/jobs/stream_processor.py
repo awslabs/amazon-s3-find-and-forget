@@ -8,7 +8,7 @@ from operator import itemgetter
 
 from stats_updater import update_stats
 from status_updater import update_status
-from boto_utils import DecimalEncoder, deserialize_item
+from boto_utils import DecimalEncoder, deserialize_item, emit_event
 from decorators import with_logger
 
 deserializer = TypeDeserializer()
@@ -23,9 +23,6 @@ q_table = ddb.Table(getenv("DeletionQueueTable"))
 @with_logger
 def handler(event, context):
     records = event["Records"]
-    updated_jobs = [
-        deserialize_item(r["dynamodb"]["NewImage"]) for r in records if is_job(r) and is_operation(r, "MODIFY")
-    ]
     new_jobs = [
         deserialize_item(r["dynamodb"]["NewImage"]) for r in records if is_job(r) and is_operation(r, "INSERT")
     ]
@@ -40,11 +37,16 @@ def handler(event, context):
     for job_id, group in grouped_events:
         group = [i for i in group]
         update_stats(job_id, group)
-        update_status(job_id, group)
+        updated_job = update_status(job_id, group)
 
-    for job in updated_jobs:
-        if job.get("JobStatus") == "COMPLETED":
-            clear_deletion_queue(job)
+        if updated_job and updated_job.get("JobStatus") == "FORGET_COMPLETED_CLEANUP_IN_PROGRESS":
+            try:
+                clear_deletion_queue(updated_job)
+                emit_event(job_id, "CleanupSucceeded", {}, "StreamProcessor")
+            except Exception as e:
+                emit_event(job_id, "CleanupFailed", {
+                    "Error": "Unable to clear deletion queue: {}".format(str(e))
+                }, "StreamProcessor")
 
 
 def process_job(job):

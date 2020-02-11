@@ -20,14 +20,17 @@ status_map = {
     "ForgetPhaseFailed": "FORGET_FAILED",
     "Exception": "FAILED",
     "JobStarted": "RUNNING",
-    "JobSucceeded": "COMPLETED",
+    "ForgetPhaseSucceeded": "FORGET_COMPLETED_CLEANUP_IN_PROGRESS",
+    "CleanupFailed": "COMPLETED_CLEANUP_FAILED",
+    "CleanupSucceeded": "COMPLETED",
 }
 
-unlocked_states = ["RUNNING", "QUEUED"]
+unlocked_states = ["RUNNING", "QUEUED", "FORGET_COMPLETED_CLEANUP_IN_PROGRESS"]
 
 time_events = {
     "JobStarted": "JobStartTime",
-    "JobSucceeded": "JobFinishTime",
+    "CleanupFailed": "JobFinishTime",
+    "CleanupSucceeded": "JobFinishTime",
     "Exception": "JobFinishTime",
     "FindPhaseFailed": "JobFinishTime",
     "ForgetPhaseFailed": "JobFinishTime",
@@ -52,14 +55,15 @@ def update_status(job_id, events):
             attr_updates[time_events[event_name]] = event["CreatedAt"]
 
     if len(attr_updates) > 0:
-        updated_job = _update_item(job_id, attr_updates)
+        job = _update_item(job_id, attr_updates)
         logger.info("Updated Status for Job ID {}: {}".format(job_id, json.dumps(attr_updates, cls=DecimalEncoder)))
+        return job
 
 
 def determine_status(job_id, event_name):
     new_status = status_map[event_name]
-    if event_name == "JobSucceeded" and job_has_errors(job_id):
-        return "COMPLETED_WITH_ERRORS"
+    if event_name == "ForgetPhaseSucceeded" and job_has_errors(job_id):
+        return "FORGET_PARTIALLY_FAILED"
 
     return new_status
 
