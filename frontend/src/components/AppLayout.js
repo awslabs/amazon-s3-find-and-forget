@@ -4,7 +4,7 @@ import { Button } from "react-bootstrap";
 import Icon from "./Icon";
 import "./AppLayout.css";
 
-import { isUndefined } from "../utils";
+import { isUndefined, repoUrl } from "../utils";
 
 export default ({ currentPage, onMenuClick, pages }) => {
   const [leftOpen, setLeftOpen] = useState(true);
@@ -40,6 +40,16 @@ export default ({ currentPage, onMenuClick, pages }) => {
                   </Button>
                 );
               })}
+          </div>
+          <div>
+            <a
+              href={repoUrl("issues")}
+              target="_blank"
+              className="menu"
+              rel="noopener noreferrer"
+            >
+              Report an Issue <Icon type="new-window" />
+            </a>
           </div>
         </div>
       </div>

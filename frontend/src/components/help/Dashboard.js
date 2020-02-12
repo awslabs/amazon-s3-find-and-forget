@@ -6,7 +6,7 @@ import {repoUrl, docsUrl} from "../../utils";
 const links = [
   {
     title: "Getting Started",
-    url: repoUrl("README.md")
+    url: repoUrl("/")
   },
   {
     title: "Add a Data Mapper",
