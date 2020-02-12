@@ -489,7 +489,7 @@ Resources:
                     "End": true,
                     "Retry": [{
                       "ErrorEquals": [ "States.ALL" ],
-                      "IntervalSeconds": 60,
+                      "IntervalSeconds": 61,
                       "MaxAttempts": 1
                     }]
                   }

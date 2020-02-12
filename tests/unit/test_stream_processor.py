@@ -277,8 +277,8 @@ def test_it_clears_queue(mock_writer):
         "Id": "job123",
         "Sk": "job123",
         "Type": "Job",
-        "JobStatus": "COMPLETED",
-        "DeletionQueue": [
+        "JobStatus": "FORGET_COMPLETED_CLEANUP_IN_PROGRESS",
+        "Matches": [
             {"MatchId": "test", "CreatedAt": 123456789}
         ]
     })

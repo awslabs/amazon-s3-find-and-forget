@@ -192,7 +192,7 @@ def get_container_id():
 
 @lru_cache()
 def safe_mode(job_id):
-    return table.get_item(Key={"Id": job_id, "Sk": job_id}).get("SafeMode", True)
+    return table.get_item(Key={"Id": job_id, "Sk": job_id})["Item"].get("SafeMode", True)
 
 
 def emit_deletion_event(message_body, stats):
