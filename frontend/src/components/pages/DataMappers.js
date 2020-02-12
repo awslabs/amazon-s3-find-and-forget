@@ -155,6 +155,7 @@ export default ({ gateway, onPageChange }) => {
             accountId={accountId}
             bucket={getBucket(selectedRow).bucket}
             close={() => showBucketPolicy(false)}
+            location={getBucket(selectedRow).location}
             show={showingBucketPolicy}
           />
         </>

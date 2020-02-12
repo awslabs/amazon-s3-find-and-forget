@@ -3,7 +3,7 @@ import { Button, Modal } from "react-bootstrap";
 
 const { athenaExecutionRole, deleteTaskRole, region } = window.s3f2Settings;
 
-export default ({ accountId, bucket, close, show }) => (
+export default ({ accountId, bucket, close, show, location }) => (
   <Modal centered show={show} size="lg" onHide={close}>
     <Modal.Header closeButton>
       <Modal.Title>S3 Bucket Policy</Modal.Title>
@@ -37,7 +37,7 @@ export default ({ accountId, bucket, close, show }) => (
               Version: "2012-10-17",
               Statement: [
                 {
-                  Sid: "AllowS3F2",
+                  Sid: "AllowS3F2Read",
                   Effect: "Allow",
                   Principal: {
                     AWS: [
@@ -45,10 +45,33 @@ export default ({ accountId, bucket, close, show }) => (
                       `arn:aws:iam::${accountId}:role/${deleteTaskRole}`
                     ]
                   },
-                  Action: "s3:*",
+                  Action: [
+                    "s3:GetBucketLocation",
+                    "s3:GetObject*",
+                    "s3:ListBucket"
+                  ],
                   Resource: [
                     `arn:aws:s3:::${bucket}`,
-                    `arn:aws:s3:::${bucket}/*`
+                    `arn:aws:s3:::${location.replace("s3://", "")}*`
+                  ]
+                }, {
+                  Sid: "AllowS3F2Write",
+                  Effect: "Allow",
+                  Principal: {
+                    AWS: [
+                      `arn:aws:iam::${accountId}:role/${deleteTaskRole}`
+                    ]
+                  },
+                  Action: [
+                    "s3:AbortMultipartUpload",
+                    "s3:GetBucketRequestPayment",
+                    "s3:ListBucketMultipartUploads",
+                    "s3:ListMultipartUploadParts",
+                    "s3:PutObject*"
+                  ],
+                  Resource: [
+                    `arn:aws:s3:::${bucket}`,
+                    `arn:aws:s3:::${location.replace("s3://", "")}*`
                   ]
                 }
               ]
