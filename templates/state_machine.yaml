@@ -92,7 +92,6 @@ Resources:
               - "dynamodb:Query"
               - "dynamodb:GetItem"
               - "dynamodb:PutItem"
-              - "dynamodb:DeleteItem"
               - "dynamodb:UpdateItem"
             Resource:
               - !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${JobTableName}"
@@ -461,7 +460,7 @@ Resources:
                 "TableName": "${DeletionQueueTableName}"
               },
               "ResultPath": "$.DeletionQueue",
-              "Next": "Users in Queue?",
+              "Next": "Purge Queues",
               "Retry": [{
                 "ErrorEquals": [ "States.ALL" ],
                 "IntervalSeconds": 10,
@@ -473,34 +472,8 @@ Resources:
                 "Next": "Handle Error"
               }]
             },
-            "Users in Queue?": {
-              "Comment": "If the deletion queue is empty, exit gracefully. Otherwise, proceed to processing the queue.",
-              "Type": "Choice",
-              "Choices": [
-                {
-                  "Variable": "$.DeletionQueue.Count",
-                  "NumericGreaterThan": 0,
-                  "Next": "Yes"
-                },
-                {
-                  "Variable": "$.DeletionQueue.Count",
-                  "NumericEquals": 0,
-                  "Next": "No"
-                }
-              ],
-              "Default": "No"
-            },
-            "No": {
-              "Comment": "No work to be done.",
-              "Type": "Pass",
-              "Next": "Job Succeeded"
-            },
-            "Yes": {
-              "Comment": "Continue.",
-              "Type": "Pass",
-              "Next": "Purge Queues"
-            },
             "Purge Queues": {
+              "Comment": "Purges the query and object deletion queues. Purges wait 61 seconds before retrying to avoid exceeding the max purge attempt rate for SQS.",
               "Type": "Parallel",
               "Next": "Get Data Mappers",
               "ResultPath": null,
@@ -517,7 +490,7 @@ Resources:
                     "End": true,
                     "Retry": [{
                       "ErrorEquals": [ "States.ALL" ],
-                      "IntervalSeconds": 60,
+                      "IntervalSeconds": 61,
                       "MaxAttempts": 1
                     }]
                   }
@@ -529,13 +502,13 @@ Resources:
                    "Parameters": {
                      "QueueUrl": "${DeleteQueueUrl}"
                    },
-                   "Comment": "Purge the deletion queue",
+                   "Comment": "Purge the deletion queue.",
                    "Type": "Task",
                    "Resource": "${PurgeQueue.Arn}",
                    "End": true,
                    "Retry": [{
                      "ErrorEquals": [ "States.ALL" ],
-                     "IntervalSeconds": 60,
+                     "IntervalSeconds": 61,
                      "MaxAttempts": 1
                    }]
                  }
@@ -720,44 +693,7 @@ Resources:
               },
               "Resource": "${EmitEvent.Arn}",
               "ResultPath": null,
-              "Next": "Delete Queue Items"
-            },
-            "Delete Queue Items": {
-              "Comment": "Deletes all items from the deletion queue",
-              "Type": "Map",
-              "Next": "Job Succeeded",
-              "InputPath": "$.DeletionQueue.Items",
-              "ItemsPath": "$",
-              "ResultPath": null,
-              "MaxConcurrency": 10,
-              "Iterator": {
-                "StartAt": "Delete Queue Item",
-                "States": {
-                  "Delete Queue Item": {
-                    "Type": "Task",
-                    "Resource": "arn:aws:states:::dynamodb:deleteItem",
-                    "Parameters": {
-                      "TableName": "${DeletionQueueTableName}",
-                      "Key": {
-                        "MatchId.$": "$.MatchId",
-                        "CreatedAt.$": "$.CreatedAt"
-                      }
-                    },
-                    "ResultPath": null,
-                    "End": true,
-                    "Retry": [{
-                      "ErrorEquals": [ "States.ALL" ],
-                      "IntervalSeconds": 10,
-                      "MaxAttempts": 1
-                    }]
-                  }
-                }
-              },
-              "Catch": [{
-                "ErrorEquals": ["States.ALL"],
-                "ResultPath": "$.ErrorDetails",
-                "Next": "Handle Error"
-              }]
+              "End": true
             },
             "Handle Error": {
               "Type": "Pass",
@@ -795,19 +731,6 @@ Resources:
               "Parameters": {
                 "EventName.$": "$.EventName",
                 "EventData.$": "$",
-                "EmitterId": "StepFunctions",
-                "JobId.$": "$$.Execution.Name"
-              },
-              "Resource": "${EmitEvent.Arn}",
-              "ResultPath": null,
-              "End": true
-            },
-            "Job Succeeded": {
-              "Comment": "Emit the job complete event",
-              "Type": "Task",
-              "Parameters": {
-                "EventName": "JobSucceeded",
-                "EventData.$": "$$.State.EnteredTime",
                 "EmitterId": "StepFunctions",
                 "JobId.$": "$$.Execution.Name"
               },

@@ -2,9 +2,9 @@
   "version": 2,
   "waiters": {
     "JobComplete": {
-      "delay": 2,
+      "delay": 5,
       "operation": "GetItem",
-      "maxAttempts": 30,
+      "maxAttempts": 60,
       "acceptors": [
         {
           "expected": "COMPLETED",
@@ -50,9 +50,9 @@
       ]
     },
     "JobFinished": {
-      "delay": 2,
+      "delay": 5,
       "operation": "GetItem",
-      "maxAttempts": 30,
+      "maxAttempts": 60,
       "acceptors": [
         {
           "expected": "COMPLETED",
@@ -89,6 +89,23 @@
           "matcher": "path",
           "state": "success",
           "argument": "Item.JobStatus.S"
+        },
+        {
+          "expected": 404,
+          "matcher": "status",
+          "state": "retry"
+        }
+      ]
+    },
+    "JobExists": {
+      "delay": 5,
+      "operation": "GetItem",
+      "maxAttempts": 30,
+      "acceptors": [
+        {
+          "expected": 200,
+          "matcher": "status",
+          "state": "success"
         },
         {
           "expected": 404,

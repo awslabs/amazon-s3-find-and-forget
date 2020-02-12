@@ -528,9 +528,9 @@ def test_it_provides_logs_for_acl_fail(mock_save, mock_s3, mock_emit, mock_delet
 
 @patch("backend.ecs_tasks.delete_files.delete_files.table")
 def test_it_passes_through_safe_mode(table):
-    table.get_item.return_value = {"SafeMode": True}
+    table.get_item.return_value = {"Item": {"SafeMode": True}}
     assert safe_mode("123")
-    table.get_item.return_value = {"SafeMode": False}
+    table.get_item.return_value = {"Item": {"SafeMode": False}}
     assert not safe_mode("456")
 
 

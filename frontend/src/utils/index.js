@@ -60,6 +60,7 @@ export const successJobClass = status => {
       return "success";
     case "RUNNING":
     case "QUEUED":
+    case "FORGET_COMPLETED_CLEANUP_IN_PROGRESS":
       return "info";
     default:
       return "error";

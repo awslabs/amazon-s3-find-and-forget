@@ -58,14 +58,8 @@ def test_it_handles_successful_queries(table):
             ':of': 0,
             ':z': 0,
         },
-        ReturnValues="UPDATED_NEW"
+        ReturnValues="ALL_NEW"
     )
-    assert {
-        "TotalQueryCount": 1,
-        "TotalQuerySucceededCount": 1,
-        "TotalQueryScannedInBytes": 10,
-        "TotalQueryTimeInMillis": 100,
-    } == resp
 
 
 @patch("backend.lambdas.jobs.stats_updater.table")
@@ -114,12 +108,8 @@ def test_it_handles_failed_queries(table):
             ':of': 0,
             ':z': 0,
         },
-        ReturnValues="UPDATED_NEW"
+        ReturnValues="ALL_NEW"
     )
-    assert {
-        "TotalQueryCount": 1,
-        "TotalQueryFailedCount": 1,
-    } == resp
 
 
 @patch("backend.lambdas.jobs.stats_updater.table")
@@ -168,11 +158,8 @@ def test_it_handles_successful_updates(table):
             ':of': 0,
             ':z': 0,
         },
-        ReturnValues="UPDATED_NEW"
+        ReturnValues="ALL_NEW"
     )
-    assert {
-        "TotalObjectUpdatedCount": 1,
-    } == resp
 
 
 @patch("backend.lambdas.jobs.stats_updater.table")
@@ -221,11 +208,8 @@ def test_it_handles_failed_updates(table):
             ':of': 1,
             ':z': 0,
         },
-        ReturnValues="UPDATED_NEW"
+        ReturnValues="ALL_NEW"
     )
-    assert {
-        "TotalObjectUpdateFailedCount": 1,
-    } == resp
 
 
 @patch("backend.lambdas.jobs.stats_updater.table")
@@ -286,15 +270,8 @@ def test_it_handles_multiple_events(table):
             ':of': 0,
             ':z': 0,
         },
-        ReturnValues="UPDATED_NEW"
+        ReturnValues="ALL_NEW"
     )
-    assert {
-        "TotalQueryCount": 1,
-        "TotalQuerySucceededCount": 1,
-        "TotalQueryScannedInBytes": 10,
-        "TotalQueryTimeInMillis": 100,
-        "TotalObjectUpdatedCount": 1,
-    } == resp
 
 
 @patch("backend.lambdas.jobs.stats_updater.ddb")
