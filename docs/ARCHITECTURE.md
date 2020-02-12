@@ -1,8 +1,15 @@
 # Architecture
 
-The following diagram provides an high-level overview of the system.
-
-![Architecture](images/architecture.png)
+## Index
+* [Introduction](#introduction)
+* [High-level overview](#high-level-overview)
+* [User Interface](#user-interface)
+* [State Management](#state-management)
+* [Deletion Job Workflow](#deletion-job-workflow)
+    * [The Find workflow](#the-find-workflow)
+    * [The Forget workflow](#the-forget-workflow)
+* [Monitoring](#monitoring)
+* [Cost Overview](#cost-overview)
 
 ## Introduction
 
@@ -12,6 +19,10 @@ In order to achieve this goal the solution has been designed around with three m
 1. It is common for data owners to have the legal requirement of removing PII data within a given period such as 15 or 30 days. The solution allows to create a queue of users to delete in order to leverage this requirement to save costs by allowing the removal of multiple users to be batched in the so called "Deletion Job". Given most of the read/write operations to S3 require similar cost for 1 or many users, in this way we achieve some gain in terms of cost. Running a deletion Job in a sensible cadence is responsibility of the customer.
 2. The deletion job is based on two separate phases called Find and Forget. The Find phase leverages Amazon Athena and its possibility to query S3 to find the exact location of specific matches (by using the `$path` pseudo-column). By running this first step independently the solution is able to determine an accurate list of the specific objects containing PII data belonging to specific users. Athena provides this functionality in a performant, secure and cost effective way ([Amazon Athena pricing](https://aws.amazon.com/athena/pricing/)). The Forget Phase consists on operating surgical removals from the specific objects rather than the whole lake, allowing great savings on S3 reads, when compared to scanning the whole data lake.
 3. The solution is designed with Serverless in mind. All the components for Web UI, API and Removal Jobs are Serverless with the exception of the VPC needed to run the solution.
+
+## High-level overview
+
+![Architecture](images/architecture.png)
 
 ## User Interface
 
@@ -43,7 +54,7 @@ When all the queries have been executed, the [Forget Workflow](#the-forget-workf
 
 ![Architecture](images/stepfunctions_graph_main.png)
 
-## The Find Workflow
+### The Find Workflow
 
 The Find workflow is operated by a AWS Step Function that uses AWS Lambda for computing and Amazon Athena to query Amazon S3.
 
@@ -52,10 +63,18 @@ When each workflow completes a query, it stores the result to the Object Deletio
 
 ![Architecture](images/stepfunctions_graph_athena.png)
 
-## The Forget Workflow
+### The Forget Workflow
 
 The Forget workflow is operated by a Amazon Step Function that uses AWS Lambda and AWS Fargate for computing and Amazon DynamoDB and Amazon SQS to handle state.
 
 When the workflow starts, a fleet of AWS Fargate tasks is instanciated to consume the Object Deletion Queue and start deleting content from the objects. When the Queue is empty, a Lambda sets the instances back to 0 in order to optimise cost. The number of Fargate tasks is configurable when deploying the solution.
 
 ![Architecture](images/stepfunctions_graph_deletion.png)
+
+## Monitoring
+
+Please refer to the [Monitoring guide](MONITORING.md)
+
+## Cost Overview
+
+Please refer to the [Cost Overview guide](COST_OVERVIEW.md)
