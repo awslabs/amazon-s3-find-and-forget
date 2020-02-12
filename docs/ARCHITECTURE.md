@@ -16,7 +16,7 @@
 The goal of the solution is to provide secure, reliable, performant and cost effective tools for finding and removing Personal Identifiable Information (PII) on S3 buckets.
 In order to achieve this goal the solution has been designed around three main ideas:
 
-1. It is common for data owners to have the legal requirement of removing PII data within a given period such as 15 or 30 days. The solution allows to create a queue of users to delete in order to leverage this requirement to save costs by allowing the removal of multiple users to be batched in the so called "Deletion Job". Given most of the read/write operations to S3 require similar cost when single files contain data of multiple users, we achieve some gains in terms of cost by batching. Running a deletion Job in a sensible cadence is responsibility of the customer.
+1. It is common for data owners to have the legal requirement of removing PII data within a given period such as 15 or 30 days. Given most of the read/write operations to S3 require similar cost when single files contain data of multiple users, the solution allows to create a queue of users to delete in order to leverage this requirement to save costs by allowing the removal of multiple users to be batched in the so called "Deletion Job". Running a deletion Job in a sensible cadence is responsibility of the customer.
 2. The deletion job is based on two separate phases called Find and Forget. The Find phase leverages Amazon Athena and its possibility to query S3 to find the exact location of specific matches (by using the `$path` pseudo-column). By running this first step independently the solution is able to determine an accurate list of the specific objects containing PII data belonging to specific users. Athena provides this functionality in a performant, secure and cost effective way ([Amazon Athena pricing](https://aws.amazon.com/athena/pricing/)). The Forget Phase consists on operating surgical removals from the specific objects rather than the whole lake, allowing great savings on S3 reads and computing, when compared to scanning the whole data lake.
 3. The solution is designed with Serverless in mind. All the components for Web UI, API and Removal Jobs are Serverless with the exception of the VPC needed to run the solution.
 
@@ -39,14 +39,14 @@ State is handled differently depending on the cirumstances:
 
 The data is stored in DynamoDB using 3 tables:
 * **DataMappers**: Metadata for mapping S3 buckets to the solution.
-* **DeletionQueue**: The queue of users to be deleted. We store this data in Dynamo in order to provide an API that easily allows to inspect and occasionally amend the data between deletion jobs.
+* **DeletionQueue**: The queue of users to be deleted. This data is stored in DynamoDB in order to provide an API that easily allows to inspect and occasionally amend the data between deletion jobs.
 * **Jobs**: Data about deletion jobs, including the Job Summary (that contains an up-to-date representation of specific jobs over time) and Job Events (documents containing metadata about discrete events affecting a running job).
 
 ## Deletion Job Workflow
 
 The Deletion Job workflow is operated by a AWS Step Function that uses AWS Lambda for computing, Amazon DynamoDB and Amazon SQS to handle state, and nested AWS Step Functions to execute the Find and Forget phases.
 
-When a Deletion Job starts, we start with the **Query planner** component. Its responsibility is querying DynamoDB to fetch the Users queue, then querying AWS Glue to compile a list of unique partitions where to run the Athena Queries. Then puts the list in the Athena Query SQS Queue.
+When a Deletion Job starts, the solution first queries DynamoDB to fetch the Users queue, then queries AWS Glue to compile a list of unique partitions where to run the Athena Queries. It then puts the list in the Athena Query SQS Queue.
 
 The flow then proceeds orchestrating Athena [Find workflows](#the-find-workflow) execution accordingly to Athena account limits for optimising concurrency and achieve best speed and reliability at minimum cost.
 
@@ -58,7 +58,7 @@ When all the queries have been executed, the [Forget Workflow](#the-forget-workf
 
 The Find workflow is operated by a AWS Step Function that uses AWS Lambda for computing and Amazon Athena to query Amazon S3.
 
-The Find workflow is based on using Athena to find where specific content is located in Amazon S3 by using Athena's `$path` pseudo-parameter. In this way we can operate the Forget Workflow by reading/writing only relevant objects rather than whole buckets, optimising performance, reliability and cost.
+The Find workflow is based on using Athena to find where specific content is located in Amazon S3 by using Athena's `$path` pseudo-parameter. In this way the system can operate the Forget Workflow by reading/writing only relevant objects rather than whole buckets, optimising performance, reliability and cost.
 When each workflow completes a query, it stores the result to the Object Deletion SQS Queue. The speed of the Find workflow depends on the Athena Concurrency (subject to account limits) and wait handlers, both configurable when deploying the solution.
 
 ![Architecture](images/stepfunctions_graph_athena.png)
