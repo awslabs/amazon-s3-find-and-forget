@@ -42,14 +42,14 @@ export default ({ currentPage, onMenuClick, pages }) => {
               })}
           </div>
           <div>
-            <Button
+            <a
               href={repoUrl("issues")}
               target="_blank"
-              className="aws-button"
+              className="menu"
               rel="noopener noreferrer"
             >
-              Report an Issue
-            </Button>
+              Report an Issue <Icon type="new-window" />
+            </a>
           </div>
         </div>
       </div>
