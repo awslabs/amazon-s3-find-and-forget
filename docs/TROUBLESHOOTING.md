@@ -30,10 +30,10 @@ debug the issue further.
 
 ### Debugging FORGET_FAILED job status problems
 
-If your job finishes with a status of FORGET_FAILED it indicates that one the
-solution was unable to perform the Forget phase. To debug the issue, check the
-event data of the **ForgetPhaseFailed**` event to find out more information
-about what error caused the issue.
+If your job finishes with a status of FORGET_FAILED it indicates that the
+solution was unable to run the Forget phase successfully. To debug the issue,
+check the event data of the **ForgetPhaseFailed** event to find out more
+information about the error which caused the failure.
 
 **Important:** This status does **not** indicate that there was an issue
 updating specific objects, but rather that the Forget phase as a whole was
@@ -49,10 +49,10 @@ updated. Verify the following:
 data mappers **and** any CMKs used to encrypt the data. For more information
 see [Permissions Configuration] in the [User Guide].
 - Your data is in one of the [Supported Data Formats].
-- Your data is compatible with the limits described in the solution [Limits].
-- Your data is not corrupted
+- Your data is compatible with the solution [Limits].
+- Your data is not corrupted.
 - Your network is configuration allows access to the relevant AWS services as
-described in [VPC Configuration]
+described in [VPC Configuration].
 
 For each object which was unable to be processed successfully, a message
 will be placed on the objects DLQ (see `DLQUrl` in the CloudFormation stack
@@ -66,22 +66,22 @@ Queue.
 If your job finishes with a status of FAILED it indicates that there was
 an unhandled exception during the job execution. Possible causes are:
 
-- One of the tasks in the main step function failed for an unknown reason.
-- There was a permissions issue for one of the solution components.
+- One of the tasks in the main step function failed.
+- There was a permissions issue encountered by one of the solution components.
 - The state machine exceeded timed out or exceeded the service quota for
 state machine execution history.
 
 For more information on what caused the issue, check the event data for
-the **Exception** in event in the job event history. If there error is related
-to Step Functions service quotas such as timeouts or exceeded the permitted
+the **Exception** in event in the job event history. If the error is related
+to Step Functions service quotas such as timeouts or exceeding the permitted
 execution history length, you may be able to resolve this by increasing the
-waiter configuration as described in [Performance Configuration]
+waiter configuration as described in [Performance Configuration].
 
 ### Debugging job status COMPLETED_CLEANUP_FAILED problems
 
 If your job finishes with a status of COMPLETED_CLEANUP_FAILED it indicates
 that although the Find and Forget phases completed successfully, the job was
-unable to remove the items it has deleted from the Deletion Queue. This is
+unable to remove the processed matches from the Deletion Queue. This is
 most likely due to either the permissions of the stream processor Lambda being
 changed or an item being manually removed from the Deletion Queue table via
 a direct call to the DynamoDB API. Check the **CleanupFailed** event in the job
@@ -94,25 +94,25 @@ execution.
 ### Unblocking a job stuck in QUEUED/RUNNING status
 
 If a job remains in the QUEUED or RUNNING status for much longer than
-expected, there may have been an unexpected issue with:
+expected, there may have been an unexpected issue relating to:
 
 - AWS Fargate accessing the ECR service endpoint. Enabling the required network
-from the subnets/security groups in which Forget Fargate tasks are launched
-will unblock the job without requiring manual intervention. For more
+access from the subnets/security groups in which Forget Fargate tasks are
+launched will unblock the job without requiring manual intervention. For more
 information see [VPC Configuration] in the [User Guide].
-- The job table stream processor. [Check the logs](https://docs.aws.amazon.com/lambda/latest/dg/monitoring-functions-logs.html)
-for the stream processor Lambda to see if there have been any errors.
-- One of the S3F2 state machine executions. If there are no errors in the job
+- Errors in job table stream processor. [Check the logs](https://docs.aws.amazon.com/lambda/latest/dg/monitoring-functions-logs.html)
+for the stream processor Lambda for errors.
+- Unhandled state machine execution errors. If there are no errors in the job
 event history which indicate an issue, check the state machine execution history
-for the execution with the same name as the blocked Job ID for issues.
+of the execution with the same name as the blocked job ID.
 
 If the state machine is still executing but in a non-recoverable state, you
-can stop the execution which will trigger an Exception Job Event leading to the
-job being marked as FAILED. If this doesn't resolve your issue or the execution
-isn't running, you can manually update the job status to FAILED or remove the
-job and any associated events from the Jobs table.
+can stop the state machine execution manually which will trigger an Exception
+job event leading to the job being marked as FAILED. If this doesn't resolve
+issue or the execution isn't running, you can manually update the job status to
+FAILED or remove the job and any associated events from the Jobs table<sup>*</sup>.
 
-**WARNING:** You should only manually intervene where there as been a fatal
+<sup>*</sup> **WARNING:** You should only manually intervene where there as been a fatal
 error from which the system cannot recover.
 
 ### Expected Results Not Found
@@ -135,3 +135,5 @@ deletion queue, verify the following:
 [Athena Troubleshooting]: https://docs.aws.amazon.com/athena/latest/ug/troubleshooting.html
 [Supported Data Formats]: LIMITS.md#supported-data-formats
 [Limits]: LIMITS.md
+
+
