@@ -4,16 +4,12 @@ The following diagram provides an high-level overview of the system.
 
 ![Architecture](images/architecture.png)
 
-## Requirements
-
-After the deployment, the users are required to configure Cognito in order to add users to the UI or the API. After accessing the UI or the REST API, the users can configure the system by mapping S3 buckets to the solution.
-
 ## User Interface
 
 For interacting with the system, the users can use the Web UI, or the API.
 
-The Web UI allows authenticated requests to the API layer by using Amazon Cognito User Pools. It consists of a Amazon S3 static site.
-The API Gateway allows to be used directly by users by sending authenticated requests.
+The Web UI allows authenticated requests to the API layer by using Amazon Cognito User Pools. It consists of a Amazon S3 static site hosting a React.js web app.
+The API Gateway allows to be used directly by users by sending authenticated requests ([API specification](./API_SPEC.md)).
 
 ## Deletion Job Workflow
 
