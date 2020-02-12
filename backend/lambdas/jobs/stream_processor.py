@@ -25,10 +25,12 @@ q_table = ddb.Table(getenv("DeletionQueueTable"))
 def handler(event, context):
     records = event["Records"]
     new_jobs = [
-        deserialize_item(r["dynamodb"]["NewImage"]) for r in records if is_job(r) and is_operation(r, "INSERT")
+        deserialize_item(r["dynamodb"]["NewImage"]) for r in records
+        if is_record_type(r, "Job") and is_operation(r, "INSERT")
     ]
     events = [
-        deserialize_item(r["dynamodb"]["NewImage"]) for r in records if is_job_event(r) and is_operation(r, "INSERT")
+        deserialize_item(r["dynamodb"]["NewImage"]) for r in records
+        if is_record_type(r, "JobEvent") and is_operation(r, "INSERT")
     ]
     grouped_events = groupby(sorted(events, key=itemgetter("Id")), key=itemgetter("Id"))
 
@@ -75,17 +77,9 @@ def is_operation(record, operation):
     return record.get("eventName") == operation
 
 
-def is_job(record):
+def is_record_type(record, record_type):
     new_image = record["dynamodb"].get("NewImage")
     if not new_image:
         return False
     item = deserialize_item(new_image)
-    return item.get("Type") and item.get("Type") == "Job"
-
-
-def is_job_event(record):
-    new_image = record["dynamodb"].get("NewImage")
-    if not new_image:
-        return False
-    item = deserialize_item(new_image)
-    return item.get("Type") and item.get("Type") == "JobEvent"
+    return item.get("Type") and item.get("Type") == record_type

@@ -473,6 +473,7 @@ Resources:
               }]
             },
             "Purge Queues": {
+              "Comment": "Purges the query and object deletion queues. Purges wait 61 seconds before retrying to avoid exceeding the max purge attempt rate for SQS.",
               "Type": "Parallel",
               "Next": "Get Data Mappers",
               "ResultPath": null,
@@ -501,7 +502,7 @@ Resources:
                    "Parameters": {
                      "QueueUrl": "${DeleteQueueUrl}"
                    },
-                   "Comment": "Purge the deletion queue",
+                   "Comment": "Purge the deletion queue.",
                    "Type": "Task",
                    "Resource": "${PurgeQueue.Arn}",
                    "End": true,

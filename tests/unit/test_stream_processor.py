@@ -7,7 +7,7 @@ from botocore.exceptions import ClientError
 from mock import patch, Mock, ANY
 
 with patch.dict(os.environ, {"JobTable": "test", "DeletionQueueTable": "test"}):
-    from backend.lambdas.jobs.stream_processor import handler, is_operation, is_job, is_job_event, process_job, \
+    from backend.lambdas.jobs.stream_processor import handler, is_operation, is_record_type, process_job, \
         clear_deletion_queue
 
 pytestmark = [pytest.mark.unit, pytest.mark.jobs]
@@ -23,7 +23,7 @@ def test_it_processes_matches_events():
     
 
 def test_it_recognises_jobs():
-    assert is_job({
+    assert is_record_type({
         "dynamodb": {
             "NewImage": {
                 "Id": {"S": "job123"},
@@ -31,8 +31,8 @@ def test_it_recognises_jobs():
                 "Type": {"S": "Job"},
             }
         }
-    })
-    assert not is_job({
+    }, "Job")
+    assert not is_record_type({
         "dynamodb": {
             "NewImage": {
                 "Id": {"S": "job123"},
@@ -40,11 +40,11 @@ def test_it_recognises_jobs():
                 "Type": {"S": "JobEvent"},
             }
         }
-    })
+    }, "Job")
 
     
 def test_it_recognises_job_events():
-    assert is_job_event({
+    assert is_record_type({
         "dynamodb": {
             "NewImage": {
                 "Id": {"S": "job123"},
@@ -52,8 +52,8 @@ def test_it_recognises_job_events():
                 "Type": {"S": "JobEvent"},
             }
         }
-    })
-    assert not is_job_event({
+    }, "JobEvent")
+    assert not is_record_type({
         "dynamodb": {
             "NewImage": {
                 "Id": {"S": "job123"},
@@ -61,20 +61,20 @@ def test_it_recognises_job_events():
                 "Type": {"S": "Job"},
             }
         }
-    })
+    }, "JobEvent")
 
 
-@patch("backend.lambdas.jobs.stream_processor.is_job", Mock(return_value=True))
-@patch("backend.lambdas.jobs.stream_processor.is_job_event", Mock(return_value=False))
-@patch("backend.lambdas.jobs.stream_processor.process_job")
 @patch("backend.lambdas.jobs.stream_processor.is_operation", Mock(return_value=True))
+@patch("backend.lambdas.jobs.stream_processor.is_record_type")
+@patch("backend.lambdas.jobs.stream_processor.process_job")
 @patch("backend.lambdas.jobs.stream_processor.deserialize_item")
-def test_it_handles_job_records(mock_deserializer, mock_process):
+def test_it_handles_job_records(mock_deserializer, mock_process, mock_is_record):
     mock_deserializer.return_value = {
         "Id": "job123",
         "Sk": "job123",
         "Type": "Job",
     }
+    mock_is_record.side_effect = [True, False]
     handler({
         "Records": [{
             "eventName": "INSERT",
@@ -92,18 +92,18 @@ def test_it_handles_job_records(mock_deserializer, mock_process):
     assert 1 == mock_deserializer.call_count
 
 
-@patch("backend.lambdas.jobs.stream_processor.is_job", Mock(return_value=False))
-@patch("backend.lambdas.jobs.stream_processor.is_job_event", Mock(return_value=True))
+@patch("backend.lambdas.jobs.stream_processor.is_operation", Mock(return_value=True))
+@patch("backend.lambdas.jobs.stream_processor.is_record_type")
 @patch("backend.lambdas.jobs.stream_processor.update_status")
 @patch("backend.lambdas.jobs.stream_processor.update_stats")
-@patch("backend.lambdas.jobs.stream_processor.is_operation", Mock(return_value=True))
 @patch("backend.lambdas.jobs.stream_processor.deserialize_item")
-def test_it_handles_job_event_records(mock_deserializer, mock_stats, mock_status):
+def test_it_handles_job_event_records(mock_deserializer, mock_stats, mock_status, mock_is_record):
     mock_deserializer.return_value = {
         "Id": "job123",
         "Sk": "123456",
         "Type": "JobEvent",
     }
+    mock_is_record.side_effect = [False, True]
     mock_status.return_value = {"JobStatus": "RUNNING"}
     mock_stats.return_value = {}
 
@@ -119,25 +119,26 @@ def test_it_handles_job_event_records(mock_deserializer, mock_stats, mock_status
             }
         }]
     }, SimpleNamespace())
+    mock_is_record.side_effect = [False, True]
 
     assert 1 == mock_status.call_count
     assert 1 == mock_stats.call_count
     assert 1 == mock_deserializer.call_count
 
 
-@patch("backend.lambdas.jobs.stream_processor.is_job", Mock(return_value=False))
-@patch("backend.lambdas.jobs.stream_processor.is_job_event", Mock(return_value=True))
+@patch("backend.lambdas.jobs.stream_processor.is_operation", Mock(return_value=True))
+@patch("backend.lambdas.jobs.stream_processor.is_record_type")
 @patch("backend.lambdas.jobs.stream_processor.update_status")
 @patch("backend.lambdas.jobs.stream_processor.update_stats")
-@patch("backend.lambdas.jobs.stream_processor.is_operation", Mock(return_value=True))
 @patch("backend.lambdas.jobs.stream_processor.deserialize_item")
-def test_it_does_not_update_status_if_stats_fails(mock_deserializer, mock_stats, mock_status):
+def test_it_does_not_update_status_if_stats_fails(mock_deserializer, mock_stats, mock_status, mock_is_record):
     mock_deserializer.return_value = {
         "Id": "job123",
         "Sk": "123456",
         "Type": "JobEvent",
     }
     mock_stats.side_effect = ValueError
+    mock_is_record.side_effect = [False, True]
 
     with pytest.raises(ValueError):
         handler({
@@ -173,14 +174,14 @@ def test_it_starts_state_machine(mock_client):
     mock_client.start_execution.assert_called()
 
 
-@patch("backend.lambdas.jobs.stream_processor.is_job", Mock(return_value=True))
-@patch("backend.lambdas.jobs.stream_processor.is_job_event", Mock(return_value=False))
 @patch("backend.lambdas.jobs.stream_processor.is_operation", Mock(return_value=True))
+@patch("backend.lambdas.jobs.stream_processor.is_record_type")
 @patch("backend.lambdas.jobs.stream_processor.client")
-def test_it_handles_already_existing_executions(mock_client):
+def test_it_handles_already_existing_executions(mock_client, mock_is_record):
     e = boto3.client("stepfunctions").exceptions.ExecutionAlreadyExists
     mock_client.exceptions.ExecutionAlreadyExists = e
     mock_client.start_execution.side_effect = e({}, "ExecutionAlreadyExists")
+    mock_is_record.side_effect = [True, False]
     process_job({
         "Id": "job123",
         "Sk": "job123",
@@ -189,16 +190,16 @@ def test_it_handles_already_existing_executions(mock_client):
     })
 
 
-@patch("backend.lambdas.jobs.stream_processor.is_job", Mock(return_value=True))
-@patch("backend.lambdas.jobs.stream_processor.is_job_event", Mock(return_value=True))
 @patch("backend.lambdas.jobs.stream_processor.process_job", Mock(return_value=None))
 @patch("backend.lambdas.jobs.stream_processor.is_operation", Mock(return_value=True))
 @patch("backend.lambdas.jobs.stream_processor.update_stats", Mock())
+@patch("backend.lambdas.jobs.stream_processor.is_record_type")
 @patch("backend.lambdas.jobs.stream_processor.update_status")
 @patch("backend.lambdas.jobs.stream_processor.clear_deletion_queue")
 @patch("backend.lambdas.jobs.stream_processor.emit_event")
 @patch("backend.lambdas.jobs.stream_processor.deserialize_item")
-def test_it_cleans_up_on_forget_complete(mock_deserializer, mock_emit, mock_clear, mock_status):
+def test_it_cleans_up_on_forget_complete(mock_deserializer, mock_emit, mock_clear, mock_status, mock_is_record):
+    mock_is_record.side_effect = [False, True]
     mock_deserializer.return_value = {
         "Id": "job123",
         "Sk": "event123",
@@ -229,16 +230,16 @@ def test_it_cleans_up_on_forget_complete(mock_deserializer, mock_emit, mock_clea
     mock_emit.assert_called_with(ANY, "CleanupSucceeded", ANY, ANY)
 
 
-@patch("backend.lambdas.jobs.stream_processor.is_job", Mock(return_value=True))
-@patch("backend.lambdas.jobs.stream_processor.is_job_event", Mock(return_value=True))
 @patch("backend.lambdas.jobs.stream_processor.process_job", Mock(return_value=None))
 @patch("backend.lambdas.jobs.stream_processor.is_operation", Mock(return_value=True))
 @patch("backend.lambdas.jobs.stream_processor.update_stats", Mock())
+@patch("backend.lambdas.jobs.stream_processor.is_record_type")
 @patch("backend.lambdas.jobs.stream_processor.update_status")
 @patch("backend.lambdas.jobs.stream_processor.clear_deletion_queue")
 @patch("backend.lambdas.jobs.stream_processor.emit_event")
 @patch("backend.lambdas.jobs.stream_processor.deserialize_item")
-def test_it_emits_event_for_cleanup_error(mock_deserializer, mock_emit, mock_clear, mock_status):
+def test_it_emits_event_for_cleanup_error(mock_deserializer, mock_emit, mock_clear, mock_status, mock_is_record):
+    mock_is_record.side_effect = [False, True]
     mock_deserializer.return_value = {
         "Id": "job123",
         "Sk": "event123",
