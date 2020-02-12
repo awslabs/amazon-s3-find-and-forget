@@ -13,21 +13,24 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 ddb = boto3.resource("dynamodb")
-table = ddb.Table(os.getenv("JobTable", "S3F2_Jobs"))
+table = ddb.Table(os.getenv("JobTable"))
 
 status_map = {
     "FindPhaseFailed": "FIND_FAILED",
     "ForgetPhaseFailed": "FORGET_FAILED",
     "Exception": "FAILED",
     "JobStarted": "RUNNING",
-    "JobSucceeded": "COMPLETED",
+    "ForgetPhaseEnded": "FORGET_COMPLETED_CLEANUP_IN_PROGRESS",
+    "CleanupFailed": "COMPLETED_CLEANUP_FAILED",
+    "CleanupSucceeded": "COMPLETED",
 }
 
-unlocked_states = ["RUNNING", "QUEUED"]
+unlocked_states = ["RUNNING", "QUEUED", "FORGET_COMPLETED_CLEANUP_IN_PROGRESS"]
 
 time_events = {
     "JobStarted": "JobStartTime",
-    "JobSucceeded": "JobFinishTime",
+    "CleanupFailed": "JobFinishTime",
+    "CleanupSucceeded": "JobFinishTime",
     "Exception": "JobFinishTime",
     "FindPhaseFailed": "JobFinishTime",
     "ForgetPhaseFailed": "JobFinishTime",
@@ -52,14 +55,15 @@ def update_status(job_id, events):
             attr_updates[time_events[event_name]] = event["CreatedAt"]
 
     if len(attr_updates) > 0:
-        _update_item(job_id, attr_updates)
+        job = _update_item(job_id, attr_updates)
         logger.info("Updated Status for Job ID {}: {}".format(job_id, json.dumps(attr_updates, cls=DecimalEncoder)))
+        return job
 
 
 def determine_status(job_id, event_name):
     new_status = status_map[event_name]
-    if event_name == "JobSucceeded" and job_has_errors(job_id):
-        return "COMPLETED_WITH_ERRORS"
+    if event_name == "ForgetPhaseEnded" and job_has_errors(job_id):
+        return "FORGET_PARTIALLY_FAILED"
 
     return new_status
 
@@ -106,7 +110,7 @@ def _update_item(job_id, attr_updates):
                 **{":{}".format(s): s for s in unlocked_states},
                 **attr_values,
             },
-            ReturnValues="UPDATED_NEW"
-        )
+            ReturnValues="ALL_NEW"
+        )["Attributes"]
     except ddb.meta.client.exceptions.ConditionalCheckFailedException:
         logger.warning("Job {} is already in a status which cannot be updated".format(job_id))

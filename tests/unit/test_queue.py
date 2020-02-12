@@ -108,10 +108,11 @@ def test_it_prevents_cancelling_whilst_running_jobs(mock_running_job):
 
 @patch("backend.lambdas.queue.handlers.bucket_count", 1)
 @patch("backend.lambdas.queue.handlers.uuid")
+@patch("backend.lambdas.queue.handlers.deletion_queue_table")
 @patch("backend.lambdas.queue.handlers.jobs_table")
 @patch("backend.lambdas.queue.handlers.running_job_exists")
 @patch("backend.lambdas.queue.handlers.get_config")
-def test_it_process_queue(mock_config, mock_running_job, table, uuid):
+def test_it_process_queue(mock_config, mock_running_job, job_table, q_table, uuid):
     mock_running_job.return_value = False
     mock_config.return_value = {
         "AthenaConcurrencyLimit": 15,
@@ -120,17 +121,19 @@ def test_it_process_queue(mock_config, mock_running_job, table, uuid):
         "WaitDurationQueryQueue": 5,
         "WaitDurationForgetQueue": 30
     }
+    q_table.scan.return_value = {"Items": [{"MatchId": "123", "CreatedAt": 123}]}
     uuid.uuid4.return_value = 123
     response = handlers.process_handler({
         "body": ""
     }, SimpleNamespace())
-    table.put_item.assert_called_with(Item={
+    job_table.put_item.assert_called_with(Item={
         "Id": "123",
         "Sk": "123",
         "Type": "Job",
         "JobStatus": "QUEUED",
         "GSIBucket": "0",
         "CreatedAt": ANY,
+        "Matches": [{"MatchId": "123", "CreatedAt": 123}],
         "AthenaConcurrencyLimit": 15,
         "DeletionTasksMaxNumber": 50,
         "WaitDurationQueryExecution": 5,
@@ -146,6 +149,7 @@ def test_it_process_queue(mock_config, mock_running_job, table, uuid):
         "JobStatus": "QUEUED",
         "GSIBucket": "0",
         "CreatedAt": ANY,
+        "Matches": [{"MatchId": "123", "CreatedAt": 123}],
         "AthenaConcurrencyLimit": 15,
         "DeletionTasksMaxNumber": 50,
         "WaitDurationQueryExecution": 5,
@@ -173,13 +177,14 @@ def test_it_returns_true_where_jobs_running(mock_table):
         IndexName=ANY,
         KeyConditionExpression=ANY,
         ScanIndexForward=False,
-        FilterExpression="(#s = :r) or (#s = :q)",
+        FilterExpression="(#s = :r) or (#s = :q) or (#s = :c)",
         ExpressionAttributeNames={
             "#s": "JobStatus"
         },
         ExpressionAttributeValues={
             ":r": "RUNNING",
             ":q": "QUEUED",
+            ":c": "FORGET_COMPLETED_CLEANUP_IN_PROGRESS",
         },
         Limit=1
     )
@@ -193,13 +198,14 @@ def test_it_returns_true_where_jobs_not_running(mock_table):
         IndexName=ANY,
         KeyConditionExpression=ANY,
         ScanIndexForward=False,
-        FilterExpression="(#s = :r) or (#s = :q)",
+        FilterExpression="(#s = :r) or (#s = :q) or (#s = :c)",
         ExpressionAttributeNames={
             "#s": "JobStatus"
         },
         ExpressionAttributeValues={
             ":r": "RUNNING",
             ":q": "QUEUED",
+            ":c": "FORGET_COMPLETED_CLEANUP_IN_PROGRESS",
         },
         Limit=1
     )

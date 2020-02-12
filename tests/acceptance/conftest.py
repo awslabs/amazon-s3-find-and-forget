@@ -155,11 +155,6 @@ def queue_table(ddb_resource, stack):
     return ddb_resource.Table(stack["DeletionQueueTable"])
 
 
-@pytest.fixture(scope="module")
-def empty_queue(queue_table):
-    empty_table(queue_table, "MatchId")
-
-
 @pytest.fixture
 def del_queue_factory(queue_table):
     def factory(match_id="testId", created_at=round(datetime.datetime.now(datetime.timezone.utc).timestamp()),
@@ -189,6 +184,8 @@ def data_mapper_table(ddb_resource, stack):
 
 @pytest.fixture(scope="module")
 def empty_data_mappers(data_mapper_table):
+    empty_table(data_mapper_table, "DataMapperId")
+    yield
     empty_table(data_mapper_table, "DataMapperId")
 
 
@@ -321,6 +318,8 @@ def job_table(ddb_resource, stack):
 @pytest.fixture(scope="module")
 def empty_jobs(job_table):
     empty_table(job_table, "Id", "Sk")
+    yield
+    empty_table(job_table, "Id", "Sk")
 
 
 @pytest.fixture
@@ -328,7 +327,7 @@ def job_factory(job_table, sf_client, stack):
     items = []
 
     def factory(job_id=str(uuid4()), status="QUEUED", gsib="0", created_at=round(datetime.datetime.now().timestamp()),
-                **kwargs):
+                matches=[], safe_mode=False, **kwargs):
         item = {
             "Id": job_id,
             "Sk": job_id,
@@ -336,11 +335,13 @@ def job_factory(job_table, sf_client, stack):
             "JobStatus": status,
             "CreatedAt": created_at,
             "GSIBucket": gsib,
+            "Matches": matches,
+            "SafeMode": safe_mode,
             "AthenaConcurrencyLimit": 15,
-            "DeletionTasksMaxNumber": 50,
+            "DeletionTasksMaxNumber": 1,
             "WaitDurationQueryExecution": 1,
             "WaitDurationQueryQueue": 1,
-            "WaitDurationForgetQueue": 15,
+            "WaitDurationForgetQueue": 5,
             **kwargs
         }
         job_table.put_item(Item=item)
@@ -355,23 +356,6 @@ def job_factory(job_table, sf_client, stack):
             sf_client.stop_execution(executionArn=arn)
         except Exception as e:
             logger.warning("Unable to stop execution: {}".format(str(e)))
-
-
-@pytest.fixture
-def job_event_factory(job_table):
-    def factory(job_id, event_name, event_data, created_at=round(datetime.datetime.now().timestamp()), **kwargs):
-        item = {
-            "Id": job_id,
-            "Sk": "{}#{}".format(created_at, str(uuid4())),
-            "Type": "JobEvent",
-            "EventName": event_name,
-            "EventData": event_data,
-            "CreatedAt": created_at,
-            **kwargs
-        }
-        job_table.put_item(Item=item)
-
-    return factory
 
 
 def get_waiter_model(config_file):
@@ -405,19 +389,10 @@ def job_finished_waiter(ddb_client):
     return create_waiter_with_client("JobFinished", waiter_model, ddb_client)
 
 
-@pytest.fixture(scope="function")
-def execution(sf_client, stack):
-    """
-    Generates a sample index config in the db which is cleaned up after the test
-    """
-    response = sf_client.start_execution(
-        stateMachineArn=stack["StateMachineArn"]
-    )
-    yield response
-    try:
-        sf_client.stop_execution(executionArn=response["executionArn"])
-    except ClientError as e:
-        logger.warning("Error stopping state machine: %s", str(e))
+@pytest.fixture(scope="session")
+def job_exists_waiter(ddb_client):
+    waiter_model = get_waiter_model("jobs.json")
+    return create_waiter_with_client("JobExists", waiter_model, ddb_client)
 
 
 @pytest.fixture(scope="module")
@@ -443,7 +418,8 @@ def dummy_lake(s3_resource, stack):
                 "Effect": "Allow",
                 "Principal": {
                     "AWS": [
-                        stack["AthenaExecutionRoleArn"]
+                        stack["AthenaExecutionRoleArn"],
+                        stack["DeleteTaskRoleArn"],
                     ]
                 },
                 "Action": "s3:*",

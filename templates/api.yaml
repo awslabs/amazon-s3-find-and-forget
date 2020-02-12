@@ -16,9 +16,11 @@ Globals:
         ConfigParam: !Ref ConfigParameter
         DeletionQueueTable: !Ref DeletionQueueTableName
         DataMapperTable: !Ref DataMapperTableName
+        GSIBucketCount: "1"
         JobTable: !Ref JobTableName
         JobTableDateGSI: !Ref JobTableDateGSI
         LogLevel: !Ref LogLevel
+        StateMachineArn: !Ref StateMachineArn
   Api:
     EndpointConfiguration: REGIONAL
     Cors:
@@ -131,10 +133,6 @@ Resources:
     Properties:
       Handler: handlers.process_handler
       CodeUri: ../backend/lambdas/queue/
-      Environment:
-        Variables:
-          StateMachineArn: !Ref StateMachineArn
-          GSIBucketCount: "1"
       Events:
         Get:
           Type: Api
@@ -211,9 +209,6 @@ Resources:
     Properties:
       Handler: handlers.get_job_handler
       CodeUri: ../backend/lambdas/jobs/
-      Environment:
-        Variables:
-          StateMachineArn: !Ref StateMachineArn
       Events:
         Get:
           Type: Api
@@ -229,9 +224,6 @@ Resources:
     Properties:
       Handler: handlers.list_jobs_handler
       CodeUri: ../backend/lambdas/jobs/
-      Environment:
-        Variables:
-          GSIBucketCount: "1"
       Events:
         List:
           Type: Api
@@ -265,6 +257,8 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref JobTableName
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DeletionQueueTableName
         - Statement:
           - Effect: Allow
             Action:
@@ -272,9 +266,6 @@ Resources:
               - "states:DescribeExecution"
               - "states:StartExecution"
             Resource: !Ref StateMachineArn
-      Environment:
-        Variables:
-          StateMachineArn: !Ref StateMachineArn
       Events:
         Stream:
           Type: DynamoDB

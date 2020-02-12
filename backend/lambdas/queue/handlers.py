@@ -96,6 +96,7 @@ def process_handler(event, context):
         "JobStatus": "QUEUED",
         "GSIBucket": str(random.randint(0, bucket_count - 1)),
         "CreatedAt": round(datetime.now(timezone.utc).timestamp()),
+        "Matches": deletion_queue_table.scan()["Items"],
         **config,
     }
 
@@ -103,7 +104,7 @@ def process_handler(event, context):
 
     return {
         "statusCode": 202,
-        "body": json.dumps(item)
+        "body": json.dumps(item, cls=DecimalEncoder)
     }
 
 
@@ -114,13 +115,14 @@ def running_job_exists():
             IndexName=index,
             KeyConditionExpression=Key('GSIBucket').eq(str(gsi_bucket)),
             ScanIndexForward=False,
-            FilterExpression="(#s = :r) or (#s = :q)",
+            FilterExpression="(#s = :r) or (#s = :q) or (#s = :c)",
             ExpressionAttributeNames={
                 "#s": "JobStatus"
             },
             ExpressionAttributeValues={
                 ":r": "RUNNING",
                 ":q": "QUEUED",
+                ":c": "FORGET_COMPLETED_CLEANUP_IN_PROGRESS",
             },
             Limit=1,
         )
