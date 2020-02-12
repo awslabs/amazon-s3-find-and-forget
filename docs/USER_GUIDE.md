@@ -181,8 +181,12 @@ The list of possible job statuses is as follows:
   asynchronously by a Lambda invoked by the [DynamoDB event stream][DynamoDB Streams]
   for the Jobs table.
 - `RUNNING`: The job is still in progress.
+- `FORGET_COMPLETED_CLEANUP_IN_PROGRESS`: The job is still in progress.
 - `COMPLETED`: The job finished successfully.
-- `COMPLETED_WITH_ERRORS`: The job finished but one or more objects could not
+- `COMPLETED_CLEANUP_FAILED`: The job finished successfully however the
+  deletion queue items could not be removed. You should manually remove these
+  or leave them to be removed on the next job
+- `FORGET_PARTIALLY_FAILED`: The job finished but one or more objects could not
   be updated. The Deletion DLQ for messages will contain a message per object
   that could not be updated.
 - `FIND_FAILED`: The job failed during the Find phase as there was an issue
