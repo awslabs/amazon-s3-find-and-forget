@@ -1,26 +1,30 @@
 # Troubleshooting
 
-This section outlines what steps to take in order to resolve issues with
+This section outlines steps to assist you with resolving issues
 deploying, configuring and using the Amazon S3 Find and Forget solution.
 
-### Debugging FIND_FAILED job status problems
+### Job Status: FIND_FAILED
 
-If your job finishes with a status of FIND_FAILED it indicates that
-one or more queries failed to execute. When using Athena + Glue for your
-data mappers, verify the following:
+A `FIND_FAILED` status indicates that the job has terminated because one or
+more data mapper queries failed to execute.
 
-- You have granted the Athena role access to the buckets referenced by your
-data mappers **and** any CMKs used to encrypt the data. For more information
-see [Permissions Configuration] in the [User Guide].
-- Your concurrency settings does not exceed your account limit or the limit
-placed on the Athena workgroup you have configured the solution to use.
-For more information see [Performance Configuration] in the [User Guide].
-- Your data is in one of the [Supported Data Formats].
-- The total size of the queries being ran by Athena does not exceed the
+If you are using Athena and Glue for your data mappers, you should verify the following:
+
+- You have granted permissions to the Athena IAM role for access to the S3
+  buckets referenced by your data mappers **and** any AWS KMS keys used to
+  encrypt the S3 objects. For more information see [Permissions Configuration]
+  in the [User Guide].
+- The concurrency setting for the solution does not exceed the limits for
+  concurrent Athena queries for your AWS account or the Athena workgroup the
+  solution is configured to use.  For more information see [Performance
+  Configuration] in the [User Guide].
+- Your data is compatible within the [solution limits]
+
+#FIXME#
+Queries will may also fail if the total size of the queries being ran by Athena does not exceed the
 maximum Athena query string length outlined in [Athena Service Quotas]. If
 queries are failing for this reason, you will need to reduce the number of
 matches being ran per deletion job.
-- Your data is compatible with the limits described in the solution [Limits].
 
 If the problem persists, find the **QueryFailed** event(s) in the job history
 to find out more specific details of the error. If you need more information,
@@ -28,40 +32,42 @@ extract the `QueryId` from the event data, find the query in the
 [Athena Query History] and use the [Athena Troubleshooting] guide to
 debug the issue further.
 
-### Debugging FORGET_FAILED job status problems
+### Job Status: FORGET_FAILED
 
-If your job finishes with a status of FORGET_FAILED it indicates that the
-solution was unable to run the Forget phase successfully. To debug the issue,
-check the event data of the **ForgetPhaseFailed** event to find out more
-information about the error which caused the failure.
+A `FORGET_FAILED` status indicates that the job has terminated because a fatal
+error occurred during the _forget_ phase of the job. S3 objects _may_ have
+been modified.
 
-**Important:** This status does **not** indicate that there was an issue
-updating specific objects, but rather that the Forget phase as a whole was
-unable to run successfully. 
+Check the job log for a **ForgetPhaseFailed** event. Examining the event data
+for this event will provide you with more information about the underlying
+error that caused the failure.
 
-### Debugging job status FORGET_PARTIALLY_FAILED job status problems
+#FIXME: Should we prompt the user to submit an issue here?
 
-If your job finishes with a status of FORGET_PARTIALLY_FAILED it indicates that
-one or more objects that were found during the Find phase were unable to be
-updated. Verify the following:
+### Job Status: FORGET_PARTIALLY_FAILED
 
-- You have granted the Fargate role access to the buckets referenced by your
-data mappers **and** any CMKs used to encrypt the data. For more information
-see [Permissions Configuration] in the [User Guide].
-- Your data is in one of the [Supported Data Formats].
-- Your data is compatible with the solution [Limits].
+A `FORGET_PARTIALLY_FAILED` status indicates that the job has completed, but
+that the _forget_ phase was unable to process one or more objects.
+
+Verify the following:
+
+- You have granted permissions to the Fargate task IAM role for access to the
+  S3 buckets referenced by your data mappers **and** any AWS KMS keys used to
+  encrypt the data. For more information see [Permissions Configuration] in the
+  [User Guide].
+- You have configured the VPC used for the Fargate tasks according to the 
+  [VPC Configuration] section.
+- Your data is compatible within the [solution limits].
 - Your data is not corrupted.
-- Your network is configuration allows access to the relevant AWS services as
-described in [VPC Configuration].
 
 For each object which was unable to be processed successfully, a message
-will be placed on the objects DLQ (see `DLQUrl` in the CloudFormation stack
-outputs) and an **ObjectUpdateFailed** event containing detailed error
-information will be present in the job event history. To reprocess these
-objects you will need to run a new job with the same Matches in the Deletion
-Queue.
+will be placed on the objects dead letter queue ("DLQ", see `DLQUrl` in the
+CloudFormation stack outputs) and an **ObjectUpdateFailed** event containing
+detailed error information will be present in the job event history. To
+reprocess these objects you will need to run a new job with the same Matches in
+the Deletion Queue.
 
-### Debugging job status FAILED problems
+### Job status: FAILED
 
 If your job finishes with a status of FAILED it indicates that there was
 an unhandled exception during the job execution. Possible causes are:
@@ -77,7 +83,7 @@ to Step Functions service quotas such as timeouts or exceeding the permitted
 execution history length, you may be able to resolve this by increasing the
 waiter configuration as described in [Performance Configuration].
 
-### Debugging job status COMPLETED_CLEANUP_FAILED problems
+### Job status: COMPLETED_CLEANUP_FAILED
 
 If your job finishes with a status of COMPLETED_CLEANUP_FAILED it indicates
 that although the Find and Forget phases completed successfully, the job was
@@ -91,7 +97,7 @@ To cleanup the Deletion Queue, either delete the items from the solution UI,
 or leave them in the queue and allow them to be removed by the subsequent job
 execution.
 
-### Unblocking a job stuck in QUEUED/RUNNING status
+### Job appears stuck in QUEUED/RUNNING status
 
 If a job remains in the QUEUED or RUNNING status for much longer than
 expected, there may have been an unexpected issue relating to:
@@ -133,7 +139,4 @@ deletion queue, verify the following:
 [Athena Service Quotas]: https://docs.aws.amazon.com/athena/latest/ug/service-limits.html
 [Athena Query History]: https://docs.aws.amazon.com/athena/latest/ug/querying.html#queries-viewing-history
 [Athena Troubleshooting]: https://docs.aws.amazon.com/athena/latest/ug/troubleshooting.html
-[Supported Data Formats]: LIMITS.md#supported-data-formats
-[Limits]: LIMITS.md
-
-
+[solution limits]: LIMITS.md
