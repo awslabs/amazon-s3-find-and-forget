@@ -1,7 +1,11 @@
 # Architecture
 
 ## Index
-* [Introduction](#introduction)
+* [Design Principles](#design-principles)
+* [Core Components](#core-components)
+    * [Data Mappers](#data-mappers)
+    * [Deletion Queue](#deletion-queue)
+    * [Deletion Jobs](#deletion-jobs)
 * [High-level Overview](#high-level-overview)
 * [User Interface](#user-interface)
 * [Persistence Layer](#persistence-layer)
@@ -10,7 +14,7 @@
     * [The Forget workflow](#the-forget-workflow)
 * [See Also](#see-also)
 
-## Introduction
+## Design Principles
 
 The goal of the solution is to provide a secure, reliable, performant and cost effective tool for finding and removing individual records within objects stored in S3 buckets.
 In order to achieve these goals the solution has adopted the following design principles:
@@ -18,6 +22,22 @@ In order to achieve these goals the solution has adopted the following design pr
 1. **Perform work in batches:** Since the time complexity of removing a single vs multiple records in a single object is practically equal and it is common for data owners to have the legal requirement of removing data within a given _timeframe_, the solution is designed to allow the customer to "queue" multiple matches to be removed in a single job.
 2. **Fail fast:** A deletion job takes place in two distinct phases: Find and Forget. The Find phase queries the objects in your S3 data lakes to find any objects which contain records where a specified column contains at least one of record identifiers (known as **Match IDs**) in the deletion queue. If any queries fail, the job will abandon as soon as possible and the Forget phase will not take place. The Forget Phase takes the list of objects returned from the Find phase, and deletes the relevant rows in only those objects.
 3. **Serverless:** Where possible, the solution only uses Serverless components. All the components for Web UI, API and Deletion Jobs are Serverless (for more information consult the [Cost Overview guide]).
+
+## Core components
+
+TODO
+
+### Data Mappers
+
+TODO
+
+### Deletion Queue
+
+TODO
+
+### Deletion Jobs
+
+TODO
 
 ## High-level Overview
 
