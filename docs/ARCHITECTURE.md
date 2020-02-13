@@ -47,7 +47,7 @@ Matches can be added at any time, and can be removed only when no deletion job i
 
 A Deletion Job is an activity performed by Amazon S3 Find and Forget which queries your data in S3 defined by the Data Mappers and deletes rows containing any match present in the Deletion Queue.
 
-The system allows customers to run Deletion Jobs at any time if no another Job is already running.
+Deletion jobs can be run anytime there is not another deletion job already running.
 
 ## High-level Overview
 
