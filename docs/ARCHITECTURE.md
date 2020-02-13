@@ -32,22 +32,22 @@ The following terms are used to identify core components within the solution.
 Data Mappers instruct the Amazon S3 Find and Forget solution how and where to search for items to be deleted.
 
 The solution currently supports one type of Data Mapper, which leverages:
-* AWS Glue as Data Catalog Provider, responsible of mapping objects in S3 buckets and their partitions
-* Amazon Athena as Query Executor, responsible of executing the search queries
+* AWS Glue as *Data Catalog Provider*, responsible of mapping objects in S3 buckets and their partitions (if they have any)
+* Amazon Athena as *Query Executor* during the [Find Phase](#the-athena-find-workflow), responsible for executing the search queries
 
-The system allows customers to create an unlimited number of Data Mappers.
+The system allows customers to create Data Mappers at any time and removing Data Mappers when no Deletion Job is running.
 
 ### Deletion Queue
 
 The Deletion Queue is a list of matches. A match is a value you wish to search for, which identifies rows in your S3 data lake to be deleted. For example, a match could be the ID of a specific customer.
 
-The system allows customers to add an unlimited number of Matches.
+The system allows customers to add Matches at any time and removing Matches when no Deletion Job is running.
 
 ### Deletion Jobs
 
 A Deletion Job is an activity performed by Amazon S3 Find and Forget which queries your data in S3 defined by the Data Mappers and deletes rows containing any match present in the Deletion Queue.
 
-The system allows customers to run Deletion Jobs at any time, except when another Job is already running.
+The system allows customers to run Deletion Jobs at any time if no another Job is already running.
 
 ## High-level Overview
 
