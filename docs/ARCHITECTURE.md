@@ -41,7 +41,7 @@ The system allows customers to create Data Mappers at any time and removing Data
 
 The Deletion Queue is a list of matches. A match is a value you wish to search for, which identifies rows in your S3 data lake to be deleted. For example, a match could be the ID of a specific customer.
 
-The system allows customers to add Matches at any time and removing Matches when no Deletion Job is running.
+Matches can be added at any time, and can be removed only when no deletion job is in progress.
 
 ### Deletion Jobs
 
