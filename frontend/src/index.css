@@ -465,11 +465,21 @@ form .form-check-label {
 }
 
 .tab-content {
-  padding: 1.9rem 0;
+  padding: 1.9rem 1rem;
+}
+
+.tab-content ol {
+  padding-left: 2rem;
 }
 
 .tab-content ol li {
   list-style: decimal;
+}
+
+pre {
+  background-color: #f2f3f3;
+  padding: 0.5rem;
+  overflow: scroll;
 }
 
 .status-label span {

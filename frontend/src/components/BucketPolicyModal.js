@@ -6,7 +6,7 @@ const { athenaExecutionRole, deleteTaskRole, region } = window.s3f2Settings;
 
 export default ({ accountId, bucket, close, show, location }) => {
   const [key, setKey] = useState('bucket');
-  const steps = [{
+  const tabs = [{
     key: "bucket",
     title: "Bucket Access",
     content: <BucketPolicy bucket={bucket} accountId={accountId} location={location} />
@@ -29,12 +29,13 @@ export default ({ accountId, bucket, close, show, location }) => {
         <p>
           After configuring a data mapper, you need to configure the relevant
           S3 bucket, CMK and IAM policies to enable the solution to read and write
-          from/to the bucket.
+          from/to the bucket. The policy statements provided below are examples of how
+          to grant the required access.
         </p>
         <Tabs activeKey={key} onSelect={k => setKey(k)}>
           {
-            steps.map(step => <Tab key={step.key} eventKey={step.key} title={<span>{step.title}</span>}>
-              {step.content}
+            tabs.map(tab => <Tab key={tab.key} eventKey={tab.key} title={<span>{tab.title}</span>}>
+              {tab.content}
             </Tab>)
           }
         </Tabs>
@@ -139,8 +140,8 @@ const KmsPolicy = ({ bucket, accountId }) => (<>
         >
           KMS console
         </a>{" "}
-        and then choose <strong>Key ID</strong> for the key used to encrypt objects in the {bucket}
-        bucket.
+        and then choose <strong>Key ID</strong> for the key used to encrypt objects in
+        the {bucket} bucket.
       </p>
     </li>
     <li>
@@ -222,7 +223,12 @@ const CrossAccountPolicy = ({ bucket, accountId, location }) => (<>
       <p>
         Add a Policy to grant the Athena Query Executor read access to the S3 Bucket
         then choose <strong>Review Policy</strong>. Input a name for the policy and
-        choose <strong>Create Policy</strong>. Here is an example IAM policy:
+        choose <strong>Create Policy</strong>. An example IAM policy is provided below.
+      </p>
+      <p>
+        <strong>Note:</strong> you only need to include the AllowS3F2Use and AllowS3F2Grants
+        if you are using a CMK to encrypt objects in the bucket. If so, replace
+        <strong> &lt;your-cmk-arn&gt;</strong> with the ARN of your CMK.
       </p>
       <code>
         <pre>
@@ -242,6 +248,33 @@ const CrossAccountPolicy = ({ bucket, accountId, location }) => (<>
                     `arn:aws:s3:::${bucket}`,
                     `arn:aws:s3:::${location.replace("s3://", "")}*`
                   ]
+                },
+                {
+                  "Sid": "AllowS3F2Use",
+                  "Effect": "Allow",
+                  "Action": [
+                    "kms:Encrypt",
+                    "kms:Decrypt",
+                    "kms:ReEncrypt*",
+                    "kms:GenerateDataKey*",
+                    "kms:DescribeKey"
+                  ],
+                  "Resource": "<your-cmk-arn>"
+                }, 
+                {
+                  "Sid": "AllowS3F2Grants",
+                  "Effect": "Allow",
+                  "Action": [
+                    "kms:CreateGrant",
+                    "kms:ListGrants",
+                    "kms:RevokeGrant"
+                  ],
+                  "Resource": "<your-cmk-arn>",
+                  "Condition": {
+                    "Bool": {
+                      "kms:GrantIsForAWSResource": "true"
+                    }
+                  }
                 }
               ]
             },
@@ -267,7 +300,12 @@ const CrossAccountPolicy = ({ bucket, accountId, location }) => (<>
       <p>
         Add a Policy to grant the Deletion Task read/write access to the S3 Bucket
         then choose <strong>Review Policy</strong>. Input a name for the policy and
-        choose <strong>Create Policy</strong>. Here is an example IAM policy:
+        choose <strong>Create Policy</strong>. An example IAM policy is provided below.
+      </p>
+      <p>
+        <strong>Note:</strong> you only need to include the AllowS3F2Use and AllowS3F2Grants
+        if you are using a CMK to encrypt objects in the bucket. If so, replace
+        <strong> &lt;your-cmk-arn&gt;</strong> with the ARN of your CMK.
       </p>
       <code>
         <pre>
@@ -302,6 +340,33 @@ const CrossAccountPolicy = ({ bucket, accountId, location }) => (<>
                     `arn:aws:s3:::${bucket}`,
                     `arn:aws:s3:::${location.replace("s3://", "")}*`
                   ]
+                },
+                {
+                  "Sid": "AllowS3F2Use",
+                  "Effect": "Allow",
+                  "Action": [
+                    "kms:Encrypt",
+                    "kms:Decrypt",
+                    "kms:ReEncrypt*",
+                    "kms:GenerateDataKey*",
+                    "kms:DescribeKey"
+                  ],
+                  "Resource": "<your-cmk-arn>"
+                }, 
+                {
+                  "Sid": "AllowS3F2Grants",
+                  "Effect": "Allow",
+                  "Action": [
+                    "kms:CreateGrant",
+                    "kms:ListGrants",
+                    "kms:RevokeGrant"
+                  ],
+                  "Resource": "<your-cmk-arn>",
+                  "Condition": {
+                    "Bool": {
+                      "kms:GrantIsForAWSResource": "true"
+                    }
+                  }
                 }
               ]
             },
