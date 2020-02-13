@@ -33,7 +33,7 @@ Data Mappers instruct the Amazon S3 Find and Forget solution how and where to se
 
 The solution currently supports one type of Data Mapper, which leverages:
 * AWS Glue as *Data Catalog Provider*, responsible of mapping objects in S3 buckets and their partitions (if they have any)
-* Amazon Athena as *Query Executor* during the [Find Phase](#the-athena-find-workflow), responsible for executing the search queries
+* Amazon Athena as the *Query Executor* during the [Find Phase](#the-athena-find-workflow), responsible for executing the search queries
 
 The system allows customers to create Data Mappers at any time and removing Data Mappers when no Deletion Job is running.
 
