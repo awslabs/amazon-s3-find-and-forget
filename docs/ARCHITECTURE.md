@@ -25,19 +25,29 @@ In order to achieve these goals the solution has adopted the following design pr
 
 ## Core components
 
-TODO
+The following terms are used to identify core components within the solution.
 
 ### Data Mappers
 
-TODO
+Data Mappers instruct the Amazon S3 Find and Forget solution how and where to search for items to be deleted.
+
+The solution currently supports one type of Data Mapper, which leverages:
+* AWS Glue as Data Catalog Provider, responsible of mapping objects in S3 buckets and their partitions
+* Amazon Athena as Query Executor, responsible of executing the search queries
+
+The system allows customers to create an unlimited number of Data Mappers.
 
 ### Deletion Queue
 
-TODO
+The Deletion Queue is a list of matches. A match is a value you wish to search for, which identifies rows in your S3 data lake to be deleted. For example, a match could be the ID of a specific customer.
+
+The system allows customers to add an unlimited number of Matches.
 
 ### Deletion Jobs
 
-TODO
+A Deletion Job is an activity performed by Amazon S3 Find and Forget which queries your data in S3 defined by the Data Mappers and deletes rows containing any match present in the Deletion Queue.
+
+The system allows customers to run Deletion Jobs at any time, except when another Job is already running.
 
 ## High-level Overview
 
