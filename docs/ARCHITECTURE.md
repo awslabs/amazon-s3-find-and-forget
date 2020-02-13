@@ -13,7 +13,7 @@
 
 ## Introduction
 
-The goal of the solution is to provide secure, reliable, performant and cost effective tools for finding and removing Personal Identifiable Information (PII) on S3 buckets.
+The goal of the solution is to provide a secure, reliable, performant and cost effective tool for finding and removing individual records within objects stored in S3 buckets.
 In order to achieve these goals the solution has adopted the following design principles:
 
 1. **Perform work in batches:** Since the time complexity of removing a single vs multiple records in a single object is practically equal and it is common for data owners to have the legal requirement of removing data within a given _timeframe_, the solution is designed to allow the user to "queue" multiple matches to be removed in a single job.
