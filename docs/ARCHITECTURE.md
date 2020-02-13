@@ -35,7 +35,7 @@ The solution currently supports one type of Data Mapper, which uses:
 * AWS Glue as *Data Catalog Provider*, responsible of mapping objects in S3 buckets and their partitions (if they have any)
 * Amazon Athena as the *Query Executor* during the [Find Phase](#the-athena-find-workflow), responsible for executing the search queries
 
-The system allows customers to create Data Mappers at any time and removing Data Mappers when no Deletion Job is running.
+Data Mappers can be created at any time, and removed when no deletion job is running.
 
 ### Deletion Queue
 
