@@ -2,25 +2,24 @@
 
 ## Index
 * [Introduction](#introduction)
-* [High-level overview](#high-level-overview)
+* [High-level Overview](#high-level-overview)
 * [User Interface](#user-interface)
-* [State Management](#state-management)
+* [Persistence Layer](#persistence-layer)
 * [Deletion Job Workflow](#deletion-job-workflow)
-    * [The Find workflow](#the-find-workflow)
+    * [The Athena Find workflow](#the-athena-find-workflow)
     * [The Forget workflow](#the-forget-workflow)
-* [Monitoring](#monitoring)
-* [Cost Overview](#cost-overview)
+* [See Also](#see-also)
 
 ## Introduction
 
 The goal of the solution is to provide a secure, reliable, performant and cost effective tool for finding and removing individual records within objects stored in S3 buckets.
 In order to achieve these goals the solution has adopted the following design principles:
 
-1. **Perform work in batches:** Since the time complexity of removing a single vs multiple records in a single object is practically equal and it is common for data owners to have the legal requirement of removing data within a given _timeframe_, the solution is designed to allow the user to "queue" multiple matches to be removed in a single job.
+1. **Perform work in batches:** Since the time complexity of removing a single vs multiple records in a single object is practically equal and it is common for data owners to have the legal requirement of removing data within a given _timeframe_, the solution is designed to allow the customer to "queue" multiple matches to be removed in a single job.
 2. **Fail fast:** A deletion job takes place in two distinct phases: Find and Forget. The Find phase queries the objects in your S3 data lakes to find any objects which contain records where a specified column contains at least one of record identifiers (known as **Match IDs**) in the deletion queue. If any queries fail, the job will abandon as soon as possible and the Forget phase will not take place. The Forget Phase takes the list of objects returned from the Find phase, and deletes the relevant rows in only those objects.
-3. **Serverless:** Where possible, the solution only uses Serverless components. All the components for Web UI, API and Deletion Jobs are Serverless.
+3. **Serverless:** Where possible, the solution only uses Serverless components. All the components for Web UI, API and Deletion Jobs are Serverless (for more information consult the [Cost Overview guide]).
 
-## High-level overview
+## High-level Overview
 
 ![Architecture](images/architecture.png)
 
@@ -28,18 +27,18 @@ In order to achieve these goals the solution has adopted the following design pr
 
 Interaction with the system is via the Web UI or the API.
 
-To use the Web UI a user must authenticate themselves. The Web UI uses the same Amazon Cognito User Pool as the API. It consists of an Amazon S3 static site hosting a React.js web app, optionally distributed by an Amazon CloudFront distribution, which makes authenticated requests to the API on behalf of the user.
-Users can also send authenticated requests directly to the API Gateway ([API specification](API_SPEC.md)).
+To use the Web UI customers must authenticate themselves. The Web UI uses the same Amazon Cognito User Pool as the API. It consists of an Amazon S3 static site hosting a React.js web app, optionally distributed by an Amazon CloudFront distribution, which makes authenticated requests to the API on behalf of the customer.
+Customers can also send authenticated requests directly to the API Gateway ([API specification]).
 
-## State Management
+## Persistence Layer
 
-State is handled differently depending on the cirumstances:
-* The user performs an action that synchronously affects state such as making an API call that results on a write or update of a document in DynamoDB. In that case the Lambda API Handlers directly interact with the Database and respond accordingly following the [API specification](API_SPEC.md).
-* The user performs an action that results in a contract for a asynchronous promise to be fullfilled such as running a deletion Job. In that case, the synchronous write to the database will trigger an asynchronous Lambda Job Stream Processor that will perform a variety of actions depending on the scenario, such as executing the Deletion Job Step Function. Asynchronous actions generally handle state by writing event documents to DynamoDB that are occasionally subject to further actions by the Job Stream Processor.
+Data Persistence is handled differently depending on the cirumstances:
+* The customer performs an action that synchronously affects state such as making an API call that results on a write or update of a document in DynamoDB. In that case the Lambda API Handlers directly interact with the Database and respond accordingly following the [API specification].
+* The customer performs an action that results in a contract for a asynchronous promise to be fullfilled such as running a deletion Job. In that case, the synchronous write to the database will trigger an asynchronous Lambda Job Stream Processor that will perform a variety of actions depending on the scenario, such as executing the Deletion Job Step Function. Asynchronous actions generally handle state by writing event documents to DynamoDB that are occasionally subject to further actions by the Job Stream Processor.
 
 The data is stored in DynamoDB using 3 tables:
 * **DataMappers**: Metadata for mapping S3 buckets to the solution.
-* **DeletionQueue**: The queue of users to be deleted. This data is stored in DynamoDB in order to provide an API that easily allows to inspect and occasionally amend the data between deletion jobs.
+* **DeletionQueue**: The queue of matches to be deleted. This data is stored in DynamoDB in order to provide an API that easily allows to inspect and occasionally amend the data between deletion jobs.
 * **Jobs**: Data about deletion jobs, including the Job Summary (that contains an up-to-date representation of specific jobs over time) and Job Events (documents containing metadata about discrete events affecting a running job).
 
 ## Deletion Job Workflow
@@ -54,11 +53,11 @@ When all the queries have been executed, the [Forget Workflow](#the-forget-workf
 
 ![Architecture](images/stepfunctions_graph_main.png)
 
-### The Find Workflow
+### The Athena Find Workflow
 
-The Find workflow is operated by a AWS Step Function that uses AWS Lambda for computing and Amazon Athena to query Amazon S3.
+The Amazon S3 Find and Forget solution currently supports one type of Find Workflow, operated by an AWS Step Function that leverages Amazon Athena to query Amazon S3.
 
-The Find workflow is based on using Athena to find where specific content is located in Amazon S3 by using Athena's `$path` pseudo-parameter. In this way the system can operate the Forget Workflow by reading/writing only relevant objects rather than whole buckets, optimising performance, reliability and cost.
+The workflow is capable of finding where specific content is located in Amazon S3 by using Athena's `$path` pseudo-parameter as part of each query. In this way the system can operate the Forget Workflow by reading/writing only relevant objects rather than whole buckets, optimising performance, reliability and cost.
 When each workflow completes a query, it stores the result to the Object Deletion SQS Queue. The speed of the Find workflow depends on the Athena Concurrency (subject to account limits) and wait handlers, both configurable when deploying the solution.
 
 ![Architecture](images/stepfunctions_graph_athena.png)
@@ -71,10 +70,14 @@ When the workflow starts, a fleet of AWS Fargate tasks is instanciated to consum
 
 ![Architecture](images/stepfunctions_graph_deletion.png)
 
-## Monitoring
+## See Also
 
-Please refer to the [Monitoring guide](MONITORING.md)
+* [API Specification]
+* [Cost Overview guide]
+* [Limits]
+* [Monitoring guide]
 
-## Cost Overview
-
-Please refer to the [Cost Overview guide](COST_OVERVIEW.md)
+[API Specification]: API_SPEC.md
+[Cost Overview guide]: COST_OVERVIEW.md
+[Limits]: LIMITS.md
+[Monitoring guide]: MONITORING.md
