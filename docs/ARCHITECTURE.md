@@ -50,7 +50,7 @@ When a Deletion Job starts, the solution first queries DynamoDB to fetch the Use
 
 The flow then proceeds orchestrating Athena [Find workflows](#the-find-workflow) execution accordingly to Athena account limits for optimising concurrency and achieve best speed and reliability at minimum cost.
 
-When all the queries have been executed, the [Forget Workflow](#the-forget-workflow) starts.
+When all the queries have been executed, the [Forget Workflow](#the-forget-workflow) is executed.
 
 ![Architecture](images/stepfunctions_graph_main.png)
 
