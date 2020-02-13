@@ -200,7 +200,7 @@ def test_it_returns_watermark_where_not_last_page_and_job_complete(table):
 
 @patch("backend.lambdas.jobs.handlers.table")
 def test_it_does_not_return_watermark_if_last_page_reached(table):
-    events = ["Exception", "CleanupSucceeded", "CleanupFailed", "CleanupSkipped"]
+    events = ["CleanupSucceeded", "CleanupFailed", "CleanupSkipped"]
     for e in events:
         stub = job_event_stub(EventName=e)
         table.get_item.return_value = job_stub()

@@ -17,7 +17,7 @@ index = os.getenv("JobTableDateGSI", "Date-GSI")
 bucket_count = int(os.getenv("GSIBucketCount", 1))
 
 end_events = [
-    "Exception", "CleanupSucceeded", "CleanupFailed", "CleanupSkipped"
+    "CleanupSucceeded", "CleanupFailed", "CleanupSkipped"
 ]
 
 
