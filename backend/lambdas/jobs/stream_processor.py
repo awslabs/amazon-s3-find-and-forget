@@ -8,7 +8,7 @@ from itertools import groupby
 from operator import itemgetter
 
 from stats_updater import update_stats
-from status_updater import update_status
+from status_updater import update_status, skip_cleanup_states
 from boto_utils import DecimalEncoder, deserialize_item, emit_event
 from decorators import with_logger
 
@@ -50,7 +50,7 @@ def handler(event, context):
                 emit_event(job_id, "CleanupFailed", {
                     "Error": "Unable to clear deletion queue: {}".format(str(e))
                 }, "StreamProcessor")
-        elif updated_job and updated_job.get("JobStatus") == "FORGET_PARTIALLY_FAILED":
+        elif updated_job and updated_job.get("JobStatus") in skip_cleanup_states:
             emit_event(job_id, "CleanupSkipped", round(datetime.now(timezone.utc).timestamp()), "StreamProcessor")
 
 

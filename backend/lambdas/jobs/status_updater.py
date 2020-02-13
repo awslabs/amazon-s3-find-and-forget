@@ -26,6 +26,7 @@ status_map = {
 }
 
 unlocked_states = ["RUNNING", "QUEUED", "FORGET_COMPLETED_CLEANUP_IN_PROGRESS"]
+skip_cleanup_states = ["FIND_FAILED", "FORGET_FAILED", "FAILED"]
 
 time_events = {
     "JobStarted": "JobStartTime",

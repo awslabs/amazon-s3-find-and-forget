@@ -238,37 +238,91 @@ def test_it_cleans_up_on_forget_complete(mock_deserializer, mock_emit, mock_clea
 @patch("backend.lambdas.jobs.stream_processor.clear_deletion_queue")
 @patch("backend.lambdas.jobs.stream_processor.emit_event")
 @patch("backend.lambdas.jobs.stream_processor.deserialize_item")
-def test_it_emits_event_for_cleanup_error(mock_deserializer, mock_emit, mock_clear, mock_status, mock_is_record):
-    mock_is_record.side_effect = [False, True]
+def test_it_emits_skipped_event_for_failures(mock_deserializer, mock_emit, mock_clear, mock_status, mock_is_record):
     mock_deserializer.return_value = {
         "Id": "job123",
         "Sk": "event123",
         "Type": "JobEvent",
-        "EventName": "ForgetPhaseSucceeded",
+        "EventName": "AnEvent",
     }
-    mock_clear.side_effect = ClientError({}, "delete_item")
-    mock_status.return_value = {
+    locked_statuses = [
+        "FIND_FAILED",
+        "FORGET_FAILED",
+        "FAILED",
+    ]
+    mock_status.side_effect = [{
         "Id": "job123",
         "Sk": "event123",
         "Type": "JobEvent",
-        "JobStatus": "FORGET_PARTIALLY_FAILED",
-    }
-    handler({
-        "Records": [{
-            "eventName": "INSERT",
-            "dynamodb": {
-                "NewImage": {
-                    "Id": {"S": "job123"},
-                    "Sk": {"S": "job123"},
-                    "Type": {"S": "Job"},
-                    "EventName": {"S": "ForgetPhaseEnded"}
+        "JobStatus": status,
+    } for status in locked_statuses]
+    mock_is_record.side_effect = list(sum([(False, True) for _ in locked_statuses], ()))
+    for _ in locked_statuses:
+        handler({
+            "Records": [{
+                "eventName": "INSERT",
+                "dynamodb": {
+                    "NewImage": {
+                        "Id": {"S": "job123"},
+                        "Sk": {"S": "event123"},
+                        "Type": {"S": "JobEvent"},
+                        "EventName": {"S": "ForgetPhaseEnded"}
+                    }
                 }
-            }
-        }]
-    }, SimpleNamespace())
+            }]
+        }, SimpleNamespace())
 
-    mock_clear.assert_not_called()
-    mock_emit.assert_called_with(ANY, "CleanupSkipped", ANY, ANY)
+        mock_clear.assert_not_called()
+        mock_emit.assert_called_with(ANY, "CleanupSkipped", ANY, ANY)
+
+
+@patch("backend.lambdas.jobs.stream_processor.process_job", Mock(return_value=None))
+@patch("backend.lambdas.jobs.stream_processor.is_operation", Mock(return_value=True))
+@patch("backend.lambdas.jobs.stream_processor.update_stats", Mock())
+@patch("backend.lambdas.jobs.stream_processor.is_record_type")
+@patch("backend.lambdas.jobs.stream_processor.update_status")
+@patch("backend.lambdas.jobs.stream_processor.clear_deletion_queue")
+@patch("backend.lambdas.jobs.stream_processor.emit_event")
+@patch("backend.lambdas.jobs.stream_processor.deserialize_item")
+def test_it_does_not_emit_skipped_event_for_non_failures(
+        mock_deserializer, mock_emit, mock_clear, mock_status, mock_is_record
+):
+    mock_deserializer.return_value = {
+        "Id": "job123",
+        "Sk": "event123",
+        "Type": "JobEvent",
+        "EventName": "AnEvent",
+    }
+    statuses = [
+        "RUNNING",
+        "QUEUED",
+        "COMPLETED",
+        "COMPLETED_CLEANUP_FAILED",
+    ]
+    mock_is_record.side_effect = list(sum([(False, True) for _ in statuses], ()))
+    mock_status.side_effect = [{
+        "Id": "job123",
+        "Sk": "event123",
+        "Type": "JobEvent",
+        "JobStatus": status,
+    } for status in statuses]
+    for _ in statuses:
+        handler({
+            "Records": [{
+                "eventName": "INSERT",
+                "dynamodb": {
+                    "NewImage": {
+                        "Id": {"S": "job123"},
+                        "Sk": {"S": "event123"},
+                        "Type": {"S": "JobEvent"},
+                        "EventName": {"S": "ForgetPhaseEnded"}
+                    }
+                }
+            }]
+        }, SimpleNamespace())
+
+    for call in mock_emit.call_args_list:
+        assert call[0][1] != 'CleanupSkipped'
 
 
 @patch("backend.lambdas.jobs.stream_processor.process_job", Mock(return_value=None))
