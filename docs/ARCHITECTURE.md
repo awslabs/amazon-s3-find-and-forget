@@ -46,7 +46,7 @@ The data is stored in DynamoDB using 3 tables:
 
 The Deletion Job workflow is operated by a AWS Step Function that uses AWS Lambda for computing, Amazon DynamoDB and Amazon SQS to handle state, and nested AWS Step Functions to execute the Find and Forget phases.
 
-When a Deletion Job starts, the solution first queries DynamoDB to fetch the Users queue, then queries AWS Glue to compile a list of unique partitions where to run the Athena Queries. It then puts the list in the Athena Query SQS Queue.
+When a Deletion Job starts, the solution gathers the contents of the Deletion Queue and all the configured data mappers then proceeds to the Find phase.
 
 For each supported query executor, the workflow generates a list of queries it should run based on the data mappers associated with that query executor and the partitions present in the data catalog tables associated with those data mappers. For each query, a message is added to the specific SQS queue for the relevant query executor.
 
