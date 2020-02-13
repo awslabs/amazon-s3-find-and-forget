@@ -26,7 +26,7 @@ In order to achieve these goals the solution has adopted the following design pr
 
 ## User Interface
 
-For interacting with the system, the users can use the Web UI, or the API.
+Interaction with the system is via the Web UI or the API.
 
 The Web UI allows authenticated requests to the API layer by using Amazon Cognito User Pools. It consists of a Amazon S3 static site hosting a React.js web app, optionally distributed by a Amazon CloudFront distribution.
 The API Gateway allows to be used directly by users by sending authenticated requests ([API specification](API_SPEC.md)).
