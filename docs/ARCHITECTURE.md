@@ -14,7 +14,7 @@
 ## Introduction
 
 The goal of the solution is to provide secure, reliable, performant and cost effective tools for finding and removing Personal Identifiable Information (PII) on S3 buckets.
-In order to achieve this goal the solution has been designed around three main ideas:
+In order to achieve these goals the solution has adopted the following design principles:
 
 1. It is common for data owners to have the legal requirement of removing PII data within a given period such as 15 or 30 days. Given most of the read/write operations to S3 require similar cost when single files contain data of multiple users, the solution allows to create a queue of users to delete in order to leverage this requirement to save costs by allowing the removal of multiple users to be batched in the so called "Deletion Job". Running a deletion Job in a sensible cadence is responsibility of the customer.
 2. The deletion job is based on two separate phases called Find and Forget. The Find phase leverages Amazon Athena and its possibility to query S3 to find the exact location of specific matches (by using the `$path` pseudo-column). By running this first step independently the solution is able to determine an accurate list of the specific objects containing PII data belonging to specific users. Athena provides this functionality in a performant, secure and cost effective way ([Amazon Athena pricing](https://aws.amazon.com/athena/pricing/)). The Forget Phase consists on operating surgical removals from the specific objects rather than the whole lake, allowing great savings on S3 reads and computing, when compared to scanning the whole data lake.
