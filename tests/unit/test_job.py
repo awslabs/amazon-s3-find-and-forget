@@ -241,6 +241,23 @@ def test_it_returns_error_if_invalid_watermark_supplied_for_running_job(table):
     assert 400 == response["statusCode"]
 
 
+@patch("backend.lambdas.jobs.handlers.table")
+def test_it_removes_watermark_where_end_event_returned(table):
+    events = ["FindPhaseFailed", "ForgetPhaseFailed", "Exception", "CleanupSucceeded", "CleanupFailed",
+              "CleanupSkipped"]
+    for e in events:
+        stub = job_event_stub(EventName=e)
+        table.get_item.return_value = job_stub()
+        table.query.return_value = {"Items": [stub]}
+        response = handlers.list_job_events_handler({
+            "pathParameters": {"job_id": "test"},
+            "queryStringParameters": {"page_size": 1}
+        }, SimpleNamespace())
+        resp_body = json.loads(response["body"])
+        assert 200 == response["statusCode"]
+        assert "NextStart" not in resp_body
+
+
 def job_stub(job_id="test", created_at=round(datetime.datetime.utcnow().timestamp()), **kwargs):
     return {"Id": job_id, "Sk": job_id, "CreatedAt": created_at, "Type": "Job", **kwargs}
 

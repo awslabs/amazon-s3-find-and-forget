@@ -41,6 +41,7 @@ def handler(event, context):
         group = [i for i in group]
         update_stats(job_id, group)
         updated_job = update_status(job_id, group)
+        # Perform cleanup if required
         if updated_job and updated_job.get("JobStatus") == "FORGET_COMPLETED_CLEANUP_IN_PROGRESS":
             try:
                 clear_deletion_queue(updated_job)
@@ -49,6 +50,8 @@ def handler(event, context):
                 emit_event(job_id, "CleanupFailed", {
                     "Error": "Unable to clear deletion queue: {}".format(str(e))
                 }, "StreamProcessor")
+        elif updated_job and updated_job.get("JobStatus") == "FORGET_PARTIALLY_FAILED":
+            emit_event(job_id, "CleanupSkipped", round(datetime.now(timezone.utc).timestamp()), "StreamProcessor")
 
 
 def process_job(job):

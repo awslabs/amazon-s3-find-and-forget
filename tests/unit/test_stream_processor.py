@@ -251,6 +251,47 @@ def test_it_emits_event_for_cleanup_error(mock_deserializer, mock_emit, mock_cle
         "Id": "job123",
         "Sk": "event123",
         "Type": "JobEvent",
+        "JobStatus": "FORGET_PARTIALLY_FAILED",
+    }
+    handler({
+        "Records": [{
+            "eventName": "INSERT",
+            "dynamodb": {
+                "NewImage": {
+                    "Id": {"S": "job123"},
+                    "Sk": {"S": "job123"},
+                    "Type": {"S": "Job"},
+                    "EventName": {"S": "ForgetPhaseEnded"}
+                }
+            }
+        }]
+    }, SimpleNamespace())
+
+    mock_clear.assert_not_called()
+    mock_emit.assert_called_with(ANY, "CleanupSkipped", ANY, ANY)
+
+
+@patch("backend.lambdas.jobs.stream_processor.process_job", Mock(return_value=None))
+@patch("backend.lambdas.jobs.stream_processor.is_operation", Mock(return_value=True))
+@patch("backend.lambdas.jobs.stream_processor.update_stats", Mock())
+@patch("backend.lambdas.jobs.stream_processor.is_record_type")
+@patch("backend.lambdas.jobs.stream_processor.update_status")
+@patch("backend.lambdas.jobs.stream_processor.clear_deletion_queue")
+@patch("backend.lambdas.jobs.stream_processor.emit_event")
+@patch("backend.lambdas.jobs.stream_processor.deserialize_item")
+def test_it_emits_event_for_cleanup_error(mock_deserializer, mock_emit, mock_clear, mock_status, mock_is_record):
+    mock_is_record.side_effect = [False, True]
+    mock_deserializer.return_value = {
+        "Id": "job123",
+        "Sk": "event123",
+        "Type": "JobEvent",
+        "EventName": "ForgetPhaseSucceeded",
+    }
+    mock_clear.side_effect = ClientError({}, "delete_item")
+    mock_status.return_value = {
+        "Id": "job123",
+        "Sk": "event123",
+        "Type": "JobEvent",
         "JobStatus": "FORGET_COMPLETED_CLEANUP_IN_PROGRESS",
     }
     handler({
