@@ -12,7 +12,7 @@ data mappers, verify the following:
 - You have granted the Athena role access to the buckets referenced by your
 data mappers **and** any CMKs used to encrypt the data. For more information
 see [Permissions Configuration] in the [User Guide].
-- Your concurrency settings does not exceed your account limit or the limit
+- Your concurrency settings do not exceed your account limit or the limit
 placed on the Athena workgroup you have configured the solution to use.
 For more information see [Performance Configuration] in the [User Guide].
 - Your data is in one of the [Supported Data Formats].
@@ -51,7 +51,7 @@ see [Permissions Configuration] in the [User Guide].
 - Your data is in one of the [Supported Data Formats].
 - Your data is compatible with the solution [Limits].
 - Your data is not corrupted.
-- Your network is configuration allows access to the relevant AWS services as
+- Your network configuration allows access to the relevant AWS services as
 described in [VPC Configuration].
 
 For each object which was unable to be processed successfully, a message
