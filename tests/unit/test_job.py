@@ -200,15 +200,18 @@ def test_it_returns_watermark_where_not_last_page_and_job_complete(table):
 
 @patch("backend.lambdas.jobs.handlers.table")
 def test_it_does_not_return_watermark_if_last_page_reached(table):
-    table.get_item.return_value = job_stub(JobFinishTime=12345)
-    table.query.return_value = {"Items": [job_event_stub(EventName="FindPhaseFailed")]}
-    response = handlers.list_job_events_handler({
-        "pathParameters": {"job_id": "test"},
-        "queryStringParameters": {"start_at": "111111#trgwtrwgergewrgwgrw"},
-    }, SimpleNamespace())
-    resp_body = json.loads(response["body"])
-    assert 200 == response["statusCode"]
-    assert "NextStart" not in resp_body
+    events = ["CleanupSucceeded", "CleanupFailed", "CleanupSkipped"]
+    for e in events:
+        stub = job_event_stub(EventName=e)
+        table.get_item.return_value = job_stub()
+        table.query.return_value = {"Items": [stub]}
+        response = handlers.list_job_events_handler({
+            "pathParameters": {"job_id": "test"},
+            "queryStringParameters": {"page_size": 1}
+        }, SimpleNamespace())
+        resp_body = json.loads(response["body"])
+        assert 200 == response["statusCode"]
+        assert "NextStart" not in resp_body
 
 
 @patch("backend.lambdas.jobs.handlers.table")

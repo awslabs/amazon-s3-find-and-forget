@@ -16,7 +16,9 @@ table = ddb.Table(os.getenv("JobTable", "S3F2_Jobs"))
 index = os.getenv("JobTableDateGSI", "Date-GSI")
 bucket_count = int(os.getenv("GSIBucketCount", 1))
 
-end_events = ["FindPhaseFailed", "ForgetPhaseFailed", "Exception", "JobSucceeded"]
+end_events = [
+    "CleanupSucceeded", "CleanupFailed", "CleanupSkipped"
+]
 
 
 @with_logger
