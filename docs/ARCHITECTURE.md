@@ -44,7 +44,7 @@ The data is stored in DynamoDB using 3 tables:
 
 ## Deletion Job Workflow
 
-The Deletion Job workflow is operated by a AWS Step Function that uses AWS Lambda for computing, Amazon DynamoDB and Amazon SQS to handle state, and nested AWS Step Functions to execute the Find and Forget phases.
+The Deletion Job workflow is implemented as an AWS Step Function. 
 
 When a Deletion Job starts, the solution gathers the contents of the Deletion Queue and all the configured data mappers then proceeds to the Find phase.
 
