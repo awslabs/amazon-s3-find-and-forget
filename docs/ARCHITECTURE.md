@@ -48,7 +48,7 @@ The Deletion Job workflow is operated by a AWS Step Function that uses AWS Lambd
 
 When a Deletion Job starts, the solution first queries DynamoDB to fetch the Users queue, then queries AWS Glue to compile a list of unique partitions where to run the Athena Queries. It then puts the list in the Athena Query SQS Queue.
 
-The flow then proceeds orchestrating Athena [Find workflows](#the-find-workflow) execution accordingly to Athena account limits for optimising concurrency and achieve best speed and reliability at minimum cost.
+For each supported query executor, the workflow generates a list of queries it should run based on the data mappers associated with that query executor and the partitions present in the data catalog tables associated with those data mappers. For each query, a message is added to the specific SQS queue for the relevant query executor.
 
 When all the queries have been executed, the [Forget Workflow](#the-forget-workflow) is executed.
 
