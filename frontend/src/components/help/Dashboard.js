@@ -9,6 +9,10 @@ const links = [
     url: repoUrl("/")
   },
   {
+    title: "Solution Architecture",
+    url: docsUrl("ARCHITECTURE.md")
+  },
+  {
     title: "Add a Data Mapper",
     url: docsUrl("USER_GUIDE.md#configuring-data-mappers")
   },

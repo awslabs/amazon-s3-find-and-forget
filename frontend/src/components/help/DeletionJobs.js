@@ -6,7 +6,7 @@ import { docsUrl, repoUrl } from "../../utils";
 const links = [
   {
     title: "Deletion Job Architecture",
-    url: repoUrl("README.md#solution-architecture")
+    url: repoUrl("ARCHITECTURE.md#deletion-job-workflow")
   },
   {
     title: "Start a Deletion Job",
