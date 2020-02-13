@@ -96,7 +96,7 @@ export default ({ gateway, onPageChange }) => {
             {...(noSelected && { disabled: "disabled" })}
             onClick={() => showBucketPolicy(true)}
           >
-            View S3 Bucket Policy
+            Generate Access Policies
           </Button>
           <Button
             className="aws-button action-button"
