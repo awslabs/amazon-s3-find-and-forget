@@ -13,9 +13,9 @@ deletion queue, verify the following:
 
 - You have chosen the relevant data mappers for the matches in the deletion
   queue.
-- Your data mappers are referencing the correct S3 locations
-- Your data mappers have been configured to search the correct columns
-- All partitions have been loaded into the Glue Data Catalog
+- Your data mappers are referencing the correct S3 locations.
+- Your data mappers have been configured to search the correct columns.
+- All partitions have been loaded into the Glue Data Catalog.
 
 ### Job appears stuck in QUEUED/RUNNING status
 
@@ -51,7 +51,7 @@ but it could not remove the processed matches from the deletion queue.
 Some possible causes for this are:
 
 - The stream processor lambda function does not have permissions to manipulate
-  the DynamoDB table
+  the DynamoDB table.
 - The item has been manually removed from the deletion queue table via a direct
   call to the DynamoDB API.
 
@@ -60,9 +60,9 @@ You can find more details of the cause by checking the job event history for a
 
 As the processed matches will still be on the queue, you can choose to either:
 
-- Manually remove the processed matches via the solution web interface or APIs
-- Take no action — allowing the matches to remain and be re-processed by the
-  next deletion job
+- Manually remove the processed matches via the solution web interface or APIs.
+- Take no action — allowing the matches to remain in the queue and be
+  re-processed during the next deletion job run.
 
 ### Job status: FAILED
 
@@ -99,7 +99,7 @@ following:
   concurrent Athena queries for your AWS account or the Athena workgroup the
   solution is configured to use.  For more information see [Performance
   Configuration] in the [User Guide].
-- Your data is compatible within the [solution limits]
+- Your data is compatible within the [solution limits].
 
 If you made any changes whilst verifying the prior points, you should attempt
 to run a new deletion job.
