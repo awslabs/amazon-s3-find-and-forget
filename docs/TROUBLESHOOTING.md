@@ -3,6 +3,9 @@
 This section outlines steps to assist you with resolving issues
 deploying, configuring and using the Amazon S3 Find and Forget solution.
 
+If you're unable to resolve an issue using this information you can [report the
+issue on GitHub](../CONTRIBUTING.md#reporting-bugsfeature-requests).
+
 ### Expected Results Not Found
 
 If the Find phase does not identify the expected objects for the matches in the
