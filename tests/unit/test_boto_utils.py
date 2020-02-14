@@ -6,7 +6,7 @@ import pytest
 from mock import MagicMock, ANY, patch
 
 from boto_utils import convert_iso8601_to_epoch, paginate, batch_sqs_msgs, read_queue, emit_event, DecimalEncoder, \
-    normalise_dates, deserialize_item
+    normalise_dates, deserialize_item, running_job_exists
 
 pytestmark = [pytest.mark.unit, pytest.mark.layers]
 
@@ -192,3 +192,45 @@ def test_it_deserializes_items():
     })
 
     assert {"MatchId": "test", "DataMappers": ["test"]} == result
+
+
+@patch("boto_utils.table")
+def test_it_returns_true_where_jobs_running(mock_table):
+    mock_table.query.return_value = {"Items": [{}]}
+    assert running_job_exists()
+    mock_table.query.assert_called_with(
+        IndexName=ANY,
+        KeyConditionExpression=ANY,
+        ScanIndexForward=False,
+        FilterExpression="(#s = :r) or (#s = :q) or (#s = :c)",
+        ExpressionAttributeNames={
+            "#s": "JobStatus"
+        },
+        ExpressionAttributeValues={
+            ":r": "RUNNING",
+            ":q": "QUEUED",
+            ":c": "FORGET_COMPLETED_CLEANUP_IN_PROGRESS",
+        },
+        Limit=1
+    )
+
+
+@patch("boto_utils.table")
+def test_it_returns_true_where_jobs_not_running(mock_table):
+    mock_table.query.return_value = {"Items": []}
+    assert not running_job_exists()
+    mock_table.query.assert_called_with(
+        IndexName=ANY,
+        KeyConditionExpression=ANY,
+        ScanIndexForward=False,
+        FilterExpression="(#s = :r) or (#s = :q) or (#s = :c)",
+        ExpressionAttributeNames={
+            "#s": "JobStatus"
+        },
+        ExpressionAttributeValues={
+            ":r": "RUNNING",
+            ":q": "QUEUED",
+            ":c": "FORGET_COMPLETED_CLEANUP_IN_PROGRESS",
+        },
+        Limit=1
+    )

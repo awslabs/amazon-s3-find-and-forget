@@ -9,10 +9,9 @@ import os
 import uuid
 
 import boto3
-from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
 
-from boto_utils import DecimalEncoder
+from boto_utils import DecimalEncoder, running_job_exists
 from decorators import with_logger, request_validator, catch_errors, load_schema, add_cors_headers
 
 logger = logging.getLogger()
@@ -106,29 +105,6 @@ def process_handler(event, context):
         "statusCode": 202,
         "body": json.dumps(item, cls=DecimalEncoder)
     }
-
-
-def running_job_exists():
-    jobs = []
-    for gsi_bucket in range(0, bucket_count):
-        response = jobs_table.query(
-            IndexName=index,
-            KeyConditionExpression=Key('GSIBucket').eq(str(gsi_bucket)),
-            ScanIndexForward=False,
-            FilterExpression="(#s = :r) or (#s = :q) or (#s = :c)",
-            ExpressionAttributeNames={
-                "#s": "JobStatus"
-            },
-            ExpressionAttributeValues={
-                ":r": "RUNNING",
-                ":q": "QUEUED",
-                ":c": "FORGET_COMPLETED_CLEANUP_IN_PROGRESS",
-            },
-            Limit=1,
-        )
-        jobs += response.get("Items", [])
-
-    return len(jobs) > 0
 
 
 def get_config():

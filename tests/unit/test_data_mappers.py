@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 from botocore.exceptions import ClientError
-from mock import patch, ANY
+from mock import patch, ANY, Mock
 
 with patch.dict(os.environ, {"DataMapperTable": "DataMapperTable"}):
     from backend.lambdas.data_mappers import handlers
@@ -125,6 +125,7 @@ def test_it_rejects_where_glue_validation_fails(validate_mapper):
     assert 400 == response["statusCode"]
 
 
+@patch("backend.lambdas.data_mappers.handlers.running_job_exists", Mock(return_value=False))
 @patch("backend.lambdas.data_mappers.handlers.table")
 def test_it_deletes_data_mapper(table):
     response = handlers.delete_data_mapper_handler({
@@ -134,6 +135,20 @@ def test_it_deletes_data_mapper(table):
     }, SimpleNamespace())
     assert {
                "statusCode": 204,
+               "headers": ANY
+           } == response
+
+
+@patch("backend.lambdas.data_mappers.handlers.running_job_exists", Mock(return_value=True))
+def test_it_rejects_deletes_whilst_job_running():
+    response = handlers.delete_data_mapper_handler({
+        "pathParameters": {
+            "data_mapper_id": "test",
+        }
+    }, SimpleNamespace())
+    assert {
+               "body": ANY,
+               "statusCode": 400,
                "headers": ANY
            } == response
 

@@ -6,6 +6,7 @@ import os
 
 import boto3
 
+from boto_utils import running_job_exists
 from decorators import with_logger, request_validator, catch_errors, load_schema, add_cors_headers
 
 dynamodb_resource = boto3.resource("dynamodb")
@@ -58,6 +59,8 @@ def create_data_mapper_handler(event, context):
 @request_validator(load_schema("delete_handler"), "pathParameters")
 @catch_errors
 def delete_data_mapper_handler(event, context):
+    if running_job_exists():
+        raise ValueError("Cannot delete Data Mappers whilst there is a job in progress")
     data_mapper_id = event["pathParameters"]["data_mapper_id"]
     table.delete_item(Key={
         "DataMapperId": data_mapper_id
