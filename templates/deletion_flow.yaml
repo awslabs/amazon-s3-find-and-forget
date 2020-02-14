@@ -163,7 +163,7 @@ Resources:
             Action: sts:AssumeRole
       Path: /
       Policies:
-      - PolicyName: SqsExecutionPolicy
+      - PolicyName: ReadWriteExecutionPolicy
         PolicyDocument:
           Version: "2012-10-17"
           Statement:
@@ -174,16 +174,13 @@ Resources:
             Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${JobTableName}"
           - Action:
             - s3:AbortMultipartUpload
-            - s3:CompleteMultipartUpload
-            - s3:CopyObject
-            - s3:GetBucketRequestPayment
+            - s3:GetBucketLocation
+            - s3:GetBucketRequestPayment*
             - s3:GetObject*
-            - s3:Head*
+            - s3:ListBucket
+            - s3:ListBucketMultipartUploads*
             - s3:ListMultipartUploads
-            - s3:ListObject*
-            - s3:ListParts
             - s3:PutObject*
-            - s3:UploadPart*
             Effect: Allow
             Resource:
               - !Sub "arn:aws:s3:::${SafeModeBucket}"

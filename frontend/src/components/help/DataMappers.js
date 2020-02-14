@@ -36,7 +36,7 @@ export default () => (
       bucket policies to enable the solution to read and write the data in the
       location specified by the Data Mapper. To see the required policies,
       choose a Data Mapper from the list then choose{" "}
-      <strong>View S3 Bucket Policy</strong>.
+      <strong>Generate Access Policies</strong>.
     </p>
     <h3>
       Learn more <Icon type="new-window" />

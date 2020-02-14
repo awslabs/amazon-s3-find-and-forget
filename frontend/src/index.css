@@ -429,6 +429,57 @@ form .form-check-label {
   font-size: 1.3rem;
 }
 
+.nav-tabs {
+  border-bottom: 1px solid #aab7b8;
+}
+
+.nav-tabs .nav-item {
+  position: relative;
+  padding: 1.3rem 0;
+  color: #545b64;
+  margin-bottom: 0;
+  border: 0;
+  font-weight: 700;
+}
+
+.nav-tabs .nav-item.active {
+  color: #eb5f07;
+}
+
+.nav-tabs .nav-item.active:before {
+  content: "";
+  position: absolute;
+  left: 0;
+  width: 100%;
+  bottom: -1px;
+  height: .2rem;
+  background: #16191f;
+}
+
+.nav-tabs .nav-item span {
+  padding: .5rem 1.3rem;
+}
+
+.nav-tabs .nav-item:not(:last-child) span {
+  border-right: 1px solid #aab7b8;
+}
+
+.tab-content {
+  padding: 1.9rem 1rem;
+}
+
+.tab-content .tab-pane > .alert:first-child {
+  margin-top: 0;
+}
+
+.tab-content ol {
+  padding-left: 2rem;
+}
+
+.tab-content ol li {
+  list-style: decimal;
+}
+
 .status-label span {
   vertical-align: middle;
   margin-left: 5px;
