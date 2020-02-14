@@ -40,14 +40,17 @@ been modified.
 
 Check the job log for a **ForgetPhaseFailed** event. Examining the event data
 for this event will provide you with more information about the underlying
-error that caused the failure.
-
-#FIXME: Should we prompt the user to submit an issue here?
+cause of the failure.
 
 ### Job Status: FORGET_PARTIALLY_FAILED
 
 A `FORGET_PARTIALLY_FAILED` status indicates that the job has completed, but
 that the _forget_ phase was unable to process one or more objects.
+
+Each object that was not processed will result in a message on the objects dead
+letter queue ("DLQ"; see `DLQUrl` in the CloudFormation stack outputs) and an
+**ObjectUpdateFailed** event in the job event history containing error
+information.
 
 Verify the following:
 
@@ -60,42 +63,49 @@ Verify the following:
 - Your data is compatible within the [solution limits].
 - Your data is not corrupted.
 
-For each object which was unable to be processed successfully, a message
-will be placed on the objects dead letter queue ("DLQ", see `DLQUrl` in the
-CloudFormation stack outputs) and an **ObjectUpdateFailed** event containing
-detailed error information will be present in the job event history. To
-reprocess these objects you will need to run a new job with the same Matches in
-the Deletion Queue.
+To reprocess the objects, populate the deletion queue with the same matches
+and run a new deletion job.
 
 ### Job status: FAILED
 
-If your job finishes with a status of FAILED it indicates that there was
-an unhandled exception during the job execution. Possible causes are:
+A `FAILED` status indicates that the job has terminated due to an unhandled
+exception. 
+
+Some possible causes for this are:
 
 - One of the tasks in the main step function failed.
-- There was a permissions issue encountered by one of the solution components.
-- The state machine exceeded timed out or exceeded the service quota for
-state machine execution history.
+- There was a permissions issue encountered in one of the solution components.
+- The state machine execution time has timed out, or has exceeded the service
+  quota for state machine execution history.
 
-For more information on what caused the issue, check the event data for
-the **Exception** in event in the job event history. If the error is related
-to Step Functions service quotas such as timeouts or exceeding the permitted
-execution history length, you may be able to resolve this by increasing the
-waiter configuration as described in [Performance Configuration].
+To find information on what caused the failure, check the deletion job log for
+an **Exception** event and inspect that event's event data.
+
+Errors relating to Step Functions such as timeouts or exceeding the permitted
+execution history length, may be resolvable by increasing the waiter
+configuration as described in [Performance Configuration].
 
 ### Job status: COMPLETED_CLEANUP_FAILED
 
-If your job finishes with a status of COMPLETED_CLEANUP_FAILED it indicates
-that although the Find and Forget phases completed successfully, the job was
-unable to remove the processed matches from the Deletion Queue. This is
-most likely due to either the permissions of the stream processor Lambda being
-changed or an item being manually removed from the Deletion Queue table via
-a direct call to the DynamoDB API. Check the **CleanupFailed** event in the job
-event history for more information.
+A `COMPLETED_CLEANUP_FAILED` status indicates that the job has completed,
+but it could not remove the processed matches from the deletion queue.
 
-To cleanup the Deletion Queue, either delete the items from the solution UI,
-or leave them in the queue and allow them to be removed by the subsequent job
-execution.
+
+Some possible causes for this are:
+
+- The stream processor lambda function does not have permissions to manipulate
+  the DynamoDB table
+- The item has been manually removed from the deletion queue table via a direct
+  call to the DynamoDB API.
+
+You can find more details of the cause by checking the job event history for a
+**CleanupFailed** event, then viewing the event data.
+
+As the processed matches will still be on the queue, you can choose to either:
+
+- Manually remove the processed matches via the solution web interface or APIs
+- Take no action — allowing the matches to remain and be re-processed by the
+  next deletion job
 
 ### Job appears stuck in QUEUED/RUNNING status
 
