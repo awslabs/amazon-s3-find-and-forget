@@ -6,8 +6,7 @@ import pytest
 from mock import patch
 
 with patch.dict(os.environ, {"QueryQueue": "test"}):
-    from backend.lambdas.tasks.generate_queries import handler, get_table, get_partitions, convert_to_col_type, \
-    deserialize_item
+    from backend.lambdas.tasks.generate_queries import handler, get_table, get_partitions, convert_to_col_type
 
 pytestmark = [pytest.mark.unit, pytest.mark.task]
 

@@ -201,6 +201,8 @@ Resources:
             Path: /data_mappers/{data_mapper_id}
             Method: delete
       Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref JobTableName
         - DynamoDBCrudPolicy:
             TableName: !Ref DataMapperTableName
   # Jobs

@@ -169,48 +169,6 @@ def test_it_prevents_concurrent_running_jobs(mock_running_job):
     assert "headers" in response
 
 
-@patch("backend.lambdas.queue.handlers.jobs_table")
-def test_it_returns_true_where_jobs_running(mock_table):
-    mock_table.query.return_value = {"Items": [{}]}
-    assert handlers.running_job_exists()
-    mock_table.query.assert_called_with(
-        IndexName=ANY,
-        KeyConditionExpression=ANY,
-        ScanIndexForward=False,
-        FilterExpression="(#s = :r) or (#s = :q) or (#s = :c)",
-        ExpressionAttributeNames={
-            "#s": "JobStatus"
-        },
-        ExpressionAttributeValues={
-            ":r": "RUNNING",
-            ":q": "QUEUED",
-            ":c": "FORGET_COMPLETED_CLEANUP_IN_PROGRESS",
-        },
-        Limit=1
-    )
-
-
-@patch("backend.lambdas.queue.handlers.jobs_table")
-def test_it_returns_true_where_jobs_not_running(mock_table):
-    mock_table.query.return_value = {"Items": []}
-    assert not handlers.running_job_exists()
-    mock_table.query.assert_called_with(
-        IndexName=ANY,
-        KeyConditionExpression=ANY,
-        ScanIndexForward=False,
-        FilterExpression="(#s = :r) or (#s = :q) or (#s = :c)",
-        ExpressionAttributeNames={
-            "#s": "JobStatus"
-        },
-        ExpressionAttributeValues={
-            ":r": "RUNNING",
-            ":q": "QUEUED",
-            ":c": "FORGET_COMPLETED_CLEANUP_IN_PROGRESS",
-        },
-        Limit=1
-    )
-
-
 @patch("backend.lambdas.queue.handlers.ssm")
 def test_it_retrieves_config(mock_client):
     mock_client.get_parameter.return_value = {

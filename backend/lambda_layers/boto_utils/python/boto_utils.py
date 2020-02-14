@@ -5,6 +5,7 @@ import os
 import uuid
 
 import boto3
+from boto3.dynamodb.conditions import Key
 from boto3.dynamodb.types import TypeDeserializer
 
 deserializer = TypeDeserializer()
@@ -13,6 +14,8 @@ batch_size = 10  # SQS Max Batch Size
 
 ddb = boto3.resource("dynamodb")
 table = ddb.Table(os.getenv("JobTable", "S3F2_Jobs"))
+index = os.getenv("JobTableDateGSI", "Date-GSI")
+bucket_count = int(os.getenv("GSIBucketCount", 1))
 
 
 def paginate(client, method, iter_keys, **kwargs):
@@ -71,6 +74,29 @@ def emit_event(job_id, event_name, event_data, emitter_id=None, created_at=None)
         "CreatedAt": normalise_dates(round(created_at)),
     }
     table.put_item(Item=item)
+
+
+def running_job_exists():
+    jobs = []
+    for gsi_bucket in range(0, bucket_count):
+        response = table.query(
+            IndexName=index,
+            KeyConditionExpression=Key('GSIBucket').eq(str(gsi_bucket)),
+            ScanIndexForward=False,
+            FilterExpression="(#s = :r) or (#s = :q) or (#s = :c)",
+            ExpressionAttributeNames={
+                "#s": "JobStatus"
+            },
+            ExpressionAttributeValues={
+                ":r": "RUNNING",
+                ":q": "QUEUED",
+                ":c": "FORGET_COMPLETED_CLEANUP_IN_PROGRESS",
+            },
+            Limit=1,
+        )
+        jobs += response.get("Items", [])
+
+    return len(jobs) > 0
 
 
 class DecimalEncoder(json.JSONEncoder):
