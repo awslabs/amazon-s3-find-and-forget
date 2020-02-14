@@ -45,12 +45,12 @@ a fatal error from which the system cannot recover.
 
 ### Job status: COMPLETED_CLEANUP_FAILED
 
-A `COMPLETED_CLEANUP_FAILED` status indicates that the job has completed,
-but it could not remove the processed matches from the deletion queue.
+A `COMPLETED_CLEANUP_FAILED` status indicates that the job has completed, but
+an error occurred when removing the processed matches from the deletion queue.
 
 Some possible causes for this are:
 
-- The stream processor lambda function does not have permissions to manipulate
+- The stream processor Lambda function does not have permissions to manipulate
   the DynamoDB table.
 - The item has been manually removed from the deletion queue table via a direct
   call to the DynamoDB API.
@@ -61,8 +61,8 @@ You can find more details of the cause by checking the job event history for a
 As the processed matches will still be on the queue, you can choose to either:
 
 - Manually remove the processed matches via the solution web interface or APIs.
-- Take no action — allowing the matches to remain in the queue and be
-  re-processed during the next deletion job run.
+- Take no action — the matches will remain in the queue and be re-processed
+  during the next deletion job run.
 
 ### Job status: FAILED
 
