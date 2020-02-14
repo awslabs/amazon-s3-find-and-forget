@@ -8,7 +8,8 @@ deploying, configuring and using the Amazon S3 Find and Forget solution.
 A `FIND_FAILED` status indicates that the job has terminated because one or
 more data mapper queries failed to execute.
 
-If you are using Athena and Glue for your data mappers, you should verify the following:
+If you are using Athena and Glue as data mappers, you should first verify the
+following:
 
 - You have granted permissions to the Athena IAM role for access to the S3
   buckets referenced by your data mappers **and** any AWS KMS keys used to
@@ -20,17 +21,20 @@ If you are using Athena and Glue for your data mappers, you should verify the fo
   Configuration] in the [User Guide].
 - Your data is compatible within the [solution limits]
 
-#FIXME#
-Queries will may also fail if the total size of the queries being ran by Athena does not exceed the
-maximum Athena query string length outlined in [Athena Service Quotas]. If
-queries are failing for this reason, you will need to reduce the number of
-matches being ran per deletion job.
+If you made any changes whilst verifying the prior points, you should attempt
+to run a new deletion job.
 
-If the problem persists, find the **QueryFailed** event(s) in the job history
-to find out more specific details of the error. If you need more information,
-extract the `QueryId` from the event data, find the query in the
-[Athena Query History] and use the [Athena Troubleshooting] guide to
-debug the issue further.
+To find further details of the cause of the failure you should inspect the
+deletion job log and inspect the event data for any **QueryFailed** events. 
+
+Athena queries may fail if the length of a query sent to Athena exceed the
+Athena query string length limit (see [Athena Service Quotas]). If queries are
+failing for this reason, you will need to reduce the number of matches queued
+when running a deletion job.
+
+To troubleshoot Athena queries further, find the `QueryId` from the event data
+and match this to the query in the [Athena Query History]. You can use the
+[Athena Troubleshooting] guide for Athena troubleshooting steps.
 
 ### Job Status: FORGET_FAILED
 
@@ -90,7 +94,6 @@ configuration as described in [Performance Configuration].
 A `COMPLETED_CLEANUP_FAILED` status indicates that the job has completed,
 but it could not remove the processed matches from the deletion queue.
 
-
 Some possible causes for this are:
 
 - The stream processor lambda function does not have permissions to manipulate
@@ -109,37 +112,39 @@ As the processed matches will still be on the queue, you can choose to either:
 
 ### Job appears stuck in QUEUED/RUNNING status
 
-If a job remains in the QUEUED or RUNNING status for much longer than
-expected, there may have been an unexpected issue relating to:
+If a job remains in a QUEUED or RUNNING status for much longer than expected,
+there may be an issue relating to:
 
 - AWS Fargate accessing the ECR service endpoint. Enabling the required network
 access from the subnets/security groups in which Forget Fargate tasks are
 launched will unblock the job without requiring manual intervention. For more
 information see [VPC Configuration] in the [User Guide].
 - Errors in job table stream processor. [Check the logs](https://docs.aws.amazon.com/lambda/latest/dg/monitoring-functions-logs.html)
-for the stream processor Lambda for errors.
+  of the stream processor Lambda function for errors.
 - Unhandled state machine execution errors. If there are no errors in the job
-event history which indicate an issue, check the state machine execution history
-of the execution with the same name as the blocked job ID.
+  event history which indicate an issue, check the state machine execution
+  history of the execution with the same name as the blocked job ID.
 
 If the state machine is still executing but in a non-recoverable state, you
 can stop the state machine execution manually which will trigger an Exception
-job event leading to the job being marked as FAILED. If this doesn't resolve
-issue or the execution isn't running, you can manually update the job status to
-FAILED or remove the job and any associated events from the Jobs table<sup>*</sup>.
+job event — the job will enter a `FAILED` status. 
 
-<sup>*</sup> **WARNING:** You should only manually intervene where there as been a fatal
-error from which the system cannot recover.
+If this doesn't resolve the issue or the execution isn't running, you can
+manually update the job status to FAILED or remove the job and any associated
+events from the Jobs table<sup>*</sup>.
+
+<sup>*</sup> **WARNING:** You should manually intervene only when there as been
+a fatal error from which the system cannot recover.
 
 ### Expected Results Not Found
 
-If the Find phase does not identify the expected files for the matches in the
+If the Find phase does not identify the expected objects for the matches in the
 deletion queue, verify the following:
 
 - You have chosen the relevant data mappers for the matches in the deletion
   queue.
 - Your data mappers are referencing the correct S3 locations
-- Your data mappers are configured to search the correct columns
+- Your data mappers have been configured to search the correct columns
 - All partitions have been loaded into the Glue Data Catalog
 
 [User Guide]: USER_GUIDE.md
