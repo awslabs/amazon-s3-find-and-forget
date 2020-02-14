@@ -468,18 +468,16 @@ form .form-check-label {
   padding: 1.9rem 1rem;
 }
 
+.tab-content .tab-pane > .alert:first-child {
+  margin-top: 0;
+}
+
 .tab-content ol {
   padding-left: 2rem;
 }
 
 .tab-content ol li {
   list-style: decimal;
-}
-
-pre {
-  background-color: #f2f3f3;
-  padding: 0.5rem;
-  overflow: scroll;
 }
 
 .status-label span {
