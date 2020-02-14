@@ -1,3 +1,4 @@
+import io
 import math
 import sys
 from functools import lru_cache
@@ -9,7 +10,6 @@ import json
 import os
 import pyarrow as pa
 import pyarrow.parquet as pq
-import s3fs
 import time
 import logging
 from multiprocessing import Pool, cpu_count
@@ -32,7 +32,6 @@ sqs = boto3.resource('sqs', endpoint_url="https://sqs.{}.amazonaws.com".format(o
 queue = sqs.Queue(os.getenv("DELETE_OBJECTS_QUEUE"))
 safe_mode_bucket = os.getenv("SAFE_MODE_BUCKET")
 safe_mode_prefix = os.getenv("SAFE_MODE_PREFIX")
-s3 = s3fs.S3FileSystem()
 
 
 def _remove_none(d: dict):
@@ -78,7 +77,7 @@ def save(client, new_parquet, bucket, key, in_safe_mode=True):
     output_bucket = bucket if not in_safe_mode else safe_mode_bucket
     output_key = key if not in_safe_mode else "{}{}/{}".format(safe_mode_prefix, bucket, key)
     logger.info("Safe mode is {}. Saving updated object to s3://{}/{}".format(in_safe_mode, output_bucket, output_key))
-    client.upload_file(new_parquet, output_bucket, output_key, ExtraArgs=extra_args)
+    client.upload_fileobj(new_parquet, output_bucket, output_key, ExtraArgs=extra_args)
     logger.info("Object uploaded to S3")
     # GrantWrite cannot be set whilst uploading therefore ACLs need to be restored separately
     write_grantees = ",".join(get_grantees(acl_resp, "WRITE"))
@@ -175,10 +174,6 @@ def get_grantees(acl, grant_type):
     return grantees
 
 
-def cleanup(new_parquet):
-    os.remove(new_parquet)
-
-
 @lru_cache()
 def get_container_id():
     metadata_file = os.getenv("ECS_CONTAINER_METADATA_FILE")
@@ -239,7 +234,7 @@ def check_object_size(client, bucket, key):
 def execute(message_body, receipt_handle):
     logger.info("Message received: {0}".format(message_body))
     client = boto3.client("s3")
-    temp_dest = "/tmp/new.parquet"
+    s3 = boto3.resource("s3")
     msg = queue.Message(receipt_handle)
     try:
         validate_message(message_body)
@@ -251,17 +246,23 @@ def execute(message_body, receipt_handle):
         input_bucket, input_key = object_path.replace("s3://", "").split("/", 1)
         check_object_size(client, input_bucket, input_key)
         logger.info("Downloading and opening the object {}".format(object_path))
-        with s3.open(object_path, "rb") as f:
-            parquet_file = load_parquet(f, stats)
-            schema = parquet_file.metadata.schema.to_arrow_schema().remove_metadata()
-            with pq.ParquetWriter(temp_dest, schema, flavor="spark") as writer:
-                for i in range(parquet_file.num_row_groups):
-                    cols = body["Columns"]
-                    delete_and_write(parquet_file, i, cols, writer, stats)
-        if stats["DeletedRows"] > 0:
-            save(client, temp_dest, input_bucket, input_key, in_safe_mode)
-        else:
-            logger.warning("The object {} was processed successfully but no rows required deletion".format(object_path))
+
+        with pa.BufferOutputStream() as out:
+            with io.BytesIO() as input_buf:
+                s3.Object(input_bucket, input_key).download_fileobj(input_buf)
+                ba = pa.BufferReader(input_buf)
+                parquet_file = load_parquet(ba, stats)
+                schema = parquet_file.metadata.schema.to_arrow_schema().remove_metadata()
+                with pq.ParquetWriter(out, schema, flavor="spark") as writer:
+                    for i in range(parquet_file.num_row_groups):
+                        cols = body["Columns"]
+                        delete_and_write(parquet_file, i, cols, writer, stats)
+
+            if stats["DeletedRows"] > 0:
+                with io.BytesIO(out.getvalue()) as output_buf:
+                    save(client, output_buf, input_bucket, input_key, in_safe_mode)
+            else:
+                logger.warning("The object {} was processed successfully but no rows required deletion".format(object_path))
         msg.delete()
         emit_deletion_event(body, stats)
         return object_path
@@ -291,9 +292,6 @@ def execute(message_body, receipt_handle):
             logger.warning("Failed to emit event for message {}: {}".format(message_body, str(e)))
         logger.error(err_message)
         msg.change_visibility(VisibilityTimeout=0)
-    finally:
-        if os.path.exists(temp_dest):
-            cleanup(temp_dest)
 
 
 if __name__ == '__main__':
