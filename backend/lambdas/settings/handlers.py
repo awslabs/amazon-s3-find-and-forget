@@ -16,5 +16,5 @@ def list_settings_handler(event, context):
     config = get_config()
     return {
         "statusCode": 200,
-        "body": json.dumps({"Settings": config})
+        "body": json.dumps({"Settings": config}, cls=DecimalEncoder)
     }
