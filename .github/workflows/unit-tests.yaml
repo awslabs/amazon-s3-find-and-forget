@@ -8,6 +8,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
+      # Cache
+      - uses: actions/cache@v1
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - uses: actions/cache@v1
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      # Setup
       - name: Set up Python 3.7
         uses: actions/setup-python@v1
         with:
@@ -24,6 +38,7 @@ jobs:
         run: pip install virtualenv
       - name: Install dependencies
         run: make setup
+      # Run Tests
       - name: CloudFormation unit tests
         run: make test-cfn
       - name: Backend unit tests
