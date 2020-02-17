@@ -9,7 +9,7 @@ import { formatErrorMessage } from "../utils";
 export default ({ className, gateway, goToJobDetails }) => {
   const [errorDetails, setErrorDetails] = useState(undefined);
   const [formState, setFormState] = useState("initial");
-  const [summary, setSummary] = useState(false);
+  const [summary, setSummary] = useState(undefined);
   const [starting, setStarting] = useState(false);
 
   const open = async () => {
