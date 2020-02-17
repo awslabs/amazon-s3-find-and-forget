@@ -5,7 +5,7 @@ import json
 
 import boto3
 
-from boto_utils import get_config
+from boto_utils import get_config, DecimalEncoder
 from decorators import with_logger, catch_errors, add_cors_headers
 
 
@@ -16,5 +16,5 @@ def list_settings_handler(event, context):
     config = get_config()
     return {
         "statusCode": 200,
-        "body": json.dumps({"Settings": config})
+        "body": json.dumps({"Settings": config}, cls=DecimalEncoder)
     }
