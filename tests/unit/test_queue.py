@@ -3,7 +3,6 @@ import os
 from types import SimpleNamespace
 
 import pytest
-from botocore.exceptions import ClientError
 from mock import patch, ANY
 
 with patch.dict(os.environ, {"DeletionQueueTable": "DeletionQueueTable"}):
@@ -167,52 +166,3 @@ def test_it_prevents_concurrent_running_jobs(mock_running_job):
 
     assert 400 == response["statusCode"]
     assert "headers" in response
-
-
-@patch("backend.lambdas.queue.handlers.ssm")
-def test_it_retrieves_config(mock_client):
-    mock_client.get_parameter.return_value = {
-        "Parameter": {
-            "Value": json.dumps({
-                "AthenaConcurrencyLimit": 1,
-                "DeletionTasksMaxNumber": 1,
-                "WaitDurationQueryExecution": 1,
-                "WaitDurationQueryQueue": 1,
-                "WaitDurationForgetQueue": 1
-            })
-        }
-    }
-    resp = handlers.get_config()
-
-    assert {
-        "AthenaConcurrencyLimit": 1,
-        "DeletionTasksMaxNumber": 1,
-        "WaitDurationQueryExecution": 1,
-        "WaitDurationQueryQueue": 1,
-        "WaitDurationForgetQueue": 1
-    } == resp
-
-
-@patch("backend.lambdas.queue.handlers.ssm")
-def test_it_handles_invalid_config(mock_client):
-    mock_client.get_parameter.return_value = {
-        "Parameter": {
-            "Value": ""
-        }
-    }
-    with pytest.raises(ValueError):
-        handlers.get_config()
-
-
-@patch("backend.lambdas.queue.handlers.ssm")
-def test_it_handles_config_not_found(mock_client):
-    mock_client.get_parameter.side_effect = ClientError({}, "get_parameter")
-    with pytest.raises(ClientError):
-        handlers.get_config()
-
-
-@patch("backend.lambdas.queue.handlers.ssm")
-def test_it_handles_other_config_errors(mock_client):
-    mock_client.get_parameter.side_effect = RuntimeError("oops!")
-    with pytest.raises(RuntimeError):
-        handlers.get_config()

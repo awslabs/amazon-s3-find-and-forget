@@ -151,6 +151,10 @@ def queue_base_endpoint():
 
 
 @pytest.fixture(scope="module")
+def settings_base_endpoint():
+    return "settings"
+
+@pytest.fixture(scope="module")
 def queue_table(ddb_resource, stack):
     return ddb_resource.Table(stack["DeletionQueueTable"])
 

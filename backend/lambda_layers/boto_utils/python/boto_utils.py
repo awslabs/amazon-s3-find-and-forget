@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 import decimal
+import logging
 import json
 import os
 import uuid
@@ -7,11 +8,15 @@ import uuid
 import boto3
 from boto3.dynamodb.conditions import Key
 from boto3.dynamodb.types import TypeDeserializer
+from botocore.exceptions import ClientError
+
 
 deserializer = TypeDeserializer()
-
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 batch_size = 10  # SQS Max Batch Size
 
+ssm = boto3.client('ssm')
 ddb = boto3.resource("dynamodb")
 table = ddb.Table(os.getenv("JobTable", "S3F2_Jobs"))
 index = os.getenv("JobTableDateGSI", "Date-GSI")
@@ -97,6 +102,21 @@ def running_job_exists():
         jobs += response.get("Items", [])
 
     return len(jobs) > 0
+
+
+def get_config():
+    try:
+        param_name = os.getenv("ConfigParam", "S3F2-Configuration")
+        return json.loads(ssm.get_parameter(Name=param_name, WithDecryption=True)["Parameter"]["Value"])
+    except (KeyError, ValueError) as e:
+        logger.error("Invalid configuration supplied: {}".format(str(e)))
+        raise e
+    except ClientError as e:
+        logger.error("Unable to retrieve config: {}".format(str(e)))
+        raise e
+    except Exception as e:
+        logger.error("Unknown error retrieving config: {}".format(str(e)))
+        raise e
 
 
 class DecimalEncoder(json.JSONEncoder):

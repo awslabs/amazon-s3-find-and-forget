@@ -251,6 +251,24 @@ Resources:
         - DynamoDBReadPolicy:
             TableName: !Ref JobTableName
 
+  # Settings
+  ListSettings:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers.list_settings_handler
+      CodeUri: ../backend/lambdas/settings/
+      Events:
+        List:
+          Type: Api
+          Properties:
+            Path: /settings
+            Method: get
+      Policies:
+        - Statement:
+          - Action: "ssm:GetParameter"
+            Effect: "Allow"
+            Resource: !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${ConfigParameter}"
+
   StreamProcessor:
     Type: AWS::Serverless::Function
     Properties:

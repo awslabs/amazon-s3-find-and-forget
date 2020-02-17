@@ -2,11 +2,13 @@ import decimal
 import json
 import types
 import mock
+
 import pytest
+from botocore.exceptions import ClientError
 from mock import MagicMock, ANY, patch
 
 from boto_utils import convert_iso8601_to_epoch, paginate, batch_sqs_msgs, read_queue, emit_event, DecimalEncoder, \
-    normalise_dates, deserialize_item, running_job_exists
+    normalise_dates, deserialize_item, running_job_exists, get_config
 
 pytestmark = [pytest.mark.unit, pytest.mark.layers]
 
@@ -234,3 +236,54 @@ def test_it_returns_true_where_jobs_not_running(mock_table):
         },
         Limit=1
     )
+
+
+@patch("boto_utils.ssm")
+def test_it_retrieves_config(mock_client):
+    mock_client.get_parameter.return_value = {
+        "Parameter": {
+            "Value": json.dumps({
+                "AthenaConcurrencyLimit": 1,
+                "DeletionTasksMaxNumber": 1,
+                "WaitDurationQueryExecution": 1,
+                "WaitDurationQueryQueue": 1,
+                "WaitDurationForgetQueue": 1,
+                "SafeMode": True
+            })
+        }
+    }
+    resp = get_config()
+
+    assert {
+        "AthenaConcurrencyLimit": 1,
+        "DeletionTasksMaxNumber": 1,
+        "WaitDurationQueryExecution": 1,
+        "WaitDurationQueryQueue": 1,
+        "WaitDurationForgetQueue": 1,
+        "SafeMode": True
+    } == resp
+
+
+@patch("boto_utils.ssm")
+def test_it_handles_invalid_config(mock_client):
+    mock_client.get_parameter.return_value = {
+        "Parameter": {
+            "Value": ""
+        }
+    }
+    with pytest.raises(ValueError):
+        get_config()
+
+
+@patch("boto_utils.ssm")
+def test_it_handles_config_not_found(mock_client):
+    mock_client.get_parameter.side_effect = ClientError({}, "get_parameter")
+    with pytest.raises(ClientError):
+        get_config()
+
+
+@patch("boto_utils.ssm")
+def test_it_handles_other_config_errors(mock_client):
+    mock_client.get_parameter.side_effect = RuntimeError("oops!")
+    with pytest.raises(RuntimeError):
+        get_config()
