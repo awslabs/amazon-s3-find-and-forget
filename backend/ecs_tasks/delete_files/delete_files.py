@@ -1,9 +1,11 @@
 import io
 import math
 import sys
+from collections import Counter
 from functools import lru_cache
 from urllib.parse import urlencode, quote_plus
 from uuid import uuid4
+from operator import itemgetter
 
 import boto3
 import json
@@ -38,34 +40,55 @@ def _remove_none(d: dict):
     return {k: v for k, v in d.items() if v is not None and v is not ''}
 
 
-def load_parquet(f, stats):
-    parquet_file = pq.ParquetFile(f, memory_map=False)
-    stats["TotalRows"] = parquet_file.metadata.num_rows
-    return parquet_file
+def get_object_as_parquet_file(input_bucket, input_key):
+    """
+    Downloads an object from S3 in-memory and converts it to PyArrow NativeFile
+    """
+    s3 = boto3.resource("s3")
+    with io.BytesIO() as input_buf:
+        s3.Object(input_bucket, input_key).download_fileobj(input_buf)
+        br = pa.BufferReader(input_buf.getvalue())
+
+    return pq.ParquetFile(br, memory_map=False)
 
 
-def delete_from_dataframe(df, columns, stats):
-    original = len(df)
-    for column in columns:
+def get_row_count(df):
+    return len(df.index)
+
+
+def delete_from_dataframe(df, to_delete):
+    for column in to_delete:
         df = df[~df[column["Column"]].isin(column["MatchIds"])]
-    stats["DeletedRows"] += abs(original - len(df))
-    return pa.Table.from_pandas(df, preserve_index=False).replace_schema_metadata()
+    return df
 
 
-def delete_and_write(parquet_file, row_group, columns, writer, stats):
-    logger.info("Row group {}/{}".format(str(row_group + 1), parquet_file.num_row_groups))
-    df = parquet_file.read_row_group(row_group).to_pandas()
-    current_rows = len(df.index)
-    stats["ProcessedRows"] += current_rows
-    if stats["ProcessedRows"] > 0:
-        logger.info("Processing {} rows ({}/{} {}% completed)...".format(
-            current_rows, stats["ProcessedRows"], stats["TotalRows"], int((stats["ProcessedRows"] * 100) / stats["TotalRows"])))
-    tab = delete_from_dataframe(df, columns, stats)
-    writer.write_table(tab)
-    logger.info("wrote table")
+def delete_matches_from_file(parquet_file, to_delete):
+    """
+    Deletes matches from Parquet file where to_delete is a list of dicts where
+    each dict contains a column to search and the MatchIds to search for in
+    that particular column
+    """
+    schema = parquet_file.metadata.schema.to_arrow_schema().remove_metadata()
+    total_rows = parquet_file.metadata.num_rows
+    stats = Counter({"ProcessedRows": total_rows, "DeletedRows": 0})
+    with pa.BufferOutputStream() as out_stream:
+        with pq.ParquetWriter(out_stream, schema, flavor="spark") as writer:
+            for row_group in range(parquet_file.num_row_groups):
+                logger.info("Row group {}/{}".format(str(row_group + 1), parquet_file.num_row_groups))
+                df = parquet_file.read_row_group(row_group).to_pandas()
+                current_rows = get_row_count(df)
+                df = delete_from_dataframe(df, to_delete)
+                new_rows = get_row_count(df)
+                tab = pa.Table.from_pandas(df, preserve_index=False).replace_schema_metadata()
+                writer.write_table(tab)
+                stats.update({"DeletedRows": current_rows - new_rows})
+    return out_stream, stats
 
 
-def save(client, new_parquet, bucket, key, in_safe_mode=True):
+def save(client, buf, bucket, key, in_safe_mode=True):
+    """
+    Save a buffer to S3, preserving any existing properties on the object
+    """
     # Get Object Settings
     request_payer_args, _ = get_requester_payment(client, bucket)
     object_info_args, _ = get_object_info(client, bucket, key)
@@ -77,7 +100,7 @@ def save(client, new_parquet, bucket, key, in_safe_mode=True):
     output_bucket = bucket if not in_safe_mode else safe_mode_bucket
     output_key = key if not in_safe_mode else "{}{}/{}".format(safe_mode_prefix, bucket, key)
     logger.info("Safe mode is {}. Saving updated object to s3://{}/{}".format(in_safe_mode, output_bucket, output_key))
-    client.upload_fileobj(new_parquet, output_bucket, output_key, ExtraArgs=extra_args)
+    client.upload_fileobj(buf, output_bucket, output_key, ExtraArgs=extra_args)
     logger.info("Object uploaded to S3")
     # GrantWrite cannot be set whilst uploading therefore ACLs need to be restored separately
     write_grantees = ",".join(get_grantees(acl_resp, "WRITE"))
@@ -226,6 +249,7 @@ def get_max_file_size_bytes():
 def check_object_size(client, bucket, key):
     _, resp = get_object_info(client, bucket, key)
     object_size = resp["ContentLength"]
+    logger.info("Object size: {}".format(object_size))
     if get_max_file_size_bytes() < object_size:
         raise IOError("Insufficient disk space available for object {}. Size: {} GB".format(
             key, round(object_size / math.pow(1024, 3), 2)))
@@ -234,35 +258,26 @@ def check_object_size(client, bucket, key):
 def execute(message_body, receipt_handle):
     logger.info("Message received: {0}".format(message_body))
     client = boto3.client("s3")
-    s3 = boto3.resource("s3")
     msg = queue.Message(receipt_handle)
     try:
+        # Parse and validate incoming message
         validate_message(message_body)
-        stats = {"ProcessedRows": 0, "DeletedRows": 0}
         body = json.loads(message_body)
-        job_id = body["JobId"]
+        cols, object_path, job_id = itemgetter('Columns', 'Object', 'JobId')(body)
         in_safe_mode = safe_mode(job_id)
-        object_path = body["Object"]
         input_bucket, input_key = object_path.replace("s3://", "").split("/", 1)
         check_object_size(client, input_bucket, input_key)
-        logger.info("Downloading and opening the object {}".format(object_path))
-
-        with pa.BufferOutputStream() as out:
-            with io.BytesIO() as input_buf:
-                s3.Object(input_bucket, input_key).download_fileobj(input_buf)
-                ba = pa.BufferReader(input_buf)
-                parquet_file = load_parquet(ba, stats)
-                schema = parquet_file.metadata.schema.to_arrow_schema().remove_metadata()
-                with pq.ParquetWriter(out, schema, flavor="spark") as writer:
-                    for i in range(parquet_file.num_row_groups):
-                        cols = body["Columns"]
-                        delete_and_write(parquet_file, i, cols, writer, stats)
-
-            if stats["DeletedRows"] > 0:
-                with io.BytesIO(out.getvalue()) as output_buf:
-                    save(client, output_buf, input_bucket, input_key, in_safe_mode)
-            else:
-                logger.warning("The object {} was processed successfully but no rows required deletion".format(object_path))
+        # Download the object in-memory and convert to PyArrow
+        logger.info("Downloading and opening {} object in-memory".format(object_path))
+        infile = get_object_as_parquet_file(input_bucket, input_key)
+        # Write new file in-memory
+        logger.info("Generating new parquet file without matches")
+        out, stats = delete_matches_from_file(infile, cols)
+        if stats["DeletedRows"] > 0:
+            with io.BytesIO(out.getvalue()) as output_buf:
+                save(client, output_buf, input_bucket, input_key, in_safe_mode)
+        else:
+            logger.warning("The object {} was processed successfully but no rows required deletion".format(object_path))
         msg.delete()
         emit_deletion_event(body, stats)
         return object_path

@@ -4,6 +4,10 @@ set -e
 
 # Obtain stack and account details
 REGION=$(aws configure get region)
+JOB_TABLE=$(aws cloudformation describe-stacks \
+  --stack-name S3F2 \
+  --query 'Stacks[0].Outputs[?OutputKey==`JobTable`].OutputValue' \
+  --output text)
 QUEUE_URL=$(aws cloudformation describe-stacks \
   --stack-name S3F2 \
   --query 'Stacks[0].Outputs[?OutputKey==`DeletionQueueUrl`].OutputValue' \
@@ -27,6 +31,7 @@ docker run \
 	-v "$(pwd)"/backend/ecs_tasks/delete_files/delete_files.py:/app/delete_files.py:ro \
 	-e DELETE_OBJECTS_QUEUE="${QUEUE_URL}" \
 	-e DLQ="${DLQ_URL}" \
+	-e JobTable="${JOB_TABLE}" \
 	-e AWS_DEFAULT_REGION="${REGION}" \
 	-e AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
 	-e AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
