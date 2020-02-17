@@ -11,7 +11,7 @@ export default {
       data: {
         Matches: matches
       }
-    })
+    });
   },
 
   enqueue(id, dataMappers) {
@@ -89,7 +89,7 @@ export default {
     return { Jobs: allJobs };
   },
 
-  async getJobEvents(jobId, watermark=undefined, page_size=20) {
+  async getJobEvents(jobId, watermark = undefined, page_size = 20) {
     let qs = `?page_size=${page_size}`;
     if (watermark) {
       qs += `&start_at=${encodeURIComponent(watermark)}`;
@@ -99,6 +99,10 @@ export default {
 
   getQueue() {
     return apiGateway("queue");
+  },
+
+  getSettings() {
+    return apiGateway("settings");
   },
 
   processQueue() {

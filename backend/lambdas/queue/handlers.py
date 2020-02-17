@@ -1,7 +1,6 @@
 """
 Queue handlers
 """
-import logging
 from datetime import datetime, timezone
 import random
 import json
@@ -11,13 +10,10 @@ import uuid
 import boto3
 from botocore.exceptions import ClientError
 
-from boto_utils import DecimalEncoder, running_job_exists
+from boto_utils import DecimalEncoder, get_config, running_job_exists
 from decorators import with_logger, request_validator, catch_errors, load_schema, add_cors_headers
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
 sfn_client = boto3.client("stepfunctions")
-ssm = boto3.client('ssm')
 dynamodb_resource = boto3.resource("dynamodb")
 deletion_queue_table = dynamodb_resource.Table(os.getenv("DeletionQueueTable", "S3F2_DeletionQueue"))
 jobs_table = dynamodb_resource.Table(os.getenv("JobTable", "S3F2_Jobs"))
@@ -105,18 +101,3 @@ def process_handler(event, context):
         "statusCode": 202,
         "body": json.dumps(item, cls=DecimalEncoder)
     }
-
-
-def get_config():
-    try:
-        param_name = os.getenv("ConfigParam", "S3F2-Configuration")
-        return json.loads(ssm.get_parameter(Name=param_name, WithDecryption=True)["Parameter"]["Value"])
-    except (KeyError, ValueError) as e:
-        logger.error("Invalid configuration supplied: {}".format(str(e)))
-        raise e
-    except ClientError as e:
-        logger.error("Unable to retrieve config: {}".format(str(e)))
-        raise e
-    except Exception as e:
-        logger.error("Unknown error retrieving config: {}".format(str(e)))
-        raise e
