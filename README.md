@@ -31,4 +31,5 @@ integrate it in your own applications.
 - [Monitoring the Solution](docs/MONITORING.md)
 - [Cost Overview](docs/COST_OVERVIEW.md)
 - [Local Development](docs/LOCAL_DEVELOPMENT.md)
+- [Troubleshooting](docs/TROUBLESHOOTING.md)
 - [Limits](docs/LIMITS.md)
