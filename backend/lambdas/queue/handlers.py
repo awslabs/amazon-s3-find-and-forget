@@ -8,9 +8,8 @@ import os
 import uuid
 
 import boto3
-from botocore.exceptions import ClientError
 
-from boto_utils import DecimalEncoder, get_config, running_job_exists
+from boto_utils import DecimalEncoder, get_config, running_job_exists, utc_timestamp
 from decorators import with_logger, request_validator, catch_errors, load_schema, add_cors_headers
 
 sfn_client = boto3.client("stepfunctions")
@@ -31,7 +30,7 @@ def enqueue_handler(event, context):
     data_mappers = body.get("DataMappers", [])
     item = {
         "MatchId": match_id,
-        "CreatedAt": round(datetime.now(timezone.utc).timestamp()),
+        "CreatedAt": utc_timestamp(),
         "DataMappers": data_mappers,
     }
     deletion_queue_table.put_item(Item=item)
@@ -90,10 +89,13 @@ def process_handler(event, context):
         "Type": "Job",
         "JobStatus": "QUEUED",
         "GSIBucket": str(random.randint(0, bucket_count - 1)),
-        "CreatedAt": round(datetime.now(timezone.utc).timestamp()),
+        "CreatedAt": utc_timestamp(),
         "DeletionQueueItems": deletion_queue_table.scan()["Items"],
-        **config,
+        "Matches": deletion_queue_table.scan()["Items"],
+        **{k: v for k, v in config.items() if k not in ["JobRecordRetentionDays"]},
     }
+    if config.get("JobRecordRetentionDays", 0) > 0:
+        item["Expires"] = utc_timestamp(days=config["JobRecordRetentionDays"])
 
     jobs_table.put_item(Item=item)
 

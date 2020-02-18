@@ -44,6 +44,9 @@ Resources:
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
     Properties:
+      TimeToLiveSpecification:
+        AttributeName: Expires
+        Enabled: true
       StreamSpecification:
         StreamViewType: NEW_IMAGE
       AttributeDefinitions:

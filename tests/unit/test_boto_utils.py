@@ -1,3 +1,4 @@
+import datetime
 import decimal
 import json
 import types
@@ -8,7 +9,7 @@ from botocore.exceptions import ClientError
 from mock import MagicMock, ANY, patch
 
 from boto_utils import convert_iso8601_to_epoch, paginate, batch_sqs_msgs, read_queue, emit_event, DecimalEncoder, \
-    normalise_dates, deserialize_item, running_job_exists, get_config
+    normalise_dates, deserialize_item, running_job_exists, get_config, utc_timestamp
 
 pytestmark = [pytest.mark.unit, pytest.mark.layers]
 
@@ -117,6 +118,7 @@ def test_it_writes_events_to_ddb(mock_table):
             "EventData": "data",
             "EmitterId": "emitter123",
             "CreatedAt": 123,
+            "Expires": mock.ANY,
         }
     )
 
@@ -134,6 +136,7 @@ def test_it_provides_defaults(mock_table):
             "EventData": "data",
             "EmitterId": "1234",
             "CreatedAt": mock.ANY,
+            "Expires": mock.ANY,
         }
     )
 
@@ -287,3 +290,10 @@ def test_it_handles_other_config_errors(mock_client):
     mock_client.get_parameter.side_effect = RuntimeError("oops!")
     with pytest.raises(RuntimeError):
         get_config()
+
+
+@patch("boto_utils.datetime")
+def test_it_applies_time_delta(dt):
+    dt.now.return_value = datetime.datetime(2020, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc)
+    assert 1580428800 == utc_timestamp(days=30)
+    assert 1577836800 == utc_timestamp()
