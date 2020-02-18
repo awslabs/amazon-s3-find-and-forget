@@ -1,5 +1,3 @@
-import gc
-import io
 import sys
 from collections import Counter
 from functools import lru_cache
@@ -42,9 +40,9 @@ def get_object_as_parquet_file(s3, input_bucket, input_key):
     """
     Downloads an object from S3 in-memory and converts it to PyArrow NativeFile
     """
-    with io.BytesIO() as input_buf:
-        s3.Object(input_bucket, input_key).download_fileobj(input_buf)
-        br = pa.BufferReader(input_buf.getvalue())
+    with pa.BufferOutputStream() as sink:
+        s3.Object(input_bucket, input_key).download_fileobj(sink)
+        br = pa.BufferReader(sink.getvalue())
 
     return pq.ParquetFile(br, memory_map=False)
 
@@ -256,21 +254,19 @@ def execute(message_body, receipt_handle):
         cols, object_path, job_id = itemgetter('Columns', 'Object', 'JobId')(body)
         in_safe_mode = safe_mode(table, job_id)
         input_bucket, input_key = object_path.replace("s3://", "").split("/", 1)
-        # Download the object in-memory and convert to PyArrow
+        # Download the object in-memory and convert to PyArrow NativeFile
         logger.info("Downloading and opening {} object in-memory".format(object_path))
         infile = get_object_as_parquet_file(s3_resource, input_bucket, input_key)
-        logger.info("thread top current...")
         # Write new file in-memory
         logger.info("Generating new parquet file without matches")
-        out, stats = delete_matches_from_file(infile, cols)
+        out_sink, stats = delete_matches_from_file(infile, cols)
         if stats["DeletedRows"] > 0:
-            with io.BytesIO(out.getvalue()) as output_buf:
-                save(client, output_buf, input_bucket, input_key, in_safe_mode)
+            output_buf = pa.BufferReader(out_sink.getvalue())
+            save(client, output_buf, input_bucket, input_key, in_safe_mode)
         else:
             logger.warning("The object {} was processed successfully but no rows required deletion".format(object_path))
         msg.delete()
         emit_deletion_event(body, stats)
-        logger.info("Allocated in thread memory: {}".format(pa.total_allocated_bytes()))
         return object_path
     except (KeyError, ArrowException) as e:
         err_message = "Parquet processing error: {}".format(str(e))
@@ -303,8 +299,6 @@ def execute(message_body, receipt_handle):
             logger.warning("Failed to emit event for message {}: {}".format(message_body, str(e)))
         logger.exception(err_message)
         msg.change_visibility(VisibilityTimeout=0)
-    finally:
-        gc.collect()
 
 
 if __name__ == '__main__':

@@ -46,7 +46,9 @@ def test_happy_path_when_queue_not_empty(mock_save, mock_emit, mock_delete, mock
     mock_delete.assert_called_with(parquet_file, [column])
     mock_save.assert_called_with(ANY, ANY, "bucket", "path/basic.parquet", False)
     mock_emit.assert_called()
-    assert isinstance(mock_save.call_args[0][1], BytesIO)
+    buf = mock_save.call_args[0][1]
+    assert buf.read
+    assert isinstance(buf, pa.BufferReader)  # must be BufferReader for zero-copy
 
 
 @patch.dict(os.environ, {'JobTable': 'test'})
