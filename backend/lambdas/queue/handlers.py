@@ -91,7 +91,7 @@ def process_handler(event, context):
         "JobStatus": "QUEUED",
         "GSIBucket": str(random.randint(0, bucket_count - 1)),
         "CreatedAt": round(datetime.now(timezone.utc).timestamp()),
-        "Matches": deletion_queue_table.scan()["Items"],
+        "DeletionQueueItems": deletion_queue_table.scan()["Items"],
         **config,
     }
 

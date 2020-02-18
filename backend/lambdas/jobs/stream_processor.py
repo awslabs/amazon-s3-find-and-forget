@@ -68,7 +68,7 @@ def process_job(job):
 
 def clear_deletion_queue(job):
     logger.info("Clearing successfully deleted matches")
-    for item in job.get("Matches", []):
+    for item in job.get("DeletionQueueItems", []):
         with q_table.batch_writer() as batch:
             batch.delete_item(Key={
                 "MatchId": item["MatchId"],

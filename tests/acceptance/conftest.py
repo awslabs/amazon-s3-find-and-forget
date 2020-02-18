@@ -339,7 +339,7 @@ def job_factory(job_table, sf_client, stack):
             "JobStatus": status,
             "CreatedAt": created_at,
             "GSIBucket": gsib,
-            "Matches": matches,
+            "DeletionQueueItems": matches,
             "SafeMode": safe_mode,
             "AthenaConcurrencyLimit": 15,
             "DeletionTasksMaxNumber": 1,
