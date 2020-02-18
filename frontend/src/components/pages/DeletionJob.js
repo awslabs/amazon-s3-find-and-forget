@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useState } from "react";
-import ReactJson from "react-json-view";
-import { Button, Col, Form, Modal, Row, Spinner, Table } from "react-bootstrap";
+import { Button, Col, Form, Row, Spinner, Table } from "react-bootstrap";
 
 import Alert from "../Alert";
 import DetailsBox from "../DetailsBox";
+import JsonModal from "../JsonModal";
 import Icon from "../Icon";
 
 import {
@@ -26,6 +26,7 @@ export default ({ gateway, jobId }) => {
   const [formState, setFormState] = useState("initial");
   const [job, setJob] = useState(undefined);
   const [jobEvents, setJobEvents] = useState([]);
+  const [matchesShown, showMatches] = useState(false);
   const [nextStart, setNextStart] = useState(false);
   const [renderTableCount, setRenderTableCount] = useState(0);
   const [selectedEvent, setSelectedEvent] = useState(undefined);
@@ -56,11 +57,10 @@ export default ({ gateway, jobId }) => {
   );
 
   const withCountDown =
-    job && ([
-      "RUNNING",
-      "QUEUED",
-      "FORGET_COMPLETED_CLEANUP_IN_PROGRESS"
-    ].indexOf(job.JobStatus) !== -1)
+    job &&
+    ["RUNNING", "QUEUED", "FORGET_COMPLETED_CLEANUP_IN_PROGRESS"].indexOf(
+      job.JobStatus
+    ) !== -1;
 
   const errorCountClass = x =>
     x === 0 || isUndefined(x) ? "success" : "error";
@@ -134,6 +134,22 @@ export default ({ gateway, jobId }) => {
               <Icon type={`alert-${successJobClass(job.JobStatus)}`} />
               <span>{job.JobStatus}</span>
             </DetailsBox>
+            <DetailsBox label="Deletion Queue Size" fullWidth>
+              {job.Matches.length}{" "}
+              {job.Matches.length > 0 && (
+                <>
+                  (
+                  <Button
+                    variant="link"
+                    style={{ padding: 0 }}
+                    onClick={() => showMatches(true)}
+                  >
+                    View Deletion Queue
+                  </Button>
+                  )
+                </>
+              )}
+            </DetailsBox>
             <DetailsBox label="Start Time">
               {formatDateTime(job.JobStartTime)}
             </DetailsBox>
@@ -191,34 +207,6 @@ export default ({ gateway, jobId }) => {
           </div>
         )}
       </div>
-      {selectedEvent && (
-        <Modal
-          centered
-          show={!isEmpty(selectedEvent)}
-          size="lg"
-          onHide={() => setSelectedEvent(undefined)}
-        >
-          <Modal.Header closeButton>
-            <Modal.Title>Job Event: {selectedEvent.Sk}</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <ReactJson
-              displayDataTypes={false}
-              indentWidth={2}
-              name={false}
-              src={selectedEvent}
-            />
-          </Modal.Body>
-          <Modal.Footer>
-            <Button
-              className="aws-button cancel"
-              onClick={() => setSelectedEvent(undefined)}
-            >
-              Close
-            </Button>
-          </Modal.Footer>
-        </Modal>
-      )}
       {eventsState === "error" && (
         <Alert type="error" title={eventsErrorDetails}>
           Unable to load Events
@@ -226,6 +214,18 @@ export default ({ gateway, jobId }) => {
       )}
       {job && (
         <>
+          <JsonModal
+            object={selectedEvent}
+            onHide={() => setSelectedEvent(undefined)}
+            show={!isEmpty(selectedEvent)}
+            title={selectedEvent && `Job Event: ${selectedEvent.Sk}`}
+          />
+          <JsonModal
+            object={job.Matches}
+            onHide={() => showMatches(false)}
+            show={matchesShown}
+            title={job && `Deletion Queue for job: ${job.Id}`}
+          />
           <div className="page-table">
             <Row>
               <Col>
