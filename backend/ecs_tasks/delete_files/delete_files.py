@@ -14,6 +14,7 @@ import time
 import logging
 from multiprocessing import Pool, cpu_count
 
+import s3fs
 from botocore.exceptions import ClientError
 from pyarrow.lib import ArrowException
 
@@ -30,21 +31,15 @@ sqs = boto3.resource('sqs', endpoint_url="https://sqs.{}.amazonaws.com".format(o
 queue = sqs.Queue(os.getenv("DELETE_OBJECTS_QUEUE"))
 safe_mode_bucket = os.getenv("SAFE_MODE_BUCKET")
 safe_mode_prefix = os.getenv("SAFE_MODE_PREFIX")
+s3 = s3fs.S3FileSystem(default_cache_type='none')
 
 
 def _remove_none(d: dict):
     return {k: v for k, v in d.items() if v is not None and v is not ''}
 
 
-def get_object_as_parquet_file(s3, input_bucket, input_key):
-    """
-    Downloads an object from S3 in-memory and converts it to PyArrow NativeFile
-    """
-    with pa.BufferOutputStream() as sink:
-        s3.Object(input_bucket, input_key).download_fileobj(sink)
-        br = pa.BufferReader(sink.getvalue())
-
-    return pq.ParquetFile(br, memory_map=False)
+def load_parquet(f):
+    return pq.ParquetFile(f, memory_map=False)
 
 
 def get_row_count(df):
@@ -77,7 +72,7 @@ def delete_matches_from_file(parquet_file, to_delete):
                 tab = pa.Table.from_pandas(df, preserve_index=False).replace_schema_metadata()
                 writer.write_table(tab)
                 stats.update({"DeletedRows": current_rows - new_rows})
-    return out_stream, stats
+        return out_stream, stats
 
 
 def save(client, buf, bucket, key, in_safe_mode=True):
@@ -242,7 +237,6 @@ def validate_message(message):
 
 def execute(message_body, receipt_handle):
     logger.info("Message received: {0}".format(message_body))
-    s3_resource = boto3.resource("s3")
     ddb = boto3.resource("dynamodb")
     table = ddb.Table(os.getenv("JobTable"))
     client = boto3.client("s3")
@@ -256,15 +250,16 @@ def execute(message_body, receipt_handle):
         input_bucket, input_key = object_path.replace("s3://", "").split("/", 1)
         # Download the object in-memory and convert to PyArrow NativeFile
         logger.info("Downloading and opening {} object in-memory".format(object_path))
-        infile = get_object_as_parquet_file(s3_resource, input_bucket, input_key)
-        # Write new file in-memory
-        logger.info("Generating new parquet file without matches")
-        out_sink, stats = delete_matches_from_file(infile, cols)
-        if stats["DeletedRows"] > 0:
-            output_buf = pa.BufferReader(out_sink.getvalue())
-            save(client, output_buf, input_bucket, input_key, in_safe_mode)
-        else:
-            logger.warning("The object {} was processed successfully but no rows required deletion".format(object_path))
+        with s3.open(object_path, "rb") as f:
+            infile = load_parquet(f)
+            # Write new file in-memory
+            logger.info("Generating new parquet file without matches")
+            out_sink, stats = delete_matches_from_file(infile, cols)
+            if stats["DeletedRows"] > 0:
+                with pa.BufferReader(out_sink.getvalue()) as output_buf:
+                    save(client, output_buf, input_bucket, input_key, in_safe_mode)
+            else:
+                logger.warning("The object {} was processed successfully but no rows required deletion".format(object_path))
         msg.delete()
         emit_deletion_event(body, stats)
         return object_path
