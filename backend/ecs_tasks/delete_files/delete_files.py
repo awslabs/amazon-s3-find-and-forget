@@ -31,7 +31,7 @@ sqs = boto3.resource('sqs', endpoint_url="https://sqs.{}.amazonaws.com".format(o
 queue = sqs.Queue(os.getenv("DELETE_OBJECTS_QUEUE"))
 safe_mode_bucket = os.getenv("SAFE_MODE_BUCKET")
 safe_mode_prefix = os.getenv("SAFE_MODE_PREFIX")
-s3 = s3fs.S3FileSystem(default_cache_type='none')
+s3 = s3fs.S3FileSystem(default_cache_type='none', requester_pays=True, default_fill_cache=False)
 
 
 def _remove_none(d: dict):
