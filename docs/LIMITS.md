@@ -32,8 +32,8 @@ supported:
 
 #### Other Limitations
 
-- Decompressed individual objects be able to smaller than the specified
-Fargate task memory limit (`DeletionTaskMemory`) when launching the stack
+- Decompressed individual object size must be less than the Fargate task memory
+limit (`DeletionTaskMemory`) specified when launching the stack
 - The bucket targeted by a data mapper must be in the same region as the
 Amazon S3 Find and Forget deployment
 - S3 Objects encrypted with SSE-C are not supported
