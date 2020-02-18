@@ -1,5 +1,5 @@
+import gc
 import io
-import math
 import sys
 from collections import Counter
 from functools import lru_cache
@@ -28,8 +28,6 @@ handler = logging.StreamHandler(stream=sys.stdout)
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
-ddb = boto3.resource("dynamodb")
-table = ddb.Table(os.getenv("JobTable"))
 sqs = boto3.resource('sqs', endpoint_url="https://sqs.{}.amazonaws.com".format(os.getenv("AWS_DEFAULT_REGION")))
 queue = sqs.Queue(os.getenv("DELETE_OBJECTS_QUEUE"))
 safe_mode_bucket = os.getenv("SAFE_MODE_BUCKET")
@@ -40,11 +38,10 @@ def _remove_none(d: dict):
     return {k: v for k, v in d.items() if v is not None and v is not ''}
 
 
-def get_object_as_parquet_file(input_bucket, input_key):
+def get_object_as_parquet_file(s3, input_bucket, input_key):
     """
     Downloads an object from S3 in-memory and converts it to PyArrow NativeFile
     """
-    s3 = boto3.resource("s3")
     with io.BytesIO() as input_buf:
         s3.Object(input_bucket, input_key).download_fileobj(input_buf)
         br = pa.BufferReader(input_buf.getvalue())
@@ -209,8 +206,12 @@ def get_container_id():
 
 
 @lru_cache()
-def safe_mode(job_id):
-    return table.get_item(Key={"Id": job_id, "Sk": job_id})["Item"].get("SafeMode", True)
+def safe_mode(table, job_id):
+    resp = table.get_item(Key={"Id": job_id, "Sk": job_id})
+    if not resp.get("Item"):
+        raise ValueError("Invalid Job ID")
+
+    return resp["Item"].get("SafeMode", True)
 
 
 def emit_deletion_event(message_body, stats):
@@ -241,22 +242,11 @@ def validate_message(message):
             raise ValueError("Malformed message. Missing key: {}".format(k))
 
 
-def get_max_file_size_bytes():
-    max_gb = int(os.getenv("MAX_FILE_SIZE_GB", 9))
-    return max_gb * math.pow(1024, 3)
-
-
-def check_object_size(client, bucket, key):
-    _, resp = get_object_info(client, bucket, key)
-    object_size = resp["ContentLength"]
-    logger.info("Object size: {}".format(object_size))
-    if get_max_file_size_bytes() < object_size:
-        raise IOError("Insufficient disk space available for object {}. Size: {} GB".format(
-            key, round(object_size / math.pow(1024, 3), 2)))
-
-
 def execute(message_body, receipt_handle):
     logger.info("Message received: {0}".format(message_body))
+    s3_resource = boto3.resource("s3")
+    ddb = boto3.resource("dynamodb")
+    table = ddb.Table(os.getenv("JobTable"))
     client = boto3.client("s3")
     msg = queue.Message(receipt_handle)
     try:
@@ -264,12 +254,12 @@ def execute(message_body, receipt_handle):
         validate_message(message_body)
         body = json.loads(message_body)
         cols, object_path, job_id = itemgetter('Columns', 'Object', 'JobId')(body)
-        in_safe_mode = safe_mode(job_id)
+        in_safe_mode = safe_mode(table, job_id)
         input_bucket, input_key = object_path.replace("s3://", "").split("/", 1)
-        check_object_size(client, input_bucket, input_key)
         # Download the object in-memory and convert to PyArrow
         logger.info("Downloading and opening {} object in-memory".format(object_path))
-        infile = get_object_as_parquet_file(input_bucket, input_key)
+        infile = get_object_as_parquet_file(s3_resource, input_bucket, input_key)
+        logger.info("thread top current...")
         # Write new file in-memory
         logger.info("Generating new parquet file without matches")
         out, stats = delete_matches_from_file(infile, cols)
@@ -280,22 +270,28 @@ def execute(message_body, receipt_handle):
             logger.warning("The object {} was processed successfully but no rows required deletion".format(object_path))
         msg.delete()
         emit_deletion_event(body, stats)
+        logger.info("Allocated in thread memory: {}".format(pa.total_allocated_bytes()))
         return object_path
     except (KeyError, ArrowException) as e:
         err_message = "Parquet processing error: {}".format(str(e))
-        logger.error(err_message)
+        logger.exception(err_message)
         emit_failed_deletion_event(json.loads(message_body), err_message)
         msg.change_visibility(VisibilityTimeout=0)
     except IOError as e:
         err_message = "Unable to retrieve object: {}".format(str(e))
-        logger.error(err_message)
+        logger.exception(err_message)
+        emit_failed_deletion_event(json.loads(message_body), err_message)
+        msg.change_visibility(VisibilityTimeout=0)
+    except MemoryError as e:
+        err_message = "Insufficient memory to work on object: {}".format(str(e))
+        logger.exception(err_message)
         emit_failed_deletion_event(json.loads(message_body), err_message)
         msg.change_visibility(VisibilityTimeout=0)
     except ClientError as e:
         err_message = "ClientError: {}".format(str(e))
         if e.operation_name == "PutObjectAcl":
             err_message += ". Redacted object uploaded successfully but unable to restore WRITE ACL"
-        logger.error(err_message)
+        logger.exception(err_message)
         emit_failed_deletion_event(json.loads(message_body), err_message)
         msg.change_visibility(VisibilityTimeout=0)
     except Exception as e:
@@ -305,19 +301,21 @@ def execute(message_body, receipt_handle):
             emit_failed_deletion_event(json_body, err_message)
         except Exception as e:
             logger.warning("Failed to emit event for message {}: {}".format(message_body, str(e)))
-        logger.error(err_message)
+        logger.exception(err_message)
         msg.change_visibility(VisibilityTimeout=0)
+    finally:
+        gc.collect()
 
 
 if __name__ == '__main__':
     logger.info("CPU count for system: {}".format(cpu_count()))
-    pool = Pool()  # Use max available
-    while 1:
-        logger.info("Fetching messages...")
-        messages = queue.receive_messages(WaitTimeSeconds=5, MaxNumberOfMessages=1)
-        if len(messages) == 0:
-            logger.info("No messages. Sleeping")
-            time.sleep(30)
-        else:
-            for m in messages:
-                pool.apply(execute, args=(m.body, m.receipt_handle))
+    with Pool(maxtasksperchild=1) as pool:
+        while 1:
+            logger.info("Fetching messages...")
+            messages = queue.receive_messages(WaitTimeSeconds=5, MaxNumberOfMessages=1)
+            if len(messages) == 0:
+                logger.info("No messages. Sleeping")
+                time.sleep(30)
+            else:
+                for m in messages:
+                    pool.apply(execute, args=(m.body, m.receipt_handle))

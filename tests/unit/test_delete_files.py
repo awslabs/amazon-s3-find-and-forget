@@ -1,4 +1,3 @@
-import math
 import os
 from io import BytesIO
 
@@ -15,22 +14,21 @@ from pyarrow.lib import ArrowException
 with patch.dict(os.environ, {
     "DELETE_OBJECTS_QUEUE": "https://url/q.fifo",
     "DLQ": "https://url/q",
-    "JobTable": "test",
     "SAFE_MODE_BUCKET": "test",
     "SAFE_MODE_PREFIX": "results/",
 }):
     from backend.ecs_tasks.delete_files.delete_files import execute, get_container_id, \
-    emit_deletion_event, emit_failed_deletion_event, check_object_size, get_max_file_size_bytes, save, get_grantees, \
+    emit_deletion_event, emit_failed_deletion_event, save, get_grantees, \
     get_object_info, get_object_tags, get_object_acl, get_requester_payment, safe_mode, get_row_count, \
     delete_from_dataframe, delete_matches_from_file, get_object_as_parquet_file
 
 pytestmark = [pytest.mark.unit]
 
 
+@patch.dict(os.environ, {'JobTable': 'test'})
 @patch("backend.ecs_tasks.delete_files.delete_files.safe_mode", MagicMock(return_value=False))
 @patch("backend.ecs_tasks.delete_files.delete_files.validate_message", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.queue", MagicMock())
-@patch("backend.ecs_tasks.delete_files.delete_files.check_object_size", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.emit_failed_deletion_event", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.get_object_as_parquet_file")
 @patch("backend.ecs_tasks.delete_files.delete_files.delete_matches_from_file")
@@ -44,17 +42,17 @@ def test_happy_path_when_queue_not_empty(mock_save, mock_emit, mock_delete, mock
     mock_get.return_value = parquet_file
     mock_delete.return_value = pa.BufferOutputStream(), {"DeletedRows": 1}
     execute(message_stub(Object="s3://bucket/path/basic.parquet"), "receipt_handle")
-    mock_get.assert_called_with("bucket", "path/basic.parquet")
+    mock_get.assert_called_with(ANY, "bucket", "path/basic.parquet")
     mock_delete.assert_called_with(parquet_file, [column])
     mock_save.assert_called_with(ANY, ANY, "bucket", "path/basic.parquet", False)
     mock_emit.assert_called()
     assert isinstance(mock_save.call_args[0][1], BytesIO)
 
 
+@patch.dict(os.environ, {'JobTable': 'test'})
 @patch("backend.ecs_tasks.delete_files.delete_files.safe_mode", MagicMock(return_value=False))
 @patch("backend.ecs_tasks.delete_files.delete_files.validate_message", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.queue", MagicMock())
-@patch("backend.ecs_tasks.delete_files.delete_files.check_object_size", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.emit_failed_deletion_event", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.get_object_as_parquet_file")
 @patch("backend.ecs_tasks.delete_files.delete_files.delete_matches_from_file")
@@ -69,21 +67,20 @@ def test_warning_logged_for_no_deletions(mock_logger, mock_save, mock_emit, mock
     mock_get.return_value = parquet_file
     mock_delete.return_value = pa.BufferOutputStream(), {"DeletedRows": 0}
     execute(message_stub(Object="s3://bucket/path/basic.parquet"), "receipt_handle")
-    mock_get.assert_called_with("bucket", "path/basic.parquet")
+    mock_get.assert_called_with(ANY, "bucket", "path/basic.parquet")
     mock_delete.assert_called_with(parquet_file, [column])
     mock_save.assert_not_called()
     mock_logger.warning.assert_called()
     mock_emit.assert_called()
 
 
-@patch("backend.ecs_tasks.delete_files.delete_files.boto3")
-def test_it_converts_s3_to_parquet_file(mock_boto):
+def test_it_converts_s3_to_parquet_file():
     data = [{'customer_id': '12345'}]
     df = pd.DataFrame(data)
-    mock_boto.resource.return_value = mock_boto
-    mock_boto.Object.return_value = mock_boto
-    mock_boto.download_fileobj.side_effect = lambda buf: df.to_parquet(buf)
-    res = get_object_as_parquet_file("bucket", "key")
+    mock_resource = MagicMock()
+    mock_resource.Object.return_value = mock_resource
+    mock_resource.download_fileobj.side_effect = lambda buf: df.to_parquet(buf)
+    res = get_object_as_parquet_file(mock_resource, "bucket", "key")
     assert isinstance(res, pq.ParquetFile)
     assert 1 == res.read().num_rows
     assert 1 == len(res.read().columns)
@@ -192,9 +189,9 @@ def test_it_returns_uuid_as_string():
     assert isinstance(resp, str)
 
 
+@patch.dict(os.environ, {'JobTable': 'test'})
 @patch("backend.ecs_tasks.delete_files.delete_files.safe_mode", MagicMock(return_value=False))
 @patch("backend.ecs_tasks.delete_files.delete_files.validate_message", MagicMock())
-@patch("backend.ecs_tasks.delete_files.delete_files.check_object_size", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.get_object_as_parquet_file")
 @patch("backend.ecs_tasks.delete_files.delete_files.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.delete_files.emit_failed_deletion_event")
@@ -212,9 +209,9 @@ def test_it_handles_missing_col_exceptions(mock_queue, mock_emit, mock_delete, m
     mock_queue.Message().change_visibility.assert_called()
 
 
+@patch.dict(os.environ, {'JobTable': 'test'})
 @patch("backend.ecs_tasks.delete_files.delete_files.safe_mode", MagicMock(return_value=False))
 @patch("backend.ecs_tasks.delete_files.delete_files.validate_message", MagicMock())
-@patch("backend.ecs_tasks.delete_files.delete_files.check_object_size", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.get_object_as_parquet_file")
 @patch("backend.ecs_tasks.delete_files.delete_files.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.delete_files.emit_failed_deletion_event")
@@ -232,6 +229,7 @@ def test_it_handles_arrow_exceptions(mock_queue, mock_emit, mock_delete, mock_ge
     mock_queue.Message().change_visibility.assert_called()
 
 
+@patch.dict(os.environ, {'JobTable': 'test'})
 @patch("backend.ecs_tasks.delete_files.delete_files.safe_mode", MagicMock(return_value=False))
 @patch("backend.ecs_tasks.delete_files.delete_files.emit_failed_deletion_event")
 @patch("backend.ecs_tasks.delete_files.delete_files.queue")
@@ -243,6 +241,7 @@ def test_it_validates_messages_with_missing_keys(mock_queue, mock_emit):
     mock_queue.Message().change_visibility.assert_called()
 
 
+@patch.dict(os.environ, {'JobTable': 'test'})
 @patch("backend.ecs_tasks.delete_files.delete_files.safe_mode", MagicMock(return_value=False))
 @patch("backend.ecs_tasks.delete_files.delete_files.emit_failed_deletion_event")
 @patch("backend.ecs_tasks.delete_files.delete_files.queue")
@@ -254,8 +253,8 @@ def test_it_validates_messages_with_invalid_body(mock_queue, mock_emit):
     mock_queue.Message().change_visibility.assert_called()
 
 
+@patch.dict(os.environ, {'JobTable': 'test'})
 @patch("backend.ecs_tasks.delete_files.delete_files.safe_mode", MagicMock(return_value=False))
-@patch("backend.ecs_tasks.delete_files.delete_files.check_object_size", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.get_object_as_parquet_file")
 @patch("backend.ecs_tasks.delete_files.delete_files.emit_failed_deletion_event")
 @patch("backend.ecs_tasks.delete_files.delete_files.queue")
@@ -269,46 +268,34 @@ def test_it_handles_s3_permission_issues(mock_queue, mock_emit, mock_get):
     mock_queue.Message().change_visibility.assert_called()
 
 
+@patch.dict(os.environ, {'JobTable': 'test'})
 @patch("backend.ecs_tasks.delete_files.delete_files.safe_mode", MagicMock(return_value=False))
+@patch("backend.ecs_tasks.delete_files.delete_files.get_object_as_parquet_file")
 @patch("backend.ecs_tasks.delete_files.delete_files.emit_failed_deletion_event")
-@patch("backend.ecs_tasks.delete_files.delete_files.check_object_size")
 @patch("backend.ecs_tasks.delete_files.delete_files.queue")
-def test_it_handles_file_too_big(mock_queue, mock_check_size, mock_emit):
+def test_it_handles_io_errors(mock_queue, mock_emit, mock_get):
     # Arrange
-    mock_check_size.side_effect = IOError("Too big")
+    mock_get.side_effect = IOError("an error")
     # Act
     execute(message_stub(), "receipt_handle")
     # Assert
-    mock_emit.assert_called_with(ANY, "Unable to retrieve object: Too big")
+    mock_emit.assert_called_with(ANY, "Unable to retrieve object: an error")
     mock_queue.Message().change_visibility.assert_called()
 
 
-@patch("backend.ecs_tasks.delete_files.delete_files.get_max_file_size_bytes", MagicMock(return_value=9 * math.pow(
-    1024, 3)))
-@patch("backend.ecs_tasks.delete_files.delete_files.get_object_info")
-def test_it_permits_files_under_max_size(mock_info):
-    mock_info.return_value = {}, {"ContentLength": 9 * math.pow(1024, 3)}
-    check_object_size(MagicMock(), "bucket", "key")
-
-
-@patch("backend.ecs_tasks.delete_files.delete_files.get_max_file_size_bytes", MagicMock(return_value=9 * math.pow(
-    1024, 3)))
-@patch("backend.ecs_tasks.delete_files.delete_files.get_object_info")
-def test_it_throws_if_file_too_big(mock_info):
-    mock_info.return_value = {}, {"ContentLength": 10 * math.pow(1024, 3)}
-    with pytest.raises(IOError):
-        check_object_size(MagicMock(), "bucket", "key")
-
-
-@patch.dict(os.environ, {"MAX_FILE_SIZE_GB": "5"})
-def test_it_reads_max_size_from_env():
-    resp = get_max_file_size_bytes()
-    assert resp == 5 * math.pow(1024, 3)
-
-
-def test_it_defaults_max_file_size():
-    resp = get_max_file_size_bytes()
-    assert resp == 9 * math.pow(1024, 3)
+@patch.dict(os.environ, {'JobTable': 'test'})
+@patch("backend.ecs_tasks.delete_files.delete_files.safe_mode", MagicMock(return_value=False))
+@patch("backend.ecs_tasks.delete_files.delete_files.get_object_as_parquet_file")
+@patch("backend.ecs_tasks.delete_files.delete_files.emit_failed_deletion_event")
+@patch("backend.ecs_tasks.delete_files.delete_files.queue")
+def test_it_handles_file_too_big(mock_queue, mock_emit, mock_get):
+    # Arrange
+    mock_get.side_effect = MemoryError("Too big")
+    # Act
+    execute(message_stub(), "receipt_handle")
+    # Assert
+    mock_emit.assert_called_with(ANY, "Insufficient memory to work on object: Too big")
+    mock_queue.Message().change_visibility.assert_called()
 
 
 def test_it_returns_requester_pays():
@@ -525,10 +512,10 @@ def test_it_restores_write_permissions(mock_grantees, mock_acl, mock_tagging, mo
     )
 
 
+@patch.dict(os.environ, {'JobTable': 'test'})
 @patch("backend.ecs_tasks.delete_files.delete_files.safe_mode", MagicMock(return_value=False))
 @patch("backend.ecs_tasks.delete_files.delete_files.validate_message", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.queue", MagicMock())
-@patch("backend.ecs_tasks.delete_files.delete_files.check_object_size", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.get_object_as_parquet_file")
 @patch("backend.ecs_tasks.delete_files.delete_files.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.delete_files.emit_failed_deletion_event")
@@ -546,13 +533,21 @@ def test_it_provides_logs_for_acl_fail(mock_save, mock_emit, mock_delete, mock_g
                                       "restore WRITE ACL")
 
 
-@patch("backend.ecs_tasks.delete_files.delete_files.table")
-def test_it_passes_through_safe_mode(table):
+def test_it_passes_through_safe_mode():
     safe_mode.cache_clear()
+    table = MagicMock()
     table.get_item.return_value = {"Item": {"SafeMode": True}}
-    assert safe_mode("123")
+    assert safe_mode(table, "123")
     table.get_item.return_value = {"Item": {"SafeMode": False}}
-    assert not safe_mode("456")
+    assert not safe_mode(table, "456")
+
+
+def test_it_raises_for_item_not_found():
+    safe_mode.cache_clear()
+    table = MagicMock()
+    table.get_item.return_value = {}
+    with pytest.raises(ValueError):
+        safe_mode(table, "123")
 
 
 def message_stub(**kwargs):
