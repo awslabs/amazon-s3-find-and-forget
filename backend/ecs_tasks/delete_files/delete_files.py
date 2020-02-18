@@ -1,5 +1,6 @@
 import sys
 from collections import Counter
+import signal
 from functools import lru_cache
 from urllib.parse import urlencode, quote_plus
 from uuid import uuid4
@@ -296,9 +297,24 @@ def execute(message_body, receipt_handle):
         msg.change_visibility(VisibilityTimeout=0)
 
 
+def kill_handler(msgs, process_pool):
+    logger.info("Received shutdown signal. Cleaning up {} messages".format(len(messages)))
+    process_pool.terminate()
+    for msg in msgs:
+        try:
+            msg.change_visibility(VisibilityTimeout=0)
+            emit_failed_deletion_event(json.loads(msg.body), "SIGINT/SIGTERM received during processing")
+        except Exception as e:
+            logger.exception("Unable to gracefully cleanup message: {}".format(str(e)))
+    sys.exit(1)
+
+
 if __name__ == '__main__':
     logger.info("CPU count for system: {}".format(cpu_count()))
+    messages = []
     with Pool(maxtasksperchild=1) as pool:
+        signal.signal(signal.SIGINT, lambda *_: kill_handler(messages, pool))
+        signal.signal(signal.SIGTERM, lambda *_: kill_handler(messages, pool))
         while 1:
             logger.info("Fetching messages...")
             messages = queue.receive_messages(WaitTimeSeconds=5, MaxNumberOfMessages=1)
