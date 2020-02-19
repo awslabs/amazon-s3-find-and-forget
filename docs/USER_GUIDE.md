@@ -89,6 +89,10 @@ your preferred AWS region:
    this stack in CloudFormation once deployed.
    * **AdminEmail:** The email address you wish to setup as the initial
    user of this Amazon S3 Find and Forget deployment.
+   * **JobRecordRetentionDays:** (Default: 0) How long job records should
+   remain in the Job table for. Use 0 to retain logs indefinitely. **Note:**
+   If the retention setting is changed it will only apply to *new* deletion jobs.
+   Existing deletion jobs will retain the TTL at the time they were ran.
    * **SafeMode:** (Default: true) Whether to operate in safe mode. Whilst Safe
    Mode is set to true, updated objects will be written to a temporary bucket
    instead of overwriting the original object. For more information see

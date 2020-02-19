@@ -41,6 +41,9 @@ def test_it_recognises_jobs():
             }
         }
     }, "Job")
+    assert not is_record_type({
+        "dynamodb": {}
+    }, "Job")
 
     
 def test_it_recognises_job_events():

@@ -71,6 +71,7 @@ The data is stored in DynamoDB using 3 tables:
 * **DataMappers**: Metadata for mapping S3 buckets to the solution.
 * **DeletionQueue**: The queue of matches to be deleted. This data is stored in DynamoDB in order to provide an API that easily allows to inspect and occasionally amend the data between deletion jobs.
 * **Jobs**: Data about deletion jobs, including the Job Summary (that contains an up-to-date representation of specific jobs over time) and Job Events (documents containing metadata about discrete events affecting a running job).
+  Job records will be retained for the duration specified in the settings after which they will be removed using the [DynamoDB TTL] feature.
 
 ## Deletion Job Workflow
 
@@ -112,3 +113,4 @@ When the workflow starts, a fleet of AWS Fargate tasks is instanciated to consum
 [Cost Overview guide]: COST_OVERVIEW.md
 [Limits]: LIMITS.md
 [Monitoring guide]: MONITORING.md
+[DynamoDB TTL]: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/TTL.html

@@ -9,7 +9,7 @@ from botocore.exceptions import ClientError
 from mock import MagicMock, ANY, patch
 
 from boto_utils import convert_iso8601_to_epoch, paginate, batch_sqs_msgs, read_queue, emit_event, DecimalEncoder, \
-    normalise_dates, deserialize_item, running_job_exists, get_config, utc_timestamp
+    normalise_dates, deserialize_item, running_job_exists, get_config, utc_timestamp, get_job_expiry
 
 pytestmark = [pytest.mark.unit, pytest.mark.layers]
 
@@ -112,7 +112,7 @@ def test_it_writes_events_to_ddb(mock_table):
     mock_table.put_item.assert_called_with(
         Item={
             "Id": "job123",
-            "Sk": "123000#1234",# gets converted to microseconds
+            "Sk": "123000#1234",  # gets converted to microseconds
             "Type": "JobEvent",
             "EventName": "event_name",
             "EventData": "data",
@@ -144,8 +144,10 @@ def test_it_provides_defaults(mock_table):
 def test_decimal_encoder():
     res_a = json.dumps({"k": decimal.Decimal(1.1)}, cls=DecimalEncoder)
     res_b = json.dumps({"k": decimal.Decimal(1.5)}, cls=DecimalEncoder)
+    res_c = json.dumps({"k": "string"}, cls=DecimalEncoder)
     assert res_a == "{\"k\": 1}"
     assert res_b == "{\"k\": 2}"
+    assert res_c == "{\"k\": string\"}"
 
 
 def test_it_converts_sfn_datetimes_to_epoch():
@@ -166,13 +168,13 @@ def test_it_converts_sfn_datetimes_to_epoch():
 
 def test_it_normalises_date_like_fields():
     assert {
-        "a": [{"a": 1578327177, "b": "string"}],
-        "b": [1578327177],
-        "c": {"a": 1578327177},
-        "d": 1578327177,
-        "e": "string",
-        "f": 2,
-    } == normalise_dates({
+               "a": [{"a": 1578327177, "b": "string"}],
+               "b": [1578327177],
+               "c": {"a": 1578327177},
+               "d": 1578327177,
+               "e": "string",
+               "f": 2,
+           } == normalise_dates({
         "a": [{"a": "2020-01-06T16:12:57.092Z", "b": "string"}],
         "b": ["2020-01-06T16:12:57.092Z"],
         "c": {"a": "2020-01-06T16:12:57.092Z"},
@@ -184,16 +186,16 @@ def test_it_normalises_date_like_fields():
 
 def test_it_deserializes_items():
     result = deserialize_item({
-      "DataMappers": {
-        "L": [
-          {
+        "DataMappers": {
+            "L": [
+                {
+                    "S": "test"
+                }
+            ]
+        },
+        "MatchId": {
             "S": "test"
-          }
-        ]
-      },
-      "MatchId": {
-        "S": "test"
-      }
+        }
     })
 
     assert {"MatchId": "test", "DataMappers": ["test"]} == result
@@ -258,13 +260,13 @@ def test_it_retrieves_config(mock_client):
     resp = get_config()
 
     assert {
-        "AthenaConcurrencyLimit": 1,
-        "DeletionTasksMaxNumber": 1,
-        "WaitDurationQueryExecution": 1,
-        "WaitDurationQueryQueue": 1,
-        "WaitDurationForgetQueue": 1,
-        "SafeMode": True
-    } == resp
+               "AthenaConcurrencyLimit": 1,
+               "DeletionTasksMaxNumber": 1,
+               "WaitDurationQueryExecution": 1,
+               "WaitDurationQueryQueue": 1,
+               "WaitDurationForgetQueue": 1,
+               "SafeMode": True
+           } == resp
 
 
 @patch("boto_utils.ssm")
@@ -297,3 +299,17 @@ def test_it_applies_time_delta(dt):
     dt.now.return_value = datetime.datetime(2020, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc)
     assert 1580428800 == utc_timestamp(days=30)
     assert 1577836800 == utc_timestamp()
+
+
+@patch("boto_utils.table")
+def test_it_gets_job_expiry(table):
+    get_job_expiry.cache_clear()
+    table.get_item.return_value = {"Item": {"Expires": 123456}}
+    assert 123456 == get_job_expiry("123")
+
+
+@patch("boto_utils.table")
+def test_it_returns_no_expiry(table):
+    get_job_expiry.cache_clear()
+    table.get_item.return_value = {"Item": {}}
+    assert not get_job_expiry("123")

@@ -93,7 +93,7 @@ def process_handler(event, context):
         "DeletionQueueItems": deletion_queue_table.scan()["Items"],
         **{k: v for k, v in config.items() if k not in ["JobRecordRetentionDays"]},
     }
-    if config.get("JobRecordRetentionDays", 0) > 0:
+    if int(config.get("JobRecordRetentionDays", 0)) > 0:
         item["Expires"] = utc_timestamp(days=config["JobRecordRetentionDays"])
 
     jobs_table.put_item(Item=item)
