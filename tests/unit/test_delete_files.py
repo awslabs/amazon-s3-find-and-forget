@@ -17,7 +17,7 @@ with patch.dict(os.environ, {
     "SAFE_MODE_BUCKET": "test",
     "SAFE_MODE_PREFIX": "results/",
 }):
-    from backend.ecs_tasks.delete_files.delete_files import execute, get_container_id, \
+    from backend.ecs_tasks.delete_files.delete_files import execute, get_emitter_id, \
          emit_deletion_event, emit_failed_deletion_event, save, get_grantees, \
          get_object_info, get_object_tags, get_object_acl, get_requester_payment, safe_mode, get_row_count, \
          delete_from_dataframe, delete_matches_from_file, load_parquet, kill_handler, handle_error
@@ -123,9 +123,9 @@ def test_it_gets_row_count():
 
 
 @patch("backend.ecs_tasks.delete_files.delete_files.emit_event")
-@patch("backend.ecs_tasks.delete_files.delete_files.get_container_id")
+@patch("backend.ecs_tasks.delete_files.delete_files.get_emitter_id")
 def test_it_emits_deletions(mock_get_id, mock_emit):
-    mock_get_id.return_value = "4567"
+    mock_get_id.return_value = "ECSTask_4567"
     stats_stub = {"Some": "stats"}
     msg = json.loads(message_stub())
     emit_deletion_event(msg, stats_stub)
@@ -136,9 +136,9 @@ def test_it_emits_deletions(mock_get_id, mock_emit):
 
 
 @patch("backend.ecs_tasks.delete_files.delete_files.emit_event")
-@patch("backend.ecs_tasks.delete_files.delete_files.get_container_id")
+@patch("backend.ecs_tasks.delete_files.delete_files.get_emitter_id")
 def test_it_emits_failed_deletions(mock_get_id, mock_emit):
-    mock_get_id.return_value = "4567"
+    mock_get_id.return_value = "ECSTask_4567"
     msg = message_stub()
     emit_failed_deletion_event(msg, "Some error")
     mock_emit.assert_called_with("1234", "ObjectUpdateFailed", {
@@ -161,26 +161,18 @@ def test_it_gracefully_handles_exceptions(mock_emit):
 
 @patch("os.getenv", MagicMock(return_value="/some/path"))
 @patch("os.path.isfile", MagicMock(return_value=True))
-def test_it_loads_container_id_from_metadata():
-    get_container_id.cache_clear()
+def test_it_loads_task_id_from_metadata():
+    get_emitter_id.cache_clear()
     with patch("builtins.open", mock_open(read_data="{\"TaskARN\": \"arn:aws:ecs:us-west-2:012345678910:task/default/2b88376d-aba3-4950-9ddf-bcb0f388a40c\"}")):
-        resp = get_container_id()
-        assert "2b88376d-aba3-4950-9ddf-bcb0f388a40c" == resp
+        resp = get_emitter_id()
+        assert "ECSTask_2b88376d-aba3-4950-9ddf-bcb0f388a40c" == resp
 
 
 @patch("os.getenv", MagicMock(return_value=None))
-@patch("backend.ecs_tasks.delete_files.delete_files.uuid4")
-def test_it_provides_default_id(mock_uuid):
-    get_container_id.cache_clear()
-    mock_uuid.return_value = "123"
-    resp = get_container_id()
-    assert "123" == resp
-
-
-def test_it_returns_uuid_as_string():
-    get_container_id.cache_clear()
-    resp = get_container_id()
-    assert isinstance(resp, str)
+def test_it_provides_default_id():
+    get_emitter_id.cache_clear()
+    resp = get_emitter_id()
+    assert "ECSTask" == resp
 
 
 @patch.dict(os.environ, {'JobTable': 'test'})

@@ -189,14 +189,14 @@ def get_grantees(acl, grant_type):
 
 
 @lru_cache()
-def get_container_id():
+def get_emitter_id():
     metadata_file = os.getenv("ECS_CONTAINER_METADATA_FILE")
     if metadata_file and os.path.isfile(metadata_file):
         with open(metadata_file) as f:
             metadata = json.load(f)
-        return metadata.get("TaskARN").rsplit("/", 1)[1]
+        return "ECSTask_{}".format(metadata.get("TaskARN").rsplit("/", 1)[1])
     else:
-        return str(uuid4())
+        return "ECSTask"
 
 
 @lru_cache()
@@ -214,7 +214,7 @@ def emit_deletion_event(message_body, stats):
         "Statistics": stats,
         "Object": message_body["Object"],
     }
-    emit_event(job_id, "ObjectUpdated", event_data, "ECSTask_{}".format(get_container_id()))
+    emit_event(job_id, "ObjectUpdated", event_data, get_emitter_id())
 
 
 def emit_failed_deletion_event(message_body, err_message):
@@ -227,7 +227,7 @@ def emit_failed_deletion_event(message_body, err_message):
             "Error": err_message,
             'Message': json_body,
         }
-        emit_event(job_id, "ObjectUpdateFailed", event_data, "ECSTask_{}".format(get_container_id()))
+        emit_event(job_id, "ObjectUpdateFailed", event_data, get_emitter_id())
     except ValueError as e:
         logger.exception("Unable to emit failure event due to invalid message")
     except ClientError as e:
