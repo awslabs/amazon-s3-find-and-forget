@@ -1,12 +1,12 @@
 import React from "react";
 
 import Icon from "../Icon";
-import { docsUrl, repoUrl } from "../../utils";
+import { docsUrl } from "../../utils";
 
 const links = [
   {
     title: "Deletion Job Architecture",
-    url: repoUrl("ARCHITECTURE.md#deletion-job-workflow")
+    url: docsUrl("ARCHITECTURE.md#deletion-job-workflow")
   },
   {
     title: "Start a Deletion Job",
