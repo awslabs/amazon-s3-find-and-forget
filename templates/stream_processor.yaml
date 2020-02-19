@@ -1,0 +1,89 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Amazon S3 Find and Forget Stream Processor
+
+Globals:
+  Function:
+    Runtime: python3.7
+    Timeout: 180
+    Layers: !Ref CommonLayers
+    Environment:
+      Variables:
+        DeletionQueueTable: !Ref DeletionQueueTableName
+        GSIBucketCount: "1"
+        JobTable: !Ref JobTableName
+        JobTableDateGSI: !Ref JobTableDateGSI
+        LogLevel: !Ref LogLevel
+        StateMachineArn: !Ref StateMachineArn
+
+Parameters:
+  CommonLayers:
+    Type: CommaDelimitedList
+    Description: Common layers supplied to all functions
+  DeletionQueueTableName:
+    Description: Table name for Deletion Queue Table
+    Type: String
+  JobTableDateGSI:
+    Description: Date ordered GSI for Jobs Table
+    Type: String
+  JobTableName:
+    Description: Table name for Jobs Table
+    Type: String
+  JobTableStreamArn:
+    Description: Stream ARN for Jobs Table
+    Type: String
+  LogLevel:
+    Type: String
+    Default: INFO
+    AllowedValues:
+      - CRITICAL
+      - FATAL
+      - ERROR
+      - WARNING
+      - INFO
+      - DEBUG
+      - NOTSET
+  StateMachineArn:
+    Description: State Machine to invoke to process the deletion queue
+    Type: String
+  
+Resources:
+  StreamProcessor:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: stream_processor.handler
+      CodeUri: ../backend/lambdas/jobs/
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref JobTableName
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DeletionQueueTableName
+        - Statement:
+          - Effect: Allow
+            Action:
+              - "states:DescribeStateMachine"
+              - "states:DescribeExecution"
+              - "states:StartExecution"
+            Resource: !Ref StateMachineArn
+      Events:
+        Stream:
+          Type: DynamoDB
+          Properties:
+            Stream: !Ref JobTableStreamArn
+            StartingPosition: TRIM_HORIZON
+            BatchSize: 10
+            MaximumBatchingWindowInSeconds: 5
+            BisectBatchOnFunctionError: true
+            ParallelizationFactor: 1
+            MaximumRetryAttempts: 3
+            MaximumRecordAgeInSeconds: 86400
+            DestinationConfig:
+              OnFailure:
+                Type: SQS
+                Destination: !GetAtt EventsDLQ.Arn
+
+  EventsDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      KmsMasterKeyId: alias/aws/sqs
+  

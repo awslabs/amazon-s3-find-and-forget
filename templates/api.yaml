@@ -20,7 +20,6 @@ Globals:
         JobTable: !Ref JobTableName
         JobTableDateGSI: !Ref JobTableDateGSI
         LogLevel: !Ref LogLevel
-        StateMachineArn: !Ref StateMachineArn
   Api:
     EndpointConfiguration: REGIONAL
     Cors:
@@ -73,9 +72,6 @@ Parameters:
       - INFO
       - DEBUG
       - NOTSET
-  StateMachineArn:
-    Description: State Machine to invoke to process the deletion queue
-    Type: String
   WebUIOrigin:
     Type: String
 
@@ -268,45 +264,6 @@ Resources:
           - Action: "ssm:GetParameter"
             Effect: "Allow"
             Resource: !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${ConfigParameter}"
-
-  StreamProcessor:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: stream_processor.handler
-      CodeUri: ../backend/lambdas/jobs/
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Ref JobTableName
-        - DynamoDBCrudPolicy:
-            TableName: !Ref DeletionQueueTableName
-        - Statement:
-          - Effect: Allow
-            Action:
-              - "states:DescribeStateMachine"
-              - "states:DescribeExecution"
-              - "states:StartExecution"
-            Resource: !Ref StateMachineArn
-      Events:
-        Stream:
-          Type: DynamoDB
-          Properties:
-            Stream: !Ref JobTableStreamArn
-            StartingPosition: TRIM_HORIZON
-            BatchSize: 10
-            MaximumBatchingWindowInSeconds: 5
-            BisectBatchOnFunctionError: true
-            ParallelizationFactor: 1
-            MaximumRetryAttempts: 3
-            MaximumRecordAgeInSeconds: 86400
-            DestinationConfig:
-              OnFailure:
-                Type: SQS
-                Destination: !GetAtt EventsDLQ.Arn
-
-  EventsDLQ:
-    Type: AWS::SQS::Queue
-    Properties:
-      KmsMasterKeyId: alias/aws/sqs
 
 Outputs:
   AccessControlAllowOriginHeader:
