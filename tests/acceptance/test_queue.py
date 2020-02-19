@@ -110,8 +110,10 @@ def test_it_disables_cancel_deletion_whilst_job_in_progress(api_client, queue_ba
         job_finished_waiter.wait(TableName=job_table.name, Key={"Id": {"S": job_id}, "Sk": {"S": job_id}})
 
 
-def test_it_processes_queue(api_client, queue_base_endpoint, sf_client, job_table, stack, job_complete_waiter):
+def test_it_processes_queue(api_client, queue_base_endpoint, sf_client, job_table, stack, job_complete_waiter,
+                            config_mutator):
     # Arrange
+    config_mutator(JobRecordRetentionDays=0)
     # Act
     response = api_client.delete(queue_base_endpoint)
     response_body = response.json()
@@ -125,6 +127,30 @@ def test_it_processes_queue(api_client, queue_base_endpoint, sf_client, job_tabl
         job_complete_waiter.wait(TableName=job_table.name, Key={"Id": {"S": job_id}, "Sk": {"S": job_id}})
         query_result = job_table.query(KeyConditionExpression=Key("Id").eq(job_id) & Key("Sk").eq(job_id))
         assert 1 == len(query_result["Items"])
+        # Verify the ran from the DynamoDB stream
+        assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
+    finally:
+        sf_client.stop_execution(executionArn=execution_arn)
+
+
+def test_it_sets_expiry(api_client, queue_base_endpoint, sf_client, job_table, stack, job_complete_waiter,
+                        config_mutator):
+    # Arrange
+    config_mutator(JobRecordRetentionDays=1)
+    # Act
+    response = api_client.delete(queue_base_endpoint)
+    response_body = response.json()
+    job_id = response_body["Id"]
+    execution_arn = "{}:{}".format(stack["StateMachineArn"].replace("stateMachine", "execution"), job_id)
+    try:
+        # Assert
+        assert 202 == response.status_code
+        assert "Id" in response_body
+        # Check the job was written to DynamoDB
+        job_complete_waiter.wait(TableName=job_table.name, Key={"Id": {"S": job_id}, "Sk": {"S": job_id}})
+        query_result = job_table.query(KeyConditionExpression=Key("Id").eq(job_id) & Key("Sk").eq(job_id))
+        assert 1 == len(query_result["Items"])
+        assert "Expires" in query_result["Items"][0]
         # Verify the ran from the DynamoDB stream
         assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
     finally:

@@ -16,6 +16,7 @@ def test_it_gets_settings(api_client, settings_base_endpoint, stack):
         'AthenaConcurrencyLimit': ANY,
         'DeletionTasksMaxNumber': ANY,
         'SafeMode': ANY,
+        'JobRecordRetentionDays': ANY,
         'WaitDurationForgetQueue': ANY,
         'WaitDurationQueryExecution': ANY,
         'WaitDurationQueryQueue': ANY
