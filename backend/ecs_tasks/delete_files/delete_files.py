@@ -1,5 +1,6 @@
 import sys
 from collections import Counter
+import signal
 from functools import lru_cache
 from urllib.parse import urlencode, quote_plus
 from uuid import uuid4
@@ -188,14 +189,14 @@ def get_grantees(acl, grant_type):
 
 
 @lru_cache()
-def get_container_id():
+def get_emitter_id():
     metadata_file = os.getenv("ECS_CONTAINER_METADATA_FILE")
     if metadata_file and os.path.isfile(metadata_file):
         with open(metadata_file) as f:
             metadata = json.load(f)
-        return metadata.get("ContainerId")
+        return "ECSTask_{}".format(metadata.get("TaskARN").rsplit("/", 1)[1])
     else:
-        return str(uuid4())
+        return "ECSTask"
 
 
 @lru_cache()
@@ -213,18 +214,24 @@ def emit_deletion_event(message_body, stats):
         "Statistics": stats,
         "Object": message_body["Object"],
     }
-    emit_event(job_id, "ObjectUpdated", event_data, "Task_{}".format(get_container_id()))
+    emit_event(job_id, "ObjectUpdated", event_data, get_emitter_id())
 
 
 def emit_failed_deletion_event(message_body, err_message):
-    job_id = message_body.get("JobId")
-    if not job_id:
-        raise ValueError("Unable to emit failure event without Job ID")
-    event_data = {
-        "Error": err_message,
-        'Message': message_body,
-    }
-    emit_event(job_id, "ObjectUpdateFailed", event_data, "Task_{}".format(get_container_id()))
+    try:
+        json_body = json.loads(message_body)
+        job_id = json_body.get("JobId")
+        if not job_id:
+            raise ValueError("Message missing Job ID")
+        event_data = {
+            "Error": err_message,
+            'Message': json_body,
+        }
+        emit_event(job_id, "ObjectUpdateFailed", event_data, get_emitter_id())
+    except ValueError as e:
+        logger.exception("Unable to emit failure event due to invalid message")
+    except ClientError as e:
+        logger.exception("Unable to emit failure event: {}".format(e))
 
 
 def validate_message(message):
@@ -235,8 +242,14 @@ def validate_message(message):
             raise ValueError("Malformed message. Missing key: {}".format(k))
 
 
+def handle_error(sqs_msg, message_body, err_message):
+    logger.error(err_message)
+    emit_failed_deletion_event(message_body, err_message)
+    sqs_msg.change_visibility(VisibilityTimeout=0)
+
+
 def execute(message_body, receipt_handle):
-    logger.info("Message received: {0}".format(message_body))
+    logger.info("Message received")
     ddb = boto3.resource("dynamodb")
     table = ddb.Table(os.getenv("JobTable"))
     client = boto3.client("s3")
@@ -262,43 +275,46 @@ def execute(message_body, receipt_handle):
                 logger.warning("The object {} was processed successfully but no rows required deletion".format(object_path))
         msg.delete()
         emit_deletion_event(body, stats)
-        return object_path
+        return msg
     except (KeyError, ArrowException) as e:
         err_message = "Parquet processing error: {}".format(str(e))
-        logger.exception(err_message)
-        emit_failed_deletion_event(json.loads(message_body), err_message)
-        msg.change_visibility(VisibilityTimeout=0)
+        handle_error(msg, message_body, err_message)
     except IOError as e:
         err_message = "Unable to retrieve object: {}".format(str(e))
-        logger.exception(err_message)
-        emit_failed_deletion_event(json.loads(message_body), err_message)
-        msg.change_visibility(VisibilityTimeout=0)
+        handle_error(msg, message_body, err_message)
     except MemoryError as e:
         err_message = "Insufficient memory to work on object: {}".format(str(e))
-        logger.exception(err_message)
-        emit_failed_deletion_event(json.loads(message_body), err_message)
-        msg.change_visibility(VisibilityTimeout=0)
+        handle_error(msg, message_body, err_message)
     except ClientError as e:
         err_message = "ClientError: {}".format(str(e))
         if e.operation_name == "PutObjectAcl":
             err_message += ". Redacted object uploaded successfully but unable to restore WRITE ACL"
-        logger.exception(err_message)
-        emit_failed_deletion_event(json.loads(message_body), err_message)
-        msg.change_visibility(VisibilityTimeout=0)
-    except Exception as e:
+        handle_error(msg, message_body, err_message)
+    except ValueError as e:
         err_message = "Unprocessable message: {}".format(str(e))
+        handle_error(msg, message_body, err_message)
+    except Exception as e:
+        err_message = "Unknown error during message processing: {}".format(str(e))
+        handle_error(msg, message_body, err_message)
+
+
+def kill_handler(msgs, process_pool):
+    logger.info("Received shutdown signal. Cleaning up {} messages".format(len(msgs)))
+    process_pool.terminate()
+    for msg in msgs:
         try:
-            json_body = json.loads(message_body)
-            emit_failed_deletion_event(json_body, err_message)
-        except Exception as e:
-            logger.warning("Failed to emit event for message {}: {}".format(message_body, str(e)))
-        logger.exception(err_message)
-        msg.change_visibility(VisibilityTimeout=0)
+            handle_error(msg, msg.body, "SIGINT/SIGTERM received during processing")
+        except (ClientError, ValueError) as e:
+            logger.exception("Unable to gracefully cleanup message: {}".format(str(e)))
+    sys.exit(1 if len(msgs) > 0 else 0)
 
 
 if __name__ == '__main__':
     logger.info("CPU count for system: {}".format(cpu_count()))
+    messages = []
     with Pool(maxtasksperchild=1) as pool:
+        signal.signal(signal.SIGINT, lambda *_: kill_handler(messages, pool))
+        signal.signal(signal.SIGTERM, lambda *_: kill_handler(messages, pool))
         while 1:
             logger.info("Fetching messages...")
             messages = queue.receive_messages(WaitTimeSeconds=5, MaxNumberOfMessages=1)
@@ -306,5 +322,6 @@ if __name__ == '__main__':
                 logger.info("No messages. Sleeping")
                 time.sleep(30)
             else:
-                for m in messages:
-                    pool.apply(execute, args=(m.body, m.receipt_handle))
+                processes = [(m.body, m.receipt_handle) for m in messages]
+                pool.starmap(execute, processes)
+                messages = []
