@@ -86,4 +86,4 @@ Resources:
     Type: AWS::SQS::Queue
     Properties:
       KmsMasterKeyId: alias/aws/sqs
-  
+ 
