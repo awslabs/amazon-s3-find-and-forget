@@ -49,6 +49,7 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
+coverage/
 
 # Translations
 *.mo
@@ -122,7 +123,28 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# vs code
 .vscode/
+
+# misc
+.idea/
+.env
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+#front end
+node_modules
+/.pnp
+.pnp.js
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# build
 packaged.yaml
 backend/lambda_layers/aws_sdk/python
 backend/lambda_layers/cr_helper/python
@@ -130,6 +152,3 @@ backend/lambda_layers/decorators/python
 !backend/lambda_layers/decorators/python/decorators.py
 build.zip
 frontend/public/settings.js
-.idea/
-.env
-.DS_Store
