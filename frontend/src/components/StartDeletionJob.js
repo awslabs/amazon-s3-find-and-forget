@@ -23,7 +23,7 @@ export default ({ className, gateway, goToJobDetails }) => {
       ]);
 
       setSummary({
-        "Matches in the Deletion Queue": queue.MatchIds.length,
+        "Deletion Queue Size": queue.MatchIds.length,
         "Data Mappers Count": dataMappers.DataMappers.length,
         "Safe Mode": settings.Settings.SafeMode.toString().toUpperCase(),
         "Athena Concurrency Limit": settings.Settings.AthenaConcurrencyLimit,

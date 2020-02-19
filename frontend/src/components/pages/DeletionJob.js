@@ -20,13 +20,13 @@ const COUNTDOWN_INTERVAL = 10;
 
 export default ({ gateway, jobId }) => {
   const [countDownLeft, setCountDownLeft] = useState(COUNTDOWN_INTERVAL);
+  const [deletionQueueShown, showDeletionQueue] = useState(false);
   const [errorDetails, setErrorDetails] = useState(undefined);
   const [eventsErrorDetails, setEventsErrorDetails] = useState(undefined);
   const [eventsState, setEventsState] = useState("initial");
   const [formState, setFormState] = useState("initial");
   const [job, setJob] = useState(undefined);
   const [jobEvents, setJobEvents] = useState([]);
-  const [matchesShown, showMatches] = useState(false);
   const [nextStart, setNextStart] = useState(false);
   const [renderTableCount, setRenderTableCount] = useState(0);
   const [selectedEvent, setSelectedEvent] = useState(undefined);
@@ -135,14 +135,14 @@ export default ({ gateway, jobId }) => {
               <span>{job.JobStatus}</span>
             </DetailsBox>
             <DetailsBox label="Deletion Queue Size" fullWidth>
-              {job.Matches.length}{" "}
-              {job.Matches.length > 0 && (
+              {job.DeletionQueueItems.length}{" "}
+              {job.DeletionQueueItems.length > 0 && (
                 <>
                   (
                   <Button
                     variant="link"
                     style={{ padding: 0 }}
-                    onClick={() => showMatches(true)}
+                    onClick={() => showDeletionQueue(true)}
                   >
                     View Deletion Queue
                   </Button>
@@ -221,9 +221,9 @@ export default ({ gateway, jobId }) => {
             title={selectedEvent && `Job Event: ${selectedEvent.Sk}`}
           />
           <JsonModal
-            object={job.Matches}
-            onHide={() => showMatches(false)}
-            show={matchesShown}
+            object={job.DeletionQueueItems}
+            onHide={() => showDeletionQueue(false)}
+            show={deletionQueueShown}
             title={job && `Deletion Queue for job: ${job.Id}`}
           />
           <div className="page-table">
