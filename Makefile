@@ -96,7 +96,7 @@ test-acceptance:
 	pytest -m acceptance --log-cli-level info
 
 test-no-state-machine:
-	pytest -m "not state_machine" --log-cli-level info  --cov=backend.lambdas --cov=boto_utils --cov=decorators --cov backend.ecs_tasks
+	pytest -m "not state_machine" --log-cli-level info  --cov=backend.lambdas --cov=boto_utils --cov=decorators --cov=backend.ecs_tasks
 
 test:
 	make test-cfn
