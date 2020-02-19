@@ -4,7 +4,7 @@ import { Button, Modal, Spinner } from "react-bootstrap";
 import Alert from "./Alert";
 import DetailsBox from "./DetailsBox";
 
-import { formatErrorMessage, pluralise } from "../utils";
+import { formatErrorMessage } from "../utils";
 
 export default ({ className, gateway, goToJobDetails }) => {
   const [errorDetails, setErrorDetails] = useState(undefined);
