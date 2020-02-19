@@ -133,8 +133,6 @@ Resources:
               Value: 'true'
             - Name: JobTable
               Value: !Ref JobTableName
-            - Name: MAX_FILE_SIZE_GB
-              Value: "9"
             - Name: SAFE_MODE_BUCKET
               Value: !Ref SafeModeBucket
             - Name: SAFE_MODE_PREFIX

@@ -1,19 +1,20 @@
-import math
 import sys
+from collections import Counter
 from functools import lru_cache
 from urllib.parse import urlencode, quote_plus
 from uuid import uuid4
+from operator import itemgetter
 
 import boto3
 import json
 import os
 import pyarrow as pa
 import pyarrow.parquet as pq
-import s3fs
 import time
 import logging
 from multiprocessing import Pool, cpu_count
 
+import s3fs
 from botocore.exceptions import ClientError
 from pyarrow.lib import ArrowException
 
@@ -26,47 +27,58 @@ handler = logging.StreamHandler(stream=sys.stdout)
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
-ddb = boto3.resource("dynamodb")
-table = ddb.Table(os.getenv("JobTable"))
 sqs = boto3.resource('sqs', endpoint_url="https://sqs.{}.amazonaws.com".format(os.getenv("AWS_DEFAULT_REGION")))
 queue = sqs.Queue(os.getenv("DELETE_OBJECTS_QUEUE"))
 safe_mode_bucket = os.getenv("SAFE_MODE_BUCKET")
 safe_mode_prefix = os.getenv("SAFE_MODE_PREFIX")
-s3 = s3fs.S3FileSystem()
+s3 = s3fs.S3FileSystem(default_cache_type='none', requester_pays=True, default_fill_cache=False)
 
 
 def _remove_none(d: dict):
     return {k: v for k, v in d.items() if v is not None and v is not ''}
 
 
-def load_parquet(f, stats):
-    parquet_file = pq.ParquetFile(f, memory_map=False)
-    stats["TotalRows"] = parquet_file.metadata.num_rows
-    return parquet_file
+def load_parquet(f):
+    return pq.ParquetFile(f, memory_map=False)
 
 
-def delete_from_dataframe(df, columns, stats):
-    original = len(df)
-    for column in columns:
+def get_row_count(df):
+    return len(df.index)
+
+
+def delete_from_dataframe(df, to_delete):
+    for column in to_delete:
         df = df[~df[column["Column"]].isin(column["MatchIds"])]
-    stats["DeletedRows"] += abs(original - len(df))
-    return pa.Table.from_pandas(df, preserve_index=False).replace_schema_metadata()
+    return df
 
 
-def delete_and_write(parquet_file, row_group, columns, writer, stats):
-    logger.info("Row group {}/{}".format(str(row_group + 1), parquet_file.num_row_groups))
-    df = parquet_file.read_row_group(row_group).to_pandas()
-    current_rows = len(df.index)
-    stats["ProcessedRows"] += current_rows
-    if stats["ProcessedRows"] > 0:
-        logger.info("Processing {} rows ({}/{} {}% completed)...".format(
-            current_rows, stats["ProcessedRows"], stats["TotalRows"], int((stats["ProcessedRows"] * 100) / stats["TotalRows"])))
-    tab = delete_from_dataframe(df, columns, stats)
-    writer.write_table(tab)
-    logger.info("wrote table")
+def delete_matches_from_file(parquet_file, to_delete):
+    """
+    Deletes matches from Parquet file where to_delete is a list of dicts where
+    each dict contains a column to search and the MatchIds to search for in
+    that particular column
+    """
+    schema = parquet_file.metadata.schema.to_arrow_schema().remove_metadata()
+    total_rows = parquet_file.metadata.num_rows
+    stats = Counter({"ProcessedRows": total_rows, "DeletedRows": 0})
+    with pa.BufferOutputStream() as out_stream:
+        with pq.ParquetWriter(out_stream, schema, flavor="spark") as writer:
+            for row_group in range(parquet_file.num_row_groups):
+                logger.info("Row group {}/{}".format(str(row_group + 1), parquet_file.num_row_groups))
+                df = parquet_file.read_row_group(row_group).to_pandas()
+                current_rows = get_row_count(df)
+                df = delete_from_dataframe(df, to_delete)
+                new_rows = get_row_count(df)
+                tab = pa.Table.from_pandas(df, preserve_index=False).replace_schema_metadata()
+                writer.write_table(tab)
+                stats.update({"DeletedRows": current_rows - new_rows})
+        return out_stream, stats
 
 
-def save(client, new_parquet, bucket, key, in_safe_mode=True):
+def save(client, buf, bucket, key, in_safe_mode=True):
+    """
+    Save a buffer to S3, preserving any existing properties on the object
+    """
     # Get Object Settings
     request_payer_args, _ = get_requester_payment(client, bucket)
     object_info_args, _ = get_object_info(client, bucket, key)
@@ -78,7 +90,7 @@ def save(client, new_parquet, bucket, key, in_safe_mode=True):
     output_bucket = bucket if not in_safe_mode else safe_mode_bucket
     output_key = key if not in_safe_mode else "{}{}/{}".format(safe_mode_prefix, bucket, key)
     logger.info("Safe mode is {}. Saving updated object to s3://{}/{}".format(in_safe_mode, output_bucket, output_key))
-    client.upload_file(new_parquet, output_bucket, output_key, ExtraArgs=extra_args)
+    client.upload_fileobj(buf, output_bucket, output_key, ExtraArgs=extra_args)
     logger.info("Object uploaded to S3")
     # GrantWrite cannot be set whilst uploading therefore ACLs need to be restored separately
     write_grantees = ",".join(get_grantees(acl_resp, "WRITE"))
@@ -175,10 +187,6 @@ def get_grantees(acl, grant_type):
     return grantees
 
 
-def cleanup(new_parquet):
-    os.remove(new_parquet)
-
-
 @lru_cache()
 def get_container_id():
     metadata_file = os.getenv("ECS_CONTAINER_METADATA_FILE")
@@ -191,8 +199,12 @@ def get_container_id():
 
 
 @lru_cache()
-def safe_mode(job_id):
-    return table.get_item(Key={"Id": job_id, "Sk": job_id})["Item"].get("SafeMode", True)
+def safe_mode(table, job_id):
+    resp = table.get_item(Key={"Id": job_id, "Sk": job_id})
+    if not resp.get("Item"):
+        raise ValueError("Invalid Job ID")
+
+    return resp["Item"].get("SafeMode", True)
 
 
 def emit_deletion_event(message_body, stats):
@@ -223,63 +235,54 @@ def validate_message(message):
             raise ValueError("Malformed message. Missing key: {}".format(k))
 
 
-def get_max_file_size_bytes():
-    max_gb = int(os.getenv("MAX_FILE_SIZE_GB", 9))
-    return max_gb * math.pow(1024, 3)
-
-
-def check_object_size(client, bucket, key):
-    _, resp = get_object_info(client, bucket, key)
-    object_size = resp["ContentLength"]
-    if get_max_file_size_bytes() < object_size:
-        raise IOError("Insufficient disk space available for object {}. Size: {} GB".format(
-            key, round(object_size / math.pow(1024, 3), 2)))
-
-
 def execute(message_body, receipt_handle):
     logger.info("Message received: {0}".format(message_body))
+    ddb = boto3.resource("dynamodb")
+    table = ddb.Table(os.getenv("JobTable"))
     client = boto3.client("s3")
-    temp_dest = "/tmp/new.parquet"
     msg = queue.Message(receipt_handle)
     try:
+        # Parse and validate incoming message
         validate_message(message_body)
-        stats = {"ProcessedRows": 0, "DeletedRows": 0}
         body = json.loads(message_body)
-        job_id = body["JobId"]
-        in_safe_mode = safe_mode(job_id)
-        object_path = body["Object"]
+        cols, object_path, job_id = itemgetter('Columns', 'Object', 'JobId')(body)
+        in_safe_mode = safe_mode(table, job_id)
         input_bucket, input_key = object_path.replace("s3://", "").split("/", 1)
-        check_object_size(client, input_bucket, input_key)
-        logger.info("Downloading and opening the object {}".format(object_path))
+        # Download the object in-memory and convert to PyArrow NativeFile
+        logger.info("Downloading and opening {} object in-memory".format(object_path))
         with s3.open(object_path, "rb") as f:
-            parquet_file = load_parquet(f, stats)
-            schema = parquet_file.metadata.schema.to_arrow_schema().remove_metadata()
-            with pq.ParquetWriter(temp_dest, schema, flavor="spark") as writer:
-                for i in range(parquet_file.num_row_groups):
-                    cols = body["Columns"]
-                    delete_and_write(parquet_file, i, cols, writer, stats)
-        if stats["DeletedRows"] > 0:
-            save(client, temp_dest, input_bucket, input_key, in_safe_mode)
-        else:
-            logger.warning("The object {} was processed successfully but no rows required deletion".format(object_path))
+            infile = load_parquet(f)
+            # Write new file in-memory
+            logger.info("Generating new parquet file without matches")
+            out_sink, stats = delete_matches_from_file(infile, cols)
+            if stats["DeletedRows"] > 0:
+                with pa.BufferReader(out_sink.getvalue()) as output_buf:
+                    save(client, output_buf, input_bucket, input_key, in_safe_mode)
+            else:
+                logger.warning("The object {} was processed successfully but no rows required deletion".format(object_path))
         msg.delete()
         emit_deletion_event(body, stats)
         return object_path
     except (KeyError, ArrowException) as e:
         err_message = "Parquet processing error: {}".format(str(e))
-        logger.error(err_message)
+        logger.exception(err_message)
         emit_failed_deletion_event(json.loads(message_body), err_message)
         msg.change_visibility(VisibilityTimeout=0)
     except IOError as e:
         err_message = "Unable to retrieve object: {}".format(str(e))
-        logger.error(err_message)
+        logger.exception(err_message)
+        emit_failed_deletion_event(json.loads(message_body), err_message)
+        msg.change_visibility(VisibilityTimeout=0)
+    except MemoryError as e:
+        err_message = "Insufficient memory to work on object: {}".format(str(e))
+        logger.exception(err_message)
         emit_failed_deletion_event(json.loads(message_body), err_message)
         msg.change_visibility(VisibilityTimeout=0)
     except ClientError as e:
         err_message = "ClientError: {}".format(str(e))
         if e.operation_name == "PutObjectAcl":
             err_message += ". Redacted object uploaded successfully but unable to restore WRITE ACL"
-        logger.error(err_message)
+        logger.exception(err_message)
         emit_failed_deletion_event(json.loads(message_body), err_message)
         msg.change_visibility(VisibilityTimeout=0)
     except Exception as e:
@@ -289,22 +292,19 @@ def execute(message_body, receipt_handle):
             emit_failed_deletion_event(json_body, err_message)
         except Exception as e:
             logger.warning("Failed to emit event for message {}: {}".format(message_body, str(e)))
-        logger.error(err_message)
+        logger.exception(err_message)
         msg.change_visibility(VisibilityTimeout=0)
-    finally:
-        if os.path.exists(temp_dest):
-            cleanup(temp_dest)
 
 
 if __name__ == '__main__':
     logger.info("CPU count for system: {}".format(cpu_count()))
-    pool = Pool()  # Use max available
-    while 1:
-        logger.info("Fetching messages...")
-        messages = queue.receive_messages(WaitTimeSeconds=5, MaxNumberOfMessages=1)
-        if len(messages) == 0:
-            logger.info("No messages. Sleeping")
-            time.sleep(30)
-        else:
-            for m in messages:
-                pool.apply(execute, args=(m.body, m.receipt_handle))
+    with Pool(maxtasksperchild=1) as pool:
+        while 1:
+            logger.info("Fetching messages...")
+            messages = queue.receive_messages(WaitTimeSeconds=5, MaxNumberOfMessages=1)
+            if len(messages) == 0:
+                logger.info("No messages. Sleeping")
+                time.sleep(30)
+            else:
+                for m in messages:
+                    pool.apply(execute, args=(m.body, m.receipt_handle))
