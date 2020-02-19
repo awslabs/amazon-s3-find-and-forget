@@ -100,5 +100,5 @@ test-no-state-machine:
 
 test:
 	make test-cfn
-	pytest --log-cli-level info --cov=backend.lambdas --cov=decorators --cov=boto_utils --cov backend.ecs_tasks
+	pytest --log-cli-level info --cov=backend.lambdas --cov=decorators --cov=boto_utils --cov=backend.ecs_tasks
 	make test-frontend
