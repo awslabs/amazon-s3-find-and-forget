@@ -214,18 +214,24 @@ def emit_deletion_event(message_body, stats):
         "Statistics": stats,
         "Object": message_body["Object"],
     }
-    emit_event(job_id, "ObjectUpdated", event_data, "Task_{}".format(get_container_id()))
+    emit_event(job_id, "ObjectUpdated", event_data, "ECSTask_{}".format(get_container_id()))
 
 
 def emit_failed_deletion_event(message_body, err_message):
-    job_id = message_body.get("JobId")
-    if not job_id:
-        raise ValueError("Unable to emit failure event without Job ID")
-    event_data = {
-        "Error": err_message,
-        'Message': message_body,
-    }
-    emit_event(job_id, "ObjectUpdateFailed", event_data, "Task_{}".format(get_container_id()))
+    try:
+        json_body = json.loads(message_body)
+        job_id = json_body.get("JobId")
+        if not job_id:
+            raise ValueError("Message missing Job ID")
+        event_data = {
+            "Error": err_message,
+            'Message': json_body,
+        }
+        emit_event(job_id, "ObjectUpdateFailed", event_data, "ECSTask_{}".format(get_container_id()))
+    except ValueError as e:
+        logger.exception("Unable to emit failure event due to invalid message: {}".format(e))
+    except ClientError as e:
+        logger.exception("Unable to emit failure event: {}".format(e))
 
 
 def validate_message(message):
@@ -234,6 +240,12 @@ def validate_message(message):
     for k in mandatory_keys:
         if k not in body:
             raise ValueError("Malformed message. Missing key: {}".format(k))
+
+
+def handle_error(sqs_msg, message_body, err_message):
+    logger.exception(err_message)
+    emit_failed_deletion_event(message_body, err_message)
+    sqs_msg.change_visibility(VisibilityTimeout=0)
 
 
 def execute(message_body, receipt_handle):
@@ -266,45 +278,33 @@ def execute(message_body, receipt_handle):
         return object_path
     except (KeyError, ArrowException) as e:
         err_message = "Parquet processing error: {}".format(str(e))
-        logger.exception(err_message)
-        emit_failed_deletion_event(json.loads(message_body), err_message)
-        msg.change_visibility(VisibilityTimeout=0)
+        handle_error(msg, message_body, err_message)
     except IOError as e:
         err_message = "Unable to retrieve object: {}".format(str(e))
-        logger.exception(err_message)
-        emit_failed_deletion_event(json.loads(message_body), err_message)
-        msg.change_visibility(VisibilityTimeout=0)
+        handle_error(msg, message_body, err_message)
     except MemoryError as e:
         err_message = "Insufficient memory to work on object: {}".format(str(e))
-        logger.exception(err_message)
-        emit_failed_deletion_event(json.loads(message_body), err_message)
-        msg.change_visibility(VisibilityTimeout=0)
+        handle_error(msg, message_body, err_message)
     except ClientError as e:
         err_message = "ClientError: {}".format(str(e))
         if e.operation_name == "PutObjectAcl":
             err_message += ". Redacted object uploaded successfully but unable to restore WRITE ACL"
-        logger.exception(err_message)
-        emit_failed_deletion_event(json.loads(message_body), err_message)
-        msg.change_visibility(VisibilityTimeout=0)
-    except Exception as e:
+        handle_error(msg, message_body, err_message)
+    except ValueError as e:
         err_message = "Unprocessable message: {}".format(str(e))
-        try:
-            json_body = json.loads(message_body)
-            emit_failed_deletion_event(json_body, err_message)
-        except Exception as e:
-            logger.warning("Failed to emit event for message {}: {}".format(message_body, str(e)))
-        logger.exception(err_message)
-        msg.change_visibility(VisibilityTimeout=0)
+        handle_error(msg, message_body, err_message)
+    except Exception as e:
+        err_message = "Unknown error during message processing: {}".format(str(e))
+        handle_error(msg, message_body, err_message)
 
 
 def kill_handler(msgs, process_pool):
-    logger.info("Received shutdown signal. Cleaning up {} messages".format(len(messages)))
+    logger.info("Received shutdown signal. Cleaning up {} messages".format(len(msgs)))
     process_pool.terminate()
     for msg in msgs:
         try:
-            msg.change_visibility(VisibilityTimeout=0)
-            emit_failed_deletion_event(json.loads(msg.body), "SIGINT/SIGTERM received during processing")
-        except Exception as e:
+            handle_error(msg, msg.body, "SIGINT/SIGTERM received during processing")
+        except (ClientError, ValueError) as e:
             logger.exception("Unable to gracefully cleanup message: {}".format(str(e)))
     sys.exit(1)
 
