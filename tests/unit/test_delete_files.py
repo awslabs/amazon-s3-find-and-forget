@@ -163,9 +163,9 @@ def test_it_gracefully_handles_exceptions(mock_emit):
 @patch("os.path.isfile", MagicMock(return_value=True))
 def test_it_loads_container_id_from_metadata():
     get_container_id.cache_clear()
-    with patch("builtins.open", mock_open(read_data="{\"ContainerId\": \"123\"}")):
+    with patch("builtins.open", mock_open(read_data="{\"TaskARN\": \"arn:aws:ecs:us-west-2:012345678910:task/default/2b88376d-aba3-4950-9ddf-bcb0f388a40c\"}")):
         resp = get_container_id()
-        assert "123" == resp
+        assert "2b88376d-aba3-4950-9ddf-bcb0f388a40c" == resp
 
 
 @patch("os.getenv", MagicMock(return_value=None))
@@ -564,12 +564,23 @@ def test_error_handler(mock_emit):
 
 @patch("backend.ecs_tasks.delete_files.delete_files.handle_error")
 def test_kill_handler_cleans_up(mock_handler):
-    with pytest.raises(SystemExit):
+    with pytest.raises(SystemExit) as e:
         mock_pool = MagicMock()
         mock_msg = MagicMock()
         kill_handler([mock_msg], mock_pool)
         mock_pool.terminate.assert_called()
         mock_handler.assert_called()
+        assert 1 == e.value.code
+
+
+@patch("backend.ecs_tasks.delete_files.delete_files.handle_error")
+def test_kill_handler_exits_successfully_when_done(mock_handler):
+    with pytest.raises(SystemExit) as e:
+        mock_pool = MagicMock()
+        kill_handler([], mock_pool)
+        mock_pool.terminate.assert_called()
+        mock_handler.assert_not_called()
+        assert 0 == e.value.code
 
 
 @patch("backend.ecs_tasks.delete_files.delete_files.handle_error")

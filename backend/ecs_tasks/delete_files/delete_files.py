@@ -194,7 +194,7 @@ def get_container_id():
     if metadata_file and os.path.isfile(metadata_file):
         with open(metadata_file) as f:
             metadata = json.load(f)
-        return metadata.get("ContainerId")
+        return metadata.get("TaskARN").rsplit("/", 1)[1]
     else:
         return str(uuid4())
 
@@ -229,7 +229,7 @@ def emit_failed_deletion_event(message_body, err_message):
         }
         emit_event(job_id, "ObjectUpdateFailed", event_data, "ECSTask_{}".format(get_container_id()))
     except ValueError as e:
-        logger.exception("Unable to emit failure event due to invalid message: {}".format(e))
+        logger.exception("Unable to emit failure event due to invalid message")
     except ClientError as e:
         logger.exception("Unable to emit failure event: {}".format(e))
 
@@ -243,13 +243,13 @@ def validate_message(message):
 
 
 def handle_error(sqs_msg, message_body, err_message):
-    logger.exception(err_message)
+    logger.error(err_message)
     emit_failed_deletion_event(message_body, err_message)
     sqs_msg.change_visibility(VisibilityTimeout=0)
 
 
 def execute(message_body, receipt_handle):
-    logger.info("Message received: {0}".format(message_body))
+    logger.info("Message received")
     ddb = boto3.resource("dynamodb")
     table = ddb.Table(os.getenv("JobTable"))
     client = boto3.client("s3")
@@ -275,7 +275,7 @@ def execute(message_body, receipt_handle):
                 logger.warning("The object {} was processed successfully but no rows required deletion".format(object_path))
         msg.delete()
         emit_deletion_event(body, stats)
-        return object_path
+        return msg
     except (KeyError, ArrowException) as e:
         err_message = "Parquet processing error: {}".format(str(e))
         handle_error(msg, message_body, err_message)
@@ -306,7 +306,7 @@ def kill_handler(msgs, process_pool):
             handle_error(msg, msg.body, "SIGINT/SIGTERM received during processing")
         except (ClientError, ValueError) as e:
             logger.exception("Unable to gracefully cleanup message: {}".format(str(e)))
-    sys.exit(1)
+    sys.exit(1 if len(msgs) > 0 else 0)
 
 
 if __name__ == '__main__':
@@ -322,5 +322,6 @@ if __name__ == '__main__':
                 logger.info("No messages. Sleeping")
                 time.sleep(30)
             else:
-                for m in messages:
-                    pool.apply(execute, args=(m.body, m.receipt_handle))
+                processes = [(m.body, m.receipt_handle) for m in messages]
+                pool.starmap(execute, processes)
+                messages = []
