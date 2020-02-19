@@ -91,7 +91,6 @@ def process_handler(event, context):
         "GSIBucket": str(random.randint(0, bucket_count - 1)),
         "CreatedAt": utc_timestamp(),
         "DeletionQueueItems": deletion_queue_table.scan()["Items"],
-        "Matches": deletion_queue_table.scan()["Items"],
         **{k: v for k, v in config.items() if k not in ["JobRecordRetentionDays"]},
     }
     if config.get("JobRecordRetentionDays", 0) > 0:
