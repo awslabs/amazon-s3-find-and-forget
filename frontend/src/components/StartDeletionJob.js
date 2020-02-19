@@ -4,7 +4,7 @@ import { Button, Modal, Spinner } from "react-bootstrap";
 import Alert from "./Alert";
 import DetailsBox from "./DetailsBox";
 
-import { formatErrorMessage } from "../utils";
+import { formatErrorMessage, pluralise } from "../utils";
 
 export default ({ className, gateway, goToJobDetails }) => {
   const [errorDetails, setErrorDetails] = useState(undefined);
@@ -26,6 +26,7 @@ export default ({ className, gateway, goToJobDetails }) => {
         "Deletion Queue Size": queue.MatchIds.length,
         "Data Mappers Count": dataMappers.DataMappers.length,
         "Safe Mode": settings.Settings.SafeMode.toString().toUpperCase(),
+        "Job History Retention (Days)": settings.Settings.JobRecordRetentionDays,
         "Athena Concurrency Limit": settings.Settings.AthenaConcurrencyLimit,
         "Wait Duration Query Execution":
           settings.Settings.WaitDurationQueryExecution,
