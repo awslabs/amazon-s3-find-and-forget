@@ -129,4 +129,45 @@ def add_cors_headers(handler):
 
         return resp
  
-    return wrapper 
+    return wrapper
+
+
+def s3_state_store(s3_state_identifier="S3Data", upload=True, download=True):
+    """
+    Decorator which auto (re)stores
+    """
+    def restore(d):
+        loaded = {}
+        for k, v in d.items():
+            if k == s3_state_identifier:
+                loaded[k] = v
+            elif isinstance(v, dict):
+                loaded[k] = restore(v)
+            else:
+                loaded[k] = v
+        return loaded
+
+    def offload(d):
+        loaded = {}
+        for k, v in d.items():
+            if k == s3_state_identifier:
+                loaded[k] = v
+            elif isinstance(v, dict):
+                loaded[k] = offload(v)
+            else:
+                loaded[k] = v
+        return loaded
+
+    def wrapper_wrapper(handler):
+        @functools.wraps(handler)
+        def wrapper(event, context):
+            if download and isinstance(event, dict):
+                event = restore(event)
+
+            resp = handler(event, context)
+
+            if upload and isinstance(resp, dict):
+                resp = offload(resp)
+            return resp
+        return wrapper
+    return wrapper_wrapper
