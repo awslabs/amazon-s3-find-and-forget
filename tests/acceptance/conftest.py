@@ -53,14 +53,14 @@ def config(stack):
 
 
 @pytest.fixture
-def config_mutator(config, ssm_client):
+def config_mutator(config, ssm_client, stack):
     ssm = boto3.client("ssm")
 
     def mutator(**kwargs):
         tmp = {**config, **kwargs}
-        ssm.put_parameter(Name=stack["ConfigParameter"], Value=tmp)
+        ssm.put_parameter(Name=stack["ConfigParameter"], Value=json.dumps(tmp), Type="String", Overwrite=True)
     yield mutator
-    ssm.put_parameter(Name=stack["ConfigParameter"], Value=config)
+    ssm.put_parameter(Name=stack["ConfigParameter"], Value=json.dumps(config), Type="String", Overwrite=True)
 
 
 @pytest.fixture(scope="session")

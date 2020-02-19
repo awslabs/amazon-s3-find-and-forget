@@ -127,7 +127,6 @@ def test_it_processes_queue(api_client, queue_base_endpoint, sf_client, job_tabl
         job_complete_waiter.wait(TableName=job_table.name, Key={"Id": {"S": job_id}, "Sk": {"S": job_id}})
         query_result = job_table.query(KeyConditionExpression=Key("Id").eq(job_id) & Key("Sk").eq(job_id))
         assert 1 == len(query_result["Items"])
-        # Verify the ran from the DynamoDB stream
         assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
     finally:
         sf_client.stop_execution(executionArn=execution_arn)
@@ -148,10 +147,9 @@ def test_it_sets_expiry(api_client, queue_base_endpoint, sf_client, job_table, s
         assert "Id" in response_body
         # Check the job was written to DynamoDB
         job_complete_waiter.wait(TableName=job_table.name, Key={"Id": {"S": job_id}, "Sk": {"S": job_id}})
-        query_result = job_table.query(KeyConditionExpression=Key("Id").eq(job_id) & Key("Sk").eq(job_id))
-        assert 1 == len(query_result["Items"])
-        assert "Expires" in query_result["Items"][0]
-        # Verify the ran from the DynamoDB stream
+        query_result = job_table.query(KeyConditionExpression=Key("Id").eq(job_id))
+        assert len(query_result["Items"]) > 0
+        assert all(["Expires" in i for i in query_result["Items"]])
         assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
     finally:
         sf_client.stop_execution(executionArn=execution_arn)

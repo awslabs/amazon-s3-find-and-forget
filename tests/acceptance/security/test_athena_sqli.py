@@ -22,34 +22,30 @@ def test_it_handles_injection_attacks(del_queue_factory, job_factory, dummy_lake
     data_loader("basic.parquet", object_key)
     bucket = dummy_lake["bucket"]
     """
-    Using single quotes as part of the match_id could be a SQL injection attack
-    for reading information from other tables. While this should be prevented
-    by configuring IAM, it is appropriate to test that the query_handler properly
-    escepes the quotes and Athena doesn't access other tables.
+    Using single quotes as part of the match_id could be a SQL injection attack for reading information from other 
+    tables. While this should be prevented by configuring IAM, it is appropriate to test that the query_handler properly
+    escapes the quotes and Athena doesn't access other tables.
     """
     cross_db_access = "foo')) UNION (select * from acceptancetests2.acceptancetests2 where customer_id in ('12345"
     """
-    Using single quotes as part of the match_id could be a SQL injection attack
-    for reading information from other tables. While this should be prevented
-    by configuring IAM, it is appropriate to test that the query_handler properly
-    escepes the quotes and Athena doesn't access other tables.
+    Using single quotes as part of the match_id could be a SQL injection attack for reading information from other 
+    tables. While this should be prevented by configuring IAM, it is appropriate to test that the query_handler properly
+    escapes the quotes and Athena doesn't access other tables.
     """
     cross_db_escaped = "foo\')) UNION (select * from acceptancetests2.acceptancetests2 where customer_id in (\'12345"
     """
-    Unicode smuggling is taken care out of the box.
-    Here is a test with "ʼ", which is similar to single quote.
+    Unicode smuggling is taken care out of the box. Here is a test with "ʼ", which is similar to single quote.
     """
     unicode_smuggling = "fooʼ)) UNION (select * from acceptancetests2.acceptancetests2 where customer_id in (ʼ12345"
     """
-    Another common SQLi attack vector consists on fragmented attacks. Tamper the
-    result of the select by commenting out relevant match_ids by using "--"
-    after a successful escape. This attack wouldn't work because Athena's
+    Another common SQLi attack vector consists on fragmented attacks. Tamper the result of the select by commenting 
+    out relevant match_ids by using "--" after a successful escape. This attack wouldn't work because Athena's
     way to escape single quotes are by doubling them rather than using backslash.
     Example: ... WHERE (user_id in ('foo', '\')) --','legit'))
     """
-    commenting = "\'", ")) --"
+    commenting = ["\'", ")) --", legit_match_id]
     new_lines = ["\n--", legit_match_id, "\n"]
-    for i in [legit_match_id, cross_db_access, cross_db_escaped, unicode_smuggling, commenting, *new_lines]:
+    for i in [legit_match_id, cross_db_access, cross_db_escaped, unicode_smuggling, *commenting, *new_lines]:
         del_queue_factory(i)
     job_id = job_factory()["Id"]
     # Act
