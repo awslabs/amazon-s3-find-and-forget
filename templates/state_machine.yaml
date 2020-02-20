@@ -89,15 +89,6 @@ Resources:
               - !GetAtt EmitEvent.Arn
           - Effect: Allow
             Action:
-              - "dynamodb:Query"
-              - "dynamodb:GetItem"
-              - "dynamodb:PutItem"
-              - "dynamodb:UpdateItem"
-            Resource:
-              - !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${JobTableName}"
-              - !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DeletionQueueTableName}"
-          - Effect: Allow
-            Action:
               - "events:PutTargets"
               - "events:PutRule"
               - "events:DescribeRule"
@@ -445,31 +436,11 @@ Resources:
               },
               "Resource": "${EmitEvent.Arn}",
               "ResultPath": null,
-              "Next": "Query Deletion Queue",
+              "Next": "Purge Queues",
               "Catch": [{
                  "ErrorEquals": ["States.ALL"],
                  "ResultPath": "$.ErrorDetails",
                  "Next": "Handle Error"
-              }]
-            },
-            "Query Deletion Queue": {
-              "Comment": "Scan the deletion queue table to obtain all users to be deleted ",
-              "Type": "Task",
-              "Resource": "${ScanTable.Arn}",
-              "Parameters": {
-                "TableName": "${DeletionQueueTableName}"
-              },
-              "ResultPath": "$.DeletionQueue",
-              "Next": "Purge Queues",
-              "Retry": [{
-                "ErrorEquals": [ "States.ALL" ],
-                "IntervalSeconds": 10,
-                "MaxAttempts": 1
-              }],
-              "Catch": [{
-                "ErrorEquals": ["States.ALL"],
-                "ResultPath": "$.ErrorDetails",
-                "Next": "Handle Error"
               }]
             },
             "Purge Queues": {
