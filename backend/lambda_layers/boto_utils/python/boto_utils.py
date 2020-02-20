@@ -168,5 +168,6 @@ def deserialize_item(item):
 
 
 def parse_s3_url(s3_url):
-    bucket, key = s3_url.replace("s3://", "").split("/", 1)
-    return bucket, key
+    if not (isinstance(s3_url, str) and s3_url.startswith("s3://")):
+        raise ValueError("Invalid S3 URL")
+    return s3_url.replace("s3://", "").split("/", 1)

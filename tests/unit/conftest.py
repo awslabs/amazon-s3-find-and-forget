@@ -1,6 +1,6 @@
 import sys
 
-from mock import MagicMock
+from mock import MagicMock, patch
 from os import path
 
 import pytest
@@ -14,19 +14,6 @@ def pytest_configure(config):
     sys.path.append(path.join("backend", "lambda_layers", "cr_helper", "python"))
     sys.path.append(path.join("backend", "lambda_layers", "decorators", "python"))
     sys.path.append(path.join("backend", "lambdas", "jobs"))
-
-
-@pytest.fixture(autouse=True)
-def decorator_mocks(monkeypatch):
-    """
-    Mock the logging and tracing decorators
-    """
-
-    def mock_decorator(func):
-        return func
-
-    import decorators
-    monkeypatch.setattr(decorators, "with_logger", mock_decorator)
 
 
 @pytest.fixture(autouse=True)

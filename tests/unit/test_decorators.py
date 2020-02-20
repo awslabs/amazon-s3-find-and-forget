@@ -1,11 +1,12 @@
 import json
+import os
+from io import BytesIO
 from types import SimpleNamespace
 
 from mock import patch, MagicMock
 import pytest
 from botocore.exceptions import ClientError
-
-from decorators import with_logger, catch_errors, request_validator, add_cors_headers
+from decorators import with_logger, catch_errors, request_validator, add_cors_headers, s3_state_store
 
 pytestmark = [pytest.mark.unit, pytest.mark.layers]
 
@@ -151,3 +152,207 @@ def test_it_wraps_response_with_headers():
         'Access-Control-Allow-Origin': 'https://site.com',
         'Content-Type': 'application/json'
     }
+
+
+def test_it_disables_loading_offloading():
+    @s3_state_store(should_offload=False, offload_keys=["Not"])
+    def my_func(event, *_):
+        return event
+
+    res = my_func({"Not": ["Offloaded"]}, {})
+    assert {"Not": ["Offloaded"]} == res
+
+
+def test_it_disables_loading_loading():
+    @s3_state_store(should_load=False, load_keys=["Data"])
+    def my_func(event, *_):
+        return event
+
+    res = my_func({"Data": "s3://bucket/key"}, {})
+    assert {"Data": "s3://bucket/key"} == res
+
+
+@patch("decorators.s3")
+@patch("decorators.uuid4", MagicMock(side_effect=["a", "b"]))
+def test_it_offloads_state(mock_s3):
+    with patch.dict(os.environ, {"StateBucket": "bucket"}):
+        @s3_state_store(offload_keys=["Dict", "List"], should_load=False)
+        def my_func(event, *_):
+            return event
+
+        res = my_func({
+            "Dict": {"test": "data"},
+            "List": ["data"],
+            "Not": ["Offloaded"]
+        }, {})
+        assert {
+            "Dict": "s3://bucket/state/a",
+            "List": "s3://bucket/state/b",
+            "Not": ["Offloaded"]
+        } == res
+        assert ("bucket", "state/a") == mock_s3.Object.call_args_list[0][0]
+        assert ("bucket", "state/b") == mock_s3.Object.call_args_list[1][0]
+        assert {"Body": '{"test": "data"}'} == mock_s3.Object().put.call_args_list[0][1]
+        assert {"Body": '["data"]'} == mock_s3.Object().put.call_args_list[1][1]
+
+
+@patch("decorators.s3")
+@patch("decorators.uuid4", MagicMock(side_effect=["a", "b"]))
+def test_it_offloads_nested_state(mock_s3):
+    with patch.dict(os.environ, {"StateBucket": "bucket"}):
+        @s3_state_store(offload_keys=["Dict", "List"], should_load=False)
+        def my_func(event, *_):
+            return event
+
+        res = my_func({
+            "Data": {
+                "Dict": {"test": "data"},
+                "List": ["data"],
+            }
+        }, {})
+        assert {
+            "Data": {
+                "Dict": "s3://bucket/state/a",
+                "List": "s3://bucket/state/b",
+            }
+        } == res
+        assert ("bucket", "state/a") == mock_s3.Object.call_args_list[0][0]
+        assert ("bucket", "state/b") == mock_s3.Object.call_args_list[1][0]
+        assert {"Body": '{"test": "data"}'} == mock_s3.Object().put.call_args_list[0][1]
+        assert {"Body": '["data"]'} == mock_s3.Object().put.call_args_list[1][1]
+
+
+@patch("decorators.s3")
+@patch("decorators.uuid4", MagicMock(side_effect=["a", "b"]))
+def test_it_offloads_all_by_default(mock_s3):
+    with patch.dict(os.environ, {"StateBucket": "bucket"}):
+        @s3_state_store(should_load=False)
+        def my_func(event, *_):
+            return event
+
+        res = my_func({
+            "Dict": {"test": "data"},
+            "List": ["data"],
+        }, {})
+        assert {
+            "Dict": "s3://bucket/state/a",
+            "List": "s3://bucket/state/b",
+        } == res
+        assert ("bucket", "state/a") == mock_s3.Object.call_args_list[0][0]
+        assert ("bucket", "state/b") == mock_s3.Object.call_args_list[1][0]
+        assert {"Body": '{"test": "data"}'} == mock_s3.Object().put.call_args_list[0][1]
+        assert {"Body": '["data"]'} == mock_s3.Object().put.call_args_list[1][1]
+
+
+def test_it_ignores_offloading_none_dict_events():
+    with patch.dict(os.environ, {"StateBucket": "bucket"}):
+        @s3_state_store(should_load=False)
+        def my_func(event, *_):
+            return event
+
+        assert "string" == my_func("string", {})
+
+
+@patch("decorators.s3")
+@patch("decorators.uuid4", MagicMock(side_effect=["a"]))
+def test_it_overrides_default_bucket_and_prefix(mock_s3):
+    with patch.dict(os.environ, {"StateBucket": "bucket"}):
+        @s3_state_store(offload_keys=["Dict"], should_load=False, prefix="custom/", bucket="otherbucket")
+        def my_func(event, *_):
+            return event
+
+        res = my_func({
+            "Dict": {"test": "data"},
+        }, {})
+        assert {
+            "Dict": "s3://otherbucket/custom/a",
+        } == res
+        assert ("otherbucket", "custom/a") == mock_s3.Object.call_args_list[0][0]
+        assert {"Body": '{"test": "data"}'} == mock_s3.Object().put.call_args_list[0][1]
+
+
+@patch("decorators.s3")
+def test_it_loads_keys(mock_s3):
+    @s3_state_store(load_keys=["Dict", "List"], should_offload=False)
+    def my_func(event, *_):
+        return event
+
+    mock_s3.Object().get.side_effect = [
+        {"Body": BytesIO(b'{"test": "data"}')},
+        {"Body": BytesIO(b'["data"]')}
+    ]
+
+    res = my_func({
+        "Dict": "s3://bucket/state/a",
+        "List": "s3://bucket/state/b",
+        "Not": "s3://bucket/state/c",
+    }, {})
+    assert {
+        "Dict": {"test": "data"},
+        "List": ["data"],
+        "Not": "s3://bucket/state/c",
+    } == res
+    # Start at call index 1 as Object already called during test setup
+    assert ("bucket", "state/a") == mock_s3.Object.call_args_list[1][0]
+    assert ("bucket", "state/b") == mock_s3.Object.call_args_list[2][0]
+
+
+@patch("decorators.s3")
+def test_it_loads_all_by_default(mock_s3):
+    @s3_state_store(load_keys=["Dict", "List"], should_offload=False)
+    def my_func(event, *_):
+        return event
+
+    mock_s3.Object().get.side_effect = [
+        {"Body": BytesIO(b'{"test": "data"}')},
+        {"Body": BytesIO(b'["data"]')}
+    ]
+
+    res = my_func({
+        "Dict": "s3://bucket/state/a",
+        "List": "s3://bucket/state/b",
+    }, {})
+    assert {
+        "Dict": {"test": "data"},
+        "List": ["data"],
+    } == res
+    # Start at call index 1 as Object already called during test setup
+    assert ("bucket", "state/a") == mock_s3.Object.call_args_list[1][0]
+    assert ("bucket", "state/b") == mock_s3.Object.call_args_list[2][0]
+
+
+@patch("decorators.s3")
+def test_it_loads_nested_state(mock_s3):
+    @s3_state_store(load_keys=["Dict", "List"], should_offload=False)
+    def my_func(event, *_):
+        return event
+
+    mock_s3.Object().get.side_effect = [
+        {"Body": BytesIO(b'{"test": "data"}')},
+        {"Body": BytesIO(b'["data"]')}
+    ]
+
+    res = my_func({
+        "Data": {
+            "Dict": "s3://bucket/state/a",
+            "List": "s3://bucket/state/b",
+        }
+    }, {})
+    assert {
+        "Data": {
+            "Dict": {"test": "data"},
+            "List": ["data"],
+        }
+    } == res
+    # Start at call index 1 as Object already called during test setup
+    assert ("bucket", "state/a") == mock_s3.Object.call_args_list[1][0]
+    assert ("bucket", "state/b") == mock_s3.Object.call_args_list[2][0]
+
+
+def test_it_ignores_loading_none_dicts():
+    with patch.dict(os.environ, {"StateBucket": "bucket"}):
+        @s3_state_store(should_offload=False)
+        def my_func(event, *_):
+            return event
+
+        assert "string" == my_func("string", {})

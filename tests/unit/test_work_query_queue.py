@@ -5,8 +5,13 @@ from types import SimpleNamespace
 import pytest
 from mock import patch, ANY, MagicMock
 
+
 with patch.dict(os.environ, {"QueueUrl": "someurl"}):
-    from backend.lambdas.tasks.work_query_queue import handler, load_execution, clear_completed, abandon_execution
+    from backend.lambdas.tasks.work_query_queue import handler, load_execution, clear_completed, \
+        abandon_execution
+    # Remove all decorators
+    while hasattr(handler, "__wrapped__"):
+        handler = handler.__wrapped__
 
 pytestmark = [pytest.mark.unit, pytest.mark.task]
 
