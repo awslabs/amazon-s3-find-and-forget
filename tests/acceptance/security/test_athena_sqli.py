@@ -45,9 +45,10 @@ def test_it_handles_injection_attacks(del_queue_factory, job_factory, dummy_lake
     """
     commenting = ["\'", ")) --", legit_match_id]
     new_lines = ["\n--", legit_match_id, "\n"]
+    del_queue_items = []
     for i in [legit_match_id, cross_db_access, cross_db_escaped, unicode_smuggling, *commenting, *new_lines]:
-        del_queue_factory(i)
-    job_id = job_factory()["Id"]
+        del_queue_items.append(del_queue_factory(i))
+    job_id = job_factory(del_queue_items=del_queue_items)["Id"]
     # Act
     job_complete_waiter.wait(TableName=job_table.name, Key={"Id": {"S": job_id}, "Sk": {"S": job_id}})
     # Assert

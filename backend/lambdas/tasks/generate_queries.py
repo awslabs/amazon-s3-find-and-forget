@@ -5,16 +5,17 @@ Requires a state object as the event which looks like:
 
 {
   "DeletionQueue": [{
-    "MatchId": {"S": "123"},
-    "DataMappers": {"L": [{"S": "mapper_a"}]}
+    "MatchId": "123",
+    "DataMappers": ["mapper_a"]
   }],
   "DataMappers": [
     {
-      "Database": {"S": "db"}
-      "Table": {"S": "table"}
-      "Columns" {"L": [{"S": "a_column"}]}
+      "Database": "db"
+      "Table": "table"
+      "Columns" ["a_column"]
     }
   ]
+}
 """
 import os
 
@@ -30,8 +31,8 @@ queue = sqs.Queue(os.getenv("QueryQueue"))
 
 @with_logger
 def handler(event, context):
-    data_mappers = [deserialize_item(item) for item in event["DataMappers"]]
-    deletion_items = [deserialize_item(item) for item in event["DeletionQueue"]]
+    data_mappers = event["DataMappers"]
+    deletion_items = event["DeletionQueue"]
     # For every partition combo of every table, create a query
     for data_mapper in data_mappers:
         queries = []

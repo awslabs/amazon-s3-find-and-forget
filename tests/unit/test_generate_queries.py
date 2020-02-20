@@ -24,20 +24,18 @@ def test_it_handles_single_columns(batch_sqs_msgs_mock, get_partitions_mock, get
     ]
     handler({
         "DataMappers": [{
-            "DataMapperId": {"S": "a"},
-            "QueryExecutor": {"S": "athena"},
-            "Columns": {"L": [{"S": "customer_id"}]},
-            "Format": {"S": "parquet"},
+            "DataMapperId": "a",
+            "QueryExecutor": "athena",
+            "Columns": columns,
+            "Format": "parquet",
             "QueryExecutorParameters": {
-                "M": {
-                    "DataCatalogProvider": {"S": "glue"},
-                    "Database": {"S": "test_db"},
-                    "Table": {"S": "test_table"}
-                }
+                "DataCatalogProvider": "glue",
+                "Database": "test_db",
+                "Table": "test_table"
             }
         }],
         "DeletionQueue": [{
-            "MatchId": {"S": "hi"},
+            "MatchId": "hi",
         }]
     }, SimpleNamespace())
 
@@ -63,20 +61,18 @@ def test_it_handles_multiple_columns(batch_sqs_msgs_mock, get_partitions_mock, g
     ]
     handler({
         "DataMappers": [{
-            "DataMapperId": {"S": "a"},
-            "QueryExecutor": {"S": "athena"},
-            "Columns": {"L": [{"S": "customer_id"}, {"S": "alt_customer_id"}]},
-            "Format": {"S": "parquet"},
+            "DataMapperId": "a",
+            "QueryExecutor": "athena",
+            "Columns": columns,
+            "Format": "parquet",
             "QueryExecutorParameters": {
-                "M": {
-                    "DataCatalogProvider": {"S": "glue"},
-                    "Database": {"S": "test_db"},
-                    "Table": {"S": "test_table"}
-                }
+                "DataCatalogProvider": "glue",
+                "Database": "test_db",
+                "Table": "test_table"
             }
         }],
         "DeletionQueue": [{
-            "MatchId": {"S": "hi"},
+            "MatchId": "hi",
         }]
     }, SimpleNamespace())
 
@@ -106,20 +102,18 @@ def test_it_handles_multiple_partition_keys(batch_sqs_msgs_mock, get_partitions_
     ]
     handler({
         "DataMappers": [{
-            "DataMapperId": {"S": "a"},
-            "QueryExecutor": {"S": "athena"},
-            "Columns": {"L": [{"S": "customer_id"}]},
-            "Format": {"S": "parquet"},
+            "DataMapperId": "a",
+            "QueryExecutor": "athena",
+            "Columns": columns,
+            "Format": "parquet",
             "QueryExecutorParameters": {
-                "M": {
-                    "DataCatalogProvider": {"S": "glue"},
-                    "Database": {"S": "test_db"},
-                    "Table": {"S": "test_table"}
-                }
+                "DataCatalogProvider": "glue",
+                "Database": "test_db",
+                "Table": "test_table"
             }
         }],
         "DeletionQueue": [{
-            "MatchId": {"S": "hi"},
+            "MatchId": "hi",
         }]
     }, SimpleNamespace())
 
@@ -150,20 +144,18 @@ def test_it_handles_multiple_partition_values(batch_sqs_msgs_mock, get_partition
     ]
     handler({
         "DataMappers": [{
-            "DataMapperId": {"S": "a"},
-            "QueryExecutor": {"S": "athena"},
-            "Columns": {"L": [{"S": "customer_id"}]},
-            "Format": {"S": "parquet"},
+            "DataMapperId": "a",
+            "QueryExecutor": "athena",
+            "Columns": columns,
+            "Format": "parquet",
             "QueryExecutorParameters": {
-                "M": {
-                    "DataCatalogProvider": {"S": "glue"},
-                    "Database": {"S": "test_db"},
-                    "Table": {"S": "test_table"}
-                }
+                "DataCatalogProvider": "glue",
+                "Database": "test_db",
+                "Table": "test_table"
             }
         }],
         "DeletionQueue": [{
-            "MatchId": {"S": "hi"},
+            "MatchId": "hi",
         }]
     }, SimpleNamespace())
 
@@ -214,36 +206,35 @@ def test_it_filters_users_from_non_applicable_tables(batch_sqs_msgs_mock, get_pa
     ]
     handler({
         "DataMappers": [{
-            "DataMapperId": {"S": "A"},
-            "QueryExecutor": {"S": "athena"},
-            "Columns": {"L": [{"S": "customer_id"}]},
-            "Format": {"S": "parquet"},
+            "DataMapperId": "A",
+            "QueryExecutor": "athena",
+            "Columns": columns,
+            "Format": "parquet",
             "QueryExecutorParameters": {
-                "M": {
-                    "DataCatalogProvider": {"S": "glue"},
-                    "Database": {"S": "test_db"},
-                    "Table": {"S": "A"}
-                }
+                "DataCatalogProvider": "glue",
+                "Database": "test_db",
+                "Table": "A"
             }
-        }, {
-            "DataMapperId": {"S": "B"},
-            "QueryExecutor": {"S": "athena"},
-            "Columns": {"L": [{"S": "customer_id"}]},
-            "Format": {"S": "parquet"},
+        },
+        {
+            "DataMapperId": "B",
+            "QueryExecutor": "athena",
+            "Columns": columns,
+            "Format": "parquet",
             "QueryExecutorParameters": {
-                "M": {
-                    "DataCatalogProvider": {"S": "glue"},
-                    "Database": {"S": "test_db"},
-                    "Table": {"S": "B"}
-                }
+                "DataCatalogProvider": "glue",
+                "Database": "test_db",
+                "Table": "B"
             }
         }],
         "DeletionQueue": [{
-            "MatchId": {"S": "123"},
-            "DataMappers": {"L": [{"S": "A"}]},
+            "MatchId": "123",
+            "DataMappers": [
+                "A"
+            ]
         }, {
-            "MatchId": {"S": "456"},
-            "DataMappers": {"L": []},
+            "MatchId": "456",
+            "DataMappers": []
         }]
     }, SimpleNamespace())
 
@@ -276,20 +267,18 @@ def test_it_handles_unpartitioned_data(batch_sqs_msgs_mock, get_partitions_mock,
     get_partitions_mock.return_value = []
     handler({
         "DataMappers": [{
-            "DataMapperId": {"S": "a"},
-            "QueryExecutor": {"S": "athena"},
-            "Columns": {"L": [{"S": "customer_id"}]},
-            "Format": {"S": "parquet"},
+            "DataMapperId": "a",
+            "QueryExecutor": "athena",
+            "Columns": columns,
+            "Format": "parquet",
             "QueryExecutorParameters": {
-                "M": {
-                    "DataCatalogProvider": {"S": "glue"},
-                    "Database": {"S": "test_db"},
-                    "Table": {"S": "test_table"}
-                }
+                "DataCatalogProvider": "glue",
+                "Database": "test_db",
+                "Table": "test_table"
             }
         }],
         "DeletionQueue": [{
-            "MatchId": {"S": "123"},
+            "MatchId": "123",
         }]
     }, SimpleNamespace())
 
@@ -299,7 +288,7 @@ def test_it_handles_unpartitioned_data(batch_sqs_msgs_mock, get_partitions_mock,
             'Database': 'test_db',
             'Table': 'test_table',
             'Columns': [{'Column': 'customer_id', 'MatchIds': ['123']}],
-            'PartitionKeys': []
+            'PartitionKeys': [],
         },
     ])
 
@@ -313,21 +302,19 @@ def test_it_removes_queries_with_no_applicable_matches(batch_sqs_msgs_mock, get_
     get_partitions_mock.return_value = []
     handler({
         "DataMappers": [{
-            "DataMapperId": {"S": "a"},
-            "QueryExecutor": {"S": "athena"},
-            "Columns": {"L": [{"S": "customer_id"}]},
-            "Format": {"S": "parquet"},
+            "DataMapperId": "A",
+            "QueryExecutor": "athena",
+            "Columns": columns,
+            "Format": "parquet",
             "QueryExecutorParameters": {
-                "M": {
-                    "DataCatalogProvider": {"S": "glue"},
-                    "Database": {"S": "test_db"},
-                    "Table": {"S": "test_table"}
-                }
+                "DataCatalogProvider": "glue",
+                "Database": "test_db",
+                "Table": "test_table"
             }
         }],
         "DeletionQueue": [{
-            "MatchId": {"S": "123"},
-            "DataMappers": {"L": [{"S": "B"}]}
+            "MatchId": "123",
+            "DataMappers": ["B"]
         }]
     }, SimpleNamespace())
 
@@ -348,21 +335,19 @@ def test_it_removes_queries_with_no_applicable_matches_for_partitioned_data(
     ]
     handler({
         "DataMappers": [{
-            "DataMapperId": {"S": "A"},
-            "QueryExecutor": {"S": "athena"},
-            "Columns": {"L": [{"S": "customer_id"}]},
-            "Format": {"S": "parquet"},
+            "DataMapperId": "A",
+            "QueryExecutor": "athena",
+            "Columns": columns,
+            "Format": "parquet",
             "QueryExecutorParameters": {
-                "M": {
-                    "DataCatalogProvider": {"S": "glue"},
-                    "Database": {"S": "test_db"},
-                    "Table": {"S": "test_table"}
-                }
+                "DataCatalogProvider": "glue",
+                "Database": "test_db",
+                "Table": "test_table"
             }
         }],
         "DeletionQueue": [{
-            "MatchId": {"S": "123"},
-            "DataMappers": {"L": [{"S": "C"}]}
+            "MatchId": "123",
+            "DataMappers": ["C"]
         }]
     }, SimpleNamespace())
 

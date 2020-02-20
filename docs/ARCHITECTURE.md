@@ -77,7 +77,7 @@ The data is stored in DynamoDB using 3 tables:
 
 The Deletion Job workflow is implemented as an AWS Step Function. 
 
-When a Deletion Job starts, the solution gathers the contents of the Deletion Queue and all the configured data mappers then proceeds to the Find phase.
+When a Deletion Job starts, the solution gathers all the configured data mappers then proceeds to the Find phase.
 
 For each supported query executor, the workflow generates a list of queries it should run based on the data mappers associated with that query executor and the partitions present in the data catalog tables associated with those data mappers. For each query, a message is added to the specific SQS queue for the relevant query executor.
 
@@ -98,7 +98,7 @@ When each workflow completes a query, it stores the result to the Object Deletio
 
 The Forget workflow is operated by a Amazon Step Function that uses AWS Lambda and AWS Fargate for computing and Amazon DynamoDB and Amazon SQS to handle state.
 
-When the workflow starts, a fleet of AWS Fargate tasks is instanciated to consume the Object Deletion Queue and start deleting content from the objects. When the Queue is empty, a Lambda sets the instances back to 0 in order to optimise cost. The number of Fargate tasks is configurable when deploying the solution.
+When the workflow starts, a fleet of AWS Fargate tasks is instantiated to consume the Object Deletion Queue and start deleting content from the objects. When the Queue is empty, a Lambda sets the instances back to 0 in order to optimise cost. The number of Fargate tasks is configurable when deploying the solution.
 
 ![Architecture](images/stepfunctions_graph_deletion.png)
 
