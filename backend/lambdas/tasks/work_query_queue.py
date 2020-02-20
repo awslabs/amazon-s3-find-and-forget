@@ -12,8 +12,8 @@ queue = sqs.Queue(queue_url)
 sf_client = boto3.client("stepfunctions")
 
 
-@s3_state_store()
 @with_logger
+@s3_state_store(keys=["Data"])
 def handler(event, context):
     concurrency_limit = int(event.get("AthenaConcurrencyLimit", 15))
     wait_duration = int(event.get("QueryExecutionWaitSeconds", 15))

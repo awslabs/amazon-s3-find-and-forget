@@ -3,12 +3,18 @@ import inspect
 import json
 import logging
 import os
+from uuid import uuid4
 
+import boto3
 import jsonschema
 from botocore.exceptions import ClientError
 
+from boto_utils import DecimalEncoder, parse_s3_url
+
 logger = logging.getLogger()
 logger.setLevel(os.getenv("LogLevel", logging.INFO))
+
+s3 = boto3.resource("s3")
 
 
 def with_logger(handler):
@@ -132,15 +138,29 @@ def add_cors_headers(handler):
     return wrapper
 
 
-def s3_state_store(s3_state_identifier="S3Data", upload=True, download=True):
+def s3_state_store(keys, should_offload=True, should_restore=True, bucket=os.getenv("StateBucket"),
+                   prefix="state/"):
     """
-    Decorator which auto (re)stores
+    Decorator which auto (re)stores state to/from S3.
+    Only dictionaries and lists can be (re)stored to/from S3
     """
+    def _load_value(value):
+        parsed_bucket, parsed_key = parse_s3_url(value)
+        logger.info("Loading data from S3 key {}".format(parsed_key))
+        obj = s3.Object(parsed_bucket, parsed_key).get()["Body"].read()
+        return json.loads(obj)
+
+    def _offload_value(value):
+        key = "{}{}".format(prefix, uuid4())
+        logger.info("Offloading data to S3 key {}".format(key))
+        s3.Object(bucket, key).put(Body=json.dumps(value, cls=DecimalEncoder))
+        return "s3://{}/{}".format(bucket, key)
+
     def restore(d):
         loaded = {}
         for k, v in d.items():
-            if k == s3_state_identifier:
-                loaded[k] = v
+            if k in keys and isinstance(v, str) and v.startswith("s3://"):
+                loaded[k] = _load_value(v)
             elif isinstance(v, dict):
                 loaded[k] = restore(v)
             else:
@@ -148,25 +168,30 @@ def s3_state_store(s3_state_identifier="S3Data", upload=True, download=True):
         return loaded
 
     def offload(d):
-        loaded = {}
+        offloaded = {}
+        if not isinstance(d, dict):
+            logger.warning("Can't perform offloading on type '{}'. Expected type 'dict'.".format(type(d)))
+            return d
+
         for k, v in d.items():
-            if k == s3_state_identifier:
-                loaded[k] = v
+            if k in keys and isinstance(v, (dict, list)):
+                offloaded[k] = _offload_value(v)
             elif isinstance(v, dict):
-                loaded[k] = offload(v)
+                offloaded[k] = offload(v)
             else:
-                loaded[k] = v
-        return loaded
+                offloaded[k] = v
+
+        return offloaded
 
     def wrapper_wrapper(handler):
         @functools.wraps(handler)
         def wrapper(event, context):
-            if download and isinstance(event, dict):
+            if should_restore and isinstance(event, dict):
                 event = restore(event)
 
             resp = handler(event, context)
 
-            if upload and isinstance(resp, dict):
+            if should_offload and isinstance(resp, dict):
                 resp = offload(resp)
             return resp
         return wrapper

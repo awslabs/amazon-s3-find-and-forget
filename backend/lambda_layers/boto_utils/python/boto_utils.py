@@ -165,3 +165,8 @@ def deserialize_item(item):
     return {
         k: deserializer.deserialize(v) for k, v in item.items()
     }
+
+
+def parse_s3_url(s3_url):
+    bucket, key = s3_url.replace("s3://", "").split("/", 1)
+    return bucket, key
