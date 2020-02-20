@@ -349,7 +349,7 @@ def job_factory(job_table, sf_client, stack):
     items = []
 
     def factory(job_id=str(uuid4()), status="QUEUED", gsib="0", created_at=round(datetime.datetime.now().timestamp()),
-                matches=[], safe_mode=False, **kwargs):
+                del_queue_items=[], safe_mode=False, **kwargs):
         item = {
             "Id": job_id,
             "Sk": job_id,
@@ -357,7 +357,7 @@ def job_factory(job_table, sf_client, stack):
             "JobStatus": status,
             "CreatedAt": created_at,
             "GSIBucket": gsib,
-            "DeletionQueueItems": matches,
+            "DeletionQueueItems": del_queue_items,
             "SafeMode": safe_mode,
             "AthenaConcurrencyLimit": 15,
             "DeletionTasksMaxNumber": 1,

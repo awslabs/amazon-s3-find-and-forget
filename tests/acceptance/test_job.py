@@ -81,11 +81,11 @@ def test_it_runs_for_happy_path(del_queue_factory, job_factory, dummy_lake, glue
                                 job_complete_waiter, job_table):
     # Generate a parquet file and add it to the lake
     glue_data_mapper_factory("test", partition_keys=["year", "month", "day"], partitions=[["2019", "08", "20"]])
-    del_queue_factory("12345")
+    item = del_queue_factory("12345")
     object_key = "test/2019/08/20/test.parquet"
     data_loader("basic.parquet", object_key)
     bucket = dummy_lake["bucket"]
-    job_id = job_factory()["Id"]
+    job_id = job_factory(del_queue_items=[item])["Id"]
     # Act
     job_complete_waiter.wait(TableName=job_table.name, Key={"Id": {"S": job_id}, "Sk": {"S": job_id}})
     # Assert
@@ -99,11 +99,11 @@ def test_it_runs_for_unpartitioned_data(del_queue_factory, job_factory, dummy_la
                                         data_loader, job_complete_waiter, job_table):
     # Generate a parquet file and add it to the lake
     glue_data_mapper_factory("test")
-    del_queue_factory("12345")
+    item = del_queue_factory("12345")
     object_key = "test/test.parquet"
     data_loader("basic.parquet", object_key)
     bucket = dummy_lake["bucket"]
-    job_id = job_factory()["Id"]
+    job_id = job_factory(del_queue_items=[item])["Id"]
     # Act
     job_complete_waiter.wait(TableName=job_table.name, Key={"Id": {"S": job_id}, "Sk": {"S": job_id}})
     # Assert
@@ -117,11 +117,11 @@ def test_it_does_not_delete_in_safe_mode(del_queue_factory, job_factory, dummy_l
                                          data_loader, job_complete_waiter, job_table, stack, s3_resource):
     # Generate a parquet file and add it to the lake
     glue_data_mapper_factory("test", partition_keys=["year", "month", "day"], partitions=[["2019", "08", "20"]])
-    del_queue_factory("12345")
+    item = del_queue_factory("12345")
     object_key = "test/2019/08/20/test.parquet"
     data_loader("basic.parquet", object_key)
     bucket = dummy_lake["bucket"]
-    job_id = job_factory(safe_mode=True)["Id"]
+    job_id = job_factory(del_queue_items=[item], safe_mode=True)["Id"]
     # Act
     job_complete_waiter.wait(TableName=job_table.name, Key={"Id": {"S": job_id}, "Sk": {"S": job_id}})
     # Assert
