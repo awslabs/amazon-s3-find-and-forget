@@ -3,7 +3,6 @@ from collections import Counter
 import signal
 from functools import lru_cache
 from urllib.parse import urlencode, quote_plus
-from uuid import uuid4
 from operator import itemgetter
 
 import boto3
@@ -19,7 +18,7 @@ import s3fs
 from botocore.exceptions import ClientError
 from pyarrow.lib import ArrowException
 
-from boto_utils import emit_event
+from boto_utils import emit_event, parse_s3_url
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -260,7 +259,7 @@ def execute(message_body, receipt_handle):
         body = json.loads(message_body)
         cols, object_path, job_id = itemgetter('Columns', 'Object', 'JobId')(body)
         in_safe_mode = safe_mode(table, job_id)
-        input_bucket, input_key = object_path.replace("s3://", "").split("/", 1)
+        input_bucket, input_key = parse_s3_url(object_path)
         # Download the object in-memory and convert to PyArrow NativeFile
         logger.info("Downloading and opening {} object in-memory".format(object_path))
         with s3.open(object_path, "rb") as f:

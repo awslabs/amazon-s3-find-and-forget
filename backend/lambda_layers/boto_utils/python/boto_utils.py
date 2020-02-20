@@ -165,3 +165,9 @@ def deserialize_item(item):
     return {
         k: deserializer.deserialize(v) for k, v in item.items()
     }
+
+
+def parse_s3_url(s3_url):
+    if not (isinstance(s3_url, str) and s3_url.startswith("s3://")):
+        raise ValueError("Invalid S3 URL")
+    return s3_url.replace("s3://", "").split("/", 1)

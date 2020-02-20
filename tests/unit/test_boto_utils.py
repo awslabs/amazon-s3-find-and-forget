@@ -9,7 +9,7 @@ from botocore.exceptions import ClientError
 from mock import MagicMock, ANY, patch
 
 from boto_utils import convert_iso8601_to_epoch, paginate, batch_sqs_msgs, read_queue, emit_event, DecimalEncoder, \
-    normalise_dates, deserialize_item, running_job_exists, get_config, utc_timestamp, get_job_expiry
+    normalise_dates, deserialize_item, running_job_exists, get_config, utc_timestamp, get_job_expiry, parse_s3_url
 
 pytestmark = [pytest.mark.unit, pytest.mark.layers]
 
@@ -311,3 +311,16 @@ def test_it_returns_no_expiry(table):
     get_job_expiry.cache_clear()
     table.get_item.return_value = {"Item": {}}
     assert not get_job_expiry("123")
+
+
+def test_it_parses_s3_url():
+    assert ["bucket", "test/key"] == parse_s3_url("s3://bucket/test/key")
+    assert ["bucket", "key"] == parse_s3_url("s3://bucket/key")
+    assert ["bucket"] == parse_s3_url("s3://bucket")
+
+
+def test_it_throws_for_invalid_urls():
+    with pytest.raises(ValueError):
+        parse_s3_url("not a url")
+    with pytest.raises(ValueError):
+        parse_s3_url(["s3://", "not", "string"])

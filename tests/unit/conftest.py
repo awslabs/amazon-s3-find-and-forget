@@ -17,19 +17,6 @@ def pytest_configure(config):
 
 
 @pytest.fixture(autouse=True)
-def decorator_mocks(monkeypatch):
-    """
-    Mock the logging and tracing decorators
-    """
-
-    def mock_decorator(func):
-        return func
-
-    import decorators
-    monkeypatch.setattr(decorators, "with_logger", mock_decorator)
-
-
-@pytest.fixture(autouse=True)
 def cr_helper_mocks(monkeypatch):
     """
     Mock the Custom Resource Helper

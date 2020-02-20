@@ -12,6 +12,7 @@ Globals:
       Variables:
         LogLevel: !Ref LogLevel
         JobTable: !Ref JobTableName
+        StateBucket: !Ref ResultBucket
 
 Parameters:
   AthenaWorkGroup:
@@ -889,6 +890,8 @@ Resources:
           StateMachineArn: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${StateMachinePrefix}-AthenaStateMachine"
           QueueUrl: !Ref QueryQueue
       Policies:
+      - S3CrudPolicy:
+          BucketName: !Ref ResultBucket
       - Statement:
         - Action:
           - "states:StartExecution"

@@ -3,12 +3,18 @@ import inspect
 import json
 import logging
 import os
+from uuid import uuid4
 
+import boto3
 import jsonschema
 from botocore.exceptions import ClientError
 
+from boto_utils import DecimalEncoder, parse_s3_url
+
 logger = logging.getLogger()
 logger.setLevel(os.getenv("LogLevel", logging.INFO))
+
+s3 = boto3.resource("s3")
 
 
 def with_logger(handler):
@@ -129,4 +135,65 @@ def add_cors_headers(handler):
 
         return resp
  
-    return wrapper 
+    return wrapper
+
+
+def s3_state_store(load_keys=[], offload_keys=[], should_offload=True, should_load=True,
+                   bucket=None, prefix="state/"):
+    """
+    Decorator which auto (re)stores state to/from S3.
+    Only dictionaries and lists can be (re)stored to/from S3
+    """
+    if not bucket:
+        bucket = os.getenv("StateBucket")
+
+    def _load_value(value):
+        parsed_bucket, parsed_key = parse_s3_url(value)
+        logger.info("Loading data from S3 key {}".format(parsed_key))
+        obj = s3.Object(parsed_bucket, parsed_key).get()["Body"].read()
+        return json.loads(obj)
+
+    def _offload_value(value):
+        key = "{}{}".format(prefix, uuid4())
+        logger.info("Offloading data to S3 key {}".format(key))
+        s3.Object(bucket, key).put(Body=json.dumps(value, cls=DecimalEncoder))
+        return "s3://{}/{}".format(bucket, key)
+
+    def load(d):
+        loaded = {}
+
+        for k, v in d.items():
+            if (k in load_keys or len(load_keys) == 0) and isinstance(v, str) and v.startswith("s3://"):
+                loaded[k] = _load_value(v)
+            elif isinstance(v, dict):
+                loaded[k] = load(v)
+            else:
+                loaded[k] = v
+        return loaded
+
+    def offload(d):
+        offloaded = {}
+
+        for k, v in d.items():
+            if (k in offload_keys or len(offload_keys) == 0) and isinstance(v, (dict, list)):
+                offloaded[k] = _offload_value(v)
+            elif isinstance(v, dict):
+                offloaded[k] = offload(v)
+            else:
+                offloaded[k] = v
+
+        return offloaded
+
+    def wrapper_wrapper(handler):
+        @functools.wraps(handler)
+        def wrapper(event, context):
+            if should_load and isinstance(event, dict):
+                event = load(event)
+
+            resp = handler(event, context)
+
+            if should_offload and isinstance(resp, dict):
+                resp = offload(resp)
+            return resp
+        return wrapper
+    return wrapper_wrapper

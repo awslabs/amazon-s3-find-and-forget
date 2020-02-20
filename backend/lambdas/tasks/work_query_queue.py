@@ -2,7 +2,7 @@ import json
 import os
 import boto3
 
-from decorators import with_logger
+from decorators import with_logger, s3_state_store
 from boto_utils import read_queue
 
 queue_url = os.getenv("QueueUrl")
@@ -13,6 +13,7 @@ sf_client = boto3.client("stepfunctions")
 
 
 @with_logger
+@s3_state_store(offload_keys=["Data"])
 def handler(event, context):
     concurrency_limit = int(event.get("AthenaConcurrencyLimit", 15))
     wait_duration = int(event.get("QueryExecutionWaitSeconds", 15))
@@ -40,7 +41,6 @@ def handler(event, context):
         msgs = read_queue(queue, remaining_capacity)
         started = []
         for msg in msgs:
-            context.logger.debug(msg.body)
             body = json.loads(msg.body)
             body["AWS_STEP_FUNCTIONS_STARTED_BY_EXECUTION_ID"] = execution_id
             body["JobId"] = job_id
