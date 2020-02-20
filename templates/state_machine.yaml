@@ -538,8 +538,8 @@ Resources:
                   "States": {
                     "Filter Athena Data Mappers": {
                       "Parameters": {
-                        "DataMappers.$": "$.DataMappers.Items[?(@.QueryExecutor.S=='athena')]",
-                        "DeletionQueue.$": "$.DeletionQueue.Items",
+                        "DataMappers.$": "$.DataMappers.Items[?(@.QueryExecutor=='athena')]",
+                        "DeletionQueue.$": "$.DeletionQueueItems",
                         "ExecutionId.$": "$$.Execution.Id",
                         "ExecutionName.$": "$$.Execution.Name",
                         "AthenaConcurrencyLimit.$": "$.AthenaConcurrencyLimit",
