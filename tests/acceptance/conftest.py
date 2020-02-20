@@ -361,9 +361,9 @@ def job_factory(job_table, sf_client, stack):
             "SafeMode": safe_mode,
             "AthenaConcurrencyLimit": 15,
             "DeletionTasksMaxNumber": 1,
-            "WaitDurationQueryExecution": 1,
-            "WaitDurationQueryQueue": 1,
-            "WaitDurationForgetQueue": 5,
+            "QueryExecutionWaitSeconds": 1,
+            "QueryQueueWaitSeconds": 1,
+            "ForgetQueueWaitSeconds": 5,
             **kwargs
         }
         job_table.put_item(Item=item)

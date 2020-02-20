@@ -117,9 +117,9 @@ def test_it_process_queue(mock_config, mock_running_job, job_table, q_table, uui
         "AthenaConcurrencyLimit": 15,
         "DeletionTasksMaxNumber": 50,
         "SafeMode": False,
-        "WaitDurationQueryExecution": 5,
-        "WaitDurationQueryQueue": 5,
-        "WaitDurationForgetQueue": 30
+        "QueryExecutionWaitSeconds": 5,
+        "QueryQueueWaitSeconds": 5,
+        "ForgetQueueWaitSeconds": 30
     }
     q_table.scan.return_value = {"Items": [{"MatchId": "123", "CreatedAt": 123}]}
     uuid.uuid4.return_value = 123
@@ -137,9 +137,9 @@ def test_it_process_queue(mock_config, mock_running_job, job_table, q_table, uui
         "AthenaConcurrencyLimit": 15,
         "DeletionTasksMaxNumber": 50,
         "SafeMode": False,
-        "WaitDurationQueryExecution": 5,
-        "WaitDurationQueryQueue": 5,
-        "WaitDurationForgetQueue": 30
+        "QueryExecutionWaitSeconds": 5,
+        "QueryQueueWaitSeconds": 5,
+        "ForgetQueueWaitSeconds": 30
     })
     assert 202 == response["statusCode"]
     assert "headers" in response
@@ -154,9 +154,9 @@ def test_it_process_queue(mock_config, mock_running_job, job_table, q_table, uui
         "AthenaConcurrencyLimit": 15,
         "DeletionTasksMaxNumber": 50,
         "SafeMode": False,
-        "WaitDurationQueryExecution": 5,
-        "WaitDurationQueryQueue": 5,
-        "WaitDurationForgetQueue": 30
+        "QueryExecutionWaitSeconds": 5,
+        "QueryQueueWaitSeconds": 5,
+        "ForgetQueueWaitSeconds": 30
     } == json.loads(response["body"])
 
 
@@ -173,11 +173,11 @@ def test_it_applies_expiry(mock_utc, mock_config, mock_running_job, job_table, q
     mock_config.return_value = {
         "AthenaConcurrencyLimit": 15,
         "DeletionTasksMaxNumber": 50,
-        "JobRecordRetentionDays": 30,
+        "JobDetailsRetentionDays": 30,
         "SafeMode": False,
-        "WaitDurationQueryExecution": 5,
-        "WaitDurationQueryQueue": 5,
-        "WaitDurationForgetQueue": 30
+        "QueryExecutionWaitSeconds": 5,
+        "QueryQueueWaitSeconds": 5,
+        "ForgetQueueWaitSeconds": 30
     }
     q_table.scan.return_value = {"Items": [{"MatchId": "123", "CreatedAt": 123}]}
     uuid.uuid4.return_value = 123
@@ -197,9 +197,9 @@ def test_it_applies_expiry(mock_utc, mock_config, mock_running_job, job_table, q
         "DeletionQueueItems": [{"MatchId": "123", "CreatedAt": 123}],
         "AthenaConcurrencyLimit": 15,
         "DeletionTasksMaxNumber": 50,
-        "WaitDurationQueryExecution": 5,
-        "WaitDurationQueryQueue": 5,
-        "WaitDurationForgetQueue": 30
+        "QueryExecutionWaitSeconds": 5,
+        "QueryQueueWaitSeconds": 5,
+        "ForgetQueueWaitSeconds": 30
     })
     assert 202 == response["statusCode"]
 

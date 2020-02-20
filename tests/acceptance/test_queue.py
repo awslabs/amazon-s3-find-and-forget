@@ -113,7 +113,7 @@ def test_it_disables_cancel_deletion_whilst_job_in_progress(api_client, queue_ba
 def test_it_processes_queue(api_client, queue_base_endpoint, sf_client, job_table, stack, job_complete_waiter,
                             config_mutator):
     # Arrange
-    config_mutator(JobRecordRetentionDays=0)
+    config_mutator(JobDetailsRetentionDays=0)
     # Act
     response = api_client.delete(queue_base_endpoint)
     response_body = response.json()
@@ -135,7 +135,7 @@ def test_it_processes_queue(api_client, queue_base_endpoint, sf_client, job_tabl
 def test_it_sets_expiry(api_client, queue_base_endpoint, sf_client, job_table, stack, job_complete_waiter,
                         config_mutator):
     # Arrange
-    config_mutator(JobRecordRetentionDays=1)
+    config_mutator(JobDetailsRetentionDays=1)
     # Act
     response = api_client.delete(queue_base_endpoint)
     response_body = response.json()

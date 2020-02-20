@@ -56,7 +56,7 @@ def test_it_starts_machine_as_expected(sqs_mock, read_queue_mock, sf_client_mock
         "ExecutionId": "1234",
         "ExecutionName": "4231",
         "AthenaConcurrencyLimit": 5,
-        "WaitDurationQueryExecution": 5,
+        "QueryExecutionWaitSeconds": 5,
     }, SimpleNamespace())
 
     sf_client_mock.start_execution.assert_called_with(stateMachineArn=ANY, input=expected_call)

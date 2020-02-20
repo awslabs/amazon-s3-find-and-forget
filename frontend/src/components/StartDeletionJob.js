@@ -16,23 +16,23 @@ export default ({ className, gateway, goToJobDetails }) => {
     setFormState("wait");
     setStarting(true);
     try {
-      const [settings, queue, dataMappers] = await Promise.all([
+      const [{Settings}, {MatchIds}, {DataMappers}] = await Promise.all([
         gateway.getSettings(),
         gateway.getQueue(),
         gateway.getDataMappers()
       ]);
 
       setSummary({
-        "Deletion Queue Size": queue.MatchIds.length,
-        "Data Mappers Count": dataMappers.DataMappers.length,
-        "Safe Mode": settings.Settings.SafeMode.toString().toUpperCase(),
-        "Job History Retention (Days)": settings.Settings.JobRecordRetentionDays,
-        "Athena Concurrency Limit": settings.Settings.AthenaConcurrencyLimit,
+        "Deletion Queue Size": MatchIds.length,
+        "Data Mappers Count": DataMappers.length,
+        "Safe Mode": Settings.SafeMode.toString().toUpperCase(),
+        "Job Details Retention (Days)": Settings.JobDetailsRetentionDays,
+        "Athena Concurrency Limit": Settings.AthenaConcurrencyLimit,
         "Wait Duration Query Execution":
-          settings.Settings.WaitDurationQueryExecution,
-        "Wait Duration Query Queue": settings.Settings.WaitDurationQueryQueue,
-        "Deletion Tasks Max Number": settings.Settings.DeletionTasksMaxNumber,
-        "Wait Duration Forget Queue": settings.Settings.WaitDurationForgetQueue
+          Settings.QueryExecutionWaitSecondsSeconds,
+        "Wait Duration Query Queue": Settings.QueryQueueWaitSecondsSeconds,
+        "Deletion Tasks Max Number": Settings.DeletionTasksMaxNumber,
+        "Wait Duration Forget Queue": Settings.ForgetQueueWaitSecondsSeconds
       });
 
       setFormState("confirm");

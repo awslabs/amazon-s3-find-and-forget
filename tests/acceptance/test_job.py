@@ -29,9 +29,9 @@ def test_it_gets_jobs(api_client, jobs_endpoint, job_factory, stack, job_table, 
         "SafeMode": False,
         "AthenaConcurrencyLimit": mock.ANY,
         "DeletionTasksMaxNumber": mock.ANY,
-        "WaitDurationQueryExecution": mock.ANY,
-        "WaitDurationQueryQueue": mock.ANY,
-        "WaitDurationForgetQueue": mock.ANY,
+        "QueryExecutionWaitSeconds": mock.ANY,
+        "QueryQueueWaitSeconds": mock.ANY,
+        "ForgetQueueWaitSeconds": mock.ANY,
     } == response_body
     assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
 

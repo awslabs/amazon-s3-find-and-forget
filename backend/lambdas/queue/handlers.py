@@ -91,10 +91,10 @@ def process_handler(event, context):
         "GSIBucket": str(random.randint(0, bucket_count - 1)),
         "CreatedAt": utc_timestamp(),
         "DeletionQueueItems": deletion_queue_table.scan()["Items"],
-        **{k: v for k, v in config.items() if k not in ["JobRecordRetentionDays"]},
+        **{k: v for k, v in config.items() if k not in ["JobDetailsRetentionDays"]},
     }
-    if int(config.get("JobRecordRetentionDays", 0)) > 0:
-        item["Expires"] = utc_timestamp(days=config["JobRecordRetentionDays"])
+    if int(config.get("JobDetailsRetentionDays", 0)) > 0:
+        item["Expires"] = utc_timestamp(days=config["JobDetailsRetentionDays"])
 
     jobs_table.put_item(Item=item)
 

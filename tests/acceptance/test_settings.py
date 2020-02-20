@@ -16,10 +16,10 @@ def test_it_gets_settings(api_client, settings_base_endpoint, stack):
         'AthenaConcurrencyLimit': ANY,
         'DeletionTasksMaxNumber': ANY,
         'SafeMode': ANY,
-        'JobRecordRetentionDays': ANY,
-        'WaitDurationForgetQueue': ANY,
-        'WaitDurationQueryExecution': ANY,
-        'WaitDurationQueryQueue': ANY
+        'JobDetailsRetentionDays': ANY,
+        'ForgetQueueWaitSeconds': ANY,
+        'QueryExecutionWaitSeconds': ANY,
+        'QueryQueueWaitSeconds': ANY
     }
     assert response.headers.get(
         "Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]

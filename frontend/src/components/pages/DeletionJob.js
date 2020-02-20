@@ -240,16 +240,16 @@ export default ({ gateway, jobId }) => {
                 {job.AthenaConcurrencyLimit}
               </DetailsBox>
               <DetailsBox label="Wait Duration Query Execution">
-                {job.WaitDurationQueryExecution}
+                {job.QueryExecutionWaitSeconds}
               </DetailsBox>
               <DetailsBox label="Wait Duration Query Queue">
-                {job.WaitDurationQueryQueue}
+                {job.QueryQueueWaitSeconds}
               </DetailsBox>
               <DetailsBox label="Deletion Tasks Max Number">
                 {job.DeletionTasksMaxNumber}
               </DetailsBox>
               <DetailsBox label="Wait Duration Forget Queue">
-                {job.WaitDurationForgetQueue}
+                {job.ForgetQueueWaitSeconds}
               </DetailsBox>
             </div>
           </div>

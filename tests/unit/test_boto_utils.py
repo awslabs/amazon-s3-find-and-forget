@@ -248,9 +248,9 @@ def test_it_retrieves_config(mock_client):
             "Value": json.dumps({
                 "AthenaConcurrencyLimit": 1,
                 "DeletionTasksMaxNumber": 1,
-                "WaitDurationQueryExecution": 1,
-                "WaitDurationQueryQueue": 1,
-                "WaitDurationForgetQueue": 1,
+                "QueryExecutionWaitSeconds": 1,
+                "QueryQueueWaitSeconds": 1,
+                "ForgetQueueWaitSeconds": 1,
                 "SafeMode": True
             })
         }
@@ -260,9 +260,9 @@ def test_it_retrieves_config(mock_client):
     assert {
                "AthenaConcurrencyLimit": 1,
                "DeletionTasksMaxNumber": 1,
-               "WaitDurationQueryExecution": 1,
-               "WaitDurationQueryQueue": 1,
-               "WaitDurationForgetQueue": 1,
+               "QueryExecutionWaitSeconds": 1,
+               "QueryQueueWaitSeconds": 1,
+               "ForgetQueueWaitSeconds": 1,
                "SafeMode": True
            } == resp
 
