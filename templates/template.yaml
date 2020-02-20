@@ -46,10 +46,26 @@ Parameters:
     AllowedValues:
       - "true"
       - "false"
+  ForgetQueueWaitSeconds:
+    Description: Wait interval for checking Forget progress
+    Type: Number
+    Default: 30
+  JobDetailsRetentionDays:
+    Description: How log to retain Job Record logs. Use 0 for indefinite. Default is 0
+    Type: Number
+    Default: 0
   PreBuiltArtefactsBucketOverride:
     Description: Overrides the default Bucket containing Front-end and Back-end pre-built artefacts. When false, the default is used for the given region (for example solution-builders-us-west-1)
     Type: String
     Default: "false"
+  QueryExecutionWaitSeconds:
+    Description: Wait interval for checking if a query has completed
+    Type: Number
+    Default: 3
+  QueryQueueWaitSeconds:
+    Description: Wait interval for checking Find progress
+    Type: Number
+    Default: 3
   ResourcePrefix:
     Description: The prefix used for uniquely named resources, such as State Machines, etc.
     Type: String
@@ -68,18 +84,6 @@ Parameters:
   VpcSubnets:
     Description: List of subnets to deploy Fargate tasks in
     Type: CommaDelimitedList
-  WaitDurationQueryExecution:
-    Description: Wait interval for checking if a query has completed
-    Type: Number
-    Default: 3
-  WaitDurationQueryQueue:
-    Description: Wait interval for checking Find progress
-    Type: Number
-    Default: 3
-  WaitDurationForgetQueue:
-    Description: Wait interval for checking Forget progress
-    Type: Number
-    Default: 30
 
 Conditions:
   DefaultPreBuiltArtefactsBucket: !Equals [!Ref PreBuiltArtefactsBucketOverride, "false"]
@@ -116,9 +120,10 @@ Resources:
           "AthenaConcurrencyLimit": ${AthenaConcurrencyLimit},
           "DeletionTasksMaxNumber": ${DeletionTasksMaxNumber},
           "SafeMode": ${SafeMode},
-          "WaitDurationQueryExecution": ${WaitDurationQueryExecution},
-          "WaitDurationQueryQueue": ${WaitDurationQueryQueue},
-          "WaitDurationForgetQueue": ${WaitDurationForgetQueue}
+          "JobDetailsRetentionDays": ${JobDetailsRetentionDays},
+          "QueryExecutionWaitSeconds": ${QueryExecutionWaitSeconds},
+          "QueryQueueWaitSeconds": ${QueryQueueWaitSeconds},
+          "ForgetQueueWaitSeconds": ${ForgetQueueWaitSeconds}
         }
       Description: SSM Parameter for S3F2 configuration.
 
@@ -290,10 +295,11 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: "Required"
+          default: "Admin Configuration"
         Parameters:
           - AdminEmail
           - SafeMode
+          - JobDetailsRetentionDays
       - Label:
           default: "Network Configuration"
         Parameters:
@@ -311,9 +317,9 @@ Metadata:
       - Label:
           default: "Waiter Configuration"
         Parameters:
-          - WaitDurationQueryExecution
-          - WaitDurationQueryQueue
-          - WaitDurationForgetQueue
+          - QueryExecutionWaitSeconds
+          - QueryQueueWaitSeconds
+          - ForgetQueueWaitSeconds
       - Label:
           default: "Advanced Configuration"
         Parameters:

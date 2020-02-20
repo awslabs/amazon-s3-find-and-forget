@@ -29,9 +29,9 @@ def test_it_gets_jobs(api_client, jobs_endpoint, job_factory, stack, job_table, 
         "SafeMode": False,
         "AthenaConcurrencyLimit": mock.ANY,
         "DeletionTasksMaxNumber": mock.ANY,
-        "WaitDurationQueryExecution": mock.ANY,
-        "WaitDurationQueryQueue": mock.ANY,
-        "WaitDurationForgetQueue": mock.ANY,
+        "QueryExecutionWaitSeconds": mock.ANY,
+        "QueryQueueWaitSeconds": mock.ANY,
+        "ForgetQueueWaitSeconds": mock.ANY,
     } == response_body
     assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
 
@@ -83,6 +83,24 @@ def test_it_runs_for_happy_path(del_queue_factory, job_factory, dummy_lake, glue
     glue_data_mapper_factory("test", partition_keys=["year", "month", "day"], partitions=[["2019", "08", "20"]])
     del_queue_factory("12345")
     object_key = "test/2019/08/20/test.parquet"
+    data_loader("basic.parquet", object_key)
+    bucket = dummy_lake["bucket"]
+    job_id = job_factory()["Id"]
+    # Act
+    job_complete_waiter.wait(TableName=job_table.name, Key={"Id": {"S": job_id}, "Sk": {"S": job_id}})
+    # Assert
+    tmp = tempfile.NamedTemporaryFile()
+    bucket.download_fileobj(object_key, tmp)
+    assert "COMPLETED" == job_table.get_item(Key={"Id": job_id, "Sk": job_id})["Item"]["JobStatus"]
+    assert 0 == len(query_parquet_file(tmp, "customer_id", "12345"))
+
+
+def test_it_runs_for_unpartitioned_data(del_queue_factory, job_factory, dummy_lake, glue_data_mapper_factory,
+                                        data_loader, job_complete_waiter, job_table):
+    # Generate a parquet file and add it to the lake
+    glue_data_mapper_factory("test")
+    del_queue_factory("12345")
+    object_key = "test/test.parquet"
     data_loader("basic.parquet", object_key)
     bucket = dummy_lake["bucket"]
     job_id = job_factory()["Id"]

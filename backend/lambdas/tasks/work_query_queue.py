@@ -15,7 +15,7 @@ sf_client = boto3.client("stepfunctions")
 @with_logger
 def handler(event, context):
     concurrency_limit = int(event.get("AthenaConcurrencyLimit", 15))
-    wait_duration = int(event.get("WaitDurationQueryExecution", 15))
+    wait_duration = int(event.get("QueryExecutionWaitSeconds", 15))
     execution_id = event["ExecutionId"]
     job_id = event["ExecutionName"]
     previously_started = event.get("RunningExecutions", {

@@ -46,6 +46,23 @@ def stack():
     return {o["OutputKey"]: o["OutputValue"] for o in stack.outputs}
 
 
+@pytest.fixture
+def config(stack):
+    ssm = boto3.client("ssm")
+    return json.loads(ssm.get_parameter(Name=stack["ConfigParameter"], WithDecryption=True)["Parameter"]["Value"])
+
+
+@pytest.fixture
+def config_mutator(config, ssm_client, stack):
+    ssm = boto3.client("ssm")
+
+    def mutator(**kwargs):
+        tmp = {**config, **kwargs}
+        ssm.put_parameter(Name=stack["ConfigParameter"], Value=json.dumps(tmp), Type="String", Overwrite=True)
+    yield mutator
+    ssm.put_parameter(Name=stack["ConfigParameter"], Value=json.dumps(config), Type="String", Overwrite=True)
+
+
 @pytest.fixture(scope="session")
 def ddb_resource():
     return boto3.resource("dynamodb")
@@ -72,8 +89,8 @@ def glue_client():
 
 
 @pytest.fixture(scope="session")
-def logs_client():
-    return boto3.client("logs")
+def ssm_client():
+    return boto3.client("ssm")
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -153,6 +170,7 @@ def queue_base_endpoint():
 @pytest.fixture(scope="module")
 def settings_base_endpoint():
     return "settings"
+
 
 @pytest.fixture(scope="module")
 def queue_table(ddb_resource, stack):
@@ -343,9 +361,9 @@ def job_factory(job_table, sf_client, stack):
             "SafeMode": safe_mode,
             "AthenaConcurrencyLimit": 15,
             "DeletionTasksMaxNumber": 1,
-            "WaitDurationQueryExecution": 1,
-            "WaitDurationQueryQueue": 1,
-            "WaitDurationForgetQueue": 5,
+            "QueryExecutionWaitSeconds": 1,
+            "QueryQueueWaitSeconds": 1,
+            "ForgetQueueWaitSeconds": 5,
             **kwargs
         }
         job_table.put_item(Item=item)

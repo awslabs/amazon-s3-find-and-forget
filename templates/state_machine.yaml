@@ -572,8 +572,8 @@ Resources:
                         "ExecutionId.$": "$$.Execution.Id",
                         "ExecutionName.$": "$$.Execution.Name",
                         "AthenaConcurrencyLimit.$": "$.AthenaConcurrencyLimit",
-                        "WaitDurationQueryQueue.$": "$.WaitDurationQueryQueue",
-                        "WaitDurationQueryExecution.$": "$.WaitDurationQueryExecution"
+                        "QueryQueueWaitSeconds.$": "$.QueryQueueWaitSeconds",
+                        "QueryExecutionWaitSeconds.$": "$.QueryExecutionWaitSeconds"
                       },
                       "Comment": "Process Data Mappers with Athena as the query executor",
                       "Type": "Pass",
@@ -613,7 +613,7 @@ Resources:
                     "Wait for Queries": {
                       "Comment": "Waits before rechecking if the Object Deletion Queue is empty",
                       "Type": "Wait",
-                      "SecondsPath": "$.WaitDurationQueryQueue",
+                      "SecondsPath": "$.QueryQueueWaitSeconds",
                       "Next": "Work Queue"
                     },
                     "Done": {
@@ -670,7 +670,7 @@ Resources:
                 "Input":{
                   "AWS_STEP_FUNCTIONS_STARTED_BY_EXECUTION_ID.$": "$$.Execution.Id",
                   "DeletionTasksMaxNumber.$": "$.DeletionTasksMaxNumber",
-                  "WaitDuration.$": "$.WaitDurationForgetQueue"
+                  "WaitDuration.$": "$.ForgetQueueWaitSeconds"
                 },
                 "StateMachineArn":"${DeleteStateMachine}",
                 "Name.$": "$$.Execution.Name"

@@ -1,9 +1,10 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import decimal
 import logging
 import json
 import os
 import uuid
+from functools import lru_cache
 
 import boto3
 from boto3.dynamodb.conditions import Key
@@ -78,7 +79,15 @@ def emit_event(job_id, event_name, event_data, emitter_id=None, created_at=None)
         "EmitterId": emitter_id,
         "CreatedAt": normalise_dates(round(created_at)),
     }
+    expiry = get_job_expiry(job_id)
+    if expiry:
+        item["Expires"] = expiry
     table.put_item(Item=item)
+
+
+@lru_cache()
+def get_job_expiry(job_id):
+    return table.get_item(Key={"Id": job_id, "Sk": job_id})["Item"].get("Expires", None)
 
 
 def running_job_exists():
@@ -124,6 +133,10 @@ class DecimalEncoder(json.JSONEncoder):
         if isinstance(o, decimal.Decimal):
             return round(o)
         return super(DecimalEncoder, self).default(o)
+
+
+def utc_timestamp(**delta_kwargs):
+    return round((datetime.now(timezone.utc) + timedelta(**delta_kwargs)).timestamp())
 
 
 def convert_iso8601_to_epoch(iso_time: str):

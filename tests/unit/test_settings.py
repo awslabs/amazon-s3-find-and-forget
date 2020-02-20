@@ -13,9 +13,9 @@ def test_it_process_queue(mock_config):
     mock_config.return_value = {
         "AthenaConcurrencyLimit": 15,
         "DeletionTasksMaxNumber": 50,
-        "WaitDurationQueryExecution": 5,
-        "WaitDurationQueryQueue": 5,
-        "WaitDurationForgetQueue": 30,
+        "QueryExecutionWaitSeconds": 5,
+        "QueryQueueWaitSeconds": 5,
+        "ForgetQueueWaitSeconds": 30,
         "SafeMode": False
     }
     response = handlers.list_settings_handler({}, SimpleNamespace())
@@ -26,9 +26,9 @@ def test_it_process_queue(mock_config):
         "Settings": {
             "AthenaConcurrencyLimit": 15,
             "DeletionTasksMaxNumber": 50,
-            "WaitDurationQueryExecution": 5,
-            "WaitDurationQueryQueue": 5,
-            "WaitDurationForgetQueue": 30,
+            "QueryExecutionWaitSeconds": 5,
+            "QueryQueueWaitSeconds": 5,
+            "ForgetQueueWaitSeconds": 30,
             "SafeMode": False
         }
     } == json.loads(response["body"])

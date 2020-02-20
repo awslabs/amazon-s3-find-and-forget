@@ -9,7 +9,7 @@ from operator import itemgetter
 
 from stats_updater import update_stats
 from status_updater import update_status, skip_cleanup_states
-from boto_utils import DecimalEncoder, deserialize_item, emit_event
+from boto_utils import DecimalEncoder, deserialize_item, emit_event, utc_timestamp
 from decorators import with_logger
 
 deserializer = TypeDeserializer()
@@ -45,13 +45,13 @@ def handler(event, context):
         if updated_job and updated_job.get("JobStatus") == "FORGET_COMPLETED_CLEANUP_IN_PROGRESS":
             try:
                 clear_deletion_queue(updated_job)
-                emit_event(job_id, "CleanupSucceeded", round(datetime.now(timezone.utc).timestamp()), "StreamProcessor")
+                emit_event(job_id, "CleanupSucceeded", utc_timestamp(), "StreamProcessor")
             except Exception as e:
                 emit_event(job_id, "CleanupFailed", {
                     "Error": "Unable to clear deletion queue: {}".format(str(e))
                 }, "StreamProcessor")
         elif updated_job and updated_job.get("JobStatus") in skip_cleanup_states:
-            emit_event(job_id, "CleanupSkipped", round(datetime.now(timezone.utc).timestamp()), "StreamProcessor")
+            emit_event(job_id, "CleanupSkipped", utc_timestamp(), "StreamProcessor")
 
 
 def process_job(job):

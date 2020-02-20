@@ -41,6 +41,9 @@ def test_it_recognises_jobs():
             }
         }
     }, "Job")
+    assert not is_record_type({
+        "dynamodb": {}
+    }, "Job")
 
     
 def test_it_recognises_job_events():
@@ -166,9 +169,9 @@ def test_it_starts_state_machine(mock_client):
         "Type": "Job",
         "AthenaConcurrencyLimit": 15,
         "DeletionTasksMaxNumber": 50,
-        "WaitDurationQueryExecution": 5,
-        "WaitDurationQueryQueue": 5,
-        "WaitDurationForgetQueue": 30
+        "QueryExecutionWaitSeconds": 5,
+        "QueryQueueWaitSeconds": 5,
+        "ForgetQueueWaitSeconds": 30
     })
 
     mock_client.start_execution.assert_called()

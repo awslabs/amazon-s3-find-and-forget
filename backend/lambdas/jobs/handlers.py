@@ -1,14 +1,13 @@
 """
 Job handlers
 """
-from datetime import datetime, timezone
 import json
 import os
 
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
 
-from boto_utils import DecimalEncoder
+from boto_utils import DecimalEncoder, utc_timestamp
 from decorators import with_logger, request_validator, catch_errors, load_schema, add_cors_headers
 
 ddb = boto3.resource("dynamodb")
@@ -53,7 +52,7 @@ def list_jobs_handler(event, context):
     if not qs:
         qs = {}
     page_size = int(qs.get("page_size", 10))
-    start_at = int(qs.get("start_at", round(datetime.now(timezone.utc).timestamp())))
+    start_at = int(qs.get("start_at", utc_timestamp()))
 
     items = []
     for gsi_bucket in range(0, bucket_count):
@@ -92,7 +91,7 @@ def list_job_events_handler(event, context):
         }
     )
 
-    watermark_boundary_mu = job.get("JobFinishTime", round(datetime.now(timezone.utc).timestamp())) * 1000
+    watermark_boundary_mu = job.get("JobFinishTime", utc_timestamp()) * 1000
 
     qs = event.get("queryStringParameters")
     if not qs:

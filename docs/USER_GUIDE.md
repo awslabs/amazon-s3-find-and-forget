@@ -93,6 +93,10 @@ your preferred AWS region:
    Mode is set to true, updated objects will be written to a temporary bucket
    instead of overwriting the original object. For more information see
    [Disabling Safe Mode](#disabling-safe-mode)
+   * **JobDetailsRetentionDays:** (Default: 0) How long job records should
+   remain in the Job table for. Use 0 to retain logs indefinitely. **Note:**
+   If the retention setting is changed it will only apply to *new* deletion jobs.
+   Existing deletion jobs will retain the TTL at the time they were ran.
    * **VpcSecurityGroups:** List of security group IDs to apply to Fargate
    deletion tasks. For more information on how to obtain these IDs, see
    [Obtaining VPC Information](#obtaining-vpc-information)
@@ -116,12 +120,12 @@ your preferred AWS region:
    see [Fargate Configuration]
    * **DeletionTaskMemory:** (Default: 30720) Fargate task memory limit. For
    more info see [Fargate Configuration]
-   * **WaitDurationQueryExecution:** (Default: 3) How long to wait when
+   * **QueryExecutionWaitSeconds:** (Default: 3) How long to wait when
    checking if an Athena Query has completed.
-   * **WaitDurationQueryQueue:** (Default: 3)  How long to wait when
+   * **QueryQueueWaitSeconds:** (Default: 3)  How long to wait when
    checking if there the current number of executing queries is less than the
    specified concurrency limit.
-   * **WaitDurationForgetQueue:** (Default: 30) How long to wait when
+   * **ForgetQueueWaitSeconds:** (Default: 30) How long to wait when
    checking if the Forget phase is complete
    * **AthenaWorkGroup:** (Default: primary) The Athena work group that should
    be used for when the solution runs Athena queries.
