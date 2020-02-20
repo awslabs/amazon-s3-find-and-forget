@@ -28,13 +28,13 @@ export default ({ className, gateway, goToJobDetails }) => {
         "Safe Mode": Settings.SafeMode.toString().toUpperCase(),
         "Job Details Retention (Days)": Settings.JobDetailsRetentionDays,
         "Athena Concurrency Limit": Settings.AthenaConcurrencyLimit,
-        "Wait Duration Query Execution (Seconds)":
+        "Query Execution Wait Duration (Seconds)":
           Settings.QueryExecutionWaitSeconds,
-        "Wait Duration Query Queue (Seconds)":
+        "Query Queue Wait Duration (Seconds)":
           Settings.QueryQueueWaitSeconds,
         "Deletion Tasks Max Number":
           Settings.DeletionTasksMaxNumber,
-        "Wait Duration Forget Queue (Seconds)":
+        "Forget Queue Wait Duration (Seconds)":
           Settings.ForgetQueueWaitSeconds
       });
 

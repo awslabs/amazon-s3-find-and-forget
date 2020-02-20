@@ -239,18 +239,23 @@ export default ({ gateway, jobId }) => {
               <DetailsBox label="Athena Concurrency Limit">
                 {job.AthenaConcurrencyLimit}
               </DetailsBox>
-              <DetailsBox label="Wait Duration Query Execution">
+              <DetailsBox label="Query Execution Wait Duration (Seconds)">
                 {job.QueryExecutionWaitSeconds}
               </DetailsBox>
-              <DetailsBox label="Wait Duration Query Queue">
+              <DetailsBox label="Query Queue Wait Duration (Seconds)">
                 {job.QueryQueueWaitSeconds}
               </DetailsBox>
               <DetailsBox label="Deletion Tasks Max Number">
                 {job.DeletionTasksMaxNumber}
               </DetailsBox>
-              <DetailsBox label="Wait Duration Forget Queue">
+              <DetailsBox label="Forget Queue Wait Duration (Seconds)">
                 {job.ForgetQueueWaitSeconds}
               </DetailsBox>
+              {
+                job.Expires && <DetailsBox label="Job Details Expiration">
+                  {formatDateTime(job.Expires)}
+                </DetailsBox>
+              }
             </div>
           </div>
           <div className="page-table">
