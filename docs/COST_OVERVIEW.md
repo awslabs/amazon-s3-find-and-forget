@@ -124,11 +124,11 @@ You are responsible for the cost of the AWS services used while running this sol
 Deletion job for 100GB of Snappy compressed Parquet objects with 2 Glue Partitions (scanned: 6.8GB - processed: 100GB)
 |Service|Spending|
 |-|-|
-|Amazon Athena|0.49$|
+|Amazon Athena|0.03$|
 |AWS Fargate|0.04$|
 |Amazon S3|0.01$|
 |Other services|0.01$|
-|Total|0.55$|
+|Total|0.09$|
 
 [needs a VPC to run]: USER_GUIDE.md#pre-requisite-Configuring-a-vpc-for-the-solution
 [some VPC endpoints]: [https://github.com/awslabs/amazon-s3-find-and-forget/blob/master/templates/vpc.yaml]
