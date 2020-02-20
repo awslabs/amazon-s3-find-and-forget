@@ -28,11 +28,14 @@ export default ({ className, gateway, goToJobDetails }) => {
         "Safe Mode": Settings.SafeMode.toString().toUpperCase(),
         "Job Details Retention (Days)": Settings.JobDetailsRetentionDays,
         "Athena Concurrency Limit": Settings.AthenaConcurrencyLimit,
-        "Wait Duration Query Execution":
-          Settings.QueryExecutionWaitSecondsSeconds,
-        "Wait Duration Query Queue": Settings.QueryQueueWaitSecondsSeconds,
-        "Deletion Tasks Max Number": Settings.DeletionTasksMaxNumber,
-        "Wait Duration Forget Queue": Settings.ForgetQueueWaitSecondsSeconds
+        "Wait Duration Query Execution (Seconds)":
+          Settings.QueryExecutionWaitSeconds,
+        "Wait Duration Query Queue (Seconds)":
+          Settings.QueryQueueWaitSeconds,
+        "Deletion Tasks Max Number":
+          Settings.DeletionTasksMaxNumber,
+        "Wait Duration Forget Queue (Seconds)":
+          Settings.ForgetQueueWaitSeconds
       });
 
       setFormState("confirm");
