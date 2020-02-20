@@ -1,6 +1,6 @@
 import sys
 
-from mock import MagicMock, patch
+from mock import MagicMock
 from os import path
 
 import pytest
