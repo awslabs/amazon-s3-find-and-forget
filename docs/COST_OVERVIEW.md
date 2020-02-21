@@ -89,7 +89,7 @@ The solution uses AWS Lambda for API handlers, Step Function steps, and DynamoDB
 
 ## AWS Step Functions
 
-Step Functions workflows are used by the solution when a deletion job runs. You are charged based on the number of state transitions of each Step Function. Step Functions counts a state transition each time a step of your workflow is executed. You are charged for the total number of state transitions across all your state machines, including retries.
+Step Functions state machines are used by the solution when a deletion job runs. You are charged based on the number of state transitions of each Step Function. Step Functions counts a state transition each time a step of your workflow is executed. You are charged for the total number of state transitions across all your state machines, including retries.
 
 [AWS Step Functions Pricing]
 [Deletion Job Workflow]
