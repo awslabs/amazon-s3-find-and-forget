@@ -119,7 +119,7 @@ During deployment, the solution uses [AWS CodeBuild], [AWS CodePipeline] and [AW
 
 # Solution Cost Estimate
 
-You are responsible for the cost of the AWS services used while running this solution. As of the date of publication, the estimated cost to run a job with different Data Lake configurations in the `eu-west-1` region is shown in the tables below. The estimates do not include VPC costs.
+You are responsible for the cost of the AWS services used while running this solution. As of the date of publication of this version of the source code, the estimated cost to run a job with different Data Lake configurations in the `eu-west-1` region is shown in the tables below. The estimates do not include VPC costs.
 
 ## Scenario 1
 
