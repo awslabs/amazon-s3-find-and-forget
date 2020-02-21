@@ -89,7 +89,7 @@ Amazon API Gateway is serverless, therefore you only pay when your APIs are in u
 
 ## AWS Lambda
 
-The solution uses AWS Lambda for API handlers, Step Function steps, and DynamoDB streams. With AWS Lambda, you pay only for what you use. You are charged based on the number of requests for your functions and the duration, the time it takes for your code to execute.
+The solution uses AWS Lambda for API handlers, Step Function tasks, and DynamoDB stream processing. With AWS Lambda, you pay only for what you use. You are charged based on the number of requests for your functions and the duration, the time it takes for your code to execute.
 
 [AWS Lambda Pricing]
 
