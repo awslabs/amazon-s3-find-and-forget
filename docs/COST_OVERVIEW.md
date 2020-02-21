@@ -42,7 +42,7 @@ The solution [needs a VPC to run][VPC Configuration].  By itself a VPC does not 
 
 ## Amazon Athena
 
-Amazon Athena is the service currently used for the Find phase. You are charged based on the amount of data scanned by each query. You can get significant cost savings and performance gains by compressing, partitioning, or converting your data to a columnar format, because each of those operations reduces the amount of data that Athena needs to scan to execute a query.
+Amazon Athena is currently the only supported service used for the Find phase. You are charged based on the amount of data scanned by each query. You can achieve significant cost savings and performance gains by reducing the quantity of data Athena needs to scan per query by using compression, partitioning and conversion of your data to a columnar format. See [Supported Data Formats](LIMITS.md#supported-data-formats) for more information regarding supported data and compression formats.
 
 The [Amazon Athena Pricing] page contains a comprehensive overview of the costs and includes a calculator that can be used for estimating the cost of each Job run based on the Data Lake size.
 
