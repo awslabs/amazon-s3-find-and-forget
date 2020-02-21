@@ -35,7 +35,7 @@ The services that most significantly affect cost in the Amazon S3 Find and Forge
 
 ## Amazon VPC
 
-The solution [needs a VPC to run], and a sample VPC is provided. Make sure you understand your hourly and usage costs. The sample VPC doesn't make use of NAT gateways, and uses [some VPC endpoints].
+The solution [needs a VPC to run][VPC Configuration].  By itself a VPC does not incur costs however if the VPC you choose to use with the solution contains components such as VPC Endpoints or NAT Gateways, these may incur additional costs. The sample VPC provided as part of this solution does not make use of NAT gateways, however it does provision VPC endpoints which will incur charges. See [Amazon VPC Pricing] for more information.
 
 * [Amazon VPC Pricing]
 * [AWS PrivateLink Pricing]
