@@ -58,7 +58,7 @@ During the Forget phase, the cost is affected by the number of objects to proces
 4. Copy the updated object to source bucket together with its metadata
 5. Remove the data from the staging bucket
 
-Additional costs apply as Amazon S3 is also used by the solution to handle internal state during Step Function executions and during the solution deployment.
+Additional S3 costs will be incurred by the solution when using S3 to handle internal state during Step Function executions, store temporary artefacts during the solution deployment, and temporarily store the output of Athena queries.
 
 [Amazon S3 Pricing]
 
