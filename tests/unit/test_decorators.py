@@ -6,7 +6,7 @@ from types import SimpleNamespace
 from mock import patch, MagicMock
 import pytest
 from botocore.exceptions import ClientError
-from decorators import with_logger, catch_errors, request_validator, add_cors_headers, s3_state_store
+from decorators import with_logger, catch_errors, request_validator, add_cors_headers, s3_state_store, json_body_loader
 
 pytestmark = [pytest.mark.unit, pytest.mark.layers]
 
@@ -15,16 +15,22 @@ test_schema = {
     "title": "TestSchema",
     "type": "object",
     "properties": {
-        "name": {
-            "type": "string"
+        "pathParameters": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            },
+            "required": ["name"]
         },
     },
-    "required": ["name"]
+    "required": ["pathParameters"]
 }
 
 
 def test_it_validates_dict_keys():
-    @request_validator(test_schema, "pathParameters")
+    @request_validator(test_schema)
     def dummy_handler(event, context):
         return {"statusCode": 200}
 
@@ -38,38 +44,8 @@ def test_it_validates_dict_keys():
     assert "Message" in json.loads(resp["body"])
 
 
-def test_it_validates_str_keys():
-    @request_validator(test_schema, "body")
-    def dummy_handler(event, context):
-        return {"statusCode": 200}
-
-    resp = dummy_handler({
-        "body": json.dumps({
-            "name": 123
-        })
-    }, SimpleNamespace())
-
-    assert 422 == resp["statusCode"]
-    assert "Message" in json.loads(resp["body"])
-
-
-def test_it_defaults_to_body_key():
-    @request_validator(test_schema)
-    def dummy_handler(event, context):
-        return {"statusCode": 200}
-
-    resp = dummy_handler({
-        "body": json.dumps({
-            "name": 123
-        })
-    }, SimpleNamespace())
-
-    assert 422 == resp["statusCode"]
-    assert "Message" in json.loads(resp["body"])
-
-
 def test_it_returns_fatal_error_on_misconfiguration():
-    @request_validator(test_schema, "non_existent")
+    @request_validator("not a schema")
     def dummy_handler(event, context):
         return {"statusCode": 200}
 
@@ -85,9 +61,9 @@ def test_it_allows_valid_schemas():
         return {"statusCode": 200}
 
     resp = dummy_handler({
-        "body": json.dumps({
+        "pathParameters": {
             "name": "123"
-        })
+        }
     }, SimpleNamespace())
 
     assert 200 == resp["statusCode"]
@@ -356,3 +332,32 @@ def test_it_ignores_loading_none_dicts():
             return event
 
         assert "string" == my_func("string", {})
+
+
+def test_it_loads_json_body_event():
+    @json_body_loader
+    def dummy_handler(event, context):
+        return event
+    expected = {"a": "payload"}
+    loaded = dummy_handler({"body": json.dumps(expected)}, {})
+    assert {
+        "body": expected
+    } == loaded
+
+
+def test_it_ignores_non_str_body():
+    @json_body_loader
+    def dummy_handler(event, context):
+        return event
+    loaded = dummy_handler({"body": 123}, {})
+    assert {
+        "body": 123
+    } == loaded
+
+
+def test_it_ignores_missing_body_key():
+    @json_body_loader
+    def dummy_handler(event, context):
+        return event
+    loaded = dummy_handler({"pathParameters": {"a": "b"}}, {})
+    assert {"pathParameters": {"a": "b"}} == loaded

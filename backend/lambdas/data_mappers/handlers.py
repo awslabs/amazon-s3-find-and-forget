@@ -7,7 +7,7 @@ import os
 import boto3
 
 from boto_utils import running_job_exists
-from decorators import with_logger, request_validator, catch_errors, load_schema, add_cors_headers
+from decorators import with_logger, request_validator, catch_errors, add_cors_headers, json_body_loader, load_schema
 
 dynamodb_resource = boto3.resource("dynamodb")
 table = dynamodb_resource.Table(os.getenv("DataMapperTable"))
@@ -32,12 +32,12 @@ def get_data_mappers_handler(event, context):
 
 @with_logger
 @add_cors_headers
-@request_validator(load_schema("data_mapper"))
-@request_validator(load_schema("data_mapper_path_parameters"), "pathParameters")
+@json_body_loader
+@request_validator(load_schema("create_data_mapper"))
 @catch_errors
 def create_data_mapper_handler(event, context):
     path_params = event["pathParameters"]
-    body = json.loads(event["body"])
+    body = event["body"]
     validate_mapper(body)
     item = {
         "DataMapperId": path_params["data_mapper_id"],
@@ -56,7 +56,7 @@ def create_data_mapper_handler(event, context):
 
 @with_logger
 @add_cors_headers
-@request_validator(load_schema("delete_handler"), "pathParameters")
+@request_validator(load_schema("delete_data_mapper"))
 @catch_errors
 def delete_data_mapper_handler(event, context):
     if running_job_exists():

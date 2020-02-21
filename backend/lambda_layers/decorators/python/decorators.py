@@ -35,21 +35,32 @@ def with_logger(handler):
     return wrapper
 
 
-def request_validator(request_schema, payload_key="body"):
+def json_body_loader(handler):
     """
-    Decorator which performs JSON validation on an event key
+    Decorator which loads the JSON body of a request
+    """
+    @functools.wraps(handler)
+    def wrapper(event, context):
+        if isinstance(event.get("body"), str):
+            event["body"] = json.loads(event["body"])
+
+        return handler(event, context)
+
+    return wrapper
+
+
+def request_validator(request_schema):
+    """
+    Decorator which performs JSON validation on an event
     """
 
     def wrapper_wrapper(handler):
         @functools.wraps(handler)
-        def wrapper(event, context):
+        def wrapper(to_validate, *args, **kwargs):
             try:
-                to_validate = event[payload_key]
-                if isinstance(to_validate, str):
-                    to_validate = json.loads(to_validate)
                 jsonschema.validate(to_validate, request_schema)
-            except KeyError as e:
-                logger.fatal("Invalid payload key: {}".format(str(e)))
+            except (KeyError, jsonschema.exceptions.SchemaError) as e:
+                logger.fatal("Invalid configuration: {}".format(str(e)))
                 return {
                     "statusCode": 500,
                     "body": json.dumps({
@@ -65,7 +76,7 @@ def request_validator(request_schema, payload_key="body"):
                     })
                 }
 
-            return handler(event, context)
+            return handler(to_validate, *args, **kwargs)
 
         return wrapper
 

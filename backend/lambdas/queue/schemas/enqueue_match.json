@@ -1,0 +1,27 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "title": "Enqueue Items Handler",
+    "type": "object",
+    "properties": {
+        "body": {
+            "type": "object",
+            "description": "Body parameters for the request",
+            "properties": {
+                "MatchId": {
+                    "description": "The Match ID to enqueue",
+                    "type": "string"
+                },
+                "DataMappers": {
+                    "type": "array",
+                    "description": "The list of data mappers to apply to this Match ID",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            },
+            "required": ["MatchId"]
+        }
+    },
+    "required": ["body"]
+}
+
