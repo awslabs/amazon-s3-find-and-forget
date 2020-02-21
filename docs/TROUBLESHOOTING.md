@@ -31,6 +31,8 @@ information see [VPC Configuration] in the [User Guide].
 - Unhandled state machine execution errors. If there are no errors in the job
   event history which indicate an issue, check the state machine execution
   history of the execution with the same name as the blocked job ID.
+- The containers have exausted memory or vCPUs capacity while processing large (+GB size) files. When deploying the solution, it is possible to activate [CloudWatch Container Insights]. Container Insights provides metrics for resources such as CPU and memory utilization, and diagnostic information, such as container restart failures. You can also set CloudWatch alarms on metrics that Container Insights collects. *Note: Using Container
+Insights will incur additional charges. It is disabled by default.*
 
 If the state machine is still executing but in a non-recoverable state, you
 can stop the state machine execution manually which will trigger an Exception
@@ -159,3 +161,4 @@ and run a new deletion job.
 [Athena Query History]: https://docs.aws.amazon.com/athena/latest/ug/querying.html#queries-viewing-history
 [Athena Troubleshooting]: https://docs.aws.amazon.com/athena/latest/ug/troubleshooting.html
 [solution limits]: LIMITS.md
+[CloudWatch Container Insights]: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContainerInsights.html
