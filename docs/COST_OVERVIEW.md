@@ -114,7 +114,7 @@ CloudFront can be optionally included to distribute the Web UI when deploying th
 
 ## Other Supporting Services
 
-During the deployment the solution uses [AWS CodeBuild], [AWS CodePipeline] and [AWS Lambda] custom resources to deploy the front-end and the back-end.
+During deployment, the solution uses [AWS CodeBuild], [AWS CodePipeline] and [AWS Lambda] custom resources to deploy the frontend and the backend.
 [AWS Fargate] uses [Amazon Elastic Container Registry] to store container images.
 
 # Solution Cost Estimate
