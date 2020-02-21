@@ -33,3 +33,11 @@ integrate it in your own applications.
 - [Local Development](docs/LOCAL_DEVELOPMENT.md)
 - [Troubleshooting](docs/TROUBLESHOOTING.md)
 - [Limits](docs/LIMITS.md)
+
+## Contributing
+
+Contributions are more than welcome. Please read the [code of conduct](CODE_OF_CONDUCT.md) and the [contributing guidelines](CONTRIBUTING.md).
+
+## License Summary
+
+This project is licensed under the Apache-2.0 License.
