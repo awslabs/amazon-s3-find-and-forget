@@ -1,0 +1,21 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "title": "Delete Data Mapper Handler",
+    "type": "object",
+    "properties": {
+        "pathParameters": {
+            "description": "Path parameters for the request",
+            "type": "object",
+            "properties": {
+                "data_mapper_id": {
+                    "description": "ID of the data mapper",
+                    "type": "string",
+                    "pattern": "^([A-Za-z0-9])+$"
+                }
+            },
+            "required": ["data_mapper_id"]
+        }
+    },
+    "required": ["pathParameters"]
+}
+

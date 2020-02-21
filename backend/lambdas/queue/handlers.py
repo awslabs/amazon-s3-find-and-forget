@@ -1,7 +1,6 @@
 """
 Queue handlers
 """
-from datetime import datetime, timezone
 import random
 import json
 import os
@@ -10,7 +9,7 @@ import uuid
 import boto3
 
 from boto_utils import DecimalEncoder, get_config, running_job_exists, utc_timestamp
-from decorators import with_logger, request_validator, catch_errors, load_schema, add_cors_headers
+from decorators import with_logger, request_validator, catch_errors, load_schema, add_cors_headers, json_body_loader
 
 sfn_client = boto3.client("stepfunctions")
 dynamodb_resource = boto3.resource("dynamodb")
@@ -22,10 +21,11 @@ bucket_count = int(os.getenv("GSIBucketCount", 1))
 
 @with_logger
 @add_cors_headers
-@request_validator(load_schema("queue_item"), "body")
+@json_body_loader
+@request_validator(load_schema("enqueue_match"))
 @catch_errors
 def enqueue_handler(event, context):
-    body = json.loads(event["body"])
+    body = event["body"]
     match_id = body["MatchId"]
     data_mappers = body.get("DataMappers", [])
     item = {
@@ -55,12 +55,13 @@ def get_handler(event, context):
 
 @with_logger
 @add_cors_headers
-@request_validator(load_schema("cancel_handler"), "body")
+@json_body_loader
+@request_validator(load_schema("cancel_matches"))
 @catch_errors
 def cancel_handler(event, context):
     if running_job_exists():
         raise ValueError("Cannot delete matches whilst there is a job in progress")
-    body = json.loads(event["body"])
+    body = event["body"]
     matches = body["Matches"]
     with deletion_queue_table.batch_writer() as batch:
         for match in matches:
