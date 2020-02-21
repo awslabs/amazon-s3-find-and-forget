@@ -49,9 +49,9 @@ and frontend React app to the solution bucket. This will trigger CodePipeline
 to automatically deploy these artefacts 
 - `make deploy-vpc`: Deploys only the VPC CloudFormation template
 - `make deploy-cfn`: Deploys only the CloudFormation template
-- `make deploy-containers-override`: Manually packages and deploys the
+- `make redeploy-containers`: Manually packages and deploys the
 Forget task Docker image to ECR via the AWS CLI rather than using CodePipeline.
-- `make deploy-frontend-override`: Manually packages and deploys the
+- `make redeploy-frontend`: Manually packages and deploys the
 frontend React app to S3 via the AWS CLI rather than using CodePipeline.
 - `make start-frontend-remote`: Opens the frontend of the deployed Amazon S3
 Find and Forget solution
@@ -101,7 +101,8 @@ make run-local-container ROLE_NAME=<your-sqs-access-role-name> AWS_PROFILE=my-pr
 
 The following commands are available for running tests:
 
-- `make test`: Run all unit and acceptance tests for the backend and frontend 
+- `make test`: Run all unit and acceptance tests for the backend and frontend
 - `make test-acceptance`: Run all backend task acceptance tests
+- `make test-cfn`: Run CloudFormation related unit tests
 - `make test-unit`: Run all backend task unit tests
 - `make test-frontend`: Run all frontend tests
