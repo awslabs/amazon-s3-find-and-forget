@@ -83,7 +83,7 @@ The system uses several queues (both Standard, some FIFO) to handle internal sta
 
 ## Amazon API Gateway
 
-Amazon API Gateway is serverless, so you only pay when your APIs are in use. There are no minimum fees or upfront commitments and you pay only for the API calls you receive and the amount of data transferred out.
+Amazon API Gateway is serverless, therefore you only pay when your APIs are in use. There are no minimum fees or upfront commitments and you pay only for the API calls you receive and the amount of data transferred out.
 
 [Amazon API Gateway Pricing]
 
