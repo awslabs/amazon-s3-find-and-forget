@@ -50,7 +50,13 @@ The [Amazon Athena Pricing] page contains a comprehensive overview of the costs 
 
 There are 4 components affecting cost when working with Amazon S3: Storage, Requests and data retrievals, Data Transfer, and Management.
 
-During the Forget phase, the cost is affected by the number of objects to process and their size. For each object, a task will read the entire content and metadata of each object from S3, it will write it to a staging bucket, it will then delete the original object, and move the updated object to source bucket together with its metadata.
+During the Forget phase, the cost is affected by the number of objects to process and their size. For each object, a task will:
+
+1. Read the entire contents and metadata from S3 for each object output by the Find phase
+2. Write this data to a staging bucket
+3. Delete the original object
+4. Copy the updated object to source bucket together with its metadata
+5. Remove the data from the staging bucket
 
 Additional costs apply as Amazon S3 is also used by the solution to handle internal state during Step Function executions and during the solution deployment.
 
