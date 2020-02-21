@@ -77,7 +77,7 @@ Amazon DynamoDB is used for storing internal state. All the tables are setup to 
 
 ## Amazon SQS
 
-The system uses a number of queues (some Standard, some FIFO) to handle internal state. The number of partitions of specific AWS Glue Data Catalogs and the number of Amazon S3 Objects to process impact the size and the number of SQS messages that the system will processes during a Deletion Job, which will affect the overall cost.
+The system uses several queues (both Standard, some FIFO) to handle internal state. The number of partitions of specific AWS Glue Data Catalogs and the number of Amazon S3 Objects to process impact the number of SQS messages that the system will processes during a Deletion Job, which will affect the overall cost.
 
 [Amazon SQS Pricing]
 
