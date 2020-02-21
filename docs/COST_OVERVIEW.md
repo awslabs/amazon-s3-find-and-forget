@@ -1,7 +1,9 @@
 Cost Overview
 =============
 
-The Amazon S3 Find and Forget solution is deployed as an [AWS CloudFormation] template.
+Amazon S3 Find and Forget is a solution you deploy in your own AWS account using [AWS CloudFormation]. There is no charge for the solution: you pay only for
+the AWS services used to run the solution. This page outlines the services used by the solution, and examples of the charges you should expect for typical
+usage of the solution.
 
 > **Disclaimer**
 >
