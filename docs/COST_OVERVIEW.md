@@ -96,7 +96,7 @@ Step Functions state machines are used by the solution when a deletion job runs.
 
 ## AWS Glue
 
-The solution uses the AWS Glue Data Catalog to fetch metadata about the Data Lake during the Find phase. For the AWS Glue Data Catalog you pay a simple monthly fee for storing and accessing the metadata and an additional fee based on the number of requests.
+The solution uses the AWS Glue Data Catalog to fetch metadata about the Data Lake during the Find phase. For the AWS Glue Data Catalog you pay a monthly fee for storing and accessing the metadata and an additional fee based on the number of requests.
 
 [AWS Glue Pricing]
 
