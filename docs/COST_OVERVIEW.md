@@ -132,7 +132,7 @@ Deletion job for 100GB of Snappy compressed Parquet objects with 2 Glue Partitio
 |Other services|0.01$|
 |Total|0.09$|
 
-[needs a VPC to run]: USER_GUIDE.md#pre-requisite-Configuring-a-vpc-for-the-solution
+[VPC Configuration]: USER_GUIDE.md#pre-requisite-Configuring-a-vpc-for-the-solution
 [some VPC endpoints]: [https://github.com/awslabs/amazon-s3-find-and-forget/blob/master/templates/vpc.yaml]
 [Amazon API Gateway Pricing]: https://aws.amazon.com/api-gateway/pricing/
 [Amazon Athena Pricing]: https://aws.amazon.com/athena/pricing/
