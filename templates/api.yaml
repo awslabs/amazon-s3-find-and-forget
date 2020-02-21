@@ -318,9 +318,9 @@ Resources:
               - method.request.header.Authorization:
                   Required: true
               - method.request.querystring.page_size:
-                  Required: true
+                  Required: false
               - method.request.querystring.start_at:
-                  Required: true
+                  Required: false
       Policies:
         - DynamoDBReadPolicy:
             TableName: !Ref JobTableName
@@ -343,9 +343,9 @@ Resources:
               - method.request.path.job_id:
                   Required: true
               - method.request.querystring.page_size:
-                  Required: true
+                  Required: false
               - method.request.querystring.start_at:
-                  Required: true
+                  Required: false
       Policies:
         - DynamoDBReadPolicy:
             TableName: !Ref JobTableName
