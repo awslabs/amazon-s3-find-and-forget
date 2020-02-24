@@ -20,21 +20,6 @@ Globals:
         JobTable: !Ref JobTableName
         JobTableDateGSI: !Ref JobTableDateGSI
         LogLevel: !Ref LogLevel
-  Api:
-    EndpointConfiguration: REGIONAL
-    Cors:
-      AllowMethods: "'*'"
-      AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-      AllowOrigin: !If
-        - DefaultAccessControlOrigin
-        - !Sub "'${WebUIOrigin}'"
-        - !Sub "'${AccessControlAllowOriginOverride}'"
-    Auth:
-      DefaultAuthorizer: CognitoAuthorizer
-      Authorizers:
-        CognitoAuthorizer:
-          UserPoolArn: !Ref CognitoUserPoolArn
-      AddDefaultAuthorizerToCorsPreflight: False
 
 Parameters:
   AccessControlAllowOriginOverride:
@@ -82,42 +67,63 @@ Resources:
   Api:
     Type: AWS::Serverless::Api
     Properties:
+      EndpointConfiguration: REGIONAL
+      Cors:
+        AllowMethods: "'*'"
+        AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+        AllowOrigin: !If
+          - DefaultAccessControlOrigin
+          - !Sub "'${WebUIOrigin}'"
+          - !Sub "'${AccessControlAllowOriginOverride}'"
+      Auth:
+        DefaultAuthorizer: CognitoAuthorizer
+        Authorizers:
+          CognitoAuthorizer:
+            UserPoolArn: !Ref CognitoUserPoolArn
+        AddDefaultAuthorizerToCorsPreflight: False
       StageName: Prod
       OpenApiVersion: '3.0.1'
+      GatewayResponses:
+        BAD_REQUEST_BODY:
+          StatusCode: 422
+          ResponseTemplates:
+            "application/json": '{ "Message": $context.error.messageString }'
+          ResponseParameters:
+            Headers:
+              AllowMethods: "'*'"
+              AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              AllowOrigin: !If
+                - DefaultAccessControlOrigin
+                - !Sub "'${WebUIOrigin}'"
+                - !Sub "'${AccessControlAllowOriginOverride}'"
+        BAD_REQUEST_PARAMETERS:
+          StatusCode: 422
+          ResponseTemplates:
+            "application/json": '{ "Message": $context.error.messageString }'
+          ResponseParameters:
+            Headers:
+              AllowMethods: "'*'"
+              AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              AllowOrigin: !If
+                - DefaultAccessControlOrigin
+                - !Sub "'${WebUIOrigin}'"
+                - !Sub "'${AccessControlAllowOriginOverride}'"
       Models:
-        DeletionQueueItem:
-          type: object
-          required:
-            - MatchId
-          properties:
-            MatchId:
-              type: string
-            DataMappers:
-              type: array
-              items:
-                type: string
-            CreatedAt:
-              type: integer
-        DataMapper:
-          type: object
-          required:
-            - QueryExecutor
-            - Columns
-          properties:
-            QueryExecutor:
-              description: Which query executor should be used for this Data Mapper
-              type: string
-              enum: ["athena"]
-            Columns:
-              description: List of columns to search for the data mapper
-              type: array
-              items:
-                description: Name of the column
-                type: string
-            Format:
-              description: Format of the data referenced by this Data Mapper
-              type: string
-              enum: ["parquet"]
+        EnqueueItem:
+          'Fn::Transform':
+            Name: 'AWS::Include'
+            Parameters:
+              Location: ./schemas/enqueue_match.json
+        CancelMatches:
+          'Fn::Transform':
+            Name: 'AWS::Include'
+            Parameters:
+              Location: ./schemas/cancel_matches.json
+        CreateDataMapper:
+          'Fn::Transform':
+            Name: 'AWS::Include'
+            Parameters:
+              Location: ./schemas/create_data_mapper.json
 
   ## Queue
   EnqueueDeletion:
@@ -133,7 +139,7 @@ Resources:
             Method: PATCH
             RestApiId: !Ref Api
             RequestModel:
-              Model: DeletionQueueItem
+              Model: EnqueueItem
               Required: true
             RequestParameters:
               - method.request.header.Authorization:
@@ -171,6 +177,9 @@ Resources:
             Path: /queue/matches
             Method: DELETE
             RestApiId: !Ref Api
+            RequestModel:
+              Model: CancelMatches
+              Required: true
             RequestParameters:
               - method.request.header.Authorization:
                   Required: true
@@ -210,14 +219,14 @@ Resources:
       Handler: handlers.create_data_mapper_handler
       CodeUri: ../backend/lambdas/data_mappers/
       Events:
-        Get:
+        Put:
           Type: Api
           Properties:
             Path: /data_mappers/{data_mapper_id}
             Method: PUT
             RestApiId: !Ref Api
             RequestModel:
-              Model: DataMapper
+              Model: CreateDataMapper
               Required: true
             RequestParameters:
               - method.request.header.Authorization:
