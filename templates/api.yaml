@@ -67,7 +67,19 @@ Resources:
   Api:
     Type: AWS::Serverless::Api
     Properties:
+      StageName: Prod
+      DefinitionBody:
+        'Fn::Transform':
+          Name: 'AWS::Include'
+          Parameters:
+            Location: ./api.definition.yml
       EndpointConfiguration: REGIONAL
+      Auth:
+        DefaultAuthorizer: CognitoAuthorizer
+        Authorizers:
+          CognitoAuthorizer:
+            UserPoolArn: !Ref CognitoUserPoolArn
+        AddDefaultAuthorizerToCorsPreflight: False
       Cors:
         AllowMethods: "'*'"
         AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
@@ -75,14 +87,6 @@ Resources:
           - DefaultAccessControlOrigin
           - !Sub "'${WebUIOrigin}'"
           - !Sub "'${AccessControlAllowOriginOverride}'"
-      Auth:
-        DefaultAuthorizer: CognitoAuthorizer
-        Authorizers:
-          CognitoAuthorizer:
-            UserPoolArn: !Ref CognitoUserPoolArn
-        AddDefaultAuthorizerToCorsPreflight: False
-      StageName: Prod
-      OpenApiVersion: '3.0.1'
       GatewayResponses:
         BAD_REQUEST_BODY:
           StatusCode: 422
@@ -108,22 +112,6 @@ Resources:
                 - DefaultAccessControlOrigin
                 - !Sub "'${WebUIOrigin}'"
                 - !Sub "'${AccessControlAllowOriginOverride}'"
-      Models:
-        EnqueueItem:
-          'Fn::Transform':
-            Name: 'AWS::Include'
-            Parameters:
-              Location: ./schemas/enqueue_match.json
-        CancelMatches:
-          'Fn::Transform':
-            Name: 'AWS::Include'
-            Parameters:
-              Location: ./schemas/cancel_matches.json
-        CreateDataMapper:
-          'Fn::Transform':
-            Name: 'AWS::Include'
-            Parameters:
-              Location: ./schemas/create_data_mapper.json
 
   ## Queue
   EnqueueDeletion:
@@ -138,12 +126,6 @@ Resources:
             Path: /queue
             Method: PATCH
             RestApiId: !Ref Api
-            RequestModel:
-              Model: EnqueueItem
-              Required: true
-            RequestParameters:
-              - method.request.header.Authorization:
-                  Required: true
       Policies:
       - DynamoDBCrudPolicy:
           TableName: !Ref DeletionQueueTableName
@@ -159,9 +141,6 @@ Resources:
             Path: /queue
             Method: GET
             RestApiId: !Ref Api
-            RequestParameters:
-              - method.request.header.Authorization:
-                  Required: true
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref DeletionQueueTableName
@@ -177,12 +156,6 @@ Resources:
             Path: /queue/matches
             Method: DELETE
             RestApiId: !Ref Api
-            RequestModel:
-              Model: CancelMatches
-              Required: true
-            RequestParameters:
-              - method.request.header.Authorization:
-                  Required: true
       Policies:
         - DynamoDBReadPolicy:
             TableName: !Ref JobTableName
@@ -200,9 +173,6 @@ Resources:
             Path: /queue
             Method: DELETE
             RestApiId: !Ref Api
-            RequestParameters:
-              - method.request.header.Authorization:
-                  Required: true
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref DeletionQueueTableName
@@ -225,15 +195,6 @@ Resources:
             Path: /data_mappers/{data_mapper_id}
             Method: PUT
             RestApiId: !Ref Api
-            RequestModel:
-              Model: CreateDataMapper
-              Required: true
-            RequestParameters:
-              - method.request.header.Authorization:
-                  Required: true
-              - method.request.path.data_mapper_id:
-                  Required: true
-
       Policies:
       - Statement:
         - Action:
@@ -261,9 +222,6 @@ Resources:
             Path: /data_mappers
             Method: GET
             RestApiId: !Ref Api
-            RequestParameters:
-              - method.request.header.Authorization:
-                  Required: true
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref DataMapperTableName
@@ -279,11 +237,6 @@ Resources:
             Path: /data_mappers/{data_mapper_id}
             Method: DELETE
             RestApiId: !Ref Api
-            RequestParameters:
-              - method.request.header.Authorization:
-                  Required: true
-              - method.request.path.data_mapper_id:
-                  Required: true
       Policies:
         - DynamoDBReadPolicy:
             TableName: !Ref JobTableName
@@ -302,11 +255,6 @@ Resources:
             Path: /jobs/{job_id}
             Method: GET
             RestApiId: !Ref Api
-            RequestParameters:
-              - method.request.header.Authorization:
-                  Required: true
-              - method.request.path.job_id:
-                  Required: true
       Policies:
         - DynamoDBReadPolicy:
             TableName: !Ref JobTableName
@@ -323,13 +271,6 @@ Resources:
             Path: /jobs
             Method: GET
             RestApiId: !Ref Api
-            RequestParameters:
-              - method.request.header.Authorization:
-                  Required: true
-              - method.request.querystring.page_size:
-                  Required: false
-              - method.request.querystring.start_at:
-                  Required: false
       Policies:
         - DynamoDBReadPolicy:
             TableName: !Ref JobTableName
@@ -346,15 +287,6 @@ Resources:
             Path: /jobs/{job_id}/events
             Method: GET
             RestApiId: !Ref Api
-            RequestParameters:
-              - method.request.header.Authorization:
-                  Required: true
-              - method.request.path.job_id:
-                  Required: true
-              - method.request.querystring.page_size:
-                  Required: false
-              - method.request.querystring.start_at:
-                  Required: false
       Policies:
         - DynamoDBReadPolicy:
             TableName: !Ref JobTableName
@@ -372,9 +304,6 @@ Resources:
             Path: /settings
             Method: GET
             RestApiId: !Ref Api
-            RequestParameters:
-              - method.request.header.Authorization:
-                  Required: true
       Policies:
         - Statement:
           - Action: "ssm:GetParameter"

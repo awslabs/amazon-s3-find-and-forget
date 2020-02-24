@@ -84,7 +84,7 @@ start-frontend-remote:
 	open $(WEBUI_URL)
 
 test-cfn:
-	cfn_nag templates/* --blacklist-path ci/cfn_nag_blacklist.yaml
+	cfn_nag templates/*.yaml --blacklist-path ci/cfn_nag_blacklist.yaml
 
 test-frontend:
 	cd frontend && npm t

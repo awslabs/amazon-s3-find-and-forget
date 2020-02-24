@@ -93,7 +93,7 @@ def catch_errors(handler):
         try:
             return handler(event, context)
         except ClientError as e:
-            logger.error("boto3 client error: {}".format(str(e)))
+            logger.exception("boto3 client error: {}".format(str(e)))
             return {
                 "statusCode": e.response['ResponseMetadata'].get('HTTPStatusCode', 400),
                 "body": json.dumps({
@@ -101,7 +101,7 @@ def catch_errors(handler):
                 })
             }
         except ValueError as e:
-            logger.warning("Invalid request: {}".format(str(e)))
+            logger.exception("Invalid request: {}".format(str(e)))
             return {
                 "statusCode": 400,
                 "body": json.dumps({
@@ -110,7 +110,7 @@ def catch_errors(handler):
             }
         except Exception as e:
             # Unknown error so avoid leaking any info
-            logger.error("Error handling event: {}".format(str(e)))
+            logger.exception("Error handling event: {}".format(str(e)))
             return {
                 "statusCode": 400,
                 "body": json.dumps({

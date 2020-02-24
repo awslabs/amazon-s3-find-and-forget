@@ -1,0 +1,492 @@
+openapi: "3.0.1"
+info:
+  title: "S3F2 API"
+  version: "1.0"
+servers:
+  - url: "https://<cloudfront-hostname>/{basePath}"
+    variables:
+      basePath:
+        default: Prod
+paths:
+  /queue:
+    get:
+      operationId: listDeletionQueueMatches
+      security:
+        - CognitoAuthorizer: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  MatchIds:
+                    type: "array"
+                    description: "The list of Match IDs currently in the queue"
+                    items:
+                      $ref: '#/components/schemas/DeletionQueueItem'
+        '422':
+          $ref: '#/components/responses/InvalidRequest'
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetDeletionQueue.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        type: "aws_proxy"
+    delete:
+      operationId: startDeletionJob
+      security:
+        - CognitoAuthorizer: []
+      responses:
+        '202':
+          description: Job Started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '422':
+          $ref: '#/components/responses/InvalidRequest'
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ProcessQueue.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        type: "aws_proxy"
+    patch:
+      operationId: addToDeletionQueue
+      security:
+        - CognitoAuthorizer: []
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeletionQueueItem'
+        '422':
+          $ref: '#/components/responses/InvalidRequest'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDeletionQueueItem'
+        required: true
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${EnqueueDeletion.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        type: "aws_proxy"
+  /queue/matches:
+    delete:
+      operationId: deleteMatches
+      security:
+        - CognitoAuthorizer: []
+      responses:
+        '204':
+          description: OK
+      requestBody:
+        content:
+          application/json:
+            schema:
+              title: "Cancel Items Handler"
+              required:
+                - "Matches"
+              type: "object"
+              properties:
+                Matches:
+                  type: "array"
+                  description: "The list of Match IDs to remove from the deletion queue"
+                  items:
+                    required:
+                      - "CreatedAt"
+                      - "MatchId"
+                    type: "object"
+                    properties:
+                      MatchId:
+                        type: "string"
+                        description: "The Match ID to remove from the deletion queue"
+                      CreatedAt:
+                        type: "integer"
+                        description: "The Creation date of the Match ID"
+        required: true
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CancelDeletion.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        type: "aws_proxy"
+  /jobs:
+    get:
+      operationId: listJobs
+      security:
+        - CognitoAuthorizer: []
+      parameters:
+        - '$ref': '#/components/parameters/StartAtQS'
+        - '$ref': '#/components/parameters/PageSizeQS'
+      responses:
+        '200':
+          description: OK
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ListJobs.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        type: "aws_proxy"
+  /jobs/{job_id}:
+    parameters:
+      - '$ref': '#/components/parameters/JobId'
+    get:
+      operationId: getJob
+      security:
+        - CognitoAuthorizer: []
+      responses:
+        '200':
+          description: OK
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetJob.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        type: "aws_proxy"
+  /jobs/{job_id}/events:
+    parameters:
+      - '$ref': '#/components/parameters/JobId'
+    get:
+      operationId: getJobEvents
+      security:
+        - CognitoAuthorizer: []
+      parameters:
+        - '$ref': '#/components/parameters/StartAtQS'
+        - '$ref': '#/components/parameters/PageSizeQS'
+      responses:
+        '200':
+          description: OK
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ListJobEvents.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        type: "aws_proxy"
+  /data_mappers:
+    get:
+      operationId: listDataMappers
+      security:
+        - CognitoAuthorizer: []
+      responses:
+        '200':
+          description: OK
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetDataMappers.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        type: "aws_proxy"
+  /data_mappers/{data_mapper_id}:
+    parameters:
+      - '$ref': '#/components/parameters/DataMapperId'
+    put:
+      operationId: createDataMapper
+      security:
+        - CognitoAuthorizer: []
+      responses:
+        '201':
+          description: OK
+      requestBody:
+        content:
+          application/json:
+            schema:
+              title: "Create Data Mapper Handler"
+              required:
+                - "Columns"
+                - "QueryExecutor"
+                - "QueryExecutorParameters"
+              type: "object"
+              properties:
+                Format:
+                  type: "string"
+                  description: "The format of the dataset"
+                  enum:
+                    - "parquet"
+                  default: "parquet"
+                QueryExecutor:
+                  type: "string"
+                  description: "The query executor used to query your dataset"
+                  enum:
+                    - "athena"
+                Columns:
+                  minItems: 1
+                  type: "array"
+                  description: "Columns to query for MatchIds the dataset"
+                  items:
+                    type: "string"
+                QueryExecutorParameters:
+                  type: "object"
+                  description: "Details of the query executor parameters to use when the QueryExecutor is set to 'athena'"
+                  properties:
+                    DataCatalogProvider:
+                      description: "The data catalog provider which contains the database table with metadata about your S3 data lake"
+                      enum:
+                        - "glue"
+                      type: "string"
+                    Database:
+                      description: "The database in the data catalog which contains the metatadata table"
+                      type: "string"
+                    Table:
+                      description: "The table in the data catalog database containing the metatadata for your data lake"
+                      type: "string"
+                  required:
+                    - "Database"
+                    - "Table"
+        required: true
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CreateDataMapper.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        type: "aws_proxy"
+    delete:
+      operationId: deleteDataMapper
+      security:
+        - CognitoAuthorizer: []
+      responses:
+        '204':
+          description: OK
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${DeleteDataMapper.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        type: "aws_proxy"
+  /settings:
+    get:
+      operationId: getSettings
+      security:
+        - CognitoAuthorizer: []
+      responses:
+        '200':
+          description: OK
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ListSettings.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        type: "aws_proxy"
+components:
+  parameters:
+    DataMapperId:
+      in: "path"
+      name: "data_mapper_id"
+      required: "true"
+      schema:
+        type: "string"
+      description: "Data Mapper ID"
+    JobId:
+      in: "path"
+      name: "job_id"
+      required: "true"
+      schema:
+        type: "string"
+      description: "Job ID"
+    PageSizeQS:
+      in: "query"
+      name: "page_size"
+      required: "false"
+      schema:
+        type: "integer"
+      description: "Page size query string parameter"
+    StartAtQS:
+      in: "query"
+      name: "start_at"
+      required: "false"
+      schema:
+        type: "string"
+      description: "Start at watermark query string parameter"
+  schemas:
+    Job:
+      type: "object"
+      required:
+        - Id
+        - JobStatus
+        - CreatedAt
+        - DeletionQueueItems
+        - AthenaConcurrencyLimit
+        - DeletionTasksMaxNumber
+        - ForgetQueueWaitSeconds
+        - QueryExecutionWaitSeconds
+        - QueryQueueWaitSeconds
+        - SafeMode
+        - Sk
+        - Type
+        - GSIBucket
+      properties:
+        Id:
+          type: "string"
+          description: "The Job ID"
+        JobStatus:
+          type: "string"
+          description: "The Job status. When a job is first created, it will remain in queued till the workflow starts"
+          default: QUEUED
+          enum:
+            - QUEUED
+            - RUNNING
+            - FORGET_COMPLETED_CLEANUP_IN_PROGRESS
+            - COMPLETED
+            - COMPLETED_CLEANUP_FAILED
+            - FAILED
+            - FIND_FAILED
+            - FORGET_FAILED
+            - FORGET_PARTIALLY_FAILED
+        CreatedAt:
+          type: "integer"
+          description: "Job creation date as Epoch timestamp"
+          default: <the current time>
+        JobStartTime:
+          type: "integer"
+          description: "Job start date as Epoch timestamp"
+        JobFinishTime:
+          type: "integer"
+          description: "Job finish date as Epoch timestamp"
+        DeletionQueueItems:
+          type: "array"
+          description: "The deletion queue items applied to this job"
+          items:
+            type: "string"
+        AthenaConcurrencyLimit:
+          type: "integer"
+          description: "Athena concurrency setting for this job"
+        DeletionTasksMaxNumber:
+          type: "integer"
+          description: "Max Fargate tasks setting for this job"
+        ForgetQueueWaitSeconds:
+          type: "integer"
+          description: "Forget queue wait setting for this job"
+        QueryExecutionWaitSeconds:
+          type: "integer"
+          description: "Query execution wait setting for this job"
+        QueryQueueWaitSeconds:
+          type: "integer"
+          description: "Query queue worker wait setting for this job"
+        SafeMode:
+          type: "boolean"
+          description: "Safe Mode setting for this job"
+          default: true
+        TotalObjectUpdatedCount:
+          type: "integer"
+          description: "Total number of successfully updated objects"
+          default: 0
+        TotalObjectUpdateFailedCount:
+          type: "integer"
+          description: "Total number of objects which could not be successfully updated"
+          default: 0
+        TotalQueryCount:
+          type: "integer"
+          description: "Total number of queries executed during the find phase"
+          default: 0
+        TotalQueryFailedCount:
+          type: "integer"
+          description: "Total number of unsuccessfully executed queries during the find phase"
+          default: 0
+        TotalQueryScannedInBytes:
+          type: "integer"
+          description: "Total amount of data scanned during the find phase"
+          default: 0
+        TotalQuerySucceededCount:
+          type: "integer"
+          description: "Total number of successfully executed queries during the find phase"
+          default: 0
+        TotalQueryTimeInMillis:
+          type: "integer"
+          description: "Total time spent by the query executor for this job"
+          default: 0
+        Expires:
+          type: "integer"
+          description: "Expiry date when the job record will be deleted as Epoch time"
+        Sk:
+          type: "string"
+          description: "Internal field used as part of DynamoDB single table design"
+        Type:
+          type: "string"
+          enum:
+            - "Job"
+          description: "Internal field used as part of DynamoDB single table design"
+        GSIBucket:
+          type: "string"
+          description: "Internal field used as part of DynamoDB single table design"
+    JobEvent:
+      type: "object"
+      properties:
+        MatchId:
+          type: "string"
+          description: "The Match ID to remove from the deletion queue"
+        CreatedAt:
+          type: "array"
+          description: "The list of data mappers to apply to this Match ID"
+          items:
+            type: "string"
+        DataMappers:
+          type: "array"
+          description: "The list of data mappers to apply to this Match ID"
+          items:
+            type: "string"
+    DeletionQueueItem:
+      type: "object"
+      properties:
+        MatchId:
+          type: "string"
+          description: "The Match ID to remove from the deletion queue"
+        CreatedAt:
+          type: "array"
+          description: "The list of data mappers to apply to this Match ID"
+          items:
+            type: "string"
+        DataMappers:
+          type: "array"
+          description: "The list of data mappers to apply to this Match ID"
+          items:
+            type: "string"
+    CreateDeletionQueueItem:
+      required:
+        - "MatchId"
+      type: "object"
+      properties:
+        MatchId:
+          type: "string"
+          description: "The Match ID to remove from the deletion queue"
+        DataMappers:
+          type: "array"
+          description: "The list of data mappers to apply to this Match ID"
+          default: ["*"]
+          items:
+            type: "string"
+    Error:
+      type: object
+      properties:
+        Message:
+          description: Error message
+          type: string
+      required:
+        - Message
+  responses:
+    InvalidRequest:
+      description: Error response for invalid requests
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  securitySchemes:
+    CognitoAuthorizer:
+      type: "apiKey"
+      name: "Authorization"
+      in: "header"
+      x-amazon-apigateway-authtype: "cognito_user_pools"
+      x-amazon-apigateway-authorizer:
+        providerARNs:
+          - Ref: CognitoUserPoolArn
+        type: "cognito_user_pools"
+x-amazon-apigateway-request-validator: All
+x-amazon-apigateway-request-validators:
+  All:
+    validateRequestParameters: true
+    validateRequestBody: true
