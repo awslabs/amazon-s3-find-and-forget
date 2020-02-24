@@ -1,0 +1,246 @@
+openapi: "3.0.1"
+info:
+  title: "S3F2 APIStack"
+  version: "1.0"
+schemes:
+  - https
+servers:
+  - url: "/{basePath}"
+    variables:
+      basePath:
+        default: Prod
+security:
+  - CognitoAuthorizer: []
+paths:
+  /queue:
+    parameters:
+      - '$ref': '#/components/parameters/Authorization'
+    get:
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetDeletionQueue.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        type: "aws_proxy"
+    delete:
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ProcessQueue.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        type: "aws_proxy"
+    patch:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EnqueueItem"
+        required: true
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${EnqueueDeletion.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        type: "aws_proxy"
+  /settings:
+    parameters:
+      - '$ref': '#/components/parameters/Authorization'
+    get:
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ListSettings.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        type: "aws_proxy"
+  /jobs/{job_id}:
+    parameters:
+      - '$ref': '#/components/parameters/Authorization'
+      - '$ref': '#/components/parameters/JobId'
+    get:
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetJob.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        type: "aws_proxy"
+  /data_mappers:
+    parameters:
+      - '$ref': '#/components/parameters/Authorization'
+    get:
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetDataMappers.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        type: "aws_proxy"
+  /queue/matches:
+    parameters:
+      - '$ref': '#/components/parameters/Authorization'
+    delete:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CancelMatches"
+        required: true
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CancelDeletion.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        type: "aws_proxy"
+  /jobs/{job_id}/events:
+    parameters:
+      - '$ref': '#/components/parameters/Authorization'
+      - '$ref': '#/components/parameters/JobId'
+    get:
+      parameters:
+        - '$ref': '#/components/parameters/StartAtQS'
+        - '$ref': '#/components/parameters/PageSizeQS'
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ListJobEvents.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        type: "aws_proxy"
+  /jobs:
+    parameters:
+      - '$ref': '#/components/parameters/Authorization'
+    get:
+      parameters:
+        - '$ref': '#/components/parameters/StartAtQS'
+        - '$ref': '#/components/parameters/PageSizeQS'
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ListJobs.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        type: "aws_proxy"
+  /data_mappers/{data_mapper_id}:
+    parameters:
+      - '$ref': '#/components/parameters/Authorization'
+      - '$ref': '#/components/parameters/DataMapperId'
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDataMapper"
+        required: true
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CreateDataMapper.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        type: "aws_proxy"
+    delete:
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${DeleteDataMapper.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        type: "aws_proxy"
+components:
+  parameters:
+    Authorization:
+      in: "header"
+      name: "Authorization"
+      required: "true"
+      schema:
+        type: "string"
+      description: "Standard Authorization Header"
+    DataMapperId:
+      in: "path"
+      name: "data_mapper_id"
+      required: "true"
+      schema:
+        type: "string"
+      description: "Data Mapper ID"
+    JobId:
+      in: "path"
+      name: "job_id"
+      required: "true"
+      schema:
+        type: "string"
+      description: "Job ID"
+    PageSizeQS:
+      in: "query"
+      name: "page_size"
+      required: "false"
+      schema:
+        type: "integer"
+      description: "Page size query string parameter"
+    StartAtQS:
+      in: "query"
+      name: "start_at"
+      required: "false"
+      schema:
+        type: "string"
+      description: "Start at watermark query string parameter"
+  schemas:
+    CancelMatches:
+      title: "Cancel Items Handler"
+      required:
+      - "Matches"
+      type: "object"
+      properties:
+        Matches:
+          type: "array"
+          description: "The list of Match IDs to remove from the deletion queue"
+          items:
+            required:
+            - "CreatedAt"
+            - "MatchId"
+            type: "object"
+            properties:
+              MatchId:
+                type: "string"
+                description: "The Match ID to remove from the deletion queue"
+              CreatedAt:
+                type: "integer"
+                description: "The Creation date of the Match ID"
+                format: "int32"
+    CreateDataMapper:
+      title: "Create Data Mapper Handler"
+      required:
+      - "Columns"
+      - "QueryExecutor"
+      type: "object"
+      properties:
+        Format:
+          type: "string"
+          description: "The format of the dataset"
+          enum:
+          - "parquet"
+          default: "parquet"
+        QueryExecutor:
+          type: "string"
+          description: "The query executor used to query your dataset"
+          enum:
+          - "athena"
+        Columns:
+          minItems: 1
+          type: "array"
+          description: "Columns to query for MatchIds the dataset"
+          items:
+            type: "string"
+    EnqueueItem:
+      title: "Enqueue Items Handler"
+      required:
+      - "MatchId"
+      type: "object"
+      properties:
+        DataMappers:
+          type: "array"
+          description: "The list of data mappers to apply to this Match ID"
+          items:
+            type: "string"
+        MatchId:
+          type: "string"
+          description: "The Match ID to enqueue"
+    
+x-amazon-apigateway-request-validator: All
+x-amazon-apigateway-request-validators:
+  All:
+    validateRequestParameters: true
+    validateRequestBody: true

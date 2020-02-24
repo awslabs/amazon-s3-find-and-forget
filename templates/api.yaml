@@ -67,7 +67,19 @@ Resources:
   Api:
     Type: AWS::Serverless::Api
     Properties:
+      StageName: Prod
+      DefinitionBody:
+        'Fn::Transform':
+          Name: 'AWS::Include'
+          Parameters:
+            Location: ./definition.yaml
       EndpointConfiguration: REGIONAL
+      Auth:
+        DefaultAuthorizer: CognitoAuthorizer
+        Authorizers:
+          CognitoAuthorizer:
+            UserPoolArn: !Ref CognitoUserPoolArn
+        AddDefaultAuthorizerToCorsPreflight: False
       Cors:
         AllowMethods: "'*'"
         AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
@@ -75,14 +87,6 @@ Resources:
           - DefaultAccessControlOrigin
           - !Sub "'${WebUIOrigin}'"
           - !Sub "'${AccessControlAllowOriginOverride}'"
-      Auth:
-        DefaultAuthorizer: CognitoAuthorizer
-        Authorizers:
-          CognitoAuthorizer:
-            UserPoolArn: !Ref CognitoUserPoolArn
-        AddDefaultAuthorizerToCorsPreflight: False
-      StageName: Prod
-      OpenApiVersion: '3.0.1'
       GatewayResponses:
         BAD_REQUEST_BODY:
           StatusCode: 422
@@ -108,22 +112,6 @@ Resources:
                 - DefaultAccessControlOrigin
                 - !Sub "'${WebUIOrigin}'"
                 - !Sub "'${AccessControlAllowOriginOverride}'"
-      Models:
-        EnqueueItem:
-          'Fn::Transform':
-            Name: 'AWS::Include'
-            Parameters:
-              Location: ./schemas/enqueue_match.json
-        CancelMatches:
-          'Fn::Transform':
-            Name: 'AWS::Include'
-            Parameters:
-              Location: ./schemas/cancel_matches.json
-        CreateDataMapper:
-          'Fn::Transform':
-            Name: 'AWS::Include'
-            Parameters:
-              Location: ./schemas/create_data_mapper.json
 
   ## Queue
   EnqueueDeletion:
