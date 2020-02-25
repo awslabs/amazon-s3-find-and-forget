@@ -30,9 +30,12 @@ usage of the solution.
 
 # Overview
 
-The solution uses Serverless components. All the components for Web UI, API and Deletion Jobs are Serverless.
+The Amazon S3 Find and Forget solution uses a serverless computing
+architecture. This model minimises costs when you're not actively using the
+solution, and allows the solution to scale while only paying for what you use.
 
-The services that most significantly affect cost in the Amazon S3 Find and Forget solution are Amazon Athena (during the Find phase), Amazon S3 (for reading and writing during the Forget Phase) and AWS Fargate (during the Forget Phase)
+For typical usage, the greatest proportion of what you will pay will be for use
+of Amazon Athena, Amazon S3 and AWS Fargate.
 
 ## Amazon VPC
 
