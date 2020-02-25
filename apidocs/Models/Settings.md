@@ -10,7 +10,5 @@ Name | Type | Description | Notes
 **false** | [**Integer**](integer.md) | Query queue worker wait setting for this job | [default to null]
 **false** | [**Boolean**](boolean.md) | Safe Mode setting for this job | [default to true]
 
-
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 
-    

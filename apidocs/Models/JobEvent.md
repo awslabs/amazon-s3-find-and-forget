@@ -12,7 +12,5 @@ Name | Type | Description | Notes
 **false** | [**String**](string.md) | Internal field used as part of DynamoDB single table design | [optional] [default to null]
 **false** | [**String**](string.md) | Internal field used as part of DynamoDB single table design | [optional] [default to null]
 
-
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 
-    

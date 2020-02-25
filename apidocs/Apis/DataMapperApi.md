@@ -9,8 +9,6 @@ Method | HTTP request | Description
 [**listDataMappers**](DataMapperApi.md#listDataMappers) | **GET** /data_mappers | Lists data mappers
 
 
-
-
 <a name="createDataMapper"></a>
 ## **createDataMapper**
 > DataMapper createDataMapper(dataMapperId, dataMapper)
@@ -19,11 +17,8 @@ Creates a data mapper
 
 ### Parameters
 
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
  **dataMapperId** | **String**| Data Mapper ID path parameter | [default to null]
  **dataMapper** | [**DataMapper**](../Models/DataMapper.md)| Request body containing details of the Data Mapper to create |
-
 
 ### Return type
 
@@ -31,13 +26,12 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[CognitoAuthorizer](../README.md#CognitoAuthorizer)
+[CognitoAuthorizer](../README.md#CognitoAuthorizer), 
 
 ### HTTP request headers
 
-- **Content-Type**: application/json, 
-- **Accept**: application/json, 
-
+- **Content-Type**: application/json
+- **Accept**: application/json
 
 <a name="deleteDataMapper"></a>
 ## **deleteDataMapper**
@@ -47,24 +41,20 @@ Removes a data mapper
 
 ### Parameters
 
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
  **dataMapperId** | **String**| Data Mapper ID path parameter | [default to null]
-
 
 ### Return type
 
-
+null (empty response body)
 
 ### Authorization
 
-[CognitoAuthorizer](../README.md#CognitoAuthorizer)
+[CognitoAuthorizer](../README.md#CognitoAuthorizer), 
 
 ### HTTP request headers
 
-- **Content-Type**: 
-- **Accept**: 
-
+- **Content-Type**: Not defined
+- **Accept**: Not defined
 
 <a name="listDataMappers"></a>
 ## **listDataMappers**
@@ -75,18 +65,16 @@ Lists data mappers
 ### Parameters
 This endpoint does not need any parameters.
 
-
 ### Return type
 
 [**ListOfDataMappers**](../Models/ListOfDataMappers.md)
 
 ### Authorization
 
-[CognitoAuthorizer](../README.md#CognitoAuthorizer)
+[CognitoAuthorizer](../README.md#CognitoAuthorizer), 
 
 ### HTTP request headers
 
-- **Content-Type**: 
+- **Content-Type**: Not defined
 - **Accept**: application/json
-
 

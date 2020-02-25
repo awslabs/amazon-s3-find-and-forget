@@ -10,8 +10,6 @@ Method | HTTP request | Description
 [**startDeletionJob**](DeletionQueueApi.md#startDeletionJob) | **DELETE** /queue | Starts a job for the items in the deletion queue
 
 
-
-
 <a name="addToDeletionQueue"></a>
 ## **addToDeletionQueue**
 > DeletionQueueItem addToDeletionQueue(createDeletionQueueItem)
@@ -20,10 +18,7 @@ Adds an item to the deletion queue
 
 ### Parameters
 
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
  **createDeletionQueueItem** | [**CreateDeletionQueueItem**](../Models/CreateDeletionQueueItem.md)| Request body containing details of the Match to add to the Deletion Queue |
-
 
 ### Return type
 
@@ -31,13 +26,12 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[CognitoAuthorizer](../README.md#CognitoAuthorizer)
+[CognitoAuthorizer](../README.md#CognitoAuthorizer), 
 
 ### HTTP request headers
 
-- **Content-Type**: application/json, 
-- **Accept**: application/json, 
-
+- **Content-Type**: application/json
+- **Accept**: application/json
 
 <a name="deleteMatches"></a>
 ## **deleteMatches**
@@ -47,24 +41,20 @@ Removes an item from the deletion queue
 
 ### Parameters
 
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
  **listOfMatchDeletions** | [**ListOfMatchDeletions**](../Models/ListOfMatchDeletions.md)|  |
-
 
 ### Return type
 
-
+null (empty response body)
 
 ### Authorization
 
-[CognitoAuthorizer](../README.md#CognitoAuthorizer)
+[CognitoAuthorizer](../README.md#CognitoAuthorizer), 
 
 ### HTTP request headers
 
-- **Content-Type**: application/json, 
-- **Accept**: 
-
+- **Content-Type**: application/json
+- **Accept**: Not defined
 
 <a name="listDeletionQueueMatches"></a>
 ## **listDeletionQueueMatches**
@@ -75,20 +65,18 @@ Lists deletion queue items
 ### Parameters
 This endpoint does not need any parameters.
 
-
 ### Return type
 
 [**DeletionQueue**](../Models/DeletionQueue.md)
 
 ### Authorization
 
-[CognitoAuthorizer](../README.md#CognitoAuthorizer)
+[CognitoAuthorizer](../README.md#CognitoAuthorizer), 
 
 ### HTTP request headers
 
-- **Content-Type**: 
-- **Accept**: application/json, 
-
+- **Content-Type**: Not defined
+- **Accept**: application/json
 
 <a name="startDeletionJob"></a>
 ## **startDeletionJob**
@@ -99,18 +87,16 @@ Starts a job for the items in the deletion queue
 ### Parameters
 This endpoint does not need any parameters.
 
-
 ### Return type
 
 [**Job**](../Models/Job.md)
 
 ### Authorization
 
-[CognitoAuthorizer](../README.md#CognitoAuthorizer)
+[CognitoAuthorizer](../README.md#CognitoAuthorizer), 
 
 ### HTTP request headers
 
-- **Content-Type**: 
+- **Content-Type**: Not defined
 - **Accept**: application/json
-
 

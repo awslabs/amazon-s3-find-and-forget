@@ -9,8 +9,6 @@ Method | HTTP request | Description
 [**listJobs**](JobApi.md#listJobs) | **GET** /jobs | Lists all jobs
 
 
-
-
 <a name="getJob"></a>
 ## **getJob**
 > Job getJob(jobId)
@@ -19,10 +17,7 @@ Returns the details of a job
 
 ### Parameters
 
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
  **jobId** | **String**| Job ID path parameter | [default to null]
-
 
 ### Return type
 
@@ -30,13 +25,12 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[CognitoAuthorizer](../README.md#CognitoAuthorizer)
+[CognitoAuthorizer](../README.md#CognitoAuthorizer), 
 
 ### HTTP request headers
 
-- **Content-Type**: 
-- **Accept**: application/json, 
-
+- **Content-Type**: Not defined
+- **Accept**: application/json
 
 <a name="getJobEvents"></a>
 ## **getJobEvents**
@@ -46,12 +40,9 @@ Lists all events for a job
 
 ### Parameters
 
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
  **jobId** | **String**| Job ID path parameter | [default to null]
  **startAt** | **String**| Start at watermark query string parameter | [optional] [default to 0]
  **pageSize** | **Integer**| Page size query string parameter | [optional] [default to null]
-
 
 ### Return type
 
@@ -59,13 +50,12 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[CognitoAuthorizer](../README.md#CognitoAuthorizer)
+[CognitoAuthorizer](../README.md#CognitoAuthorizer), 
 
 ### HTTP request headers
 
-- **Content-Type**: 
-- **Accept**: application/json, 
-
+- **Content-Type**: Not defined
+- **Accept**: application/json
 
 <a name="listJobs"></a>
 ## **listJobs**
@@ -75,11 +65,8 @@ Lists all jobs
 
 ### Parameters
 
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
  **startAt** | **String**| Start at watermark query string parameter | [optional] [default to 0]
  **pageSize** | **Integer**| Page size query string parameter | [optional] [default to null]
-
 
 ### Return type
 
@@ -87,11 +74,10 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[CognitoAuthorizer](../README.md#CognitoAuthorizer)
+[CognitoAuthorizer](../README.md#CognitoAuthorizer), 
 
 ### HTTP request headers
 
-- **Content-Type**: 
+- **Content-Type**: Not defined
 - **Accept**: application/json
-
 

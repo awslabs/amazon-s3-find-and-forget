@@ -7,7 +7,5 @@ Name | Type | Description | Notes
 **false** | [**List**](string.md) | The list of data mappers to apply to this Match ID | [default to null]
 **false** | [**List**](string.md) | The list of data mappers to apply to this Match ID | [default to null]
 
-
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 
-    
