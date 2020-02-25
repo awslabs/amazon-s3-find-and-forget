@@ -149,7 +149,7 @@ paths:
           Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetJob.Arn}/invocations"
         passthroughBehavior: "when_no_match"
         httpMethod: "POST"
-        type: "aws_proxy"`
+        type: "aws_proxy"
   /jobs/{job_id}/events:
     parameters:
       - '$ref': '#/components/parameters/JobId'
