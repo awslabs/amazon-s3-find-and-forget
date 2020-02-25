@@ -1,6 +1,6 @@
 # DeletionQueueApi
 
-All URIs are relative to *https://&lt;your-api-gw-url&gt;/Prod*
+All URIs are relative to *https://your-apigw-id.execute-api.region.amazonaws.com/Prod*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -18,6 +18,8 @@ Adds an item to the deletion queue
 
 ### Parameters
 
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
  **createDeletionQueueItem** | [**CreateDeletionQueueItem**](../Models/CreateDeletionQueueItem.md)| Request body containing details of the Match to add to the Deletion Queue |
 
 ### Return type
@@ -26,7 +28,7 @@ Adds an item to the deletion queue
 
 ### Authorization
 
-[CognitoAuthorizer](../README.md#CognitoAuthorizer), 
+[CognitoAuthorizer](../README.md#CognitoAuthorizer)
 
 ### HTTP request headers
 
@@ -41,6 +43,8 @@ Removes an item from the deletion queue
 
 ### Parameters
 
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
  **listOfMatchDeletions** | [**ListOfMatchDeletions**](../Models/ListOfMatchDeletions.md)|  |
 
 ### Return type
@@ -49,7 +53,7 @@ null (empty response body)
 
 ### Authorization
 
-[CognitoAuthorizer](../README.md#CognitoAuthorizer), 
+[CognitoAuthorizer](../README.md#CognitoAuthorizer)
 
 ### HTTP request headers
 
@@ -71,7 +75,7 @@ This endpoint does not need any parameters.
 
 ### Authorization
 
-[CognitoAuthorizer](../README.md#CognitoAuthorizer), 
+[CognitoAuthorizer](../README.md#CognitoAuthorizer)
 
 ### HTTP request headers
 
@@ -93,7 +97,7 @@ This endpoint does not need any parameters.
 
 ### Authorization
 
-[CognitoAuthorizer](../README.md#CognitoAuthorizer), 
+[CognitoAuthorizer](../README.md#CognitoAuthorizer)
 
 ### HTTP request headers
 

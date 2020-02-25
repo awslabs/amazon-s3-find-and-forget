@@ -1,6 +1,6 @@
 # JobApi
 
-All URIs are relative to *https://&lt;your-api-gw-url&gt;/Prod*
+All URIs are relative to *https://your-apigw-id.execute-api.region.amazonaws.com/Prod*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -17,6 +17,8 @@ Returns the details of a job
 
 ### Parameters
 
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
  **jobId** | **String**| Job ID path parameter | [default to null]
 
 ### Return type
@@ -25,7 +27,7 @@ Returns the details of a job
 
 ### Authorization
 
-[CognitoAuthorizer](../README.md#CognitoAuthorizer), 
+[CognitoAuthorizer](../README.md#CognitoAuthorizer)
 
 ### HTTP request headers
 
@@ -40,6 +42,8 @@ Lists all events for a job
 
 ### Parameters
 
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
  **jobId** | **String**| Job ID path parameter | [default to null]
  **startAt** | **String**| Start at watermark query string parameter | [optional] [default to 0]
  **pageSize** | **Integer**| Page size query string parameter | [optional] [default to null]
@@ -50,7 +54,7 @@ Lists all events for a job
 
 ### Authorization
 
-[CognitoAuthorizer](../README.md#CognitoAuthorizer), 
+[CognitoAuthorizer](../README.md#CognitoAuthorizer)
 
 ### HTTP request headers
 
@@ -65,6 +69,8 @@ Lists all jobs
 
 ### Parameters
 
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
  **startAt** | **String**| Start at watermark query string parameter | [optional] [default to 0]
  **pageSize** | **Integer**| Page size query string parameter | [optional] [default to null]
 
@@ -74,7 +80,7 @@ Lists all jobs
 
 ### Authorization
 
-[CognitoAuthorizer](../README.md#CognitoAuthorizer), 
+[CognitoAuthorizer](../README.md#CognitoAuthorizer)
 
 ### HTTP request headers
 

@@ -3,7 +3,7 @@ info:
   title: "S3F2 API"
   version: "1.0"
 servers:
-  - url: "https://<your-api-gw-url>/{basePath}"
+  - url: "https://your-apigw-id.execute-api.region.amazonaws.com/{basePath}"
     variables:
       basePath:
         default: "Prod"

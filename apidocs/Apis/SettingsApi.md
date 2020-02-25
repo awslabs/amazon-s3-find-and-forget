@@ -1,6 +1,6 @@
 # SettingsApi
 
-All URIs are relative to *https://&lt;your-api-gw-url&gt;/Prod*
+All URIs are relative to *https://your-apigw-id.execute-api.region.amazonaws.com/Prod*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -22,7 +22,7 @@ This endpoint does not need any parameters.
 
 ### Authorization
 
-[CognitoAuthorizer](../README.md#CognitoAuthorizer), 
+[CognitoAuthorizer](../README.md#CognitoAuthorizer)
 
 ### HTTP request headers
 

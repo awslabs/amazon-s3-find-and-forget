@@ -3,7 +3,7 @@
 <a name="documentation-for-api-endpoints"></a>
 ## Documentation for API Endpoints
 
-All URIs are relative to *https://<your-api-gw-url>/Prod*
+All URIs are relative to *https://your-apigw-id.execute-api.region.amazonaws.com/Prod*
 
 API | Operation | HTTP request | Description
 ------------ | ------------- | ------------- | -------------

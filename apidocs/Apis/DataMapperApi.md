@@ -1,6 +1,6 @@
 # DataMapperApi
 
-All URIs are relative to *https://&lt;your-api-gw-url&gt;/Prod*
+All URIs are relative to *https://your-apigw-id.execute-api.region.amazonaws.com/Prod*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -17,6 +17,8 @@ Creates a data mapper
 
 ### Parameters
 
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
  **dataMapperId** | **String**| Data Mapper ID path parameter | [default to null]
  **dataMapper** | [**DataMapper**](../Models/DataMapper.md)| Request body containing details of the Data Mapper to create |
 
@@ -26,7 +28,7 @@ Creates a data mapper
 
 ### Authorization
 
-[CognitoAuthorizer](../README.md#CognitoAuthorizer), 
+[CognitoAuthorizer](../README.md#CognitoAuthorizer)
 
 ### HTTP request headers
 
@@ -41,6 +43,8 @@ Removes a data mapper
 
 ### Parameters
 
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
  **dataMapperId** | **String**| Data Mapper ID path parameter | [default to null]
 
 ### Return type
@@ -49,7 +53,7 @@ null (empty response body)
 
 ### Authorization
 
-[CognitoAuthorizer](../README.md#CognitoAuthorizer), 
+[CognitoAuthorizer](../README.md#CognitoAuthorizer)
 
 ### HTTP request headers
 
@@ -71,7 +75,7 @@ This endpoint does not need any parameters.
 
 ### Authorization
 
-[CognitoAuthorizer](../README.md#CognitoAuthorizer), 
+[CognitoAuthorizer](../README.md#CognitoAuthorizer)
 
 ### HTTP request headers
 
