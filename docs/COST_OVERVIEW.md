@@ -30,91 +30,112 @@ usage of the solution.
 
 # Overview
 
-Where possible, the solution only uses Serverless components. All the components for Web UI, API and Deletion Jobs are Serverless.
+The solution uses Serverless components. All the components for Web UI, API and Deletion Jobs are Serverless.
+
 The services that most significantly affect cost in the Amazon S3 Find and Forget solution are Amazon Athena (during the Find phase), Amazon S3 (for reading and writing during the Forget Phase) and AWS Fargate (during the Forget Phase)
 
 ## Amazon VPC
 
-The solution [needs a VPC to run][VPC Configuration].  By itself a VPC does not incur costs however if the VPC you choose to use with the solution contains components such as VPC Endpoints or NAT Gateways, these may incur additional costs. The sample VPC provided as part of this solution does not make use of NAT gateways, however it does provision VPC endpoints which will incur charges. See [Amazon VPC Pricing] for more information.
+Amazon VPC provides network connectivity for AWS Fargate tasks that run during the _Forget_ phase. 
+
+How you build the VPC used can determine the prices you pay. For example, VPC Endpoints and NAT Gateways have different hourly prices and costs for data transferred.
+
+The sample VPC provided in this solution makes use of VPC Endpoints, which have an hourly cost as well as data transfer cost. You can choose to use this sample VPC,
+however it may be more cost-efficient to use an existing suitable VPC in your account if one exists.
 
 * [Amazon VPC Pricing]
 * [AWS PrivateLink Pricing]
 
 ## Amazon Athena
 
-Amazon Athena is currently the only supported service used for the Find phase. You are charged based on the amount of data scanned by each query. You can achieve significant cost savings and performance gains by reducing the quantity of data Athena needs to scan per query by using compression, partitioning and conversion of your data to a columnar format. See [Supported Data Formats](LIMITS.md#supported-data-formats) for more information regarding supported data and compression formats.
+Amazon Athena scans your data lake during the _Find phase_ of a deletion job. You pay for the Athena queries run based on the amount of data scanned.
 
-The [Amazon Athena Pricing] page contains a comprehensive overview of the costs and includes a calculator that can be used for estimating the cost of each Job run based on the Data Lake size.
+You can achieve significant cost savings and performance gains by reducing the quantity of data Athena needs to scan per query by using compression, partitioning and conversion of your data to a columnar format. See [Supported Data Formats](LIMITS.md#supported-data-formats) for more information regarding supported data and compression formats.
+
+The [Amazon Athena Pricing] page contains an overview of prices and provides a calculator to estimate the Athena query cost for each deletion job run based on the Data
+Lake size.
 
 ## Amazon S3
 
-There are 4 components affecting cost when working with Amazon S3: Storage, Requests and data retrievals, Data Transfer, and Management.
+Four types of charges occur when working with Amazon S3: Storage, Requests and data retrievals, Data Transfer, and Management.
 
-During the Forget phase, the cost is affected by the number of objects to process and their size. For each object, a task will:
-
-1. Read the entire contents and metadata from S3 for each object output by the Find phase
-2. Write this data to a staging bucket
-3. Delete the original object
-4. Copy the updated object to source bucket together with its metadata
-5. Remove the data from the staging bucket
-
-Additional S3 costs will be incurred by the solution when using S3 to handle internal state during Step Function executions, store temporary artefacts during the solution deployment, and temporarily store the output of Athena queries.
+- The solution web interface is deployed to, and served, from an S3 Bucket
+- During the _Find_ phase, Amazon Athena will:
+  1. Retrieve data from Amazon S3 for the columns defined in the data mapper
+  1. Store its results in an S3 bucket
+- During the _Forget_ phase, a program run in AWS Fargate processes each object identified in the Find phase will:
+  1. Retrieve the entire object and its metadata
+  1. Create a new version of the file, and PUTs this object to a staging bucket
+  1. Deletes the original object
+  1. Copies the updated object from the staging bucket to the data bucket, and sets any metadata identified from the original object
+  1. Deletes the object from the staging bucket
+- Some small artefacts, and state data relating to AWS Step Functions Workflows may be stored in S3
 
 [Amazon S3 Pricing]
 
 ## AWS Fargate
 
-AWS Fargate is used by the solution during the Forget Phase. The cost is affected by the number of containers and their configuration (vCPU and memory), configurable when deploying the Solution.
+The Forget phase of the solution uses AWS Fargate. Using Fargate, you pay for the duration that Fargate tasks run during the Forget phase.
+
+The AWS Fargate cost is affected by the number of Fargate tasks you choose to run concurrently, and their configuration (vCPU and memory). You can configure these
+parameters when deploying the Solution.
 
 [AWS Fargate Pricing]
 
 ## Amazon DynamoDB
 
-Amazon DynamoDB is used for storing internal state. All the tables are setup to use on-demand capacity mode after the solution is deployed.
+Amazon DynamoDB stores internal state data for the solution. All tables created by the solution use the on-demand capacity mode of pricing. You pay for storage used by
+these tables, and capacity used when interacting with the solution web interface, API, or running a deletion job.
 
 * [Amazon DynamoDB Pricing]
 * [Solution Persistence Layer]
 
 ## Amazon SQS
 
-The system uses several queues (both Standard, some FIFO) to handle internal state. The number of partitions of specific AWS Glue Data Catalogs and the number of Amazon S3 Objects to process impact the number of SQS messages that the system will processes during a Deletion Job, which will affect the overall cost.
+The solution uses standard and FIFO SQS queues to handle internal state during a deletion job. You pay for the number of requests made to SQS. The number of requests
+increases with the number of data mappers, partitions in those data mappers, and the number of Amazon S3 objects processed in a deletion job.
 
 [Amazon SQS Pricing]
 
 ## Amazon API Gateway
 
-Amazon API Gateway is serverless, therefore you only pay when your APIs are in use. There are no minimum fees or upfront commitments and you pay only for the API calls you receive and the amount of data transferred out.
+Amazon API Gateway is used to provide the solution web interface and API. You pay for requests made when using the web interface or API, and any data transferred out.
 
 [Amazon API Gateway Pricing]
 
 ## AWS Lambda
 
-The solution uses AWS Lambda for API handlers, Step Function tasks, and DynamoDB stream processing. With AWS Lambda, you pay only for what you use. You are charged based on the number of requests for your functions and the duration, the time it takes for your code to execute.
+AWS Lambda Functions are used throughout the solution. You pay for the requests to, and execution time of these functions. Functions execute when using the solution web
+interface, API, and when a deletion job runs.
 
 [AWS Lambda Pricing]
 
 ## AWS Step Functions
 
-Step Functions state machines are used by the solution when a deletion job runs. You are charged based on the number of state transitions of each Step Function. Step Functions counts a state transition each time a step of your workflow is executed. You are charged for the total number of state transitions across all your state machines, including retries.
+AWS Step Functions Standard Workflows are used when a deletion job runs. You pay for the amount of state transitions in the Step Function Workflow. The number of
+state transitions will increase with the number of data mappers, and partitions in those data mappers, included in a deletion job.
 
 [AWS Step Functions Pricing]
 [Deletion Job Workflow]
 
 ## AWS Glue
 
-The solution uses the AWS Glue Data Catalog to fetch metadata about the Data Lake during the Find phase. For the AWS Glue Data Catalog you pay a monthly fee for storing and accessing the metadata and an additional fee based on the number of requests.
+AWS Glue Data Catalog is used by the solution to define data mappers. You pay a monthly fee based on the number of objects stored in the data catalog, and for requests
+made to the AWS Glue service when the solution runs.
 
 [AWS Glue Pricing]
 
 ## Amazon Cognito
 
-With Amazon Cognito, you pay only for what you use. The solution uses Amazon Cognito to secure the API and an admin user is created during deployment.
+Amazon Cognito provides authentication to secure access to the API using an administrative user created during deployment. You pay a monthly fee for active users in
+the Cognito User Pool.
 
 [Amazon Cognito Pricing]
 
 ## Amazon CloudFront
 
-CloudFront can be optionally included to distribute the Web UI when deploying the solution.
+If you choose to deploy a CloudFront distribution for the solution interface, you will pay CloudFront charges for requests and data transferred when you access the web
+interface.
 
 [Amazon CloudFront Pricing]
 
