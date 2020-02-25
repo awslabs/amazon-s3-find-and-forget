@@ -41,7 +41,10 @@ of Amazon Athena, Amazon S3 and AWS Fargate.
 
 Amazon VPC provides network connectivity for AWS Fargate tasks that run during the _Forget_ phase. 
 
-How you build the VPC used can determine the prices you pay. For example, VPC Endpoints and NAT Gateways have different hourly prices and costs for data transferred.
+How you build the VPC will determine the prices you pay. For example, VPC
+Endpoints and NAT Gateways are two different ways to provide network access to
+the solutions' dependencies. Both ways have different hourly prices and costs
+for data transferred.
 
 The sample VPC provided in this solution makes use of VPC Endpoints, which have an hourly cost as well as data transfer cost. You can choose to use this sample VPC,
 however it may be more cost-efficient to use an existing suitable VPC in your account if one exists.
