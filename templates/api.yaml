@@ -72,7 +72,7 @@ Resources:
         'Fn::Transform':
           Name: 'AWS::Include'
           Parameters:
-            Location: ./definition.yaml
+            Location: ./api.definition.yaml
       EndpointConfiguration: REGIONAL
       Auth:
         DefaultAuthorizer: CognitoAuthorizer
