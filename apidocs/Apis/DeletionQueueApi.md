@@ -4,29 +4,30 @@ All URIs are relative to *https://&lt;your-api-gw-url&gt;/Prod*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**addToDeletionQueue**](DeletionQueueApi.md#addToDeletionQueue) | **PATCH** /queue | 
-[**deleteMatches**](DeletionQueueApi.md#deleteMatches) | **DELETE** /queue/matches | 
-[**listDeletionQueueMatches**](DeletionQueueApi.md#listDeletionQueueMatches) | **GET** /queue | 
-[**startDeletionJob**](DeletionQueueApi.md#startDeletionJob) | **DELETE** /queue | 
+[**addToDeletionQueue**](DeletionQueueApi.md#addToDeletionQueue) | **PATCH** /queue | Adds an item to the deletion queue
+[**deleteMatches**](DeletionQueueApi.md#deleteMatches) | **DELETE** /queue/matches | Removes an item from the deletion queue
+[**listDeletionQueueMatches**](DeletionQueueApi.md#listDeletionQueueMatches) | **GET** /queue | Lists deletion queue items
+[**startDeletionJob**](DeletionQueueApi.md#startDeletionJob) | **DELETE** /queue | Starts a job for the items in the deletion queue
+
+
 
 
 <a name="addToDeletionQueue"></a>
-# **addToDeletionQueue**
+## **addToDeletionQueue**
 > DeletionQueueItem addToDeletionQueue(createDeletionQueueItem)
 
-
-
-    Adds an item to the deletion queue
+Adds an item to the deletion queue
 
 ### Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **createDeletionQueueItem** | [**CreateDeletionQueueItem**](/Models/CreateDeletionQueueItem.md)|  |
+ **createDeletionQueueItem** | [**CreateDeletionQueueItem**](../Models/CreateDeletionQueueItem.md)| Request body containing details of the Match to add to the Deletion Queue |
+
 
 ### Return type
 
-[**DeletionQueueItem**](/Models/DeletionQueueItem.md)
+[**DeletionQueueItem**](../Models/DeletionQueueItem.md)
 
 ### Authorization
 
@@ -34,26 +35,26 @@ Name | Type | Description  | Notes
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
-- **Accept**: application/json
+- **Content-Type**: application/json, 
+- **Accept**: application/json, 
+
 
 <a name="deleteMatches"></a>
-# **deleteMatches**
+## **deleteMatches**
 > deleteMatches(listOfMatchDeletions)
 
-
-
-    Removes an item from the deletion queue
+Removes an item from the deletion queue
 
 ### Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **listOfMatchDeletions** | [**ListOfMatchDeletions**](/Models/ListOfMatchDeletions.md)|  |
+ **listOfMatchDeletions** | [**ListOfMatchDeletions**](../Models/ListOfMatchDeletions.md)|  |
+
 
 ### Return type
 
-null (empty response body)
+
 
 ### Authorization
 
@@ -61,23 +62,23 @@ null (empty response body)
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
-- **Accept**: Not defined
+- **Content-Type**: application/json, 
+- **Accept**: 
+
 
 <a name="listDeletionQueueMatches"></a>
-# **listDeletionQueueMatches**
+## **listDeletionQueueMatches**
 > DeletionQueue listDeletionQueueMatches()
 
-
-
-    Lists deletion queue items
+Lists deletion queue items
 
 ### Parameters
-This endpoint does not need any parameter.
+This endpoint does not need any parameters.
+
 
 ### Return type
 
-[**DeletionQueue**](/Models/DeletionQueue.md)
+[**DeletionQueue**](../Models/DeletionQueue.md)
 
 ### Authorization
 
@@ -85,23 +86,23 @@ This endpoint does not need any parameter.
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
-- **Accept**: application/json
+- **Content-Type**: 
+- **Accept**: application/json, 
+
 
 <a name="startDeletionJob"></a>
-# **startDeletionJob**
+## **startDeletionJob**
 > Job startDeletionJob()
 
-
-
-    Starts a job for the items in the deletion queue
+Starts a job for the items in the deletion queue
 
 ### Parameters
-This endpoint does not need any parameter.
+This endpoint does not need any parameters.
+
 
 ### Return type
 
-[**Job**](/Models/Job.md)
+[**Job**](../Models/Job.md)
 
 ### Authorization
 
@@ -109,6 +110,7 @@ This endpoint does not need any parameter.
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
+- **Content-Type**: 
 - **Accept**: application/json
+
 

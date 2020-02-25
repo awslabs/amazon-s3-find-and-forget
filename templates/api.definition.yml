@@ -19,7 +19,7 @@ tags:
 paths:
   /queue:
     get:
-      description: Lists deletion queue items
+      summary: Lists deletion queue items
       tags:
         - DeletionQueue
       operationId: "listDeletionQueueMatches"
@@ -46,7 +46,7 @@ paths:
         httpMethod: "POST"
         type: "aws_proxy"
     delete:
-      description: Starts a job for the items in the deletion queue
+      summary: Starts a job for the items in the deletion queue
       tags:
         - DeletionQueue
       operationId: "startDeletionJob"
@@ -68,7 +68,7 @@ paths:
         httpMethod: "POST"
         type: "aws_proxy"
     patch:
-      description: Adds an item to the deletion queue
+      summary: Adds an item to the deletion queue
       tags:
         - DeletionQueue
       operationId: "addToDeletionQueue"
@@ -84,6 +84,7 @@ paths:
         '422':
           $ref: '#/components/responses/InvalidRequest'
       requestBody:
+        description: "Request body containing details of the Match to add to the Deletion Queue"
         content:
           application/json:
             schema:
@@ -97,7 +98,7 @@ paths:
         type: "aws_proxy"
   /queue/matches:
     delete:
-      description: Removes an item from the deletion queue
+      summary: Removes an item from the deletion queue
       tags:
         - DeletionQueue
       operationId: "deleteMatches"
@@ -107,6 +108,7 @@ paths:
         '204':
           description: OK
       requestBody:
+        description: "Request body containing a list of Matches to be deleted"
         content:
           application/json:
             schema:
@@ -140,7 +142,7 @@ paths:
         type: "aws_proxy"
   /jobs:
     get:
-      description: Lists all jobs
+      summary: Lists all jobs
       tags:
         - Job
       operationId: "listJobs"
@@ -178,7 +180,7 @@ paths:
     parameters:
       - '$ref': '#/components/parameters/JobId'
     get:
-      description: Returns the details of a job
+      summary: Returns the details of a job
       tags:
         - Job
       operationId: "getJob"
@@ -201,7 +203,7 @@ paths:
     parameters:
       - '$ref': '#/components/parameters/JobId'
     get:
-      description: Lists all events for a job
+      summary: Lists all events for a job
       tags:
         - Job
       operationId: "getJobEvents"
@@ -237,7 +239,7 @@ paths:
         type: "aws_proxy"
   /data_mappers:
     get:
-      description: Lists data mappers
+      summary: Lists data mappers
       tags:
         - DataMapper
       operationId: "listDataMappers"
@@ -267,7 +269,7 @@ paths:
     parameters:
       - '$ref': '#/components/parameters/DataMapperId'
     put:
-      description: Creates a data mapper
+      summary: Creates a data mapper
       tags:
         - DataMapper
       operationId: "createDataMapper"
@@ -281,6 +283,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/DataMapper'
       requestBody:
+        description: "Request body containing details of the Data Mapper to create"
         content:
           application/json:
             schema:
@@ -293,7 +296,7 @@ paths:
         httpMethod: "POST"
         type: "aws_proxy"
     delete:
-      description: Removes a data mapper
+      summary: Removes a data mapper
       tags:
         - DataMapper
       operationId: "deleteDataMapper"
@@ -310,7 +313,7 @@ paths:
         type: "aws_proxy"
   /settings:
     get:
-      description: Gets the solution settings
+      summary: Gets the solution settings
       tags:
         - Settings
       operationId: "getSettings"
@@ -337,14 +340,14 @@ components:
       required: "true"
       schema:
         type: "string"
-      description: "Data Mapper ID"
+      description: "Data Mapper ID path parameter"
     JobId:
       in: "path"
       name: "job_id"
       required: "true"
       schema:
         type: "string"
-      description: "Job ID"
+      description: "Job ID path parameter"
     PageSizeQS:
       in: "query"
       name: "page_size"
@@ -358,9 +361,11 @@ components:
       required: "false"
       schema:
         type: "string"
+        default: 0
       description: "Start at watermark query string parameter"
   schemas:
     DataMapper:
+      description: "A Data Mapper object"
       required:
         - "Columns"
         - "QueryExecutor"
@@ -406,6 +411,7 @@ components:
             - "Database"
             - "Table"
     DeletionQueueItem:
+      description: "A Deletion Queue Item object"
       type: "object"
       required:
         - "MatchId"
@@ -426,6 +432,7 @@ components:
           items:
             type: "string"
     CreateDeletionQueueItem:
+      description: "A request to create a Deletion Queue Item"
       required:
         - "MatchId"
       type: "object"
@@ -440,6 +447,7 @@ components:
           items:
             type: "string"
     Job:
+      description: "A Job object"
       type: "object"
       required:
         - "Id"
@@ -550,6 +558,7 @@ components:
           type: "string"
           description: "Internal field used as part of DynamoDB single table design"
     JobEvent:
+      description: "A Job Event object"
       type: "object"
       properties:
         Id:
@@ -581,6 +590,7 @@ components:
             - "Job"
           description: "Internal field used as part of DynamoDB single table design"
     Settings:
+      description: "A Settings object"
       type: "object"
       properties:
         AthenaConcurrencyLimit:
@@ -610,6 +620,7 @@ components:
         - "QueryQueueWaitSeconds"
         - "SafeMode"
     Error:
+      description: "A standard error object"
       type: "object"
       properties:
         Message:

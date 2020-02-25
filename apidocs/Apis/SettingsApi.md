@@ -4,23 +4,24 @@ All URIs are relative to *https://&lt;your-api-gw-url&gt;/Prod*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**getSettings**](SettingsApi.md#getSettings) | **GET** /settings | 
+[**getSettings**](SettingsApi.md#getSettings) | **GET** /settings | Gets the solution settings
+
+
 
 
 <a name="getSettings"></a>
-# **getSettings**
+## **getSettings**
 > Settings getSettings()
 
-
-
-    Gets the solution settings
+Gets the solution settings
 
 ### Parameters
-This endpoint does not need any parameter.
+This endpoint does not need any parameters.
+
 
 ### Return type
 
-[**Settings**](/Models/Settings.md)
+[**Settings**](../Models/Settings.md)
 
 ### Authorization
 
@@ -28,6 +29,7 @@ This endpoint does not need any parameter.
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
+- **Content-Type**: 
 - **Accept**: application/json
+
 

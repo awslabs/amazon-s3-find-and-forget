@@ -6,9 +6,9 @@
 
 All URIs are relative to *{{{basePath}}}*
 
-Class | Method | HTTP request | Description
+API | Operation | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
-{{#apiInfo}}{{#apis}}{{#operations}}{{#operation}}*{{classname}}* | [**{{operationId}}**](Apis/{{apiDocPath}}{{classname}}.md#{{operationIdLowerCase}}) | **{{httpMethod}}** {{path}} | {{#summary}}{{{summary}}}{{/summary}}
+{{#apiInfo}}{{#apis}}{{#operations}}{{#operation}}*{{classname}}* | [**{{operationId}}**](./Apis/{{apiDocPath}}{{classname}}.md#{{operationId}}) | **{{httpMethod}}** {{path}} | {{#summary}}{{{summary}}}{{/summary}}
 {{/operation}}{{/operations}}{{/apis}}{{/apiInfo}}
 {{/generateApiDocs}}
 
@@ -17,7 +17,7 @@ Class | Method | HTTP request | Description
 ## Documentation for Models
 
 {{#modelPackage}}
-{{#models}}{{#model}} - [{{{modelPackage}}}.{{{classname}}}](Models/{{modelDocPath}}{{{classname}}}.md)
+{{#models}}{{#model}} - [{{{classname}}}](./Models/{{modelDocPath}}{{{classname}}}.md)
 {{/model}}{{/models}}
 {{/modelPackage}}
 {{^modelPackage}}
@@ -25,7 +25,7 @@ No model defined in this package
 {{/modelPackage}}
 {{/generateModelDocs}}
 
-<a name="documentation-for-authorization"></a>{{! TODO: optional documentation for authorization? }}
+<a name="documentation-for-authorization"></a>
 ## Documentation for Authorization
 
 {{^authMethods}}
