@@ -152,4 +152,3 @@ backend/lambda_layers/decorators/python
 !backend/lambda_layers/decorators/python/decorators.py
 build.zip
 frontend/public/settings.js
-.openapi-generator-ignore/
