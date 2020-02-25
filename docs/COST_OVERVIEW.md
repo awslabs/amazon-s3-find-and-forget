@@ -34,7 +34,7 @@ The Amazon S3 Find and Forget solution uses a serverless computing
 architecture. This model minimises costs when you're not actively using the
 solution, and allows the solution to scale while only paying for what you use.
 
-For typical usage, the greatest proportion of what you will pay will be for use
+For typical usage, the greatest proportion of what you pay will be for use
 of Amazon Athena, Amazon S3 and AWS Fargate.
 
 ## Amazon VPC
