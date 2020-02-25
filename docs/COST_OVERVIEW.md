@@ -47,7 +47,7 @@ the solutions' dependencies. Both ways have different hourly prices and costs
 for data transferred.
 
 The sample VPC provided in this solution makes use of VPC Endpoints, which have an hourly cost as well as data transfer cost. You can choose to use this sample VPC,
-however it may be more cost-efficient to use an existing suitable VPC in your account if one exists.
+however it may be more cost-efficient to use an existing suitable VPC in your account if you have one.
 
 * [Amazon VPC Pricing]
 * [AWS PrivateLink Pricing]
@@ -65,17 +65,19 @@ Lake size.
 
 Four types of charges occur when working with Amazon S3: Storage, Requests and data retrievals, Data Transfer, and Management.
 
+Uses of Amazon S3 in the solution include:
+
 - The solution web interface is deployed to, and served, from an S3 Bucket
 - During the _Find_ phase, Amazon Athena will:
   1. Retrieve data from Amazon S3 for the columns defined in the data mapper
   1. Store its results in an S3 bucket
 - During the _Forget_ phase, a program run in AWS Fargate processes each object identified in the Find phase will:
   1. Retrieve the entire object and its metadata
-  1. Create a new version of the file, and PUTs this object to a staging bucket
-  1. Deletes the original object
-  1. Copies the updated object from the staging bucket to the data bucket, and sets any metadata identified from the original object
-  1. Deletes the object from the staging bucket
-- Some small artefacts, and state data relating to AWS Step Functions Workflows may be stored in S3
+  1. Create a new version of the file, and PUT this object to a staging bucket
+  1. Delete the original object
+  1. Copy the updated object from the staging bucket to the data bucket, and sets any metadata identified from the original object
+  1. Delete the object from the staging bucket
+- Some artefacts, and state data relating to AWS Step Functions Workflows may be stored in S3
 
 [Amazon S3 Pricing]
 
@@ -91,7 +93,7 @@ parameters when deploying the Solution.
 ## Amazon DynamoDB
 
 Amazon DynamoDB stores internal state data for the solution. All tables created by the solution use the on-demand capacity mode of pricing. You pay for storage used by
-these tables, and capacity used when interacting with the solution web interface, API, or running a deletion job.
+these tables, and DynamoDB capacity used when interacting with the solution web interface, API, or running a deletion job.
 
 * [Amazon DynamoDB Pricing]
 * [Solution Persistence Layer]
@@ -111,7 +113,7 @@ Amazon API Gateway is used to provide the solution web interface and API. You pa
 
 ## AWS Lambda
 
-AWS Lambda Functions are used throughout the solution. You pay for the requests to, and execution time of these functions. Functions execute when using the solution web
+AWS Lambda Functions are used throughout the solution. You pay for the requests to, and execution time of, these functions. Functions execute when using the solution web
 interface, API, and when a deletion job runs.
 
 [AWS Lambda Pricing]
@@ -152,7 +154,7 @@ During deployment, the solution uses [AWS CodeBuild], [AWS CodePipeline] and [AW
 
 # Solution Cost Estimate
 
-You are responsible for the cost of the AWS services used while running this solution. As of the date of publication of this version of the source code, the estimated cost to run a job with different Data Lake configurations in the `eu-west-1` region is shown in the tables below. The estimates do not include VPC costs.
+You are responsible for the cost of the AWS services used while running this solution. As of the date of publication of this version of the source code, the estimated cost to run a job with different Data Lake configurations in the Europe (Ireland) region is shown in the tables below. The estimates do not include VPC costs.
 
 ## Scenario 1
 
