@@ -1,4 +1,4 @@
-# ./Models.DataMappersDataMapperIdQueryExecutorParameters
+# ./Models.DataMapperQueryExecutorParameters
 ## Properties
 
 Name | Type | Description | Notes

@@ -3,36 +3,40 @@
 <a name="documentation-for-api-endpoints"></a>
 ## Documentation for API Endpoints
 
-All URIs are relative to *https://<cloudfront-hostname>/Prod*
+All URIs are relative to *https://<your-api-gw-url>/Prod*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
-*DefaultApi* | [**addToDeletionQueue**](Apis/DefaultApi.md#addtodeletionqueue) | **PATCH** /queue | 
-*DefaultApi* | [**createDataMapper**](Apis/DefaultApi.md#createdatamapper) | **PUT** /data_mappers/{data_mapper_id} | 
-*DefaultApi* | [**deleteDataMapper**](Apis/DefaultApi.md#deletedatamapper) | **DELETE** /data_mappers/{data_mapper_id} | 
-*DefaultApi* | [**deleteMatches**](Apis/DefaultApi.md#deletematches) | **DELETE** /queue/matches | 
-*DefaultApi* | [**getJob**](Apis/DefaultApi.md#getjob) | **GET** /jobs/{job_id} | 
-*DefaultApi* | [**getJobEvents**](Apis/DefaultApi.md#getjobevents) | **GET** /jobs/{job_id}/events | 
-*DefaultApi* | [**getSettings**](Apis/DefaultApi.md#getsettings) | **GET** /settings | 
-*DefaultApi* | [**listDataMappers**](Apis/DefaultApi.md#listdatamappers) | **GET** /data_mappers | 
-*DefaultApi* | [**listDeletionQueueMatches**](Apis/DefaultApi.md#listdeletionqueuematches) | **GET** /queue | 
-*DefaultApi* | [**listJobs**](Apis/DefaultApi.md#listjobs) | **GET** /jobs | 
-*DefaultApi* | [**startDeletionJob**](Apis/DefaultApi.md#startdeletionjob) | **DELETE** /queue | 
+*DataMapperApi* | [**createDataMapper**](Apis/DataMapperApi.md#createdatamapper) | **PUT** /data_mappers/{data_mapper_id} | 
+*DataMapperApi* | [**deleteDataMapper**](Apis/DataMapperApi.md#deletedatamapper) | **DELETE** /data_mappers/{data_mapper_id} | 
+*DataMapperApi* | [**listDataMappers**](Apis/DataMapperApi.md#listdatamappers) | **GET** /data_mappers | 
+*DeletionQueueApi* | [**addToDeletionQueue**](Apis/DeletionQueueApi.md#addtodeletionqueue) | **PATCH** /queue | 
+*DeletionQueueApi* | [**deleteMatches**](Apis/DeletionQueueApi.md#deletematches) | **DELETE** /queue/matches | 
+*DeletionQueueApi* | [**listDeletionQueueMatches**](Apis/DeletionQueueApi.md#listdeletionqueuematches) | **GET** /queue | 
+*DeletionQueueApi* | [**startDeletionJob**](Apis/DeletionQueueApi.md#startdeletionjob) | **DELETE** /queue | 
+*JobApi* | [**getJob**](Apis/JobApi.md#getjob) | **GET** /jobs/{job_id} | 
+*JobApi* | [**getJobEvents**](Apis/JobApi.md#getjobevents) | **GET** /jobs/{job_id}/events | 
+*JobApi* | [**listJobs**](Apis/JobApi.md#listjobs) | **GET** /jobs | 
+*SettingsApi* | [**getSettings**](Apis/SettingsApi.md#getsettings) | **GET** /settings | 
 
 
 <a name="documentation-for-models"></a>
 ## Documentation for Models
 
- - [/Models.CancelItemsHandler](Models/CancelItemsHandler.md)
- - [/Models.CreateDataMapperHandler](Models/CreateDataMapperHandler.md)
  - [/Models.CreateDeletionQueueItem](Models/CreateDeletionQueueItem.md)
- - [/Models.DataMappersDataMapperIdQueryExecutorParameters](Models/DataMappersDataMapperIdQueryExecutorParameters.md)
+ - [/Models.DataMapper](Models/DataMapper.md)
+ - [/Models.DataMapperQueryExecutorParameters](Models/DataMapperQueryExecutorParameters.md)
+ - [/Models.DeletionQueue](Models/DeletionQueue.md)
  - [/Models.DeletionQueueItem](Models/DeletionQueueItem.md)
  - [/Models.Error](Models/Error.md)
- - [/Models.InlineResponse200](Models/InlineResponse200.md)
  - [/Models.Job](Models/Job.md)
  - [/Models.JobEvent](Models/JobEvent.md)
- - [/Models.QueueMatchesMatches](Models/QueueMatchesMatches.md)
+ - [/Models.ListOfDataMappers](Models/ListOfDataMappers.md)
+ - [/Models.ListOfJobEvents](Models/ListOfJobEvents.md)
+ - [/Models.ListOfJobs](Models/ListOfJobs.md)
+ - [/Models.ListOfMatchDeletions](Models/ListOfMatchDeletions.md)
+ - [/Models.MatchDeletion](Models/MatchDeletion.md)
+ - [/Models.Settings](Models/Settings.md)
 
 
 <a name="documentation-for-authorization"></a>

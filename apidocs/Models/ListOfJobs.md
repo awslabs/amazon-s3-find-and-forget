@@ -1,9 +1,10 @@
-# ./Models.CancelItemsHandler
+# ./Models.ListOfJobs
 ## Properties
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Matches** | [**List**](_queue_matches_Matches.md) | The list of Match IDs to remove from the deletion queue | [default to null]
+**Jobs** | [**List**](Job.md) | The list of jobs | [optional] [default to null]
+**NextStart** | [**Integer**](integer.md) | The watermark to use when requesting the next page of results | [optional] [default to 0]
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

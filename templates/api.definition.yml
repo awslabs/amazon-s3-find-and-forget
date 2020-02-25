@@ -3,14 +3,26 @@ info:
   title: "S3F2 API"
   version: "1.0"
 servers:
-  - url: "https://<cloudfront-hostname>/{basePath}"
+  - url: "https://<your-api-gw-url>/{basePath}"
     variables:
       basePath:
-        default: Prod
+        default: "Prod"
+tags:
+  - name: DataMapper
+    description: Operations related to data mappers
+  - name: DeletionQueue
+    description: Operations related to the deletion queue
+  - name: Jobs
+    description: Operations related to jobs
+  - name: Settings
+    description: Operations related to solution settings
 paths:
   /queue:
     get:
-      operationId: listDeletionQueueMatches
+      description: Lists deletion queue items
+      tags:
+        - DeletionQueue
+      operationId: "listDeletionQueueMatches"
       security:
         - CognitoAuthorizer: []
       responses:
@@ -20,14 +32,13 @@ paths:
             application/json:
               schema:
                 type: "object"
+                title: "DeletionQueue"
                 properties:
                   MatchIds:
                     type: "array"
                     description: "The list of Match IDs currently in the queue"
                     items:
                       $ref: '#/components/schemas/DeletionQueueItem'
-        '422':
-          $ref: '#/components/responses/InvalidRequest'
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetDeletionQueue.Arn}/invocations"
@@ -35,12 +46,15 @@ paths:
         httpMethod: "POST"
         type: "aws_proxy"
     delete:
-      operationId: startDeletionJob
+      description: Starts a job for the items in the deletion queue
+      tags:
+        - DeletionQueue
+      operationId: "startDeletionJob"
       security:
         - CognitoAuthorizer: []
       responses:
         '202':
-          description: Job Started
+          description: "Job Started"
           content:
             application/json:
               schema:
@@ -54,12 +68,15 @@ paths:
         httpMethod: "POST"
         type: "aws_proxy"
     patch:
-      operationId: addToDeletionQueue
+      description: Adds an item to the deletion queue
+      tags:
+        - DeletionQueue
+      operationId: "addToDeletionQueue"
       security:
         - CognitoAuthorizer: []
       responses:
         '201':
-          description: Created
+          description: "Created"
           content:
             application/json:
               schema:
@@ -80,7 +97,10 @@ paths:
         type: "aws_proxy"
   /queue/matches:
     delete:
-      operationId: deleteMatches
+      description: Removes an item from the deletion queue
+      tags:
+        - DeletionQueue
+      operationId: "deleteMatches"
       security:
         - CognitoAuthorizer: []
       responses:
@@ -90,7 +110,7 @@ paths:
         content:
           application/json:
             schema:
-              title: "Cancel Items Handler"
+              title: "ListOfMatchDeletions"
               required:
                 - "Matches"
               type: "object"
@@ -99,6 +119,7 @@ paths:
                   type: "array"
                   description: "The list of Match IDs to remove from the deletion queue"
                   items:
+                    title: "MatchDeletion"
                     required:
                       - "CreatedAt"
                       - "MatchId"
@@ -119,7 +140,10 @@ paths:
         type: "aws_proxy"
   /jobs:
     get:
-      operationId: listJobs
+      description: Lists all jobs
+      tags:
+        - Job
+      operationId: "listJobs"
       security:
         - CognitoAuthorizer: []
       parameters:
@@ -127,7 +151,23 @@ paths:
         - '$ref': '#/components/parameters/PageSizeQS'
       responses:
         '200':
-          description: OK
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                title: "ListOfJobs"
+                type: "object"
+                properties:
+                  Jobs:
+                    type: "array"
+                    description: "The list of jobs"
+                    items:
+                      $ref: '#/components/schemas/Job'
+                  NextStart:
+                    type: "integer"
+                    nullable: true
+                    default: 0
+                    description: "The watermark to use when requesting the next page of results"
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ListJobs.Arn}/invocations"
@@ -138,12 +178,19 @@ paths:
     parameters:
       - '$ref': '#/components/parameters/JobId'
     get:
-      operationId: getJob
+      description: Returns the details of a job
+      tags:
+        - Job
+      operationId: "getJob"
       security:
         - CognitoAuthorizer: []
       responses:
         '200':
-          description: OK
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetJob.Arn}/invocations"
@@ -154,7 +201,10 @@ paths:
     parameters:
       - '$ref': '#/components/parameters/JobId'
     get:
-      operationId: getJobEvents
+      description: Lists all events for a job
+      tags:
+        - Job
+      operationId: "getJobEvents"
       security:
         - CognitoAuthorizer: []
       parameters:
@@ -162,7 +212,23 @@ paths:
         - '$ref': '#/components/parameters/PageSizeQS'
       responses:
         '200':
-          description: OK
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                title: "ListOfJobEvents"
+                type: "object"
+                properties:
+                  JobEvents:
+                    type: "array"
+                    description: "The list of job events"
+                    items:
+                      $ref: '#/components/schemas/JobEvent'
+                  NextStart:
+                    type: "integer"
+                    nullable: true
+                    default: 0
+                    description: "The watermark to use when requesting the next page of results"
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ListJobEvents.Arn}/invocations"
@@ -171,12 +237,26 @@ paths:
         type: "aws_proxy"
   /data_mappers:
     get:
-      operationId: listDataMappers
+      description: Lists data mappers
+      tags:
+        - DataMapper
+      operationId: "listDataMappers"
       security:
         - CognitoAuthorizer: []
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                title: "ListOfDataMappers"
+                type: "object"
+                properties:
+                  DataMappers:
+                    type: "array"
+                    description: "The list of data mappers"
+                    items:
+                      $ref: '#/components/schemas/DataMapper'
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetDataMappers.Arn}/invocations"
@@ -187,58 +267,24 @@ paths:
     parameters:
       - '$ref': '#/components/parameters/DataMapperId'
     put:
-      operationId: createDataMapper
+      description: Creates a data mapper
+      tags:
+        - DataMapper
+      operationId: "createDataMapper"
       security:
         - CognitoAuthorizer: []
       responses:
         '201':
-          description: OK
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataMapper'
       requestBody:
         content:
           application/json:
             schema:
-              title: "Create Data Mapper Handler"
-              required:
-                - "Columns"
-                - "QueryExecutor"
-                - "QueryExecutorParameters"
-              type: "object"
-              properties:
-                Format:
-                  type: "string"
-                  description: "The format of the dataset"
-                  enum:
-                    - "parquet"
-                  default: "parquet"
-                QueryExecutor:
-                  type: "string"
-                  description: "The query executor used to query your dataset"
-                  enum:
-                    - "athena"
-                Columns:
-                  minItems: 1
-                  type: "array"
-                  description: "Columns to query for MatchIds the dataset"
-                  items:
-                    type: "string"
-                QueryExecutorParameters:
-                  type: "object"
-                  description: "Details of the query executor parameters to use when the QueryExecutor is set to 'athena'"
-                  properties:
-                    DataCatalogProvider:
-                      description: "The data catalog provider which contains the database table with metadata about your S3 data lake"
-                      enum:
-                        - "glue"
-                      type: "string"
-                    Database:
-                      description: "The database in the data catalog which contains the metatadata table"
-                      type: "string"
-                    Table:
-                      description: "The table in the data catalog database containing the metatadata for your data lake"
-                      type: "string"
-                  required:
-                    - "Database"
-                    - "Table"
+              $ref: '#/components/schemas/DataMapper'
         required: true
       x-amazon-apigateway-integration:
         uri:
@@ -247,7 +293,10 @@ paths:
         httpMethod: "POST"
         type: "aws_proxy"
     delete:
-      operationId: deleteDataMapper
+      description: Removes a data mapper
+      tags:
+        - DataMapper
+      operationId: "deleteDataMapper"
       security:
         - CognitoAuthorizer: []
       responses:
@@ -261,12 +310,19 @@ paths:
         type: "aws_proxy"
   /settings:
     get:
-      operationId: getSettings
+      description: Gets the solution settings
+      tags:
+        - Settings
+      operationId: "getSettings"
       security:
         - CognitoAuthorizer: []
       responses:
         '200':
-          description: OK
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Settings'
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ListSettings.Arn}/invocations"
@@ -304,22 +360,101 @@ components:
         type: "string"
       description: "Start at watermark query string parameter"
   schemas:
+    DataMapper:
+      required:
+        - "Columns"
+        - "QueryExecutor"
+        - "QueryExecutorParameters"
+      type: "object"
+      properties:
+        DataMapperId:
+          type: "string"
+          description: "The ID of the data mapper"
+        Format:
+          type: "string"
+          description: "The format of the dataset"
+          enum:
+            - "parquet"
+          default: "parquet"
+        QueryExecutor:
+          type: "string"
+          description: "The query executor used to query your dataset"
+          enum:
+            - "athena"
+        Columns:
+          minItems: 1
+          type: "array"
+          description: "Columns to query for MatchIds the dataset"
+          items:
+            type: "string"
+        QueryExecutorParameters:
+          type: "object"
+          description: "Details of the query executor parameters to use when the QueryExecutor is set to 'athena'"
+          properties:
+            DataCatalogProvider:
+              description: "The data catalog provider which contains the database table with metadata about your S3 data lake"
+              enum:
+                - "glue"
+              type: "string"
+            Database:
+              description: "The database in the data catalog which contains the metatadata table"
+              type: "string"
+            Table:
+              description: "The table in the data catalog database containing the metatadata for your data lake"
+              type: "string"
+          required:
+            - "Database"
+            - "Table"
+    DeletionQueueItem:
+      type: "object"
+      required:
+        - "MatchId"
+        - "CreatedAt"
+        - "DataMappers"
+      properties:
+        MatchId:
+          type: "string"
+          description: "The Match ID to remove from the deletion queue"
+        CreatedAt:
+          type: "array"
+          description: "The list of data mappers to apply to this Match ID"
+          items:
+            type: "string"
+        DataMappers:
+          type: "array"
+          description: "The list of data mappers to apply to this Match ID"
+          items:
+            type: "string"
+    CreateDeletionQueueItem:
+      required:
+        - "MatchId"
+      type: "object"
+      properties:
+        MatchId:
+          type: "string"
+          description: "The Match ID to remove from the deletion queue"
+        DataMappers:
+          type: "array"
+          description: "The list of data mappers to apply to this Match ID"
+          default: ["*"]
+          items:
+            type: "string"
     Job:
       type: "object"
       required:
-        - Id
-        - JobStatus
-        - CreatedAt
-        - DeletionQueueItems
-        - AthenaConcurrencyLimit
-        - DeletionTasksMaxNumber
-        - ForgetQueueWaitSeconds
-        - QueryExecutionWaitSeconds
-        - QueryQueueWaitSeconds
-        - SafeMode
-        - Sk
-        - Type
-        - GSIBucket
+        - "Id"
+        - "JobStatus"
+        - "CreatedAt"
+        - "DeletionQueueItems"
+        - "AthenaConcurrencyLimit"
+        - "DeletionTasksMaxNumber"
+        - "ForgetQueueWaitSeconds"
+        - "QueryExecutionWaitSeconds"
+        - "QueryQueueWaitSeconds"
+        - "SafeMode"
+        - "Sk"
+        - "Type"
+        - "GSIBucket"
       properties:
         Id:
           type: "string"
@@ -327,17 +462,17 @@ components:
         JobStatus:
           type: "string"
           description: "The Job status. When a job is first created, it will remain in queued till the workflow starts"
-          default: QUEUED
+          default: "QUEUED"
           enum:
-            - QUEUED
-            - RUNNING
-            - FORGET_COMPLETED_CLEANUP_IN_PROGRESS
-            - COMPLETED
-            - COMPLETED_CLEANUP_FAILED
-            - FAILED
-            - FIND_FAILED
-            - FORGET_FAILED
-            - FORGET_PARTIALLY_FAILED
+            - "QUEUED"
+            - "RUNNING"
+            - "FORGET_COMPLETED_CLEANUP_IN_PROGRESS"
+            - "COMPLETED"
+            - "COMPLETED_CLEANUP_FAILED"
+            - "FAILED"
+            - "FIND_FAILED"
+            - "FORGET_FAILED"
+            - "FORGET_PARTIALLY_FAILED"
         CreatedAt:
           type: "integer"
           description: "Job creation date as Epoch timestamp"
@@ -402,7 +537,7 @@ components:
           default: 0
         Expires:
           type: "integer"
-          description: "Expiry date when the job record will be deleted as Epoch time"
+          description: "Expiry date when the item will be deleted as Epoch time"
         Sk:
           type: "string"
           description: "Internal field used as part of DynamoDB single table design"
@@ -417,60 +552,74 @@ components:
     JobEvent:
       type: "object"
       properties:
-        MatchId:
+        Id:
           type: "string"
-          description: "The Match ID to remove from the deletion queue"
+          description: "The Job ID"
         CreatedAt:
-          type: "array"
-          description: "The list of data mappers to apply to this Match ID"
-          items:
-            type: "string"
-        DataMappers:
-          type: "array"
-          description: "The list of data mappers to apply to this Match ID"
-          items:
-            type: "string"
-    DeletionQueueItem:
+          type: "integer"
+          description: "Job creation date as Epoch timestamp"
+          default: <the current time>
+        EventName:
+          type: "string"
+          description: "The Job Event name"
+        EventData:
+          type: "object"
+          description: "Free form field containing data about the event. Structure varies based on the event"
+        EmitterId:
+          type: "string"
+          description: "The identifier for the service or service instance which emitted the event"
+          example: "StepFunctions"
+        Expires:
+          type: "integer"
+          description: "Expiry date when the item will be deleted as Epoch time"
+        Sk:
+          type: "string"
+          description: "Internal field used as part of DynamoDB single table design"
+        Type:
+          type: "string"
+          enum:
+            - "Job"
+          description: "Internal field used as part of DynamoDB single table design"
+    Settings:
       type: "object"
       properties:
-        MatchId:
-          type: "string"
-          description: "The Match ID to remove from the deletion queue"
-        CreatedAt:
-          type: "array"
-          description: "The list of data mappers to apply to this Match ID"
-          items:
-            type: "string"
-        DataMappers:
-          type: "array"
-          description: "The list of data mappers to apply to this Match ID"
-          items:
-            type: "string"
-    CreateDeletionQueueItem:
+        AthenaConcurrencyLimit:
+          type: "integer"
+          description: "Athena concurrency setting for this job"
+        DeletionTasksMaxNumber:
+          type: "integer"
+          description: "Max Fargate tasks setting for this job"
+        ForgetQueueWaitSeconds:
+          type: "integer"
+          description: "Forget queue wait setting for this job"
+        QueryExecutionWaitSeconds:
+          type: "integer"
+          description: "Query execution wait setting for this job"
+        QueryQueueWaitSeconds:
+          type: "integer"
+          description: "Query queue worker wait setting for this job"
+        SafeMode:
+          type: "boolean"
+          description: "Safe Mode setting for this job"
+          default: true
       required:
-        - "MatchId"
-      type: "object"
-      properties:
-        MatchId:
-          type: "string"
-          description: "The Match ID to remove from the deletion queue"
-        DataMappers:
-          type: "array"
-          description: "The list of data mappers to apply to this Match ID"
-          default: ["*"]
-          items:
-            type: "string"
+        - "AthenaConcurrencyLimit"
+        - "DeletionTasksMaxNumber"
+        - "ForgetQueueWaitSeconds"
+        - "QueryExecutionWaitSeconds"
+        - "QueryQueueWaitSeconds"
+        - "SafeMode"
     Error:
-      type: object
+      type: "object"
       properties:
         Message:
-          description: Error message
-          type: string
+          description: "Error message"
+          type: "string"
       required:
-        - Message
+        - "Message"
   responses:
     InvalidRequest:
-      description: Error response for invalid requests
+      description: "Error response for invalid requests"
       content:
         application/json:
           schema:

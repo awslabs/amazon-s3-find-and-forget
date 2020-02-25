@@ -22,7 +22,7 @@ Name | Type | Description | Notes
 **TotalQueryScannedInBytes** | [**Integer**](integer.md) | Total amount of data scanned during the find phase | [optional] [default to 0]
 **TotalQuerySucceededCount** | [**Integer**](integer.md) | Total number of successfully executed queries during the find phase | [optional] [default to 0]
 **TotalQueryTimeInMillis** | [**Integer**](integer.md) | Total time spent by the query executor for this job | [optional] [default to 0]
-**Expires** | [**Integer**](integer.md) | Expiry date when the job record will be deleted as Epoch time | [optional] [default to null]
+**Expires** | [**Integer**](integer.md) | Expiry date when the item will be deleted as Epoch time | [optional] [default to null]
 **Sk** | [**String**](string.md) | Internal field used as part of DynamoDB single table design | [default to null]
 **Type** | [**String**](string.md) | Internal field used as part of DynamoDB single table design | [default to null]
 **GSIBucket** | [**String**](string.md) | Internal field used as part of DynamoDB single table design | [default to null]
