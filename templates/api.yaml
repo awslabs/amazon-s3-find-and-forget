@@ -67,6 +67,7 @@ Resources:
   Api:
     Type: AWS::Serverless::Api
     Properties:
+      OpenApiVersion: '3.0.1'
       StageName: Prod
       DefinitionBody:
         'Fn::Transform':
@@ -88,15 +89,26 @@ Resources:
           - !Sub "'${WebUIOrigin}'"
           - !Sub "'${AccessControlAllowOriginOverride}'"
       GatewayResponses:
+        DEFAULT_4XX:
+          ResponseTemplates:
+            "application/json": '{ "Message": $context.error.messageString }'
+          ResponseParameters:
+            Headers:
+              Access-Control-Allow-Methods: "'*'"
+              Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              Access-Control-Allow-Origin: !If
+                - DefaultAccessControlOrigin
+                - !Sub "'${WebUIOrigin}'"
+                - !Sub "'${AccessControlAllowOriginOverride}'"
         BAD_REQUEST_BODY:
           StatusCode: 422
           ResponseTemplates:
             "application/json": '{ "Message": $context.error.messageString }'
           ResponseParameters:
             Headers:
-              AllowMethods: "'*'"
-              AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-              AllowOrigin: !If
+              Access-Control-Allow-Methods: "'*'"
+              Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              Access-Control-Allow-Origin: !If
                 - DefaultAccessControlOrigin
                 - !Sub "'${WebUIOrigin}'"
                 - !Sub "'${AccessControlAllowOriginOverride}'"
@@ -106,9 +118,9 @@ Resources:
             "application/json": '{ "Message": $context.error.messageString }'
           ResponseParameters:
             Headers:
-              AllowMethods: "'*'"
-              AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-              AllowOrigin: !If
+              Access-Control-Allow-Methods: "'*'"
+              Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              Access-Control-Allow-Origin: !If
                 - DefaultAccessControlOrigin
                 - !Sub "'${WebUIOrigin}'"
                 - !Sub "'${AccessControlAllowOriginOverride}'"
