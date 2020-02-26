@@ -40,7 +40,7 @@ Parameters:
     Default: 7
   ResourcePrefix:
     Type: String
-  SafeModeBucket:
+  OutputBucket:
     Type: String
   VpcSecurityGroups:
     Type: CommaDelimitedList
@@ -132,9 +132,9 @@ Resources:
               Value: 'true'
             - Name: JobTable
               Value: !Ref JobTableName
-            - Name: SAFE_MODE_BUCKET
-              Value: !Ref SafeModeBucket
-            - Name: SAFE_MODE_PREFIX
+            - Name: OUTPUT_BUCKET
+              Value: !Ref OutputBucket
+            - Name: OUTPUT_PREFIX
               Value: results/
 
   DeleteService:
@@ -180,8 +180,8 @@ Resources:
             - s3:PutObject*
             Effect: Allow
             Resource:
-              - !Sub "arn:aws:s3:::${SafeModeBucket}"
-              - !Sub "arn:aws:s3:::${SafeModeBucket}/*"
+              - !Sub "arn:aws:s3:::${OutputBucket}"
+              - !Sub "arn:aws:s3:::${OutputBucket}/*"
           - Action:
             - logs:DescribeLogStreams
             - logs:CreateLogStream

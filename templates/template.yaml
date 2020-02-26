@@ -180,7 +180,7 @@ Resources:
         EnableContainerInsights: !Ref EnableContainerInsights
         JobTableName: !GetAtt DDBStack.Outputs.JobTable
         ResourcePrefix: !Ref ResourcePrefix
-        SafeModeBucket: !Ref TempBucket
+        OutputBucket: !Ref TempBucket
         VpcSecurityGroups: !Join [",", !Ref VpcSecurityGroups]
         VpcSubnets: !Join [",", !Ref VpcSubnets]
   DeployStack:

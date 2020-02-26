@@ -29,8 +29,8 @@ logger.addHandler(handler)
 
 sqs = boto3.resource('sqs', endpoint_url="https://sqs.{}.amazonaws.com".format(os.getenv("AWS_DEFAULT_REGION")))
 queue = sqs.Queue(os.getenv("DELETE_OBJECTS_QUEUE"))
-safe_mode_bucket = os.getenv("SAFE_MODE_BUCKET")
-safe_mode_prefix = os.getenv("SAFE_MODE_PREFIX")
+output_bucket = os.getenv("OUTPUT_BUCKET")
+output_prefix = os.getenv("OUTPUT_PREFIX")
 s3 = s3fs.S3FileSystem(default_cache_type='none', requester_pays=True, default_fill_cache=False)
 
 
@@ -75,7 +75,7 @@ def delete_matches_from_file(parquet_file, to_delete):
         return out_stream, stats
 
 
-def save(client, buf, bucket, key, in_safe_mode=True):
+def save(client, buf, bucket, key):
     """
     Save a buffer to S3, preserving any existing properties on the object
     """
@@ -87,9 +87,8 @@ def save(client, buf, bucket, key, in_safe_mode=True):
     extra_args = {**request_payer_args, **object_info_args, **tagging_args, **acl_args}
     logger.info("Object settings: {}".format(extra_args))
     # Write Object Back to S3
-    output_bucket = bucket if not in_safe_mode else safe_mode_bucket
-    output_key = key if not in_safe_mode else "{}{}/{}".format(safe_mode_prefix, bucket, key)
-    logger.info("Safe mode is {}. Saving updated object to s3://{}/{}".format(in_safe_mode, output_bucket, output_key))
+    output_key = "{}{}/{}".format(output_prefix, bucket, key)
+    logger.info("Saving updated object to s3://{}/{}".format(output_bucket, output_key))
     client.upload_fileobj(buf, output_bucket, output_key, ExtraArgs=extra_args)
     logger.info("Object uploaded to S3")
     # GrantWrite cannot be set whilst uploading therefore ACLs need to be restored separately
@@ -198,15 +197,6 @@ def get_emitter_id():
         return "ECSTask"
 
 
-@lru_cache()
-def safe_mode(table, job_id):
-    resp = table.get_item(Key={"Id": job_id, "Sk": job_id})
-    if not resp.get("Item"):
-        raise ValueError("Invalid Job ID")
-
-    return resp["Item"].get("SafeMode", True)
-
-
 def emit_deletion_event(message_body, stats):
     job_id = message_body["JobId"]
     event_data = {
@@ -258,7 +248,6 @@ def execute(message_body, receipt_handle):
         validate_message(message_body)
         body = json.loads(message_body)
         cols, object_path, job_id = itemgetter('Columns', 'Object', 'JobId')(body)
-        in_safe_mode = safe_mode(table, job_id)
         input_bucket, input_key = parse_s3_url(object_path)
         # Download the object in-memory and convert to PyArrow NativeFile
         logger.info("Downloading and opening {} object in-memory".format(object_path))
@@ -269,7 +258,7 @@ def execute(message_body, receipt_handle):
             out_sink, stats = delete_matches_from_file(infile, cols)
             if stats["DeletedRows"] > 0:
                 with pa.BufferReader(out_sink.getvalue()) as output_buf:
-                    save(client, output_buf, input_bucket, input_key, in_safe_mode)
+                    save(client, output_buf, input_bucket, input_key)
             else:
                 logger.warning("The object {} was processed successfully but no rows required deletion".format(object_path))
         msg.delete()
