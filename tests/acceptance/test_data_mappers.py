@@ -40,6 +40,50 @@ def test_it_rejects_invalid_data_mapper(api_client, data_mapper_base_endpoint, s
     assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
 
 
+def test_it_rejects_invalid_data_source(api_client, data_mapper_base_endpoint, stack):
+    key = "test"
+    response = api_client.put("{}/{}".format(data_mapper_base_endpoint, key), json={
+        "Columns": ["column"],
+        "QueryExecutor": "unsupported",
+        "QueryExecutorParameters": {},
+        "Format": "parquet",
+    })
+    assert 422 == response.status_code
+    assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
+
+
+def test_it_rejects_invalid_data_catalog_provider(api_client, data_mapper_base_endpoint, stack):
+    key = "test"
+    response = api_client.put("{}/{}".format(data_mapper_base_endpoint, key), json={
+        "Columns": ["column"],
+        "QueryExecutor": "athena",
+        "QueryExecutorParameters": {
+            "Database": "database",
+            "Table": "table",
+            "DataCatalogProvider": "invalid",
+        },
+        "Format": "parquet",
+    })
+    assert 422 == response.status_code
+    assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
+
+
+def test_it_rejects_missing_glue_catalog(api_client, data_mapper_base_endpoint, stack):
+    key = "test"
+    response = api_client.put("{}/{}".format(data_mapper_base_endpoint, key), json={
+        "Columns": ["column"],
+        "QueryExecutor": "athena",
+        "QueryExecutorParameters": {
+            "Database": "non_existent",
+            "Table": "non_existent",
+            "DataCatalogProvider": "glue",
+        },
+        "Format": "parquet",
+    })
+    assert 400 == response.status_code
+    assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
+
+
 def test_it_gets_all_data_mappers(api_client, data_mapper_base_endpoint, glue_data_mapper_factory, stack):
     # Arrange
     item = glue_data_mapper_factory()

@@ -88,22 +88,6 @@ def test_it_provides_default_format(validate_mapper, table):
            } == json.loads(response["body"])
 
 
-@patch("backend.lambdas.data_mappers.handlers.table")
-def test_it_rejects_invalid_data_source(table):
-    response = handlers.create_data_mapper_handler({
-        "pathParameters": {
-            "data_mapper_id": "test"
-        },
-        "body": json.dumps({
-            "Columns": ["column"],
-            "QueryExecutor": "unsupported",
-            "QueryExecutorParameters": {},
-        })
-    }, SimpleNamespace())
-
-    assert 422 == response["statusCode"]
-
-
 @patch("backend.lambdas.data_mappers.handlers.validate_mapper")
 def test_it_rejects_where_glue_validation_fails(validate_mapper):
     # Simulate raising an exception for table not existing

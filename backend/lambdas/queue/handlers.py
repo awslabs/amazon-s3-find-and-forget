@@ -9,7 +9,7 @@ import uuid
 import boto3
 
 from boto_utils import DecimalEncoder, get_config, running_job_exists, utc_timestamp
-from decorators import with_logger, request_validator, catch_errors, load_schema, add_cors_headers, json_body_loader
+from decorators import with_logger, catch_errors, add_cors_headers, json_body_loader
 
 sfn_client = boto3.client("stepfunctions")
 dynamodb_resource = boto3.resource("dynamodb")
@@ -22,7 +22,6 @@ bucket_count = int(os.getenv("GSIBucketCount", 1))
 @with_logger
 @add_cors_headers
 @json_body_loader
-@request_validator(load_schema("enqueue_match"))
 @catch_errors
 def enqueue_handler(event, context):
     body = event["body"]
@@ -56,7 +55,6 @@ def get_handler(event, context):
 @with_logger
 @add_cors_headers
 @json_body_loader
-@request_validator(load_schema("cancel_matches"))
 @catch_errors
 def cancel_handler(event, context):
     if running_job_exists():

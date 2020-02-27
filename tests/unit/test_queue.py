@@ -73,22 +73,6 @@ def test_it_cancels_deletions(table, mock_running_job):
     } == response
 
 
-@patch("backend.lambdas.queue.handlers.deletion_queue_table")
-def test_it_rejects_invalid_delete_requests(table):
-    response = handlers.cancel_handler({
-        "body": json.dumps({
-            "Matches": [{
-                "MatchId": "test"
-            }],
-        })
-    }, SimpleNamespace())
-    assert {
-        "statusCode": 422,
-        "headers": ANY,
-        "body": ANY
-    } == response
-
-
 @patch("backend.lambdas.queue.handlers.running_job_exists")
 def test_it_prevents_cancelling_whilst_running_jobs(mock_running_job):
     mock_running_job.return_value = True

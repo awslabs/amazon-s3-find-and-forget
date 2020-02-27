@@ -50,6 +50,19 @@ def test_it_gets_queue(api_client, queue_base_endpoint, del_queue_factory, stack
     assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
 
 
+def test_it_rejects_invalid_deletion(api_client, del_queue_factory, queue_base_endpoint, queue_table, stack):
+    # Arrange
+    del_queue_item = del_queue_factory()
+    match_id = del_queue_item["MatchId"]
+    # Act
+    response = api_client.delete("{}/matches".format(queue_base_endpoint), json={"Matches": [{
+        "MatchId": match_id,
+    }]})
+    # Assert
+    assert 422 == response.status_code
+    assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
+
+
 def test_it_cancels_deletion(api_client, del_queue_factory, queue_base_endpoint, queue_table, stack):
     # Arrange
     del_queue_item = del_queue_factory()
