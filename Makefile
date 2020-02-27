@@ -73,7 +73,7 @@ setup:
 	pip install -r backend/lambda_layers/cr_helper/requirements.txt -t backend/lambda_layers/cr_helper/python
 	pip install -r backend/lambda_layers/decorators/requirements.txt -t backend/lambda_layers/decorators/python
 	pip install -r requirements.txt
-	pre-commit init
+	pre-commit install
 	npm i @openapitools/openapi-generator-cli --no-package-lock
 	cd frontend && npm i
 	gem install cfn-nag
