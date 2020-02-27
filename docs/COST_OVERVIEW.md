@@ -1,5 +1,4 @@
-Cost Overview
-=============
+# Cost Overview
 
 Amazon S3 Find and Forget is a solution you deploy in your own AWS account using [AWS CloudFormation]. There is no charge for the solution: you pay only for
 the AWS services used to run the solution. This page outlines the services used by the solution, and examples of the charges you should expect for typical
@@ -9,7 +8,7 @@ usage of the solution.
 >
 > You are responsible for the cost of the AWS services used while running this deployment. There is no additional cost for using the solution. For full details, see the following pricing pages for each AWS service you will be using. Prices are subject to change.
 
-# Index
+## Index
 
 * [Overview](#overview)
   * [AWS Fargate](#aws-fargate)
@@ -28,7 +27,7 @@ usage of the solution.
 * [Solution Cost Estimate](#solution-cost-estimate)
   * [Scenario 1](#scenario-1)
 
-# Overview
+## Overview
 
 The Amazon S3 Find and Forget solution uses a serverless computing
 architecture. This model minimises costs when you're not actively using the
@@ -37,7 +36,7 @@ solution, and allows the solution to scale while only paying for what you use.
 For typical usage, the greatest proportion of what you pay will be for use
 of Amazon Athena, Amazon S3 and AWS Fargate.
 
-## AWS Fargate
+### AWS Fargate
 
 The Forget phase of the solution uses AWS Fargate. Using Fargate, you pay for the duration that Fargate tasks run during the Forget phase.
 
@@ -46,21 +45,21 @@ parameters when deploying the Solution.
 
 [AWS Fargate Pricing]
 
-## AWS Glue
+### AWS Glue
 
 AWS Glue Data Catalog is used by the solution to define data mappers. You pay a monthly fee based on the number of objects stored in the data catalog, and for requests
 made to the AWS Glue service when the solution runs.
 
 [AWS Glue Pricing]
 
-## AWS Lambda
+### AWS Lambda
 
 AWS Lambda Functions are used throughout the solution. You pay for the requests to, and execution time of, these functions. Functions execute when using the solution web
 interface, API, and when a deletion job runs.
 
 [AWS Lambda Pricing]
 
-## AWS Step Functions
+### AWS Step Functions
 
 AWS Step Functions Standard Workflows are used when a deletion job runs. You pay for the amount of state transitions in the Step Function Workflow. The number of
 state transitions will increase with the number of data mappers, and partitions in those data mappers, included in a deletion job.
@@ -68,13 +67,13 @@ state transitions will increase with the number of data mappers, and partitions 
 [AWS Step Functions Pricing]
 [Deletion Job Workflow]
 
-## Amazon API Gateway
+### Amazon API Gateway
 
 Amazon API Gateway is used to provide the solution web interface and API. You pay for requests made when using the web interface or API, and any data transferred out.
 
 [Amazon API Gateway Pricing]
 
-## Amazon Athena
+### Amazon Athena
 
 Amazon Athena scans your data lake during the _Find phase_ of a deletion job. You pay for the Athena queries run based on the amount of data scanned.
 
@@ -83,21 +82,21 @@ You can achieve significant cost savings and performance gains by reducing the q
 The [Amazon Athena Pricing] page contains an overview of prices and provides a calculator to estimate the Athena query cost for each deletion job run based on the Data
 Lake size.
 
-## Amazon CloudFront
+### Amazon CloudFront
 
 If you choose to deploy a CloudFront distribution for the solution interface, you will pay CloudFront charges for requests and data transferred when you access the web
 interface.
 
 [Amazon CloudFront Pricing]
 
-## Amazon Cognito
+### Amazon Cognito
 
 Amazon Cognito provides authentication to secure access to the API using an administrative user created during deployment. You pay a monthly fee for active users in
 the Cognito User Pool.
 
 [Amazon Cognito Pricing]
 
-## Amazon DynamoDB
+### Amazon DynamoDB
 
 Amazon DynamoDB stores internal state data for the solution. All tables created by the solution use the on-demand capacity mode of pricing. You pay for storage used by
 these tables, and DynamoDB capacity used when interacting with the solution web interface, API, or running a deletion job.
@@ -105,7 +104,7 @@ these tables, and DynamoDB capacity used when interacting with the solution web 
 * [Amazon DynamoDB Pricing]
 * [Solution Persistence Layer]
 
-## Amazon S3
+### Amazon S3
 
 Four types of charges occur when working with Amazon S3: Storage, Requests and data retrievals, Data Transfer, and Management.
 
@@ -125,14 +124,14 @@ Uses of Amazon S3 in the solution include:
 
 [Amazon S3 Pricing]
 
-## Amazon SQS
+### Amazon SQS
 
 The solution uses standard and FIFO SQS queues to handle internal state during a deletion job. You pay for the number of requests made to SQS. The number of requests
 increases with the number of data mappers, partitions in those data mappers, and the number of Amazon S3 objects processed in a deletion job.
 
 [Amazon SQS Pricing]
 
-## Amazon VPC
+### Amazon VPC
 
 Amazon VPC provides network connectivity for AWS Fargate tasks that run during the _Forget_ phase. 
 
@@ -147,16 +146,16 @@ however it may be more cost-efficient to use an existing suitable VPC in your ac
 * [Amazon VPC Pricing]
 * [AWS PrivateLink Pricing]
 
-## Other Supporting Services
+### Other Supporting Services
 
 During deployment, the solution uses [AWS CodeBuild], [AWS CodePipeline] and [AWS Lambda] custom resources to deploy the frontend and the backend.
 [AWS Fargate] uses [Amazon Elastic Container Registry] to store container images.
 
-# Solution Cost Estimate
+## Solution Cost Estimate
 
 You are responsible for the cost of the AWS services used while running this solution. As of the date of publication of this version of the source code, the estimated cost to run a job with different Data Lake configurations in the Europe (Ireland) region is shown in the tables below. The estimates do not include VPC costs.
 
-## Scenario 1
+### Scenario 1
 
 This example shows how the charges would be calculated for a deletion job where:
 
@@ -174,7 +173,7 @@ This example shows how the charges would be calculated for a deletion job where:
 |Other services|$0.01|n/a|
 |Total|$**TODO** |n/a|
 
-## Scenario 2
+### Scenario 2
 
 This example shows how the charges would be calculated for a deletion job where:
 
