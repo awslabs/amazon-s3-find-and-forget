@@ -11,13 +11,9 @@ import pytest
 import pandas as pd
 from pyarrow.lib import ArrowException
 
-mock_output_bucket = "test"
-mock_output_prefix = "results/"
 with patch.dict(os.environ, {
     "DELETE_OBJECTS_QUEUE": "https://url/q.fifo",
     "DLQ": "https://url/q",
-    "OUTPUT_BUCKET": mock_output_bucket,
-    "OUTPUT_PREFIX": mock_output_prefix,
 }):
     from backend.ecs_tasks.delete_files.delete_files import execute, get_emitter_id, \
          emit_deletion_event, emit_failed_deletion_event, save, get_grantees, \
@@ -428,8 +424,7 @@ def test_it_applies_settings_when_saving(mock_grantees, mock_acl, mock_tagging, 
     mock_grantees.return_value = ''
     buf = BytesIO()
     save(mock_client, buf, "bucket", "key")
-    expected_output_key = "{}{}/{}".format(mock_output_prefix, "bucket", "key")
-    mock_client.upload_fileobj.assert_called_with(buf, mock_output_bucket, expected_output_key, ExtraArgs={
+    mock_client.upload_fileobj.assert_called_with(buf, "bucket", "key", ExtraArgs={
         "Expires": "123",
         "Metadata": {},
         "RequestPayer": "requester",
@@ -461,15 +456,11 @@ def test_it_restores_write_permissions(mock_grantees, mock_acl, mock_tagging, mo
     })
     mock_grantees.return_value = {"id=123"}
     buf = BytesIO()
-    input_bucket = "bucket"
-    input_key = "key"
-    expected_output_key = "{}{}/{}".format(mock_output_prefix, input_bucket, input_key)
-    save(mock_client, buf, input_bucket, input_key)
-    mock_client.upload_fileobj.assert_called_with(buf, mock_output_bucket, expected_output_key,
-                                                  ExtraArgs={"GrantFullControl": "id=abc"})
+    save(mock_client, buf, "bucket", "key",)
+    mock_client.upload_fileobj.assert_called_with(buf, "bucket", "key", ExtraArgs={"GrantFullControl": "id=abc"})
     mock_client.put_object_acl.assert_called_with(
-        Bucket=mock_output_bucket,
-        Key=expected_output_key,
+        Bucket="bucket",
+        Key="key",
         GrantFullControl="id=abc",
         GrantWrite="id=123"
     )

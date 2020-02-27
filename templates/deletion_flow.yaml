@@ -40,8 +40,6 @@ Parameters:
     Default: 7
   ResourcePrefix:
     Type: String
-  OutputBucket:
-    Type: String
   VpcSecurityGroups:
     Type: CommaDelimitedList
   VpcSubnets:
@@ -132,10 +130,6 @@ Resources:
               Value: 'true'
             - Name: JobTable
               Value: !Ref JobTableName
-            - Name: OUTPUT_BUCKET
-              Value: !Ref OutputBucket
-            - Name: OUTPUT_PREFIX
-              Value: results/
 
   DeleteService:
     Type: AWS::ECS::Service
@@ -169,19 +163,6 @@ Resources:
             - dynamodb:PutItem
             Effect: Allow
             Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${JobTableName}"
-          - Action:
-            - s3:AbortMultipartUpload
-            - s3:GetBucketLocation
-            - s3:GetBucketRequestPayment*
-            - s3:GetObject*
-            - s3:ListBucket
-            - s3:ListBucketMultipartUploads*
-            - s3:ListMultipartUploads
-            - s3:PutObject*
-            Effect: Allow
-            Resource:
-              - !Sub "arn:aws:s3:::${OutputBucket}"
-              - !Sub "arn:aws:s3:::${OutputBucket}/*"
           - Action:
             - logs:DescribeLogStreams
             - logs:CreateLogStream

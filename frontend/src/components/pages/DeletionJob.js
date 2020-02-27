@@ -233,8 +233,8 @@ export default ({ gateway, jobId }) => {
               </Col>
             </Row>
             <div className="details content">
-              <DetailsBox label="Safe Mode">
-                {job.SafeMode.toString().toUpperCase()}
+              <DetailsBox label="Delete Old Versions">
+                {job.DeleteOldVersions.toString().toUpperCase()}
               </DetailsBox>
               <DetailsBox label="Athena Concurrency Limit">
                 {job.AthenaConcurrencyLimit}

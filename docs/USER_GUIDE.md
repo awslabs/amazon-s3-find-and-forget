@@ -106,10 +106,9 @@ resources.
    this stack in CloudFormation once deployed.
    * **AdminEmail:** The email address you wish to setup as the initial
    user of this Amazon S3 Find and Forget deployment.
-   * **SafeMode:** (Default: true) Whether to operate in safe mode. Whilst Safe
-   Mode is set to true, updated objects will be written to a temporary bucket
-   instead of overwriting the original object. For more information see
-   [Disabling Safe Mode](#disabling-safe-mode)
+   * **DeleteOldVersions:** (Default: false) Whether to operate delete old versions
+   of an object. For more information see
+   [Enabling Old Version Deletion](#enabling-old-version-deletion)
    * **JobDetailsRetentionDays:** (Default: 0) How long job records should
    remain in the Job table for. Use 0 to retain logs indefinitely. **Note:**
    If the retention setting is changed it will only apply to *new* deletion jobs.
@@ -344,6 +343,9 @@ at point by choosing the job ID from the Deletion Jobs list. The job details
 page will automatically refresh and to display the current status and
 statistics for the job. For more information on the possible statuses and
 their meaning, see [Deletion Job Statuses](#deletion-job-statuses).
+
+## Enabling Old Version Deletion
+*TODO*
 
 Job events are continuously emitted whilst a job is running. These events are
 used to update the status and statistics for the job. You can view all the

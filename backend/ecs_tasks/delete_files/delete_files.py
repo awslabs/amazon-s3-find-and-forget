@@ -29,8 +29,6 @@ logger.addHandler(handler)
 
 sqs = boto3.resource('sqs', endpoint_url="https://sqs.{}.amazonaws.com".format(os.getenv("AWS_DEFAULT_REGION")))
 queue = sqs.Queue(os.getenv("DELETE_OBJECTS_QUEUE"))
-output_bucket = os.getenv("OUTPUT_BUCKET")
-output_prefix = os.getenv("OUTPUT_PREFIX")
 s3 = s3fs.S3FileSystem(default_cache_type='none', requester_pays=True, default_fill_cache=False)
 
 
@@ -87,15 +85,14 @@ def save(client, buf, bucket, key):
     extra_args = {**request_payer_args, **object_info_args, **tagging_args, **acl_args}
     logger.info("Object settings: {}".format(extra_args))
     # Write Object Back to S3
-    output_key = "{}{}/{}".format(output_prefix, bucket, key)
-    logger.info("Saving updated object to s3://{}/{}".format(output_bucket, output_key))
-    client.upload_fileobj(buf, output_bucket, output_key, ExtraArgs=extra_args)
+    logger.info("Saving updated object to s3://{}/{}".format(bucket, key))
+    client.upload_fileobj(buf, bucket, key, ExtraArgs=extra_args)
     logger.info("Object uploaded to S3")
     # GrantWrite cannot be set whilst uploading therefore ACLs need to be restored separately
     write_grantees = ",".join(get_grantees(acl_resp, "WRITE"))
     if write_grantees:
         logger.info("WRITE grant found. Restoring additional grantees for object")
-        client.put_object_acl(Bucket=output_bucket, Key=output_key, **{
+        client.put_object_acl(Bucket=bucket, Key=key, **{
             **request_payer_args,
             **acl_args,
             'GrantWrite': write_grantees,
@@ -197,6 +194,38 @@ def get_emitter_id():
         return "ECSTask"
 
 
+@lru_cache()
+def get_bucket_versioning(client, bucket):
+    return True
+    # resp = client.get_bucket_versioning(
+    #     Bucket=bucket
+    # )
+    #
+    # return resp['Status'] == "Enabled"
+
+
+@lru_cache()
+def should_delete_previous_versions(table, job_id):
+    return True
+    # resp = table.get_item(Key={"Id": job_id, "Sk": job_id})
+    # if not resp.get("Item"):
+    #     raise ValueError("Invalid Job ID")
+    #
+    # return resp["Item"].get("DeletePreviousVersions", True)
+
+
+def delete_previous_versions(client, input_bucket, input_key):
+    return True
+    # resp = client.list_object_versions(
+    #     Bucket=input_bucket,
+    #     Prefix=input_key,
+    # )
+    # versions = resp.get('Versions', [])
+    # versions.extend(resp.get('DeleteMarkers', []))
+    # for version_id in [x['VersionId'] for x in versions if x['VersionId'] != 'null']:
+    #     client.delete_object(Bucket=bucket, Key=filename, VersionId=version_id)
+
+
 def emit_deletion_event(message_body, stats):
     job_id = message_body["JobId"]
     event_data = {
@@ -249,6 +278,8 @@ def execute(message_body, receipt_handle):
         body = json.loads(message_body)
         cols, object_path, job_id = itemgetter('Columns', 'Object', 'JobId')(body)
         input_bucket, input_key = parse_s3_url(object_path)
+        if not get_bucket_versioning(client, input_bucket):
+            raise ValueError("Bucket {} does not have versioning enabled".format(input_bucket))
         # Download the object in-memory and convert to PyArrow NativeFile
         logger.info("Downloading and opening {} object in-memory".format(object_path))
         with s3.open(object_path, "rb") as f:
@@ -259,6 +290,8 @@ def execute(message_body, receipt_handle):
             if stats["DeletedRows"] > 0:
                 with pa.BufferReader(out_sink.getvalue()) as output_buf:
                     save(client, output_buf, input_bucket, input_key)
+                if should_delete_previous_versions(table, job_id):
+                    delete_previous_versions(client, input_bucket, input_key)
             else:
                 logger.warning("The object {} was processed successfully but no rows required deletion".format(object_path))
         msg.delete()

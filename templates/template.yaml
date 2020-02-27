@@ -26,6 +26,13 @@ Parameters:
     AllowedValues:
       - "true"
       - "false"
+  DeleteOldVersions:
+    Description: Whether to remove old versions when performing updates
+    Type: String
+    Default: "true"
+    AllowedValues:
+      - "true"
+      - "false"
   DeletionTaskCPU:
     Description: The CPU to be allocated to the Deletion Fargate Task
     Type: String
@@ -126,7 +133,7 @@ Resources:
         {
           "AthenaConcurrencyLimit": ${AthenaConcurrencyLimit},
           "DeletionTasksMaxNumber": ${DeletionTasksMaxNumber},
-          "SafeMode": ${SafeMode},
+          "DeleteOldVersions": ${DeleteOldVersions},
           "JobDetailsRetentionDays": ${JobDetailsRetentionDays},
           "QueryExecutionWaitSeconds": ${QueryExecutionWaitSeconds},
           "QueryQueueWaitSeconds": ${QueryQueueWaitSeconds},
@@ -180,7 +187,6 @@ Resources:
         EnableContainerInsights: !Ref EnableContainerInsights
         JobTableName: !GetAtt DDBStack.Outputs.JobTable
         ResourcePrefix: !Ref ResourcePrefix
-        OutputBucket: !Ref TempBucket
         VpcSecurityGroups: !Join [",", !Ref VpcSecurityGroups]
         VpcSubnets: !Join [",", !Ref VpcSubnets]
   DeployStack:
@@ -306,7 +312,7 @@ Metadata:
           default: "Admin Configuration"
         Parameters:
           - AdminEmail
-          - SafeMode
+          - DeleteOldVersions
           - JobDetailsRetentionDays
       - Label:
           default: "Network Configuration"
