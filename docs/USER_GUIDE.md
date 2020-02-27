@@ -82,7 +82,7 @@ your preferred AWS region:
 2. If prompted, login using your AWS account credentials.
 3. You should see a screen titled "*Create Stack*" at the "*Specify template*"
    step. The fields specifying the CloudFormation template are pre-populated.
-   Click the *Next* button at the bottom of the page.
+   Choose the *Next* button at the bottom of the page.
 4. On the "*Specify stack details*" screen you should provide values for the
    following parameters of the CloudFormation stack:
    * **Stack Name:** (Default: S3F2) This is the name that is used to refer to
@@ -146,7 +146,7 @@ your preferred AWS region:
 
    These are required to allow CloudFormation to create a Role to allow access
    to resources needed by the stack and name the resources in a dynamic way.
-7. Click *Create Change Set* 
+7. Choose *Create Change Set* 
 8. On the *Change Set* screen, click *Execute* to launch your stack.
    * You may need to wait for the *Execution status* of the change set to
    become "*AVAILABLE*" before the "*Execute*" button becomes available.
@@ -157,7 +157,33 @@ your preferred AWS region:
    used to access the application.
 
 ## Configuring Data Mappers
-*TODO*
+After [Deploying the Solution](#deploying-the-solution), your first step should
+be to configure one or more data mappers which will connect your data to the
+solution. Identify the S3 Bucket containing the data you wish to connect to the
+solution and ensure you have defined a table in your data catalog and that all
+existing (and future partitions as they are created) are known to the Data
+Catalog. Currently AWS Glue is the only supported data catalog provider. For
+more information on defining your data in the Glue Data Catalog, see
+[Defining Glue Tables]. You must define your Table in the Glue Data Catalog in
+the same region and account as the S3 Find and Forget solution.
+
+1. Access the application UI via the **WebUIUrl** displayed in the *Outputs* tab
+for the stack.
+2. Choose **Data Mappers** from the menu then choose **Create Data Mapper** 
+3. On the Create Data Mapper page input a **Name** to uniquely identify this
+Data Mapper. Select a **Query Executor Type** then choose the **Database** and
+**Table** in your data catalog which describes the target data in S3.
+A list of columns will be displayed for the chosen Table. From the
+list, choose the column(s) the solution should use to to find items in the
+data which should be deleted. For example, if your table has three columns
+named **customer_id**, **description** and **created_at** and you want to
+search for items using the **customer_id**, you should choose only the
+**customer_id** column from this list. Once you have chosen the column(s),
+choose **Create Data Mapper**.
+4. A message will be displayed advising you to update the S3 Bucket Policy
+for the S3 Bucket referenced by the newly created data mapper. See
+[Granting Access to Data](#granting-access-to-data) for more information
+on how to do this. Choose **Return to Data Mappers**.
 
 ## Granting Access to Data
 *TODO*
@@ -172,9 +198,6 @@ your preferred AWS region:
 *TODO*
 
 ## Adjusting Performance Configuration
-*TODO*
-
-## Updating the Stack
 *TODO*
 
 ## Deletion Job Statuses
@@ -204,7 +227,11 @@ The list of possible job statuses is as follows:
 For more information on how to resolve statuses indicative of errors, consult
 the [Troubleshooting] guide.
 
+## Updating the Stack
+*TODO*
+
 [Troubleshooting]: TROUBLESHOOTING.md
 [Fargate Configuration]: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html#fargate-tasks-size
 [VPC Endpoints]: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-endpoints.html
 [DynamoDB Streams]: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Streams.html
+[Defining Glue Tables]: https://docs.aws.amazon.com/glue/latest/dg/tables-described.html
