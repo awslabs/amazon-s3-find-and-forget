@@ -1,0 +1,7 @@
+repos:
+-   repo: local
+    hooks:
+    -   id: generate-api-docs
+        name: generate-api-docs
+        entry: make generate-api-docs
+        language: system
