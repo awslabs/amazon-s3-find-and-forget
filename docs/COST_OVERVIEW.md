@@ -26,6 +26,7 @@ usage of the solution.
   * [Other Supporting Services](#other-supporting-services)
 * [Solution Cost Estimate](#solution-cost-estimate)
   * [Scenario 1](#scenario-1)
+  * [Scenario 2](#scenario-2)
 
 ## Overview
 
