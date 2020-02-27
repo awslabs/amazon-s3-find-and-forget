@@ -158,14 +158,39 @@ You are responsible for the cost of the AWS services used while running this sol
 
 ## Scenario 1
 
-Deletion job for 100GB of Snappy compressed Parquet objects with 2 Glue Partitions (scanned: 6.8GB - processed: 100GB)
-|Service|Spending|
-|-|-|
-|Amazon Athena|0.03$|
-|AWS Fargate|0.04$|
-|Amazon S3|0.01$|
-|Other services|0.01$|
-|Total|0.09$|
+This example shows how the charges would be calculated for a deletion job where:
+
+- Your dataset is 100GB of Snappy compressed Parquet objects are distributed across 2 Partitions
+- The S3 bucket containing the objects is in the same region as the S3 Find and Forget Solution
+- The total size of the data held in the column queried by Athena is 6.8GB
+- The Find phase returns **TODO** objects which need to be modified
+- The Forget phase uses **TODO** Fargate tasks with 4 vCPUs each, running concurrently for **TODO** minutes
+
+|Service|Spending|Notes|
+|-|-|-|
+|Amazon Athena|$0.03|6.8GB of data scanned|
+|AWS Fargate|$**TODO** |50 tasks x 4 vCPUs x **TODO** hours|
+|Amazon S3|$**TODO** |**TODO** of requests and data retrieval. $0 of data transfer|
+|Other services|$0.01|n/a|
+|Total|$**TODO** |n/a|
+
+## Scenario 2
+
+This example shows how the charges would be calculated for a deletion job where:
+
+- Your dataset is 750GB of Snappy compressed Parquet objects are distributed across 1000 Partitions
+- The S3 bucket containing the objects is in the same region as the S3 Find and Forget Solution
+- The total size of the data held in the column queried by Athena is 10GB
+- The Find phase returns 1000 objects which need to be modified
+- The Forget phase uses 50 Fargate tasks with 4 vCPUs each, running concurrently for 45 minutes
+
+|Service|Spending|Notes|
+|-|-|-|
+|Amazon Athena|$0.05|10GB of data scanned|
+|AWS Fargate|$6|50 tasks x 4 vCPUs x 0.75 hours|
+|Amazon S3|$2|$2 of requests and data retrieval. $0 of data transfer|
+|Other services|$0.01|n/a|
+|Total|$8.06|n/a|
 
 [AWS CloudFormation]: https://aws.amazon.com/cloudformation/
 [AWS CodeBuild]: https://aws.amazon.com/codebuild/pricing/
