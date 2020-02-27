@@ -6,7 +6,7 @@ Amazon S3 Find and Forget
 
 Amazon S3 Find and Forget is a solution to the need to selectively erase
 records from data lakes stored on Amazon Simple Storage Service (Amazon S3).
-This solution can assist data lake operators to fulfill their obligations to
+This solution can assist data lake operators to fulfil their obligations to
 handle erasure requests such as those that can be made under the European
 General Data Protection Regulation (GDPR).
 
