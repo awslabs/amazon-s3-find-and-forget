@@ -159,14 +159,15 @@ your preferred AWS region:
 ## Configuring Data Mappers
 
 After [Deploying the Solution](#deploying-the-solution), your first step should
-be to configure one or more data mappers which will connect your data to the
-solution. Identify the S3 Bucket containing the data you wish to connect to the
-solution and ensure you have defined a table in your data catalog and that all
-existing (and future partitions as they are created) are known to the Data
-Catalog. Currently AWS Glue is the only supported data catalog provider. For
-more information on defining your data in the Glue Data Catalog, see
-[Defining Glue Tables]. You must define your Table in the Glue Data Catalog in
-the same region and account as the S3 Find and Forget solution.
+be to configure one or more [data mappers](ARCHITECTURE.md#data-mappers) which
+will connect your data to the solution. Identify the S3 Bucket containing the
+data you wish to connect to the solution and ensure you have defined a table in
+your data catalog and that all existing (and future partitions as they are
+created) are known to the Data Catalog. Currently AWS Glue is the only supported
+data catalog provider. For more information on defining your data in the Glue
+Data Catalog, see [Defining Glue Tables]. You must define your Table in the
+Glue Data Catalog in the same region and account as the S3 Find and Forget
+solution.
 
 1. Access the application UI via the **WebUIUrl** displayed in the *Outputs* tab
 for the stack.
@@ -205,20 +206,20 @@ Amazon Athena, and **write** access to the IAM role used by AWS Fargate, follow
 these steps:
 
 1. Access the application UI via the **WebUIUrl** displayed in the *Outputs* tab
-for the stack.
+   for the stack.
 2. Choose **Data Mappers** from the menu then choose the radio button for the
-relevant data mapper from the **Data Mappers** list.
+   relevant data mapper from the **Data Mappers** list.
 3. Choose **Generate Access Policies** and follow the instructions on the
-**Bucket Access** tab to update the bucket policy. If you already have a
-bucket policy in place, add the statements shown to your existing bucket policy
-rather than replacing it completely. If your data is encrypted with an
-**Customer Managed CMK** rather than an **AWS Managed CMK**, see
-[Data Encrypted with Customer Managed CMK](#data-encrypted-with-a-customer-managed-cmk)
-to grant the solution access to the Customer Managed CMK. If the bucket and/or
-Customer Managed CMK reside in a different account, see
-[Cross Account Buckets/CMKs](#cross-account-buckets-and-cmks) **after** you
-have granted any required Customer Managed CMK access. For more information on
-using Server-Side Encryption (SSE) with S3, see [Using SSE with CMKs].
+   **Bucket Access** tab to update the bucket policy. If you already have a
+   bucket policy in place, add the statements shown to your existing bucket policy
+   rather than replacing it completely. If your data is encrypted with an
+   **Customer Managed CMK** rather than an **AWS Managed CMK**, see
+   [Data Encrypted with Customer Managed CMK](#data-encrypted-with-a-customer-managed-cmk)
+   to grant the solution access to the Customer Managed CMK. If the bucket
+   and/or Customer Managed CMK reside in a different account, see
+   [Cross Account Buckets/CMKs](#cross-account-buckets-and-cmks) **after** you
+   have granted any required Customer Managed CMK access. For more information on
+   using Server-Side Encryption (SSE) with S3, see [Using SSE with CMKs].
 
 ### Data Encrypted with a Customer Managed CMK
 
@@ -253,9 +254,35 @@ Athena and Fargate IAM roles with the provided statements. For more information,
 see [Cross Account S3 Access] and [Cross Account CMK Access].
 
 ## Adding to the Deletion Queue
-*TODO*
 
-## Running a Deletion Job
+Once your Data Mappers are configured, you can begin adding "Matches" to the
+[Deletion Queue](ARCHITECTURE.md#deletion-queue).
+
+1. Access the application UI via the **WebUIUrl** displayed in the *Outputs* tab
+   for the stack.
+2. Choose **Deletion Queue** from the menu then choose **Add Match to the
+   Deletion Queue**.
+3. Input a **Match**, which is the value to search for in your data mappers.
+   If you wish to search for the match from all data mappers choose
+   **All Data Mappers**, otherwise choose **Select your Data Mappers** then
+   select the relevant data mappers from the list.
+4. Choose **Add Item to the Deletion Queue** and confirm you can see the
+   match in the Deletion Queue.
+
+When the next deletion job runs, the solution will scan the configured columns
+of your data for any occurrences of the Matches present in the queue at the
+time the job starts and remove any items where one of the Matches is present.
+
+If across all your data mappers you can find all items related to a single
+logical entity using the same value, you only need to add one Match value to the
+deletion queue to delete that logical entity from all data mappers.
+
+If the value used to identify a single logical entity is not consistent across
+your data mappers, you should add an item to the deletion queue **for each
+distinct value** which identifies the logical entity, selecting the specific
+data mapper(s) to which that value is relevant.
+
+### Running a Deletion Job
 *TODO*
 Choose Start
 Event History
@@ -263,7 +290,7 @@ List of Events
 To optimise costs
 Ref Job statuses
 
-### Deletion Job Statuses
+#### Deletion Job Statuses
 
 The list of possible job statuses is as follows:
 
@@ -290,7 +317,7 @@ The list of possible job statuses is as follows:
 For more information on how to resolve statuses indicative of errors, consult
 the [Troubleshooting] guide.
 
-### Event Types
+#### Event Types
 
 The list of events is as follows:
 
