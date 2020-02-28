@@ -157,6 +157,7 @@ your preferred AWS region:
    used to access the application.
 
 ## Configuring Data Mappers
+
 After [Deploying the Solution](#deploying-the-solution), your first step should
 be to configure one or more data mappers which will connect your data to the
 solution. Identify the S3 Bucket containing the data you wish to connect to the
@@ -186,13 +187,77 @@ for the S3 Bucket referenced by the newly created data mapper. See
 on how to do this. Choose **Return to Data Mappers**.
 
 ## Granting Access to Data
-*TODO*
+
+After configuring a data mapper you must ensure that the S3 Find and Forget
+solution has the required level of access to the S3 location the data mapper
+refers to. The recommended way to achieve this is through the use of
+[S3 Bucket Policies].
+
+> **Note:** AWS IAM uses an eventual consistency moodel and therefore any change
+> you make to IAM, Bucket or KMS Key policies may take time to become visible.
+> Ensure that the permissions changes have been propagated to all endpoints
+> before starting a job.
+
+### Updating your Bucket Policy
+
+To update the S3 bucket policy to grant **read** access to the IAM role used by
+Amazon Athena, and **write** access to the IAM role used by AWS Fargate, follow
+these steps:
+
+1. Access the application UI via the **WebUIUrl** displayed in the *Outputs* tab
+for the stack.
+2. Choose **Data Mappers** from the menu then choose the radio button for the
+relevant data mapper from the **Data Mappers** list.
+3. Choose **Generate Access Policies** and follow the instructions on the
+**Bucket Access** tab to update the bucket policy. If you already have a
+bucket policy in place, add the statements shown to your existing bucket policy
+rather than replacing it completely. If your data is encrypted with an
+**Customer Managed CMK** rather than an **AWS Managed CMK**, see
+[Data Encrypted with Customer Managed CMK](#data-encrypted-with-a-customer-managed-cmk)
+to grant the solution access to the Customer Managed CMK. If the bucket and/or
+Customer Managed CMK reside in a different account, see
+[Cross Account Buckets/CMKs](#cross-account-buckets-and-cmks) **after** you
+have granted any required Customer Managed CMK access. For more information on
+using Server-Side Encryption (SSE) with S3, see [Using SSE with CMKs].
+
+### Data Encrypted with a Customer Managed CMK
+
+Where the data you are connecting to the solution is encrypted with an Customer
+Managed CMK rather than an AWS Managed CMK, you must also grant the Athena
+and Fargate IAM roles access to use the key so that the data can be decrypted
+when reading, re-encrypted when writing.
+
+Once you have updated the bucket policy as described in
+[Updating the Bucket Policy](#updating-the-bucket-policy), choose
+the **KMS Access** tab from the **Generate Access Policies** modal window and
+follow the instructions to update the key policy with the provided statements.
+The statements provided are for use when using the **policy view** in the AWS
+console or making updates to the key policy via the CLI, CloudFormation or the
+API. If you wish, to use the **default view** in th AWS console, add the
+**Principals** in the provided statements as **key users**. For more
+information, see [How to Change a Key Policy].
+
+### Cross Account Buckets and CMKs  
+
+Where the bucket referenced by a data mapper is in a different account to the
+deployed S3 Find and Forget solution, and/or the Customer Managed CMK use to
+encrypt data via SSE is in a different account, you also need to update the
+Athena/Fargate roles to grant them access to bucket/keys.
+
+Once you have updated the bucket policy and any key policies as described in
+[Updating the Bucket Policy](#updating-the-bucket-policy) and [Data Encrypted
+with a Customer Managed CMK](#data-encrypted-with-a-customer-managed-cmk), 
+choose the **KMS Access** tab from the **Generate Access Policies** modal
+window and follow the instructions to add the provided inline policies to the
+Athena and Fargate IAM roles with the provided statements. For more information,
+see [Cross Account S3 Access] and [Cross Account CMK Access].
 
 ## Adding to the Deletion Queue
 *TODO*
 
 ## Running a Deletion Job
 *TODO*
+To optimise costs
 
 ## Disabling Safe Mode
 *TODO*
@@ -235,3 +300,9 @@ the [Troubleshooting] guide.
 [VPC Endpoints]: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-endpoints.html
 [DynamoDB Streams]: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Streams.html
 [Defining Glue Tables]: https://docs.aws.amazon.com/glue/latest/dg/tables-described.html
+[S3 Bucket Policies]: https://docs.aws.amazon.com/AmazonS3/latest/dev/using-iam-policies.html
+[Using SSE with CMKs]: https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingKMSEncryption.html
+[Customer Master Keys]: https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#master_keys
+[How to Change a Key Policy]: https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-modifying.html#key-policy-modifying-how-to
+[Cross Account S3 Access]: https://docs.aws.amazon.com/AmazonS3/latest/dev/example-walkthroughs-managing-access-example2.html
+[Cross Account KMS Access]: https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-modifying-external-accounts.html
