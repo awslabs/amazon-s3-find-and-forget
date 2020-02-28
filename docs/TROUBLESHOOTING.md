@@ -67,7 +67,7 @@ As the processed matches will still be on the queue, you can choose to either:
 
 ### Job status: FAILED
 
-A `FAILED` status indicates that the job has terminated due to an unhandled
+A `FAILED` status indicates that the job has terminated due to a generic
 exception. 
 
 Some possible causes for this are:

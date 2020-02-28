@@ -1,6 +1,6 @@
 openapi: "3.0.1"
 info:
-  title: "S3F2 API"
+  title: "Amazon S3 Find And Forget API"
   version: "1.0"
 servers:
   - url: "https://your-apigw-id.execute-api.region.amazonaws.com/{basePath}"
