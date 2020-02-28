@@ -257,15 +257,13 @@ see [Cross Account S3 Access] and [Cross Account CMK Access].
 
 ## Running a Deletion Job
 *TODO*
+Choose Start
+Event History
+List of Events
 To optimise costs
+Ref Job statuses
 
-## Disabling Safe Mode
-*TODO*
-
-## Adjusting Performance Configuration
-*TODO*
-
-## Deletion Job Statuses
+### Deletion Job Statuses
 
 The list of possible job statuses is as follows:
 
@@ -291,6 +289,30 @@ The list of possible job statuses is as follows:
 
 For more information on how to resolve statuses indicative of errors, consult
 the [Troubleshooting] guide.
+
+### Event Types
+
+The list of events is as follows:
+
+- `JobStarted`: 
+- `FindPhaseStarted`: 
+- `FindPhaseEnded`: 
+- `FindPhaseFailed`: 
+- `ForgetPhaseStarted`: 
+- `ForgetPhaseEnded`: 
+- `ForgetPhaseFailed`: 
+- `CleanupSucceeded`: 
+- `CleanupFailed`: 
+- `CleanupSkipped`: 
+- `QuerySucceeded`: 
+- `QueryFailed`: 
+- `ObjectUpdated`: 
+- `ObjectUpdateFailed`: 
+- `Exception`: 
+
+
+## Adjusting Performance Configuration
+*TODO*
 
 ## Updating the Stack
 *TODO*
