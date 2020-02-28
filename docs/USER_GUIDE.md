@@ -282,21 +282,50 @@ your data mappers, you should add an item to the deletion queue **for each
 distinct value** which identifies the logical entity, selecting the specific
 data mapper(s) to which that value is relevant.
 
-### Running a Deletion Job
-*TODO*
-Choose Start
-Event History
-List of Events
-To optimise costs
-Ref Job statuses
+## Running a Deletion Job
 
-#### Deletion Job Statuses
+Once you have configured your data mappers and added one or more items to the
+deletion queue, you can stat a job.
+
+1. Access the application UI via the **WebUIUrl** displayed in the *Outputs* tab
+   for the stack.
+2. Choose **Deletion Jobs** from the menu and ensure there are no jobs
+   currently running. Choose **Start a Deletion Job** and review the settings
+   displayed on the screen. For more information on how to edit these settings,
+   see [Adjusting Performance Configuration](#adjusting-performance-configuration).
+3. If you are happy with the current solution configuration choose **Start
+   a Deletion Job**. The job details page should be displayed.
+   
+Once a job has started, you can leave the page and return to view its progress
+at point by choosing the job ID from the Deletion Jobs list. The job details
+page will automatically refresh and to display the current status and
+statistics for the job. For more information on the possible statuses and
+their meaning, see [Deletion Job Statuses](#deletion-job-statuses).
+
+Job events are continuously emitted whilst a job is running. These events are
+used to update the status and statistics for the job. You can view all the
+emitted events for a job in the **Job Events** table. Whilst a job is running,
+the **Load More** button will continue to be displayed even if no new events
+have been received. Once a job has finished, the **Load More** button will
+disappear once you have loaded all the emitted events. For more information
+on the events which can be emitted during a job, see [Deletion Job Event
+Types](#deletion-job-event-types)
+
+To optimise costs, it is best practice when using the solution to start jobs
+on a regular schedule, rather than every time a single item is added to the
+Deletion Queue. This is because the marginal cost of the Find phase when
+deleting an additional item from the queue is far less that re-executing
+the Find phase (where the data mappers searched are the same). Similarly, the
+marginal cost of removing an additional match from an object is negligible when
+there is already at least 1 match present in the object contents.
+
+### Deletion Job Statuses
 
 The list of possible job statuses is as follows:
 
 - `QUEUED`: The job has been accepted but has yet to start. Jobs are started
-  asynchronously by a Lambda invoked by the [DynamoDB event stream][DynamoDB Streams]
-  for the Jobs table.
+  asynchronously by a Lambda invoked by the [DynamoDB event stream][DynamoDB
+  Streams] for the Jobs table.
 - `RUNNING`: The job is still in progress.
 - `FORGET_COMPLETED_CLEANUP_IN_PROGRESS`: The job is still in progress.
 - `COMPLETED`: The job finished successfully.
@@ -317,26 +346,44 @@ The list of possible job statuses is as follows:
 For more information on how to resolve statuses indicative of errors, consult
 the [Troubleshooting] guide.
 
-#### Event Types
+### Deletion Job Event Types
 
 The list of events is as follows:
 
-- `JobStarted`: 
-- `FindPhaseStarted`: 
-- `FindPhaseEnded`: 
-- `FindPhaseFailed`: 
-- `ForgetPhaseStarted`: 
-- `ForgetPhaseEnded`: 
-- `ForgetPhaseFailed`: 
-- `CleanupSucceeded`: 
-- `CleanupFailed`: 
-- `CleanupSkipped`: 
-- `QuerySucceeded`: 
-- `QueryFailed`: 
-- `ObjectUpdated`: 
-- `ObjectUpdateFailed`: 
-- `Exception`: 
-
+- `JobStarted`: Emitted when the deletion job state machine first starts.
+  Causes the status of the job to transition from `QUEUED` to `RUNNING`
+- `FindPhaseStarted`: Emitted when the deletion job has purged any messages
+  from the query and object queues and is ready to be searching for data.
+- `FindPhaseEnded`: Emitted when all queries have executed and written their
+  results to the objects queue.
+- `FindPhaseFailed`: Emitted when one or more queries fail. Causes the status
+  to transition to `FIND_FAILED`.
+- `ForgetPhaseStarted`: Emitted when the Find phase has completed successfully
+  and the Forget phase is starting.
+- `ForgetPhaseEnded`: Emitted when the Forget phase has completed. If the
+  Forget phase completes with no errors, this event causes the status to
+  transition to `FORGET_COMPLETED_CLEANUP_IN_PROGRESS`. If the
+  Forget phase completes but there was an error updating one or more objects,
+  this causes the status to transition to `FORGET_PARTIALLY_FAILED`.
+- `ForgetPhaseFailed`: Emitted when there was an issue running the Fargate
+  tasks. Causes the status to transition to `FORGET_FAILED`.
+- `CleanupSucceeded`: The **final** event emitted when a job has executed
+  successfully and the Deletion Queue has been cleaned up. Causes the status
+  to transition to `COMPLETED`.
+- `CleanupFailed`: The **final** event emitted when the job executed
+  successfully but there was an error removing the processed matches from
+  the Deletion Queue. Causes the status to transition to
+  `COMPLETED_CLEANUP_FAILED`.
+- `CleanupSkipped`: Emitted when the job is finalising and the job status
+  is one of `FIND_FAILED`, `FORGET_FAILED` or `FAILED`.
+- `QuerySucceeded`: Emitted whenever a single query executes successfully.
+- `QueryFailed`: Emitted whenever a single query fails.
+- `ObjectUpdated`: Emitted whenever an updated object is written to S3 and
+  any associated deletions are complete.
+- `ObjectUpdateFailed`: Emitted whenever an object cannot be updated or an
+  associated deletion fails.
+- `Exception`: Emitted whenever there an unhandled error occurs during the
+  job execution. Causes the status to transition to `FAILED`.
 
 ## Adjusting Performance Configuration
 *TODO*
