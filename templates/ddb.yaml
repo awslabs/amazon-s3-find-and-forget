@@ -1,12 +1,16 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: Amazon S3 Find and Forget DDB Tables
 
+Parameters:
+  DeletionUpdatePolicy:
+    Type: String
+
 Resources:
 
   DeletionQueueTable:
     Type: AWS::DynamoDB::Table
-    DeletionPolicy: Retain
-    UpdateReplacePolicy: Retain
+    DeletionPolicy: !Ref DeletionUpdatePolicy
+    UpdateReplacePolicy: !Ref DeletionUpdatePolicy
     Properties:
       AttributeDefinitions: 
         - 
@@ -26,8 +30,8 @@ Resources:
 
   DataMapperTable:
     Type: AWS::DynamoDB::Table
-    DeletionPolicy: Retain
-    UpdateReplacePolicy: Retain
+    DeletionPolicy: !Ref DeletionUpdatePolicy
+    UpdateReplacePolicy: !Ref DeletionUpdatePolicy
     Properties:
       AttributeDefinitions:
         -
@@ -41,8 +45,8 @@ Resources:
 
   JobTable:
     Type: AWS::DynamoDB::Table
-    DeletionPolicy: Retain
-    UpdateReplacePolicy: Retain
+    DeletionPolicy: !Ref DeletionUpdatePolicy
+    UpdateReplacePolicy: !Ref DeletionUpdatePolicy
     Properties:
       TimeToLiveSpecification:
         AttributeName: Expires
