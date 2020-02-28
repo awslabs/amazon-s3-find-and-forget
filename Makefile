@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 
 .PHONY : deploy deploy-containers pre-deploy setup test test-cov test-acceptance test-acceptance-cov test-no-state-machine test-no-state-machine-cov test-unit test-unit-cov
-	
+
 pre-deploy:
 ifndef TEMP_BUCKET
 	$(error TEMP_BUCKET is undefined)
@@ -44,6 +44,10 @@ deploy-artefacts:
 	zip -r build.zip backend/lambda_layers backend/ecs_tasks/delete_files/ frontend/build -x backend/ecs_tasks/delete_files/__pycache* -x *settings.js
 	aws s3 cp build.zip s3://$(TEMP_BUCKET)/amazon-s3-find-and-forget/$(VERSION)/build.zip
 
+generate-api-docs:
+	npx openapi-generator generate -i ./templates/api.definition.yml -g markdown -t ./docs/templates/ -o docs/api
+	git add docs/api
+
 redeploy-containers:
 	$(eval ACCOUNT_ID := $(shell aws sts get-caller-identity --query Account --output text))
 	$(eval REGION := $(shell aws configure get region))
@@ -69,6 +73,8 @@ setup:
 	pip install -r backend/lambda_layers/cr_helper/requirements.txt -t backend/lambda_layers/cr_helper/python
 	pip install -r backend/lambda_layers/decorators/requirements.txt -t backend/lambda_layers/decorators/python
 	pip install -r requirements.txt
+	pre-commit install
+	npm i
 	cd frontend && npm i
 	gem install cfn-nag
 

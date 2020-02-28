@@ -11,3 +11,4 @@ pandas==0.25.3
 pytest-cov==2.8.1
 s3fs==0.4.0
 crhelper==2.0.4
+pre-commit==1.21.0
