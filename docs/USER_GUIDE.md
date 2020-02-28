@@ -292,7 +292,7 @@ deletion queue, you can stat a job.
 2. Choose **Deletion Jobs** from the menu and ensure there are no jobs
    currently running. Choose **Start a Deletion Job** and review the settings
    displayed on the screen. For more information on how to edit these settings,
-   see [Adjusting Performance Configuration](#adjusting-performance-configuration).
+   see [Adjusting Configuration](#adjusting-configuration).
 3. If you are happy with the current solution configuration choose **Start
    a Deletion Job**. The job details page should be displayed.
    
@@ -385,8 +385,56 @@ The list of events is as follows:
 - `Exception`: Emitted whenever there an unhandled error occurs during the
   job execution. Causes the status to transition to `FAILED`.
 
-## Adjusting Performance Configuration
-*TODO*
+## Adjusting Configuration
+
+There are several parameters to set when [Deploying the
+Solution](#deploying-the-solution) which affect the behaviour of the solution
+in terms of data retention and performance:
+
+* `AthenaConcurrencyLimit`: Increasing the number of concurrent queries that
+  that should be executed during the Find phase will decrease the total time
+  spent performing the Find phase. You should not increase this value beyond
+  your account Service Quota for concurrent DML queries, and should ensure
+  that the value set takes into account any other Athena DML queries that
+  may be executing whilst a job is running.
+* `DeletionTasksMaxNumber`: Increasing the number of concurrent tasks that
+  should consume messages from the object queue will decrease the total time
+  spent performing the Find phase.
+* `QueryExecutionWaitSeconds`: Decreasing this value will decrease the length
+  of time between each check to see whether a query has completed. You should
+  aim to set this to the "ceiling function" of your average query time. For
+  example, if you average query takes 3.2 seconds, set this to 4.
+* `QueryQueueWaitSeconds`: Decreasing this value will decrease the length of
+  time between each check to see whether additional queries can be scheduled
+  during the Find phase. If your jobs fail due to exceeding the Step Functions
+  execution history quota, you may have set this value to low and should
+  increase it to allow more queries to be scheduled after each check.
+* `ForgetQueueWaitSeconds`: Decreasing this value will decrease the length of
+  time between each check to see whether the Fargate object queue is empty.
+  If your jobs fail due to exceeding the Step Functions execution history quota,
+  you may have set this value to low.
+* `SafeMode`: Setting this value to true will cause the solution to write
+  updated objects to a temporary bucket rather than to the source bucket/object
+  key. Typically this mode is used when first deploying the solution to verify
+  your configuration.
+* `JobDetailsRetentionDays`: Changing this value will change how long records
+  job details and events are retained for. Set this to 0 to retain them
+  indefinitely.
+
+The values for these parameters are stored in an SSM Parameter Store String
+Parameter named  `/s3f2/S3F2-Configuration` as a JSON object and can be updated
+at any time by [Updating the SSM Parameter][Updating an SSM Parameter] and
+changing the values. **You should not alter the structure or data types of the
+configuration JSON object.**
+ 
+Once updated, the configuration will affect any **future** job executions.
+In progress and previous executions will **not** be affected.
+The current configuration values are displayed when confirming that you wish
+to start a job.
+
+If you wish to update the vCPUs/memory allocated to Fargate tasks, you must
+update these by performing a stack update. For more information, see
+[Updating the Stack](#updating-the-stack).
 
 ## Updating the Stack
 *TODO*
@@ -402,3 +450,4 @@ The list of events is as follows:
 [How to Change a Key Policy]: https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-modifying.html#key-policy-modifying-how-to
 [Cross Account S3 Access]: https://docs.aws.amazon.com/AmazonS3/latest/dev/example-walkthroughs-managing-access-example2.html
 [Cross Account KMS Access]: https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-modifying-external-accounts.html
+[Updating an SSM Parameter]: https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-cli.html
