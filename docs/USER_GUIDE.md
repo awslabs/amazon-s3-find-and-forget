@@ -136,6 +136,7 @@ your preferred AWS region:
    if you are using a customised version of these artefacts.
    * **ResourcePrefix:** (Default: S3F2) Resource prefix to apply to resource
    names when creating statically named resources.
+   * **RetainDynamoDBTables** (Default: true) Wheter to retain the DynamoDB tables upon Stack Update and Stack Deletion.
 
    When completed, click *Next*
 5. [Configure stack options](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-add-tags.html) if desired, then click *Next*.
