@@ -4,7 +4,7 @@
   "private": true,
   "dependencies": {},
   "devDependencies": {
-    "openapi-generator": "^0.1.34"
+    "@openapitools/openapi-generator-cli": "^1.0.10-4.2.3"
   },
   "scripts": {},
   "repository": {

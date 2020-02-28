@@ -1,4 +1,4 @@
-# Documentation for S3F2 API
+# Documentation for Amazon S3 Find And Forget API
 
 <a name="documentation-for-api-endpoints"></a>
 ## Documentation for API Endpoints
