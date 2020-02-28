@@ -109,7 +109,7 @@ When the workflow starts, a fleet of AWS Fargate tasks is instantiated to consum
 * [Limits]
 * [Monitoring guide]
 
-[API Specification]: API_SPEC.md
+[API Specification]: ./api/README.md
 [Cost Overview guide]: COST_OVERVIEW.md
 [Limits]: LIMITS.md
 [Monitoring guide]: MONITORING.md
