@@ -162,7 +162,7 @@ After [Deploying the Solution](#deploying-the-solution), your first step should
 be to configure one or more [data mappers](ARCHITECTURE.md#data-mappers) which
 will connect your data to the solution. Identify the S3 Bucket containing the
 data you wish to connect to the solution and ensure you have defined a table in
-your data catalog and that all existing (and future partitions as they are
+your data catalog and that all existing and future partitions (as they are
 created) are known to the Data Catalog. Currently AWS Glue is the only supported
 data catalog provider. For more information on defining your data in the Glue
 Data Catalog, see [Defining Glue Tables]. You must define your Table in the
