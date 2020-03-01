@@ -392,7 +392,7 @@ Solution](#deploying-the-solution) which affect the behaviour of the solution
 in terms of data retention and performance:
 
 * `AthenaConcurrencyLimit`: Increasing the number of concurrent queries that
-  that should be executed during the Find phase will decrease the total time
+ should be executed will decrease the total time
   spent performing the Find phase. You should not increase this value beyond
   your account Service Quota for concurrent DML queries, and should ensure
   that the value set takes into account any other Athena DML queries that
