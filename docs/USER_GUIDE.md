@@ -399,7 +399,7 @@ in terms of data retention and performance:
   may be executing whilst a job is running.
 * `DeletionTasksMaxNumber`: Increasing the number of concurrent tasks that
   should consume messages from the object queue will decrease the total time
-  spent performing the Find phase.
+  spent performing the Forget phase.
 * `QueryExecutionWaitSeconds`: Decreasing this value will decrease the length
   of time between each check to see whether a query has completed. You should
   aim to set this to the "ceiling function" of your average query time. For
