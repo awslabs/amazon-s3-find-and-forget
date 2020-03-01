@@ -11,6 +11,9 @@ Conditions:
 
 Resources:
 
+  # DeletionPolicy and UpdateReplacePolicy need a String
+  # https://github.com/aws-cloudformation/aws-cloudformation-coverage-roadmap/issues/162
+
   DeletionQueueTableNotRetain:
     Type: AWS::DynamoDB::Table
     Condition: ShouldNotRetainTables
