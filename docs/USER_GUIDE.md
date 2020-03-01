@@ -382,7 +382,7 @@ The list of events is as follows:
   any associated deletions are complete.
 - `ObjectUpdateFailed`: Emitted whenever an object cannot be updated or an
   associated deletion fails.
-- `Exception`: Emitted whenever there an unhandled error occurs during the
+- `Exception`: Emitted whenever a generic error occurs during the
   job execution. Causes the status to transition to `FAILED`.
 
 ## Adjusting Configuration
