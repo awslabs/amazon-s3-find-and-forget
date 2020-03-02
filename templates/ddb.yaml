@@ -1,6 +1,12 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: Amazon S3 Find and Forget DDB Tables
 
+Metadata:
+  cfn-lint:
+    config:
+      ignore_checks:
+        - W1001
+
 Parameters:
   RetainTables:
     Type: String
@@ -20,15 +26,15 @@ Resources:
     DeletionPolicy: Delete
     UpdateReplacePolicy: Delete
     Properties:
-      AttributeDefinitions: 
-        - 
+      AttributeDefinitions:
+        -
           AttributeName: MatchId
           AttributeType: S
         -
           AttributeName: CreatedAt
           AttributeType: N
-      KeySchema: 
-        - 
+      KeySchema:
+        -
           AttributeName: MatchId
           KeyType: HASH
         -
@@ -42,22 +48,22 @@ Resources:
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
     Properties:
-      AttributeDefinitions: 
-        - 
+      AttributeDefinitions:
+        -
           AttributeName: MatchId
           AttributeType: S
         -
           AttributeName: CreatedAt
           AttributeType: N
-      KeySchema: 
-        - 
+      KeySchema:
+        -
           AttributeName: MatchId
           KeyType: HASH
         -
           AttributeName: CreatedAt
           KeyType: RANGE
       BillingMode: PAY_PER_REQUEST
-      
+
   DataMapperTableNotRetain:
     Type: AWS::DynamoDB::Table
     Condition: ShouldNotRetainTables
@@ -73,7 +79,7 @@ Resources:
           AttributeName: DataMapperId
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
-  
+
   DataMapperTableRetain:
     Type: AWS::DynamoDB::Table
     Condition: ShouldRetainTables
