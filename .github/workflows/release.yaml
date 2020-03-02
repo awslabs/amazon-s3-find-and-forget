@@ -1,0 +1,43 @@
+---
+
+name: Release Version
+on:
+  push:
+    branches:
+      - master
+      - ci-publishing
+jobs:
+  release:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      # Cache
+      - uses: actions/cache@v1
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      # Setup
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.7
+      - name: Install dependencies
+        run: pip install cfn-flip
+      # Release if required
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@latest
+        if:  $VERSION > $(git describe --abbrev=0 --tags 2> /dev/null || echo '0')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ make version }}
+        with:
+          tag_name: ${{ env.VERSION }}
+          release_name: Release ${{ env.VERSION }}
+          body: |
+            See the CHANGELOG for a list of features included in this release
+          draft: false
+          prerelease: false
