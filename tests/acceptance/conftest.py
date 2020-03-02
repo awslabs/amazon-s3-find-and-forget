@@ -8,11 +8,10 @@ from uuid import uuid4
 
 import boto3
 import pytest
-from botocore.exceptions import ClientError
 from botocore.waiter import WaiterModel, create_waiter_with_client
 from requests import Session
 
-from . import load_env, empty_table
+from . import empty_table
 
 logger = logging.getLogger()
 
@@ -25,7 +24,7 @@ def pytest_configure(config):
     """
     Initial test env setup
     """
-    load_env()
+    pass
 
 
 def pytest_unconfigure(config):
