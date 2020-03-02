@@ -6,13 +6,8 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 from cfn_flip import load
-from dotenv import load_dotenv
 
 logger = logging.getLogger()
-
-
-def load_env():
-    load_dotenv(".env")
 
 
 def load_template(template_name):

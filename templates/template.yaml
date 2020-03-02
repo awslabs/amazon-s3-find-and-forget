@@ -94,7 +94,6 @@ Parameters:
 
 Conditions:
   DefaultPreBuiltArtefactsBucket: !Equals [!Ref PreBuiltArtefactsBucketOverride, "false"]
-  ShouldRetainDynamoTables: !Equals [!Ref RetainDynamoDBTables, "true"]
 
 Mappings:
   Solution:
@@ -166,7 +165,7 @@ Resources:
     Properties:
       TemplateURL: ./ddb.yaml
       Parameters:
-        DeletionUpdatePolicy: !If [ShouldRetainDynamoTables, "Retain", "Delete"]
+        RetainTables: !Ref RetainDynamoDBTables
   DelStack:
     Type: AWS::CloudFormation::Stack
     Properties:

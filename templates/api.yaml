@@ -43,9 +43,6 @@ Parameters:
   JobTableName:
     Description: Table name for Jobs Table
     Type: String
-  JobTableStreamArn:
-    Description: Stream ARN for Jobs Table
-    Type: String
   LogLevel:
     Type: String
     Default: INFO

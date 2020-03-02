@@ -3,6 +3,24 @@
 This section describes how to install, configure and use the Amazon S3 Find and
 Forget solution.
 
+## Index
+* [Pre-requisite: Configuring a VPC](#pre-requisite-configuring-a-vpc-for-the-solution)
+    * [Creating a New VPC](#creating-a-new-vpc)
+    * [Using an Existing VPC](#using-an-existing-vpc)
+* [Deploying the Solution](#deploying-the-solution)
+* [Configuring Data Mappers](#configuring-data-mappers)
+* [Granting Access to Data](#granting-access-to-data)
+    * [Updating Your Bucket Policy](#updating-your-bucket-policy)
+    * [Data Encrypted with Customer Managed CMKs](#data-encrypted-with-a-customer-managed-cmk)
+    * [Cross Account Buckets and CMKs](#cross-account-buckets-and-cmks)
+* [Adding to the Deletion Queue](#adding-to-the-deletion-queue)
+* [Running a Deletion Job](#running-a-deletion-job)
+    * [Deletion Job Statuses](#deletion-job-statuses)
+    * [Deletion Job Event Types](#deletion-job-event-types)
+* [Adjusting Configuration](#adjusting-configuration)
+* [Updating the Stack](#updating-the-stack)
+
+
 ## Pre-requisite: Configuring a VPC for the Solution
 
 The Fargate tasks used by this solution to perform deletions must be able to
@@ -82,7 +100,7 @@ your preferred AWS region:
 2. If prompted, login using your AWS account credentials.
 3. You should see a screen titled "*Create Stack*" at the "*Specify template*"
    step. The fields specifying the CloudFormation template are pre-populated.
-   Click the *Next* button at the bottom of the page.
+   Choose the *Next* button at the bottom of the page.
 4. On the "*Specify stack details*" screen you should provide values for the
    following parameters of the CloudFormation stack:
    * **Stack Name:** (Default: S3F2) This is the name that is used to refer to
@@ -147,7 +165,7 @@ your preferred AWS region:
 
    These are required to allow CloudFormation to create a Role to allow access
    to resources needed by the stack and name the resources in a dynamic way.
-7. Click *Create Change Set* 
+7. Choose *Create Change Set* 
 8. On the *Change Set* screen, click *Execute* to launch your stack.
    * You may need to wait for the *Execution status* of the change set to
    become "*AVAILABLE*" before the "*Execute*" button becomes available.
@@ -158,33 +176,200 @@ your preferred AWS region:
    used to access the application.
 
 ## Configuring Data Mappers
-*TODO*
+
+After [Deploying the Solution](#deploying-the-solution), your first step should
+be to configure one or more [data mappers](ARCHITECTURE.md#data-mappers) which
+will connect your data to the solution. Identify the S3 Bucket containing the
+data you wish to connect to the solution and ensure you have defined a table in
+your data catalog and that all existing and future partitions (as they are
+created) are known to the Data Catalog. Currently AWS Glue is the only supported
+data catalog provider. For more information on defining your data in the Glue
+Data Catalog, see [Defining Glue Tables]. You must define your Table in the
+Glue Data Catalog in the same region and account as the S3 Find and Forget
+solution.
+
+1. Access the application UI via the **WebUIUrl** displayed in the *Outputs* tab
+for the stack.
+2. Choose **Data Mappers** from the menu then choose **Create Data Mapper** 
+3. On the Create Data Mapper page input a **Name** to uniquely identify this
+Data Mapper. Select a **Query Executor Type** then choose the **Database** and
+**Table** in your data catalog which describes the target data in S3.
+A list of columns will be displayed for the chosen Table. From the
+list, choose the column(s) the solution should use to to find items in the
+data which should be deleted. For example, if your table has three columns
+named **customer_id**, **description** and **created_at** and you want to
+search for items using the **customer_id**, you should choose only the
+**customer_id** column from this list. Once you have chosen the column(s),
+choose **Create Data Mapper**.
+4. A message will be displayed advising you to update the S3 Bucket Policy
+for the S3 Bucket referenced by the newly created data mapper. See
+[Granting Access to Data](#granting-access-to-data) for more information
+on how to do this. Choose **Return to Data Mappers**.
+
+You can also create Data Mappers directly via the API. For more information,
+see the [API Documentation].
 
 ## Granting Access to Data
-*TODO*
+
+After configuring a data mapper you must ensure that the S3 Find and Forget
+solution has the required level of access to the S3 location the data mapper
+refers to. The recommended way to achieve this is through the use of
+[S3 Bucket Policies].
+
+> **Note:** AWS IAM uses an [eventual consistency model](https://docs.aws.amazon.com/IAM/latest/UserGuide/troubleshoot_general.html#troubleshoot_general_eventual-consistency)
+> and therefore any change you make to IAM, Bucket or KMS Key policies may
+> take time to become visible. Ensure you have allowed time for permissions
+> changes to propagate to all endpoints before starting a job. If your job
+> fails with a status of FIND_FAILED and the `QueryFailed` events indicate
+> S3 permissions issues, you may need to wait for the permissions changes
+> to propagate.
+
+### Updating your Bucket Policy
+
+To update the S3 bucket policy to grant **read** access to the IAM role used by
+Amazon Athena, and **write** access to the IAM role used by AWS Fargate, follow
+these steps:
+
+1. Access the application UI via the **WebUIUrl** displayed in the *Outputs* tab
+   for the stack.
+2. Choose **Data Mappers** from the menu then choose the radio button for the
+   relevant data mapper from the **Data Mappers** list.
+3. Choose **Generate Access Policies** and follow the instructions on the
+   **Bucket Access** tab to update the bucket policy. If you already have a
+   bucket policy in place, add the statements shown to your existing bucket policy
+   rather than replacing it completely. If your data is encrypted with an
+   **Customer Managed CMK** rather than an **AWS Managed CMK**, see
+   [Data Encrypted with Customer Managed CMK](#data-encrypted-with-a-customer-managed-cmk)
+   to grant the solution access to the Customer Managed CMK. If the bucket
+   and/or Customer Managed CMK reside in a different account, see
+   [Cross Account Buckets/CMKs](#cross-account-buckets-and-cmks) **after** you
+   have granted any required Customer Managed CMK access. For more information on
+   using Server-Side Encryption (SSE) with S3, see [Using SSE with CMKs].
+
+### Data Encrypted with a Customer Managed CMK
+
+Where the data you are connecting to the solution is encrypted with an Customer
+Managed CMK rather than an AWS Managed CMK, you must also grant the Athena
+and Fargate IAM roles access to use the key so that the data can be decrypted
+when reading, re-encrypted when writing.
+
+Once you have updated the bucket policy as described in
+[Updating the Bucket Policy](#updating-the-bucket-policy), choose
+the **KMS Access** tab from the **Generate Access Policies** modal window and
+follow the instructions to update the key policy with the provided statements.
+The statements provided are for use when using the **policy view** in the AWS
+console or making updates to the key policy via the CLI, CloudFormation or the
+API. If you wish, to use the **default view** in th AWS console, add the
+**Principals** in the provided statements as **key users**. For more
+information, see [How to Change a Key Policy].
+
+### Cross Account Buckets and CMKs  
+
+Where the bucket referenced by a data mapper is in a different account to the
+deployed S3 Find and Forget solution, and/or the Customer Managed CMK use to
+encrypt data via SSE is in a different account, you also need to update the
+Athena/Fargate roles to grant them access to bucket/keys.
+
+Once you have updated the bucket policy and any key policies as described in
+[Updating the Bucket Policy](#updating-the-bucket-policy) and [Data Encrypted
+with a Customer Managed CMK](#data-encrypted-with-a-customer-managed-cmk), 
+choose the **KMS Access** tab from the **Generate Access Policies** modal
+window and follow the instructions to add the provided inline policies to the
+Athena and Fargate IAM roles with the provided statements. For more information,
+see [Cross Account S3 Access] and [Cross Account CMK Access].
 
 ## Adding to the Deletion Queue
-*TODO*
+
+Once your Data Mappers are configured, you can begin adding "Matches" to the
+[Deletion Queue](ARCHITECTURE.md#deletion-queue).
+
+1. Access the application UI via the **WebUIUrl** displayed in the *Outputs* tab
+   for the stack.
+2. Choose **Deletion Queue** from the menu then choose **Add Match to the
+   Deletion Queue**.
+3. Input a **Match**, which is the value to search for in your data mappers.
+   If you wish to search for the match from all data mappers choose
+   **All Data Mappers**, otherwise choose **Select your Data Mappers** then
+   select the relevant data mappers from the list.
+4. Choose **Add Item to the Deletion Queue** and confirm you can see the
+   match in the Deletion Queue.
+
+You can also add matches to the Deletion Queue directly via the API. For more
+information, see the [API Documentation].
+
+When the next deletion job runs, the solution will scan the configured columns
+of your data for any occurrences of the Matches present in the queue at the
+time the job starts and remove any items where one of the Matches is present.
+
+If across all your data mappers you can find all items related to a single
+logical entity using the same value, you only need to add one Match value to the
+deletion queue to delete that logical entity from all data mappers.
+
+If the value used to identify a single logical entity is not consistent across
+your data mappers, you should add an item to the deletion queue **for each
+distinct value** which identifies the logical entity, selecting the specific
+data mapper(s) to which that value is relevant.
+
+If you make a mistake when adding a Match to the deletion queue, you can remove
+that match from the queue as long as there is no job running. Once a job has
+started no items can be removed from the deletion queue until the running job
+has completed. You may continue to add matches to the queue whilst a job is
+running, but only matches which were present when the job started will be
+processed by that job. Once a job completes, only the matches that job has
+processed will be removed from the queue.
+
+In order to facilitate different teams using a single deployment within an
+organisation, the same match can be added to the deletion queue more than once.
+When the job executes, it will merge the lists of data mappers for duplicates
+in the queue.
 
 ## Running a Deletion Job
-*TODO*
 
-## Disabling Safe Mode
-*TODO*
+Once you have configured your data mappers and added one or more items to the
+deletion queue, you can stat a job.
 
-## Adjusting Performance Configuration
-*TODO*
+1. Access the application UI via the **WebUIUrl** displayed in the *Outputs* tab
+   for the stack.
+2. Choose **Deletion Jobs** from the menu and ensure there are no jobs
+   currently running. Choose **Start a Deletion Job** and review the settings
+   displayed on the screen. For more information on how to edit these settings,
+   see [Adjusting Configuration](#adjusting-configuration).
+3. If you are happy with the current solution configuration choose **Start
+   a Deletion Job**. The job details page should be displayed.
+   
+You can also start jobs directly via the API. For more information, see the
+[API Documentation].
+   
+Once a job has started, you can leave the page and return to view its progress
+at point by choosing the job ID from the Deletion Jobs list. The job details
+page will automatically refresh and to display the current status and
+statistics for the job. For more information on the possible statuses and
+their meaning, see [Deletion Job Statuses](#deletion-job-statuses).
 
-## Updating the Stack
-*TODO*
+Job events are continuously emitted whilst a job is running. These events are
+used to update the status and statistics for the job. You can view all the
+emitted events for a job in the **Job Events** table. Whilst a job is running,
+the **Load More** button will continue to be displayed even if no new events
+have been received. Once a job has finished, the **Load More** button will
+disappear once you have loaded all the emitted events. For more information
+on the events which can be emitted during a job, see [Deletion Job Event
+Types](#deletion-job-event-types)
 
-## Deletion Job Statuses
+To optimise costs, it is best practice when using the solution to start jobs
+on a regular schedule, rather than every time a single item is added to the
+Deletion Queue. This is because the marginal cost of the Find phase when
+deleting an additional item from the queue is far less that re-executing
+the Find phase (where the data mappers searched are the same). Similarly, the
+marginal cost of removing an additional match from an object is negligible when
+there is already at least 1 match present in the object contents.
+
+### Deletion Job Statuses
 
 The list of possible job statuses is as follows:
 
 - `QUEUED`: The job has been accepted but has yet to start. Jobs are started
-  asynchronously by a Lambda invoked by the [DynamoDB event stream][DynamoDB Streams]
-  for the Jobs table.
+  asynchronously by a Lambda invoked by the [DynamoDB event stream][DynamoDB
+  Streams] for the Jobs table.
 - `RUNNING`: The job is still in progress.
 - `FORGET_COMPLETED_CLEANUP_IN_PROGRESS`: The job is still in progress.
 - `COMPLETED`: The job finished successfully.
@@ -205,7 +390,110 @@ The list of possible job statuses is as follows:
 For more information on how to resolve statuses indicative of errors, consult
 the [Troubleshooting] guide.
 
+### Deletion Job Event Types
+
+The list of events is as follows:
+
+- `JobStarted`: Emitted when the deletion job state machine first starts.
+  Causes the status of the job to transition from `QUEUED` to `RUNNING`
+- `FindPhaseStarted`: Emitted when the deletion job has purged any messages
+  from the query and object queues and is ready to be searching for data.
+- `FindPhaseEnded`: Emitted when all queries have executed and written their
+  results to the objects queue.
+- `FindPhaseFailed`: Emitted when one or more queries fail. Causes the status
+  to transition to `FIND_FAILED`.
+- `ForgetPhaseStarted`: Emitted when the Find phase has completed successfully
+  and the Forget phase is starting.
+- `ForgetPhaseEnded`: Emitted when the Forget phase has completed. If the
+  Forget phase completes with no errors, this event causes the status to
+  transition to `FORGET_COMPLETED_CLEANUP_IN_PROGRESS`. If the
+  Forget phase completes but there was an error updating one or more objects,
+  this causes the status to transition to `FORGET_PARTIALLY_FAILED`.
+- `ForgetPhaseFailed`: Emitted when there was an issue running the Fargate
+  tasks. Causes the status to transition to `FORGET_FAILED`.
+- `CleanupSucceeded`: The **final** event emitted when a job has executed
+  successfully and the Deletion Queue has been cleaned up. Causes the status
+  to transition to `COMPLETED`.
+- `CleanupFailed`: The **final** event emitted when the job executed
+  successfully but there was an error removing the processed matches from
+  the Deletion Queue. Causes the status to transition to
+  `COMPLETED_CLEANUP_FAILED`.
+- `CleanupSkipped`: Emitted when the job is finalising and the job status
+  is one of `FIND_FAILED`, `FORGET_FAILED` or `FAILED`.
+- `QuerySucceeded`: Emitted whenever a single query executes successfully.
+- `QueryFailed`: Emitted whenever a single query fails.
+- `ObjectUpdated`: Emitted whenever an updated object is written to S3 and
+  any associated deletions are complete.
+- `ObjectUpdateFailed`: Emitted whenever an object cannot be updated or an
+  associated deletion fails.
+- `Exception`: Emitted whenever a generic error occurs during the
+  job execution. Causes the status to transition to `FAILED`.
+
+## Adjusting Configuration
+
+There are several parameters to set when [Deploying the
+Solution](#deploying-the-solution) which affect the behaviour of the solution
+in terms of data retention and performance:
+
+* `AthenaConcurrencyLimit`: Increasing the number of concurrent queries that
+ should be executed will decrease the total time
+  spent performing the Find phase. You should not increase this value beyond
+  your account Service Quota for concurrent DML queries, and should ensure
+  that the value set takes into account any other Athena DML queries that
+  may be executing whilst a job is running.
+* `DeletionTasksMaxNumber`: Increasing the number of concurrent tasks that
+  should consume messages from the object queue will decrease the total time
+  spent performing the Forget phase.
+* `QueryExecutionWaitSeconds`: Decreasing this value will decrease the length
+  of time between each check to see whether a query has completed. You should
+  aim to set this to the "ceiling function" of your average query time. For
+  example, if you average query takes 3.2 seconds, set this to 4.
+* `QueryQueueWaitSeconds`: Decreasing this value will decrease the length of
+  time between each check to see whether additional queries can be scheduled
+  during the Find phase. If your jobs fail due to exceeding the Step Functions
+  execution history quota, you may have set this value to low and should
+  increase it to allow more queries to be scheduled after each check.
+* `ForgetQueueWaitSeconds`: Decreasing this value will decrease the length of
+  time between each check to see whether the Fargate object queue is empty.
+  If your jobs fail due to exceeding the Step Functions execution history quota,
+  you may have set this value to low.
+* `SafeMode`: Setting this value to true will cause the solution to write
+  updated objects to a temporary bucket rather than to the source bucket/object
+  key. Typically this mode is used when first deploying the solution to verify
+  your configuration.
+* `JobDetailsRetentionDays`: Changing this value will change how long records
+  job details and events are retained for. Set this to 0 to retain them
+  indefinitely.
+
+The values for these parameters are stored in an SSM Parameter Store String
+Parameter named  `/s3f2/S3F2-Configuration` as a JSON object. The recommended
+approach for updating these values is to perform a [Stack Update](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-direct.html)
+and change the relevant parameters for the stack.
+
+It is possible to [update the SSM Parameter][Updating an SSM Parameter] directly
+however this is not a recommended approach. **You should not alter the
+structure or data types of the configuration JSON object.**
+ 
+Once updated, the configuration will affect any **future** job executions.
+In progress and previous executions will **not** be affected. The current
+configuration values are displayed when confirming that you wish to start a job.
+
+You can only update the vCPUs/memory allocated to Fargate tasks by performing a
+stack update. For more information, see [Updating the Stack](#updating-the-stack).
+
+## Updating the Stack
+*TODO*
+
+[API Documentation]: api/README.md
 [Troubleshooting]: TROUBLESHOOTING.md
 [Fargate Configuration]: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html#fargate-tasks-size
 [VPC Endpoints]: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-endpoints.html
 [DynamoDB Streams]: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Streams.html
+[Defining Glue Tables]: https://docs.aws.amazon.com/glue/latest/dg/tables-described.html
+[S3 Bucket Policies]: https://docs.aws.amazon.com/AmazonS3/latest/dev/using-iam-policies.html
+[Using SSE with CMKs]: https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingKMSEncryption.html
+[Customer Master Keys]: https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#master_keys
+[How to Change a Key Policy]: https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-modifying.html#key-policy-modifying-how-to
+[Cross Account S3 Access]: https://docs.aws.amazon.com/AmazonS3/latest/dev/example-walkthroughs-managing-access-example2.html
+[Cross Account KMS Access]: https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-modifying-external-accounts.html
+[Updating an SSM Parameter]: https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-cli.html

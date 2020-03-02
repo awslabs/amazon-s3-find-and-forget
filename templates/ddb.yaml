@@ -1,26 +1,40 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: Amazon S3 Find and Forget DDB Tables
 
+Metadata:
+  cfn-lint:
+    config:
+      ignore_checks:
+        - W1001
+
 Parameters:
-  DeletionUpdatePolicy:
+  RetainTables:
     Type: String
+
+Conditions:
+  ShouldNotRetainTables: !Equals [!Ref RetainTables, "false"]
+  ShouldRetainTables: !Equals [!Ref RetainTables, "true"]
 
 Resources:
 
-  DeletionQueueTable:
+  # DeletionPolicy and UpdateReplacePolicy need a String
+  # https://github.com/aws-cloudformation/aws-cloudformation-coverage-roadmap/issues/162
+
+  DeletionQueueTableNotRetain:
     Type: AWS::DynamoDB::Table
-    DeletionPolicy: !Ref DeletionUpdatePolicy
-    UpdateReplacePolicy: !Ref DeletionUpdatePolicy
+    Condition: ShouldNotRetainTables
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
-      AttributeDefinitions: 
-        - 
+      AttributeDefinitions:
+        -
           AttributeName: MatchId
           AttributeType: S
         -
           AttributeName: CreatedAt
           AttributeType: N
-      KeySchema: 
-        - 
+      KeySchema:
+        -
           AttributeName: MatchId
           KeyType: HASH
         -
@@ -28,10 +42,33 @@ Resources:
           KeyType: RANGE
       BillingMode: PAY_PER_REQUEST
 
-  DataMapperTable:
+  DeletionQueueTableRetain:
     Type: AWS::DynamoDB::Table
-    DeletionPolicy: !Ref DeletionUpdatePolicy
-    UpdateReplacePolicy: !Ref DeletionUpdatePolicy
+    Condition: ShouldRetainTables
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      AttributeDefinitions:
+        -
+          AttributeName: MatchId
+          AttributeType: S
+        -
+          AttributeName: CreatedAt
+          AttributeType: N
+      KeySchema:
+        -
+          AttributeName: MatchId
+          KeyType: HASH
+        -
+          AttributeName: CreatedAt
+          KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST
+
+  DataMapperTableNotRetain:
+    Type: AWS::DynamoDB::Table
+    Condition: ShouldNotRetainTables
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       AttributeDefinitions:
         -
@@ -43,10 +80,27 @@ Resources:
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
 
-  JobTable:
+  DataMapperTableRetain:
     Type: AWS::DynamoDB::Table
-    DeletionPolicy: !Ref DeletionUpdatePolicy
-    UpdateReplacePolicy: !Ref DeletionUpdatePolicy
+    Condition: ShouldRetainTables
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      AttributeDefinitions:
+        -
+          AttributeName: DataMapperId
+          AttributeType: S
+      KeySchema:
+        -
+          AttributeName: DataMapperId
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+  JobTableNotRetain:
+    Type: AWS::DynamoDB::Table
+    Condition: ShouldNotRetainTables
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
     Properties:
       TimeToLiveSpecification:
         AttributeName: Expires
@@ -87,14 +141,71 @@ Resources:
           Projection:
             ProjectionType: ALL
 
+  JobTableRetain:
+    Type: AWS::DynamoDB::Table
+    Condition: ShouldRetainTables
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TimeToLiveSpecification:
+        AttributeName: Expires
+        Enabled: true
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+      AttributeDefinitions:
+        -
+          AttributeName: Id
+          AttributeType: S
+        -
+          AttributeName: Sk
+          AttributeType: S
+        -
+          AttributeName: GSIBucket
+          AttributeType: S
+        -
+          AttributeName: CreatedAt
+          AttributeType: N
+      KeySchema:
+        -
+          AttributeName: Id
+          KeyType: HASH
+        -
+          AttributeName: Sk
+          KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST
+      GlobalSecondaryIndexes:
+        -
+          IndexName: Date-GSI
+          KeySchema:
+            -
+              AttributeName: GSIBucket
+              KeyType: HASH
+            -
+              AttributeName: CreatedAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          
 Outputs:
   DeletionQueueTable:
-    Value: !Ref DeletionQueueTable
+    Value: !If
+      - ShouldRetainTables
+      - !Ref DeletionQueueTableRetain
+      - !Ref DeletionQueueTableNotRetain
   DataMapperTable:
-    Value: !Ref DataMapperTable
+    Value: !If
+      - ShouldRetainTables
+      - !Ref DataMapperTableRetain
+      - !Ref DataMapperTableNotRetain
   JobTable:
-    Value: !Ref JobTable
+    Value: !If
+      - ShouldRetainTables
+      - !Ref JobTableRetain
+      - !Ref JobTableNotRetain
   JobTableDateGSI:
     Value: Date-GSI
   JobTableStreamArn:
-    Value: !GetAtt JobTable.StreamArn
+    Value: !If
+      - ShouldRetainTables
+      - !GetAtt JobTableRetain.StreamArn
+      - !GetAtt JobTableNotRetain.StreamArn
