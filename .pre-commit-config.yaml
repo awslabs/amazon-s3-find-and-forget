@@ -2,6 +2,17 @@ repos:
 -   repo: local
     hooks:
     -   id: generate-api-docs
-        name: generate-api-docs
+        name: Generate API Docs
         entry: make generate-api-docs
         language: system
+-   repo: https://github.com/awslabs/git-secrets
+    rev: 5e28df337746db4f070c84f7069d365bfd0d72a8
+    hooks:
+    -   id: git-secrets
+-   repo: https://github.com/aws-cloudformation/cfn-python-lint
+    rev: v0.28.2
+    hooks:
+    -   id: cfn-python-lint
+        args: [--ignore-templates=api.defintion.yml]
+        files: >-
+            templates/.*\.(json|yml|yaml|template)$
