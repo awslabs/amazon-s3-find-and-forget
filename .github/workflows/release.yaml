@@ -3,14 +3,15 @@
 name: Release Version
 on:
   push:
-    branches-ignore:
-      - '**'
+    branches:
+      - master
 jobs:
   release:
     name: Release Version
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
       # Cache
       - uses: actions/cache@v1
         with:
@@ -33,7 +34,7 @@ jobs:
         run: echo ::set-env name=THIS_VERSION::$(make version)
       - name: Set latest
         id: latest
-        run: echo ::set-env name=LATEST::$(git describe --abbrev=0 --tags 2> /dev/null || echo '0')
+        run: echo ::set-env name=LATEST::$(git describe --tags $(git rev-list --tags --max-count=1) 2> /dev/null || echo '0')
       - name: Create Release
         id: create_release
         uses: actions/create-release@latest
@@ -44,6 +45,6 @@ jobs:
           tag_name: ${{ env.THIS_VERSION }}
           release_name: Release ${{ env.THIS_VERSION }}
           body: |
-            See the CHANGELOG for a list of features included in this release
+            See the CHANGELOG for a list of features included in this release #TODO
           draft: false
           prerelease: false
