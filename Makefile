@@ -39,14 +39,17 @@ deploy-cfn:
 		--parameter-overrides CreateCloudFrontDistribution=false EnableContainerInsights=true AdminEmail=$(ADMIN_EMAIL) AccessControlAllowOriginOverride=* PreBuiltArtefactsBucketOverride=$(TEMP_BUCKET) VpcSubnets=${SUBNETS} VpcSecurityGroups=${SEC_GROUPS} SafeMode=false
 
 deploy-artefacts:
-	$(eval VERSION := $(shell cfn-flip templates/template.yaml | python -c 'import sys, json; print(json.load(sys.stdin)["Mappings"]["Solution"]["Constants"]["Version"])'))
-	make build-frontend
-	zip -r build.zip backend/lambda_layers backend/ecs_tasks/delete_files/ frontend/build -x backend/ecs_tasks/delete_files/__pycache* -x *settings.js
+	$(eval VERSION := $(make version))
+	make package
 	aws s3 cp build.zip s3://$(TEMP_BUCKET)/amazon-s3-find-and-forget/$(VERSION)/build.zip
 
 generate-api-docs:
 	npx openapi-generator generate -i ./templates/api.definition.yml -g markdown -t ./docs/templates/ -o docs/api
 	git add docs/api
+
+package:
+	make build-frontend
+	zip -r build.zip backend/ecs_tasks/delete_files/ frontend/build -x backend/ecs_tasks/delete_files/__pycache* -x *settings.js
 
 redeploy-containers:
 	$(eval ACCOUNT_ID := $(shell aws sts get-caller-identity --query Account --output text))
@@ -82,6 +85,11 @@ setup-frontend-local-dev:
 	$(eval WEBUI_BUCKET := $(shell aws cloudformation describe-stacks --stack-name S3F2 --query 'Stacks[0].Outputs[?OutputKey==`WebUIBucket`].OutputValue' --output text))
 	aws s3 cp s3://$(WEBUI_BUCKET)/settings.js frontend/public/settings.js
 
+setup-predeploy:
+	virtualenv venv
+	source venv/bin/activate
+	pip install cfn-flip==1.2.2
+
 start-frontend-local:
 	cd frontend && npm start
 
@@ -108,3 +116,6 @@ test:
 	make test-cfn
 	pytest --log-cli-level info --cov=backend.lambdas --cov=decorators --cov=boto_utils --cov=backend.ecs_tasks
 	make test-frontend
+
+version:
+	@echo $(shell cfn-flip templates/template.yaml | python -c 'import sys, json; print(json.load(sys.stdin)["Mappings"]["Solution"]["Constants"]["Version"])')
