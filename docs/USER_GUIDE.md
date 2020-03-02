@@ -180,7 +180,7 @@ After [Deploying the Solution](#deploying-the-solution), your first step should
 be to configure one or more [data mappers](ARCHITECTURE.md#data-mappers) which
 will connect your data to the solution. Identify the S3 Bucket containing the
 data you wish to connect to the solution and ensure you have defined a table in
-your data catalog and that all existing (and future partitions as they are
+your data catalog and that all existing and future partitions (as they are
 created) are known to the Data Catalog. Currently AWS Glue is the only supported
 data catalog provider. For more information on defining your data in the Glue
 Data Catalog, see [Defining Glue Tables]. You must define your Table in the
@@ -425,7 +425,7 @@ The list of events is as follows:
   any associated deletions are complete.
 - `ObjectUpdateFailed`: Emitted whenever an object cannot be updated or an
   associated deletion fails.
-- `Exception`: Emitted whenever there an unhandled error occurs during the
+- `Exception`: Emitted whenever a generic error occurs during the
   job execution. Causes the status to transition to `FAILED`.
 
 ## Adjusting Configuration
@@ -435,14 +435,14 @@ Solution](#deploying-the-solution) which affect the behaviour of the solution
 in terms of data retention and performance:
 
 * `AthenaConcurrencyLimit`: Increasing the number of concurrent queries that
-  that should be executed during the Find phase will decrease the total time
+ should be executed will decrease the total time
   spent performing the Find phase. You should not increase this value beyond
   your account Service Quota for concurrent DML queries, and should ensure
   that the value set takes into account any other Athena DML queries that
   may be executing whilst a job is running.
 * `DeletionTasksMaxNumber`: Increasing the number of concurrent tasks that
   should consume messages from the object queue will decrease the total time
-  spent performing the Find phase.
+  spent performing the Forget phase.
 * `QueryExecutionWaitSeconds`: Decreasing this value will decrease the length
   of time between each check to see whether a query has completed. You should
   aim to set this to the "ceiling function" of your average query time. For
