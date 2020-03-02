@@ -85,6 +85,11 @@ setup-frontend-local-dev:
 	$(eval WEBUI_BUCKET := $(shell aws cloudformation describe-stacks --stack-name S3F2 --query 'Stacks[0].Outputs[?OutputKey==`WebUIBucket`].OutputValue' --output text))
 	aws s3 cp s3://$(WEBUI_BUCKET)/settings.js frontend/public/settings.js
 
+setup-predeploy:
+	virtualenv venv
+	source venv/bin/activate
+	pip install cfn-flip==1.2.2
+
 start-frontend-local:
 	cd frontend && npm start
 

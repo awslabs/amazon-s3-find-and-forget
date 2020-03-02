@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - master
+      - ci-publishing
 jobs:
   release:
     name: Release Version
@@ -23,8 +24,10 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: 3.7
+      - name: Install virtualenv
+        run: pip install virtualenv
       - name: Install dependencies
-        run: pip install cfn-flip==1.2.2
+        run: make setup-predeploy
       # Release if required
       - name: Set version
         id: version
