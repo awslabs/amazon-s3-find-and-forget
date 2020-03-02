@@ -1,7 +1,15 @@
 ---
 
 name: Unit Tests
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    types:
+      - opened
+      - edited
+      - synchronize
 jobs:
   unit_tests:
     name: Unit tests
