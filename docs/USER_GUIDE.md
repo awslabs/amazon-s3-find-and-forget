@@ -84,8 +84,7 @@ resources.
 > running this solution. For full details, see the pricing pages for each AWS
 > service you will be using in this sample. Prices are subject to change.
 
-1. Deploy the latest CloudFormation template by following the link below for
-your preferred AWS region:
+1. Deploy the latest CloudFormation template using the AWS Console by choosing the "*Launch Template*" button below for your preferred AWS region. If you wish to [deploy using the AWS CLI] instead, you can refer to the "*Template Link*" to download the template files.
 
 |Region|Launch Template|Template Link|Launch VPC Template|VPC Template Link|
 |-|-|-|-|-|
@@ -497,3 +496,4 @@ stack update. For more information, see [Updating the Stack](#updating-the-stack
 [Cross Account S3 Access]: https://docs.aws.amazon.com/AmazonS3/latest/dev/example-walkthroughs-managing-access-example2.html
 [Cross Account KMS Access]: https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-modifying-external-accounts.html
 [Updating an SSM Parameter]: https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-cli.html
+[deploy using the aws cli]: https://docs.aws.amazon.com/cli/latest/reference/cloudformation/deploy/index.html
