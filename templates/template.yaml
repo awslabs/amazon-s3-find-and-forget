@@ -98,7 +98,7 @@ Conditions:
 Mappings:
   Solution:
     Constants:
-      Version: "0.1"
+      Version: '0.1'
 
 Resources:
   TempBucket:
