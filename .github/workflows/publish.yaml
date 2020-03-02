@@ -1,0 +1,62 @@
+---
+
+name: Publish Version
+on:
+  release:
+    types: [published, edited]
+jobs:
+  publish:
+    name: Publish Version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.REGION }}
+      - name: Set version
+        id: version
+        run: echo ::set-env name=VERSION::${GITHUB_REF/refs\/tags\//}
+      # Cache
+      - uses: actions/cache@v1
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - uses: actions/cache@v1
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      # Setup
+      - name: Install xmllint
+        run: sudo apt-get install libsnappy-dev
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.7
+      - name: Set up Nodejs 12
+        uses: actions/setup-node@v1
+        with:
+          node-version: 12
+      - name: Set up ruby 2.6
+        uses: actions/setup-ruby@v1
+        with:
+          ruby-version: '2.6'
+      - name: Install virtualenv
+        run: pip install virtualenv
+      - name: Install dependencies
+        run: make setup
+      # Package and Upload Archive
+      - name: Build Artefact
+        run: make package
+      - name: Create archive
+        run: zip -r $VERSION.zip templates backend cfn-publish build.zip -x **/__pycache* -x *settings.js
+      - name: Upload artefact
+        run: aws s3 cp $VERSION.zip s3://$CFN_BUCKET/amazon-s3-find-and-forget/$VERSION/amazon-s3-find-and-forget.zip
+        env:
+          CFN_BUCKET: ${{ secrets.CFN_BUCKET }}
