@@ -3,8 +3,8 @@
 name: Release Version
 on:
   push:
-    branches:
-      - master
+    branches-ignore:
+      - '**'
 jobs:
   release:
     name: Release Version
