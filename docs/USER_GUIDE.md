@@ -3,6 +3,24 @@
 This section describes how to install, configure and use the Amazon S3 Find and
 Forget solution.
 
+## Index
+* [Pre-requisite: Configuring a VPC](#pre-requisite-configuring-a-vpc-for-the-solution)
+    * [Creating a New VPC](#creating-a-new-vpc)
+    * [Using an Existing VPC](#using-an-existing-vpc)
+* [Deploying the Solution](#deploying-the-solution)
+* [Configuring Data Mappers](#configuring-data-mappers)
+* [Granting Access to Data](#granting-access-to-data)
+    * [Updating Your Bucket Policy](#updating-your-bucket-policy)
+    * [Data Encrypted with Customer Managed CMKs](#data-encrypted-with-a-customer-managed-cmk)
+    * [Cross Account Buckets and CMKs](#cross-account-buckets-and-cmks)
+* [Adding to the Deletion Queue](#adding-to-the-deletion-queue)
+* [Running a Deletion Job](#running-a-deletion-job)
+    * [Deletion Job Statuses](#deletion-job-statuses)
+    * [Deletion Job Event Types](#deletion-job-event-types)
+* [Adjusting Configuration](#adjusting-configuration)
+* [Updating the Stack](#updating-the-stack)
+
+
 ## Pre-requisite: Configuring a VPC for the Solution
 
 The Fargate tasks used by this solution to perform deletions must be able to
@@ -187,6 +205,9 @@ for the S3 Bucket referenced by the newly created data mapper. See
 [Granting Access to Data](#granting-access-to-data) for more information
 on how to do this. Choose **Return to Data Mappers**.
 
+You can also create Data Mappers directly via the API. For more information,
+see the [API Documentation].
+
 ## Granting Access to Data
 
 After configuring a data mapper you must ensure that the S3 Find and Forget
@@ -194,10 +215,13 @@ solution has the required level of access to the S3 location the data mapper
 refers to. The recommended way to achieve this is through the use of
 [S3 Bucket Policies].
 
-> **Note:** AWS IAM uses an eventual consistency moodel and therefore any change
-> you make to IAM, Bucket or KMS Key policies may take time to become visible.
-> Ensure that the permissions changes have been propagated to all endpoints
-> before starting a job.
+> **Note:** AWS IAM uses an [eventual consistency model](https://docs.aws.amazon.com/IAM/latest/UserGuide/troubleshoot_general.html#troubleshoot_general_eventual-consistency)
+> and therefore any change you make to IAM, Bucket or KMS Key policies may
+> take time to become visible. Ensure you have allowed time for permissions
+> changes to propagate to all endpoints before starting a job. If your job
+> fails with a status of FIND_FAILED and the `QueryFailed` events indicate
+> S3 permissions issues, you may need to wait for the permissions changes
+> to propagate.
 
 ### Updating your Bucket Policy
 
@@ -269,6 +293,9 @@ Once your Data Mappers are configured, you can begin adding "Matches" to the
 4. Choose **Add Item to the Deletion Queue** and confirm you can see the
    match in the Deletion Queue.
 
+You can also add matches to the Deletion Queue directly via the API. For more
+information, see the [API Documentation].
+
 When the next deletion job runs, the solution will scan the configured columns
 of your data for any occurrences of the Matches present in the queue at the
 time the job starts and remove any items where one of the Matches is present.
@@ -281,6 +308,19 @@ If the value used to identify a single logical entity is not consistent across
 your data mappers, you should add an item to the deletion queue **for each
 distinct value** which identifies the logical entity, selecting the specific
 data mapper(s) to which that value is relevant.
+
+If you make a mistake when adding a Match to the deletion queue, you can remove
+that match from the queue as long as there is no job running. Once a job has
+started no items can be removed from the deletion queue until the running job
+has completed. You may continue to add matches to the queue whilst a job is
+running, but only matches which were present when the job started will be
+processed by that job. Once a job completes, only the matches that job has
+processed will be removed from the queue.
+
+In order to facilitate different teams using a single deployment within an
+organisation, the same match can be added to the deletion queue more than once.
+When the job executes, it will merge the lists of data mappers for duplicates
+in the queue.
 
 ## Running a Deletion Job
 
@@ -295,6 +335,9 @@ deletion queue, you can stat a job.
    see [Adjusting Configuration](#adjusting-configuration).
 3. If you are happy with the current solution configuration choose **Start
    a Deletion Job**. The job details page should be displayed.
+   
+You can also start jobs directly via the API. For more information, see the
+[API Documentation].
    
 Once a job has started, you can leave the page and return to view its progress
 at point by choosing the job ID from the Deletion Jobs list. The job details
@@ -422,23 +465,25 @@ in terms of data retention and performance:
   indefinitely.
 
 The values for these parameters are stored in an SSM Parameter Store String
-Parameter named  `/s3f2/S3F2-Configuration` as a JSON object and can be updated
-at any time by [Updating the SSM Parameter][Updating an SSM Parameter] and
-changing the values. **You should not alter the structure or data types of the
-configuration JSON object.**
+Parameter named  `/s3f2/S3F2-Configuration` as a JSON object. The recommended
+approach for updating these values is to perform a [Stack Update](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-direct.html)
+and change the relevant parameters for the stack.
+
+It is possible to [update the SSM Parameter][Updating an SSM Parameter] directly
+however this is not a recommended approach. **You should not alter the
+structure or data types of the configuration JSON object.**
  
 Once updated, the configuration will affect any **future** job executions.
-In progress and previous executions will **not** be affected.
-The current configuration values are displayed when confirming that you wish
-to start a job.
+In progress and previous executions will **not** be affected. The current
+configuration values are displayed when confirming that you wish to start a job.
 
-If you wish to update the vCPUs/memory allocated to Fargate tasks, you must
-update these by performing a stack update. For more information, see
-[Updating the Stack](#updating-the-stack).
+You can only update the vCPUs/memory allocated to Fargate tasks by performing a
+stack update. For more information, see [Updating the Stack](#updating-the-stack).
 
 ## Updating the Stack
 *TODO*
 
+[API Documentation]: api/README.md
 [Troubleshooting]: TROUBLESHOOTING.md
 [Fargate Configuration]: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html#fargate-tasks-size
 [VPC Endpoints]: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-endpoints.html
