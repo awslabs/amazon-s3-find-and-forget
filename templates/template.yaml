@@ -151,7 +151,6 @@ Resources:
         DataMapperTableName: !GetAtt DDBStack.Outputs.DataMapperTable
         JobTableDateGSI: !GetAtt DDBStack.Outputs.JobTableDateGSI
         JobTableName: !GetAtt DDBStack.Outputs.JobTable
-        JobTableStreamArn: !GetAtt DDBStack.Outputs.JobTableStreamArn
         WebUIOrigin: !GetAtt WebUIStack.Outputs.Origin
   AuthStack:
     Type: AWS::CloudFormation::Stack
