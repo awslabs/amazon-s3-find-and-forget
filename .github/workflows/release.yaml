@@ -5,10 +5,9 @@ on:
   push:
     branches:
       - master
-      - ci-publishing
 jobs:
   release:
-    name: Unit tests
+    name: Release Version
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -25,18 +24,23 @@ jobs:
         with:
           python-version: 3.7
       - name: Install dependencies
-        run: pip install cfn-flip
+        run: pip install cfn-flip==1.2.2
       # Release if required
+      - name: Set version
+        id: version
+        run: echo ::set-env name=THIS_VERSION::$(make version)
+      - name: Set latest
+        id: latest
+        run: echo ::set-env name=LATEST::$(git describe --abbrev=0 --tags 2> /dev/null || echo '0')
       - name: Create Release
         id: create_release
         uses: actions/create-release@latest
-        if:  $VERSION > $(git describe --abbrev=0 --tags 2> /dev/null || echo '0')
+        if: env.THIS_VERSION > env.LATEST
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ make version }}
         with:
-          tag_name: ${{ env.VERSION }}
-          release_name: Release ${{ env.VERSION }}
+          tag_name: ${{ env.THIS_VERSION }}
+          release_name: Release ${{ env.THIS_VERSION }}
           body: |
             See the CHANGELOG for a list of features included in this release
           draft: false
