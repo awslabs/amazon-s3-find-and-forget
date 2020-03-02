@@ -34,7 +34,7 @@ jobs:
         run: echo ::set-env name=THIS_VERSION::$(make version)
       - name: Set latest
         id: latest
-        run: echo ::set-env name=LATEST::$(git describe --tags $(git rev-list --tags --max-count=1) || echo '0')
+        run: echo ::set-env name=LATEST::$(git describe --always --tags $(git rev-list --tags --max-count=1) || echo '0')
       - name: Create Release
         id: create_release
         uses: actions/create-release@latest
