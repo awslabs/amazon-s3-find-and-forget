@@ -30,7 +30,7 @@ export default ({ accountId, bucket, close, show, location }) => {
       <Modal.Body>
         <p>
           After configuring a data mapper, you need to configure the relevant
-          S3 bucket, CMK and IAM policies to enable the solution to read and write
+          S3 bucket, Customer Managed CMK and IAM policies to enable the solution to read and write
           from/to the bucket. The policy statements provided below are examples of how
           to grant the required access.
         </p>
@@ -174,7 +174,7 @@ const KmsPolicy = ({ bucket, accountId, location }) => {
   return (<>
     <Alert type="info" title="Additional Permissions">
       If your none of the objects stored in{" "}
-      <strong>{location}</strong> are encrypted with a CMK, you can skip this step.
+      <strong>{location}</strong> are encrypted with a Customer Managed CMK, you can skip this step.
     </Alert>
     <ol>
       <li>
@@ -311,7 +311,7 @@ const CrossAccountPolicy = ({ bucket, accountId, location }) => {
   }
   return (<>
     <Alert type="info" title="Additional Permissions">
-        If your bucket and KMS key used for encrypting objects are owned by the
+        If your bucket and Customer Managed CMK key used for encrypting objects are owned by the
         account <strong>{accountId}</strong>, you can skip this step
     </Alert>
     <ol>
@@ -336,7 +336,7 @@ const CrossAccountPolicy = ({ bucket, accountId, location }) => {
         </p>
         <p>
           <strong>Note:</strong> you only need to include the AllowS3F2Usage and AllowS3F2Grants
-          if you are using a CMK to encrypt objects in the bucket. If so, replace{" "}
+          statements if you are using a Customer Managed CMK to encrypt objects in the bucket. If so, replace{" "}
           <strong>&lt;your-cmk-arn&gt;</strong> with the ARN of your CMK.
         </p>
         <PolicyJson policy={athenaIamPolicy} />
@@ -361,7 +361,7 @@ const CrossAccountPolicy = ({ bucket, accountId, location }) => {
         </p>
         <p>
           <strong>Note:</strong> you only need to include the AllowS3F2Usage and AllowS3F2Grants
-          if you are using a CMK to encrypt objects in the bucket. If so, replace{" "}
+          if you are using a Customer Managed CMK to encrypt objects in the bucket. If so, replace{" "}
           <strong>&lt;your-cmk-arn&gt;</strong> with the ARN of your CMK.
         </p>
         <PolicyJson policy={fargateIamPolicy} />
