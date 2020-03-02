@@ -1,12 +1,10 @@
 pytest==5.3.5
 cfn-lint==0.28.2
-boto3==1.12.11
 cfn-flip==1.2.2
-jsonschema==3.2.0
 mock==4.0.1
-pyarrow==0.16.0
-pandas==1.0.1
 pytest-cov==2.8.1
-s3fs==0.4.0
-crhelper==2.0.5
 pre-commit==2.1.1
+-r ./backend/ecs_tasks/delete_files/requirements.txt
+-r ./backend/lambda_layers/aws_sdk/requirements.txt
+-r ./backend/lambda_layers/cr_helper/requirements.txt
+-r ./backend/lambda_layers/decorators/requirements.txt
