@@ -22,7 +22,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
       # Setup
-      - name: Install xmllint
+      - name: Install snappy dep
         run: sudo apt-get install libsnappy-dev
       - name: Set up Python 3.7
         uses: actions/setup-python@v1
