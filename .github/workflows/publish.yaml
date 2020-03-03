@@ -55,8 +55,8 @@ jobs:
       - name: Build Artefact
         run: make package
       - name: Create archive
-        run: zip -r $VERSION.zip templates backend cfn-publish build.zip -x **/__pycache* -x *settings.js
+        run: zip -r output.zip templates backend cfn-publish build.zip -x **/__pycache* -x *settings.js
       - name: Upload artefact
-        run: aws s3 cp $VERSION.zip s3://$CFN_BUCKET/amazon-s3-find-and-forget/$VERSION/amazon-s3-find-and-forget.zip
+        run: aws s3 cp output.zip s3://$CFN_BUCKET/amazon-s3-find-and-forget/$VERSION/amazon-s3-find-and-forget.zip
         env:
           CFN_BUCKET: ${{ secrets.CFN_BUCKET }}
