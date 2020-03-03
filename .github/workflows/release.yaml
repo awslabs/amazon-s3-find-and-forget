@@ -45,6 +45,6 @@ jobs:
           tag_name: ${{ env.THIS_VERSION }}
           release_name: Release ${{ env.THIS_VERSION }}
           body: |
-            See the CHANGELOG for a list of features included in this release #TODO
+            See the CHANGELOG for a list of features included in this release
           draft: false
           prerelease: false
