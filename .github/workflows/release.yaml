@@ -34,7 +34,7 @@ jobs:
         run: echo ::set-env name=THIS_VERSION::$(make version)
       - name: Set latest
         id: latest
-        run: echo ::set-env name=LATEST::$(git describe --tags $(git rev-list --tags --max-count=1) 2> /dev/null || echo '0')
+        run: echo ::set-env name=LATEST::$(git describe --tags $(git rev-list --tags --max-count=1) | sed s/^v// 2> /dev/null || echo '0')
       - name: Create Release
         id: create_release
         uses: actions/create-release@latest
@@ -42,8 +42,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ env.THIS_VERSION }}
-          release_name: Release ${{ env.THIS_VERSION }}
+          tag_name: v${{ env.THIS_VERSION }}
+          release_name: Release v${{ env.THIS_VERSION }}
           body: |
             See the CHANGELOG for a list of features included in this release
           draft: false
