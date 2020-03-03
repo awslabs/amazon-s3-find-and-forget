@@ -33,6 +33,7 @@ integrate it in your own applications.
 - [Local Development](docs/LOCAL_DEVELOPMENT.md)
 - [Troubleshooting](docs/TROUBLESHOOTING.md)
 - [Limits](docs/LIMITS.md)
+- [Change Log](CHANGELOG.md)
 
 ## Contributing
 
