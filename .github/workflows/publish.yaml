@@ -10,6 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Fetch Tags
+        run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -33,7 +35,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
       # Setup
-      - name: Install xmllint
+      - name: Install Snappy
         run: sudo apt-get install libsnappy-dev
       - name: Set up Python 3.7
         uses: actions/setup-python@v1
@@ -52,11 +54,9 @@ jobs:
       - name: Install dependencies
         run: make setup
       # Package and Upload Archive
-      - name: Build Artefact
+      - name: Build Release
         run: make package
-      - name: Create archive
-        run: zip -r output.zip templates backend cfn-publish build.zip -x **/__pycache* -x *settings.js
       - name: Upload artefact
-        run: aws s3 cp output.zip s3://$CFN_BUCKET/amazon-s3-find-and-forget/$VERSION/amazon-s3-find-and-forget.zip
+        run: aws s3 cp packaged.zip s3://$CFN_BUCKET/amazon-s3-find-and-forget/$VERSION/amazon-s3-find-and-forget.zip
         env:
           CFN_BUCKET: ${{ secrets.CFN_BUCKET }}

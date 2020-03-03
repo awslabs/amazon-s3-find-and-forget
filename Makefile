@@ -40,7 +40,7 @@ deploy-cfn:
 
 deploy-artefacts:
 	$(eval VERSION := $(make version))
-	make package
+	make package-artefacts
 	aws s3 cp build.zip s3://$(TEMP_BUCKET)/amazon-s3-find-and-forget/$(VERSION)/build.zip
 
 generate-api-docs:
@@ -48,6 +48,10 @@ generate-api-docs:
 	git add docs/api
 
 package:
+	make package-artefacts
+	zip -r packaged.zip templates backend cfn-publish build.zip -x **/__pycache* -x *settings.js
+
+package-artefacts:
 	make build-frontend
 	zip -r build.zip backend/ecs_tasks/delete_files/ frontend/build -x backend/ecs_tasks/delete_files/__pycache* -x *settings.js
 
