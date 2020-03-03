@@ -49,7 +49,7 @@ generate-api-docs:
 
 package:
 	make package-artefacts
-	zip -r packaged.zip templates backend cfn-publish build.zip -x **/__pycache* -x *settings.js
+	zip -r packaged.zip templates backend cfn-publish.config build.zip -x **/__pycache* -x *settings.js
 
 package-artefacts:
 	make build-frontend
