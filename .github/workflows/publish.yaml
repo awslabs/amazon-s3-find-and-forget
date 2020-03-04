@@ -1,21 +1,28 @@
 ---
 
-name: Unit Tests
+name: Publish Version
 on:
-  push:
-    branches:
-      - master
-  pull_request:
-    types:
-      - opened
-      - edited
-      - synchronize
+  release:
+    types: [published, edited]
 jobs:
-  unit_tests:
-    name: Unit tests
+  publish:
+    name: Publish Version
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Fetch Tags
+        run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.REGION }}
+          role-to-assume: ${{ secrets.AWS_PUBLISHER_ROLE_TO_ASSUME }}
+          role-duration-seconds: 300
+      - name: Set version
+        id: version
+        run: echo ::set-env name=VERSION::${GITHUB_REF/refs\/tags\//}
       # Cache
       - uses: actions/cache@v1
         with:
@@ -30,7 +37,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
       # Setup
-      - name: Install snappy dep
+      - name: Install Snappy
         run: sudo apt-get install libsnappy-dev
       - name: Set up Python 3.7
         uses: actions/setup-python@v1
@@ -48,12 +55,10 @@ jobs:
         run: pip install virtualenv
       - name: Install dependencies
         run: make setup
-      # Run Tests
-      - name: CloudFormation unit tests
-        run: make test-cfn
-      - name: Backend unit tests
-        run: make test-unit
+      # Package and Upload Archive
+      - name: Build Release
+        run: make package
+      - name: Upload artefact
+        run: aws s3 cp packaged.zip s3://$CFN_BUCKET/amazon-s3-find-and-forget/$VERSION/amazon-s3-find-and-forget.zip
         env:
-          AWS_DEFAULT_REGION: eu-west-1
-      - name: Frontend unit tests
-        run: make test-frontend
+          CFN_BUCKET: ${{ secrets.CFN_BUCKET }}
