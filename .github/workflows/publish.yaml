@@ -3,7 +3,7 @@
 name: Publish Version
 on:
   release:
-    types: [published, edited]
+    types: [created, edited]
 jobs:
   publish:
     name: Publish Version
