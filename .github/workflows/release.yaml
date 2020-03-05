@@ -47,4 +47,4 @@ jobs:
           body: |
             See the CHANGELOG for a list of features included in this release
           draft: false
-          prerelease: false
+          prerelease: true
