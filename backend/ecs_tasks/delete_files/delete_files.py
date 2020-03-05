@@ -196,34 +196,29 @@ def get_emitter_id():
 
 @lru_cache()
 def get_bucket_versioning(client, bucket):
-    return True
-    # resp = client.get_bucket_versioning(
-    #     Bucket=bucket
-    # )
-    #
-    # return resp['Status'] == "Enabled"
+    resp = client.get_bucket_versioning(Bucket=bucket)
+
+    return resp['Status'] == "Enabled"
 
 
 @lru_cache()
 def should_delete_previous_versions(table, job_id):
-    return True
-    # resp = table.get_item(Key={"Id": job_id, "Sk": job_id})
-    # if not resp.get("Item"):
-    #     raise ValueError("Invalid Job ID")
-    #
-    # return resp["Item"].get("DeletePreviousVersions", True)
+    resp = table.get_item(Key={"Id": job_id, "Sk": job_id})
+    if not resp.get("Item"):
+        raise ValueError("Invalid Job ID")
+
+    return resp["Item"].get("DeletePreviousVersions", True)
 
 
 def delete_previous_versions(client, input_bucket, input_key):
-    return True
-    # resp = client.list_object_versions(
-    #     Bucket=input_bucket,
-    #     Prefix=input_key,
-    # )
-    # versions = resp.get('Versions', [])
-    # versions.extend(resp.get('DeleteMarkers', []))
-    # for version_id in [x['VersionId'] for x in versions if x['VersionId'] != 'null']:
-    #     client.delete_object(Bucket=bucket, Key=filename, VersionId=version_id)
+    resp = client.list_object_versions(
+        Bucket=input_bucket,
+        Prefix=input_key,
+    )
+    versions = resp.get('Versions', [])
+    versions.extend(resp.get('DeleteMarkers', []))
+    for version_id in [x['VersionId'] for x in versions if x['VersionId'] != 'null']:
+        client.delete_object(Bucket=input_bucket, Key=input_key, VersionId=version_id)
 
 
 def emit_deletion_event(message_body, stats):
