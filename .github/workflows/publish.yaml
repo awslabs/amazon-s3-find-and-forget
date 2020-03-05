@@ -2,8 +2,11 @@
 
 name: Publish Version
 on:
+  tags:
+    - '*'
   release:
-    types: [created, published, prereleased, edited]
+    types:
+      - edited
 jobs:
   publish:
     name: Publish Version
