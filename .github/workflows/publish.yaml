@@ -3,7 +3,7 @@
 name: Publish Version
 on:
   release:
-    types: [created, edited]
+    types: [created, published, prereleased, edited]
 jobs:
   publish:
     name: Publish Version
@@ -19,7 +19,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.REGION }}
           role-to-assume: ${{ secrets.AWS_PUBLISHER_ROLE_TO_ASSUME }}
-          role-duration-seconds: 300
+          role-duration-seconds: 900
       - name: Set version
         id: version
         run: echo ::set-env name=VERSION::${GITHUB_REF/refs\/tags\//}
