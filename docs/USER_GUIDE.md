@@ -107,7 +107,8 @@ resources.
    * **AdminEmail:** The email address you wish to setup as the initial
    user of this Amazon S3 Find and Forget deployment.
    * **DeleteOldVersions:** (Default: false) Whether to delete old versions
-   of an object. For more information see
+   of objects after a new version is created following any forget operations.
+   For more information see
    [Enabling Old Version Deletion](#enabling-old-version-deletion)
    * **JobDetailsRetentionDays:** (Default: 0) How long job records should
    remain in the Job table for. Use 0 to retain logs indefinitely. **Note:**
