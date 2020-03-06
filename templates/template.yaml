@@ -26,7 +26,7 @@ Parameters:
     AllowedValues:
       - "true"
       - "false"
-  DeleteOldVersions:
+  DeletePreviousVersions:
     Description: Whether to remove old versions when performing updates
     Type: String
     Default: "true"
@@ -85,13 +85,6 @@ Parameters:
     AllowedValues:
       - "true"
       - "false"
-  SafeMode:
-    Description: Whether to enable safe mode. When enabled, the solution will not overwrite the original object when forgetting but instead save a copy
-    Type: String
-    Default: "true"
-    AllowedValues:
-      - "true"
-      - "false"
   VpcSecurityGroups:
     Description: List of security groups to apply to Fargate tasks
     Type: CommaDelimitedList
@@ -133,7 +126,7 @@ Resources:
         {
           "AthenaConcurrencyLimit": ${AthenaConcurrencyLimit},
           "DeletionTasksMaxNumber": ${DeletionTasksMaxNumber},
-          "DeleteOldVersions": ${DeleteOldVersions},
+          "DeletePreviousVersions": ${DeletePreviousVersions},
           "JobDetailsRetentionDays": ${JobDetailsRetentionDays},
           "QueryExecutionWaitSeconds": ${QueryExecutionWaitSeconds},
           "QueryQueueWaitSeconds": ${QueryQueueWaitSeconds},
@@ -312,7 +305,7 @@ Metadata:
           default: "Admin Configuration"
         Parameters:
           - AdminEmail
-          - DeleteOldVersions
+          - DeletePreviousVersions
           - JobDetailsRetentionDays
       - Label:
           default: "Network Configuration"

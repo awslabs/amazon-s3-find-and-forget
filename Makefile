@@ -108,7 +108,7 @@ test-frontend:
 	cd frontend && npm t
 
 test-unit:
-	pytest -m unit --log-cli-level info --cov=backend.lambdas --cov=decorators --cov=boto_utils --cov=backend.ecs_tasks
+	pytest -m unit --log-cli-level info --cov=backend.lambdas --cov=decorators --cov=boto_utils --cov=backend.ecs_tasks --cov-report term-missing
 
 test-acceptance:
 	pytest -m acceptance --log-cli-level info

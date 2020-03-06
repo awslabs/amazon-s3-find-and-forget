@@ -16,9 +16,10 @@ with patch.dict(os.environ, {
     "DLQ": "https://url/q",
 }):
     from backend.ecs_tasks.delete_files.delete_files import execute, get_emitter_id, \
-         emit_deletion_event, emit_failed_deletion_event, save, get_grantees, \
-         get_object_info, get_object_tags, get_object_acl, get_requester_payment, get_row_count, \
-         delete_from_dataframe, delete_matches_from_file, load_parquet, kill_handler, handle_error
+    emit_deletion_event, emit_failed_deletion_event, save, get_grantees, \
+    get_object_info, get_object_tags, get_object_acl, get_requester_payment, get_row_count, \
+    delete_from_dataframe, delete_matches_from_file, load_parquet, kill_handler, handle_error, get_bucket_versioning, \
+    should_delete_previous_versions, delete_previous_versions
 
 pytestmark = [pytest.mark.unit]
 
@@ -314,7 +315,7 @@ def test_it_handles_file_too_big(mock_handler, mock_s3):
 @patch("backend.ecs_tasks.delete_files.delete_files.get_bucket_versioning", MagicMock(return_value=True))
 @patch("backend.ecs_tasks.delete_files.delete_files.s3")
 @patch("backend.ecs_tasks.delete_files.delete_files.handle_error")
-def test_it_handles_file_too_big(mock_handler, mock_s3):
+def test_it_handles_generic_error(mock_handler, mock_s3):
     # Arrange
     mock_s3.open.side_effect = RuntimeError("Some Error")
     # Act
@@ -334,6 +335,79 @@ def test_it_handles_unversioned_buckets(mock_handler, mock_s3):
     execute(message_stub(), "receipt_handle")
     # Assert
     mock_handler.assert_called_with(ANY, ANY, "Unprocessable message: Bucket bucket does not have versioning enabled")
+
+
+def test_it_returns_bucket_versioning_enabled():
+    get_bucket_versioning.cache_clear()
+    client = MagicMock()
+    client.get_bucket_versioning.return_value = {"Status": "Enabled"}
+    assert get_bucket_versioning(client, "bucket")
+
+
+def test_it_returns_bucket_versioning_disabled():
+    get_bucket_versioning.cache_clear()
+    client = MagicMock()
+    client.get_bucket_versioning.return_value = {"Status": "Suspended"}
+    assert not get_bucket_versioning(client, "bucket")
+
+
+def test_it_returns_delete_old_versions_setting_enabled():
+    should_delete_previous_versions.cache_clear()
+    table = MagicMock()
+    table.get_item.return_value = {
+        "Item": {
+            "Id": "123",
+            "DeletePreviousVersions": True
+        }
+    }
+    assert should_delete_previous_versions(table, "123")
+
+
+def test_it_defaults_delete_old_versions_setting():
+    should_delete_previous_versions.cache_clear()
+    table = MagicMock()
+    table.get_item.return_value = {
+        "Item": {
+            "Id": "123"
+        }
+    }
+    assert should_delete_previous_versions(table, "123")
+
+
+def test_it_returns_delete_old_versions_setting_disabled():
+    should_delete_previous_versions.cache_clear()
+    table = MagicMock()
+    table.get_item.return_value = {
+        "Item": {
+            "Id": "123",
+            "DeletePreviousVersions": False
+        }
+    }
+    assert not should_delete_previous_versions(table, "123")
+
+
+def test_it_raises_for_invalid_job_id():
+    should_delete_previous_versions.cache_clear()
+    table = MagicMock()
+    table.get_item.return_value = {}
+    with pytest.raises(ValueError):
+        should_delete_previous_versions(table, "123")
+
+
+def test_it_wipes_old_versions():
+    client = MagicMock()
+    client.list_object_versions.return_value = {
+        "Versions": [{
+            "VersionId": "1234"
+        }],
+        "DeleteMarkers": [{
+            "VersionId": "4321"
+        }],
+    }
+    delete_previous_versions(client, "bucket", "key")
+    assert 2 == client.delete_object.call_count
+    assert {"Bucket": "bucket", "Key": "key", "VersionId": "1234"} == client.delete_object.call_args_list[0][1]
+    assert {"Bucket": "bucket", "Key": "key", "VersionId": "4321"} == client.delete_object.call_args_list[1][1]
 
 
 def test_it_returns_requester_pays():

@@ -106,10 +106,10 @@ resources.
    this stack in CloudFormation once deployed.
    * **AdminEmail:** The email address you wish to setup as the initial
    user of this Amazon S3 Find and Forget deployment.
-   * **DeleteOldVersions:** (Default: false) Whether to delete old versions
-   of objects after a new version is created following any forget operations.
-   For more information see
-   [Enabling Old Version Deletion](#enabling-old-version-deletion)
+   * **DeletePreviousVersions:** (Default: false) Whether to delete previous
+   versions of objects after a new version is created following any forget
+   operations. For more information see
+   [Enabling Previous Version Deletion](#enabling-previous-version-deletion)
    * **JobDetailsRetentionDays:** (Default: 0) How long job records should
    remain in the Job table for. Use 0 to retain logs indefinitely. **Note:**
    If the retention setting is changed it will only apply to *new* deletion jobs.
@@ -345,7 +345,7 @@ page will automatically refresh and to display the current status and
 statistics for the job. For more information on the possible statuses and
 their meaning, see [Deletion Job Statuses](#deletion-job-statuses).
 
-## Enabling Old Version Deletion
+## Enabling Previous Version Deletion
 *TODO*
 
 Job events are continuously emitted whilst a job is running. These events are
