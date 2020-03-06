@@ -106,10 +106,10 @@ resources.
    this stack in CloudFormation once deployed.
    * **AdminEmail:** The email address you wish to setup as the initial
    user of this Amazon S3 Find and Forget deployment.
-   * **DeletePreviousVersions:** (Default: false) Whether to delete previous
+   * **DeletePreviousVersions:** (Default: true) Whether to delete previous
    versions of objects after a new version is created following any forget
    operations. For more information see
-   [Enabling Previous Version Deletion](#enabling-previous-version-deletion)
+   [Disabling Previous Version Deletion](#enabling-previous-version-deletion)
    * **JobDetailsRetentionDays:** (Default: 0) How long job records should
    remain in the Job table for. Use 0 to retain logs indefinitely. **Note:**
    If the retention setting is changed it will only apply to *new* deletion jobs.
@@ -345,9 +345,6 @@ page will automatically refresh and to display the current status and
 statistics for the job. For more information on the possible statuses and
 their meaning, see [Deletion Job Statuses](#deletion-job-statuses).
 
-## Enabling Previous Version Deletion
-*TODO*
-
 Job events are continuously emitted whilst a job is running. These events are
 used to update the status and statistics for the job. You can view all the
 emitted events for a job in the **Job Events** table. Whilst a job is running,
@@ -459,10 +456,11 @@ in terms of data retention and performance:
   time between each check to see whether the Fargate object queue is empty.
   If your jobs fail due to exceeding the Step Functions execution history quota,
   you may have set this value to low.
-* `SafeMode`: Setting this value to true will cause the solution to write
-  updated objects to a temporary bucket rather than to the source bucket/object
-  key. Typically this mode is used when first deploying the solution to verify
-  your configuration.
+* `DeletePreviousVersions`: Setting this value to true will cause the solution 
+  to explicitly delete all previous versions of an object after it has
+  written a new version without the Matches removed as part of a deletion job.
+  For more information see
+  [Disabling Previous Version Deletion](#enabling-previous-version-deletion)
 * `JobDetailsRetentionDays`: Changing this value will change how long records
   job details and events are retained for. Set this to 0 to retain them
   indefinitely.
@@ -483,6 +481,23 @@ configuration values are displayed when confirming that you wish to start a job.
 You can only update the vCPUs/memory allocated to Fargate tasks by performing a
 stack update. For more information, see [Updating the Stack](#updating-the-stack).
 
+## Disabling Previous Version Deletion
+
+By default, all previous versions of an object written by the solution will be
+deleted. However, if you wish to retain old versions and/or delete them at a
+later date, via a [Bucket Lifecycle Policy] for example, you can disable this
+feature by setting `DeletePreviousVersions` to `false` when deploying the
+solution.
+
+If you are evaluating the Amazon S3 Find and Forget solution, you may wish
+to set `DeletePreviousVersions` to `false` to allow you to "rollback" any
+updates made by the solution during evaluation. 
+
+> **Important:** By retaining old versions of objects, you will incur
+> additional S3 storage costs due to storing both the latest and previous
+> versions of objects. Deleting old versions of objects once they are no
+> longer required will reduce these costs.  
+
 ## Updating the Stack
 *TODO*
 
@@ -500,3 +515,4 @@ stack update. For more information, see [Updating the Stack](#updating-the-stack
 [Cross Account KMS Access]: https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-modifying-external-accounts.html
 [Updating an SSM Parameter]: https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-cli.html
 [deploy using the aws cli]: https://docs.aws.amazon.com/cli/latest/reference/cloudformation/deploy/index.html
+[Bucket Lifecycle Policy]: https://docs.aws.amazon.com/AmazonS3/latest/dev/object-lifecycle-mgmt.html

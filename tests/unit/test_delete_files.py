@@ -399,15 +399,65 @@ def test_it_wipes_old_versions():
     client.list_object_versions.return_value = {
         "Versions": [{
             "VersionId": "1234"
-        }],
-        "DeleteMarkers": [{
-            "VersionId": "4321"
+        }, {
+            "VersionId": "2345"
+        }, {
+            "VersionId": "3456"
         }],
     }
-    delete_previous_versions(client, "bucket", "key")
+    delete_previous_versions(client, "bucket", "key", "2345")
     assert 2 == client.delete_object.call_count
-    assert {"Bucket": "bucket", "Key": "key", "VersionId": "1234"} == client.delete_object.call_args_list[0][1]
-    assert {"Bucket": "bucket", "Key": "key", "VersionId": "4321"} == client.delete_object.call_args_list[1][1]
+    assert {"Bucket": "bucket", "Key": "key", "VersionId": "2345"} == client.delete_object.call_args_list[0][1]
+    assert {"Bucket": "bucket", "Key": "key", "VersionId": "3456"} == client.delete_object.call_args_list[1][1]
+
+
+def test_it_raises_where_previous_version_is_missing():
+    client = MagicMock()
+    client.list_object_versions.return_value = {
+        "Versions": [{
+            "VersionId": "1234"
+        }],
+        "DeleteMarkers": []
+    }
+    with pytest.raises(ValueError):
+        delete_previous_versions(client, "bucket", "key", "2345")
+        assert 0 == client.delete_object.call_count
+
+
+def test_it_raises_where_source_version_is_not_latest():
+    client = MagicMock()
+    client.list_object_versions.return_value = {
+        "Versions": [{
+            "VersionId": "1234"
+        }, {
+            "VersionId": "3456"
+        }, {
+            "VersionId": "2345"
+        }],
+        "DeleteMarkers": []
+    }
+    with pytest.raises(ValueError):
+        delete_previous_versions(client, "bucket", "key", "2345")
+        assert 0 == client.delete_object.call_count
+
+
+def test_it_raises_where_deletion_marker_exists():
+    client = MagicMock()
+    client.list_object_versions.return_value = {
+        "Versions": [{
+            "VersionId": "1234"
+        }, {
+            "VersionId": "2345"
+        }, {
+            "VersionId": "3456"
+        }],
+        "DeleteMarkers": [{
+            "VersionId": "4567"
+        }]
+    }
+    with pytest.raises(ValueError):
+        delete_previous_versions(client, "bucket", "key", "2345")
+        assert 0 == client.delete_object.call_count
 
 
 def test_it_returns_requester_pays():

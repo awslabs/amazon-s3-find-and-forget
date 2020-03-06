@@ -348,7 +348,7 @@ def job_factory(job_table, sf_client, stack):
     items = []
 
     def factory(job_id=str(uuid4()), status="QUEUED", gsib="0", created_at=round(datetime.datetime.now().timestamp()),
-                del_queue_items=[], safe_mode=False, **kwargs):
+                del_queue_items=[], delete_previous_versions=True, **kwargs):
         item = {
             "Id": job_id,
             "Sk": job_id,
@@ -357,7 +357,7 @@ def job_factory(job_table, sf_client, stack):
             "CreatedAt": created_at,
             "GSIBucket": gsib,
             "DeletionQueueItems": del_queue_items,
-            "SafeMode": safe_mode,
+            "DeletePreviousVersions": delete_previous_versions,
             "AthenaConcurrencyLimit": 15,
             "DeletionTasksMaxNumber": 1,
             "QueryExecutionWaitSeconds": 1,
@@ -432,6 +432,7 @@ def dummy_lake(s3_resource, stack):
         "LocationConstraint": getenv("AWS_DEFAULT_REGION", "eu-west-1")
     }, )
     bucket.wait_until_exists()
+    s3_resource.BucketVersioning(bucket_name).enable()
     policy.put(Policy=json.dumps({
         "Version": "2012-10-17",
         "Statement": [
@@ -459,6 +460,7 @@ def dummy_lake(s3_resource, stack):
 
     # Cleanup
     bucket.objects.delete()
+    bucket.object_versions.delete()
     bucket.delete()
 
 

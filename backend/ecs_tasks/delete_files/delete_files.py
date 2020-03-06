@@ -29,7 +29,7 @@ logger.addHandler(handler)
 
 sqs = boto3.resource('sqs', endpoint_url="https://sqs.{}.amazonaws.com".format(os.getenv("AWS_DEFAULT_REGION")))
 queue = sqs.Queue(os.getenv("DELETE_OBJECTS_QUEUE"))
-s3 = s3fs.S3FileSystem(default_cache_type='none', requester_pays=True, default_fill_cache=False)
+s3 = s3fs.S3FileSystem(default_cache_type='none', requester_pays=True, default_fill_cache=False, version_aware=True)
 
 
 def _remove_none(d: dict):
@@ -210,14 +210,21 @@ def should_delete_previous_versions(table, job_id):
     return resp["Item"].get("DeletePreviousVersions", True)
 
 
-def delete_previous_versions(client, input_bucket, input_key):
-    resp = client.list_object_versions(
-        Bucket=input_bucket,
-        Prefix=input_key,
-    )
+def delete_previous_versions(client, input_bucket, input_key, source_version_id):
+    resp = client.list_object_versions(Bucket=input_bucket, Prefix=input_key)
     versions = resp.get('Versions', [])
-    versions.extend(resp.get('DeleteMarkers', []))
-    for version_id in [x['VersionId'] for x in versions if x['VersionId'] != 'null']:
+    delete_markers = resp.get('DeleteMarkers', [])
+    # Ensure object has not been deleted
+    if len(delete_markers) > 0:
+        raise ValueError("Delete marker added for {} during processing".format(input_key))
+    # Ensure that at least the amended and source object still exist
+    if len(versions) <= 1:
+        raise ValueError("Only a single version of {} exists. At least 2 should exist")
+    # Ensure the penultimate version is a known version
+    if versions[1]["VersionId"] != source_version_id:
+        raise ValueError("Another version of {} has been written during processing".format(input_key))
+    versions = resp["Versions"]
+    for version_id in [x['VersionId'] for x in versions if x['VersionId'] != versions[0]["VersionId"]]:
         client.delete_object(Bucket=input_bucket, Key=input_key, VersionId=version_id)
 
 
@@ -256,7 +263,7 @@ def validate_message(message):
 
 
 def handle_error(sqs_msg, message_body, err_message):
-    logger.error(err_message)
+    logger.exception(err_message)
     emit_failed_deletion_event(message_body, err_message)
     sqs_msg.change_visibility(VisibilityTimeout=0)
 
@@ -286,7 +293,7 @@ def execute(message_body, receipt_handle):
                 with pa.BufferReader(out_sink.getvalue()) as output_buf:
                     save(client, output_buf, input_bucket, input_key)
                 if should_delete_previous_versions(table, job_id):
-                    delete_previous_versions(client, input_bucket, input_key)
+                    delete_previous_versions(client, input_bucket, input_key, f.version_id)
             else:
                 logger.warning("The object {} was processed successfully but no rows required deletion".format(object_path))
         msg.delete()

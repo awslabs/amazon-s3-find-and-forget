@@ -25,6 +25,12 @@
           "argument": "Item.JobStatus.S"
         },
         {
+          "expected": "FORGET_COMPLETED_CLEANUP_IN_PROGRESS",
+          "matcher": "path",
+          "state": "retry",
+          "argument": "Item.JobStatus.S"
+        },
+        {
           "expected": "FAILED",
           "matcher": "path",
           "state": "failure",
@@ -38,6 +44,18 @@
         },
         {
           "expected": "FORGET_FAILED",
+          "matcher": "path",
+          "state": "failure",
+          "argument": "Item.JobStatus.S"
+        },
+        {
+          "expected": "FORGET_PARTIALLY_FAILED",
+          "matcher": "path",
+          "state": "failure",
+          "argument": "Item.JobStatus.S"
+        },
+        {
+          "expected": "COMPLETED_CLEANUP_FAILED",
           "matcher": "path",
           "state": "failure",
           "argument": "Item.JobStatus.S"
@@ -73,6 +91,12 @@
           "argument": "Item.JobStatus.S"
         },
         {
+          "expected": "FORGET_COMPLETED_CLEANUP_IN_PROGRESS",
+          "matcher": "path",
+          "state": "retry",
+          "argument": "Item.JobStatus.S"
+        },
+        {
           "expected": "FAILED",
           "matcher": "path",
           "state": "success",
@@ -86,6 +110,18 @@
         },
         {
           "expected": "FORGET_FAILED",
+          "matcher": "path",
+          "state": "success",
+          "argument": "Item.JobStatus.S"
+        },
+        {
+          "expected": "FORGET_PARTIALLY_FAILED",
+          "matcher": "path",
+          "state": "success",
+          "argument": "Item.JobStatus.S"
+        },
+        {
+          "expected": "COMPLETED_CLEANUP_FAILED",
           "matcher": "path",
           "state": "success",
           "argument": "Item.JobStatus.S"
