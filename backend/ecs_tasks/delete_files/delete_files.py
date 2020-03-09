@@ -86,9 +86,11 @@ def save(client, buf, bucket, key, source_version=None):
     logger.info("Object settings: {}".format(extra_args))
     # Write Object Back to S3
     logger.info("Saving updated object to s3://{}/{}".format(bucket, key))
-    with s3.open("s3://{bucket}/{key}", "wb", **extra_args) as f:
-        f.write(buf.getvalue())
-        new_version_id = f.version_id
+    contents = buf.read()
+    with s3.open("s3://{}/{}".format(bucket, key), "wb", **extra_args) as f:
+        f.write(contents)
+    s3.invalidate_cache()  # TODO: remove once https://github.com/dask/s3fs/issues/294 is resolved
+    new_version_id = f.version_id
     logger.info("Object uploaded to S3")
     # GrantWrite cannot be set whilst uploading therefore ACLs need to be restored separately
     write_grantees = ",".join(get_grantees(acl_resp, "WRITE"))
@@ -294,7 +296,6 @@ def execute(message_body, receipt_handle):
             logger.warning("The object {} was processed successfully but no rows required deletion".format(object_path))
         msg.delete()
         emit_deletion_event(body, stats)
-        return msg
     except (KeyError, ArrowException) as e:
         err_message = "Parquet processing error: {}".format(str(e))
         handle_error(msg, message_body, err_message)

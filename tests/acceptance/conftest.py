@@ -468,9 +468,9 @@ def data_loader(dummy_lake):
     loaded_data = []
     bucket = dummy_lake["bucket"]
 
-    def load_data(filename, object_key):
+    def load_data(filename, object_key, **kwargs):
         file_path = str(Path(__file__).parent.joinpath("data").joinpath(filename))
-        bucket.upload_file(file_path, object_key)
+        bucket.upload_file(file_path, object_key, ExtraArgs=kwargs)
         loaded_data.append(object_key)
 
     yield load_data
