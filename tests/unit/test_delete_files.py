@@ -442,7 +442,7 @@ def test_it_gets_acl_args(mock_requester):
 
 
 @patch("backend.ecs_tasks.delete_files.delete_files.get_requester_payment")
-def test_it_handles_versions_for_get_tagging(mock_requester):
+def test_it_handles_versions_for_get_acl(mock_requester):
     get_object_info.cache_clear()
     client = MagicMock()
     mock_requester.return_value = {}, {}
