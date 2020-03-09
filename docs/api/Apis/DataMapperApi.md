@@ -4,9 +4,9 @@ All URIs are relative to *https://your-apigw-id.execute-api.region.amazonaws.com
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**CreateDataMapper**](DataMapperApi.md#createdatamapper) | **PUT** /data_mappers/{data_mapper_id} | Creates a data mapper
-[**DeleteDataMapper**](DataMapperApi.md#deletedatamapper) | **DELETE** /data_mappers/{data_mapper_id} | Removes a data mapper
-[**ListDataMappers**](DataMapperApi.md#listdatamappers) | **GET** /data_mappers | Lists data mappers
+[**CreateDataMapper**](DataMapperApi.md#createdatamapper) | **PUT** /v1/data_mappers/{data_mapper_id} | Creates a data mapper
+[**DeleteDataMapper**](DataMapperApi.md#deletedatamapper) | **DELETE** /v1/data_mappers/{data_mapper_id} | Removes a data mapper
+[**ListDataMappers**](DataMapperApi.md#listdatamappers) | **GET** /v1/data_mappers | Lists data mappers
 
 
 <a name="createdatamapper"></a>

@@ -17,7 +17,7 @@ tags:
   - name: Settings
     description: Operations related to solution settings
 paths:
-  /queue:
+  /v1/queue:
     get:
       summary: Lists deletion queue items
       tags:
@@ -96,7 +96,7 @@ paths:
         passthroughBehavior: "when_no_match"
         httpMethod: "POST"
         type: "aws_proxy"
-  /queue/matches:
+  /v1/queue/matches:
     delete:
       summary: Removes an item from the deletion queue
       tags:
@@ -140,7 +140,7 @@ paths:
         passthroughBehavior: "when_no_match"
         httpMethod: "POST"
         type: "aws_proxy"
-  /jobs:
+  /v1/jobs:
     get:
       summary: Lists all jobs
       tags:
@@ -176,7 +176,7 @@ paths:
         passthroughBehavior: "when_no_match"
         httpMethod: "POST"
         type: "aws_proxy"
-  /jobs/{job_id}:
+  /v1/jobs/{job_id}:
     parameters:
       - '$ref': '#/components/parameters/JobId'
     get:
@@ -199,7 +199,7 @@ paths:
         passthroughBehavior: "when_no_match"
         httpMethod: "POST"
         type: "aws_proxy"
-  /jobs/{job_id}/events:
+  /v1/jobs/{job_id}/events:
     parameters:
       - '$ref': '#/components/parameters/JobId'
     get:
@@ -237,7 +237,7 @@ paths:
         passthroughBehavior: "when_no_match"
         httpMethod: "POST"
         type: "aws_proxy"
-  /data_mappers:
+  /v1/data_mappers:
     get:
       summary: Lists data mappers
       tags:
@@ -265,7 +265,7 @@ paths:
         passthroughBehavior: "when_no_match"
         httpMethod: "POST"
         type: "aws_proxy"
-  /data_mappers/{data_mapper_id}:
+  /v1/data_mappers/{data_mapper_id}:
     parameters:
       - '$ref': '#/components/parameters/DataMapperId'
     put:
@@ -311,7 +311,7 @@ paths:
         passthroughBehavior: "when_no_match"
         httpMethod: "POST"
         type: "aws_proxy"
-  /settings:
+  /v1/settings:
     get:
       summary: Gets the solution settings
       tags:

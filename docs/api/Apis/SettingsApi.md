@@ -4,7 +4,7 @@ All URIs are relative to *https://your-apigw-id.execute-api.region.amazonaws.com
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**GetSettings**](SettingsApi.md#getsettings) | **GET** /settings | Gets the solution settings
+[**GetSettings**](SettingsApi.md#getsettings) | **GET** /v1/settings | Gets the solution settings
 
 
 <a name="getsettings"></a>
