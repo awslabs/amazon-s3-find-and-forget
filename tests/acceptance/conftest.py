@@ -464,14 +464,21 @@ def dummy_lake(s3_resource, stack):
     bucket.delete()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def data_loader(dummy_lake):
+    loaded_data = []
+    bucket = dummy_lake["bucket"]
+
     def load_data(filename, object_key):
-        bucket = dummy_lake["bucket"]
         file_path = str(Path(__file__).parent.joinpath("data").joinpath(filename))
         bucket.upload_file(file_path, object_key)
+        loaded_data.append(object_key)
 
-    return load_data
+    yield load_data
+
+    for d in loaded_data:
+        bucket.objects.filter(Prefix=d).delete()
+        bucket.object_versions.filter(Prefix=d).delete()
 
 
 def fetch_total_messages(q):
@@ -482,7 +489,7 @@ def fetch_total_messages(q):
 @pytest.fixture(scope="session")
 def query_queue(stack):
     queue = boto3.resource("sqs").Queue(stack["QueryQueueUrl"])
-    if(fetch_total_messages(queue) > 0):
+    if fetch_total_messages(queue) > 0:
         queue.purge()
     return queue
 
@@ -490,7 +497,7 @@ def query_queue(stack):
 @pytest.fixture(scope="session")
 def fargate_queue(stack):
     queue = boto3.resource("sqs").Queue(stack["DeletionQueueUrl"])
-    if(fetch_total_messages(queue) > 0):
+    if fetch_total_messages(queue) > 0:
         queue.purge()
     return queue
 
