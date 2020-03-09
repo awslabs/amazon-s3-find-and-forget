@@ -4,9 +4,9 @@ All URIs are relative to *https://your-apigw-id.execute-api.region.amazonaws.com
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**GetJob**](JobApi.md#getjob) | **GET** /jobs/{job_id} | Returns the details of a job
-[**GetJobEvents**](JobApi.md#getjobevents) | **GET** /jobs/{job_id}/events | Lists all events for a job
-[**ListJobs**](JobApi.md#listjobs) | **GET** /jobs | Lists all jobs
+[**GetJob**](JobApi.md#getjob) | **GET** /v1/jobs/{job_id} | Returns the details of a job
+[**GetJobEvents**](JobApi.md#getjobevents) | **GET** /v1/jobs/{job_id}/events | Lists all events for a job
+[**ListJobs**](JobApi.md#listjobs) | **GET** /v1/jobs | Lists all jobs
 
 
 <a name="getjob"></a>

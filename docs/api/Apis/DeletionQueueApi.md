@@ -4,10 +4,10 @@ All URIs are relative to *https://your-apigw-id.execute-api.region.amazonaws.com
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**AddToDeletionQueue**](DeletionQueueApi.md#addtodeletionqueue) | **PATCH** /queue | Adds an item to the deletion queue
-[**DeleteMatches**](DeletionQueueApi.md#deletematches) | **DELETE** /queue/matches | Removes an item from the deletion queue
-[**ListDeletionQueueMatches**](DeletionQueueApi.md#listdeletionqueuematches) | **GET** /queue | Lists deletion queue items
-[**StartDeletionJob**](DeletionQueueApi.md#startdeletionjob) | **DELETE** /queue | Starts a job for the items in the deletion queue
+[**AddToDeletionQueue**](DeletionQueueApi.md#addtodeletionqueue) | **PATCH** /v1/queue | Adds an item to the deletion queue
+[**DeleteMatches**](DeletionQueueApi.md#deletematches) | **DELETE** /v1/queue/matches | Removes an item from the deletion queue
+[**ListDeletionQueueMatches**](DeletionQueueApi.md#listdeletionqueuematches) | **GET** /v1/queue | Lists deletion queue items
+[**StartDeletionJob**](DeletionQueueApi.md#startdeletionjob) | **DELETE** /v1/queue | Starts a job for the items in the deletion queue
 
 
 <a name="addtodeletionqueue"></a>

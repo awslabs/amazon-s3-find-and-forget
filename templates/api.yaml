@@ -132,7 +132,7 @@ Resources:
         Get:
           Type: Api
           Properties:
-            Path: /queue
+            Path: /v1/queue
             Method: PATCH
             RestApiId: !Ref Api
       Policies:
@@ -147,7 +147,7 @@ Resources:
         Get:
           Type: Api
           Properties:
-            Path: /queue
+            Path: /v1/queue
             Method: GET
             RestApiId: !Ref Api
       Policies:
@@ -162,7 +162,7 @@ Resources:
         Get:
           Type: Api
           Properties:
-            Path: /queue/matches
+            Path: /v1/queue/matches
             Method: DELETE
             RestApiId: !Ref Api
       Policies:
@@ -179,7 +179,7 @@ Resources:
         Get:
           Type: Api
           Properties:
-            Path: /queue
+            Path: /v1/queue
             Method: DELETE
             RestApiId: !Ref Api
       Policies:
@@ -201,7 +201,7 @@ Resources:
         Put:
           Type: Api
           Properties:
-            Path: /data_mappers/{data_mapper_id}
+            Path: /v1/data_mappers/{data_mapper_id}
             Method: PUT
             RestApiId: !Ref Api
       Policies:
@@ -228,7 +228,7 @@ Resources:
         Get:
           Type: Api
           Properties:
-            Path: /data_mappers
+            Path: /v1/data_mappers
             Method: GET
             RestApiId: !Ref Api
       Policies:
@@ -243,7 +243,7 @@ Resources:
         Get:
           Type: Api
           Properties:
-            Path: /data_mappers/{data_mapper_id}
+            Path: /v1/data_mappers/{data_mapper_id}
             Method: DELETE
             RestApiId: !Ref Api
       Policies:
@@ -261,7 +261,7 @@ Resources:
         Get:
           Type: Api
           Properties:
-            Path: /jobs/{job_id}
+            Path: /v1/jobs/{job_id}
             Method: GET
             RestApiId: !Ref Api
       Policies:
@@ -277,7 +277,7 @@ Resources:
         List:
           Type: Api
           Properties:
-            Path: /jobs
+            Path: /v1/jobs
             Method: GET
             RestApiId: !Ref Api
       Policies:
@@ -293,7 +293,7 @@ Resources:
         List:
           Type: Api
           Properties:
-            Path: /jobs/{job_id}/events
+            Path: /v1/jobs/{job_id}/events
             Method: GET
             RestApiId: !Ref Api
       Policies:
@@ -310,7 +310,7 @@ Resources:
         List:
           Type: Api
           Properties:
-            Path: /settings
+            Path: /v1/settings
             Method: GET
             RestApiId: !Ref Api
       Policies:

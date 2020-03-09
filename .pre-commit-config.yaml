@@ -13,6 +13,6 @@ repos:
     rev: v0.28.2
     hooks:
     -   id: cfn-python-lint
-        args: [--ignore-templates=api.defintion.yml]
+        args: [--ignore-templates=templates/api.definition.yml]
         files: >-
             templates/.*\.(json|yml|yaml|template)$

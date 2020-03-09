@@ -7,17 +7,17 @@ All URIs are relative to *https://your-apigw-id.execute-api.region.amazonaws.com
 
 API | Operation | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
-*DataMapperApi* | [**CreateDataMapper**](./Apis/DataMapperApi.md#createdatamapper) | **PUT** /data_mappers/{data_mapper_id} | Creates a data mapper
-*DataMapperApi* | [**DeleteDataMapper**](./Apis/DataMapperApi.md#deletedatamapper) | **DELETE** /data_mappers/{data_mapper_id} | Removes a data mapper
-*DataMapperApi* | [**ListDataMappers**](./Apis/DataMapperApi.md#listdatamappers) | **GET** /data_mappers | Lists data mappers
-*DeletionQueueApi* | [**AddToDeletionQueue**](./Apis/DeletionQueueApi.md#addtodeletionqueue) | **PATCH** /queue | Adds an item to the deletion queue
-*DeletionQueueApi* | [**DeleteMatches**](./Apis/DeletionQueueApi.md#deletematches) | **DELETE** /queue/matches | Removes an item from the deletion queue
-*DeletionQueueApi* | [**ListDeletionQueueMatches**](./Apis/DeletionQueueApi.md#listdeletionqueuematches) | **GET** /queue | Lists deletion queue items
-*DeletionQueueApi* | [**StartDeletionJob**](./Apis/DeletionQueueApi.md#startdeletionjob) | **DELETE** /queue | Starts a job for the items in the deletion queue
-*JobApi* | [**GetJob**](./Apis/JobApi.md#getjob) | **GET** /jobs/{job_id} | Returns the details of a job
-*JobApi* | [**GetJobEvents**](./Apis/JobApi.md#getjobevents) | **GET** /jobs/{job_id}/events | Lists all events for a job
-*JobApi* | [**ListJobs**](./Apis/JobApi.md#listjobs) | **GET** /jobs | Lists all jobs
-*SettingsApi* | [**GetSettings**](./Apis/SettingsApi.md#getsettings) | **GET** /settings | Gets the solution settings
+*DataMapperApi* | [**CreateDataMapper**](./Apis/DataMapperApi.md#createdatamapper) | **PUT** /v1/data_mappers/{data_mapper_id} | Creates a data mapper
+*DataMapperApi* | [**DeleteDataMapper**](./Apis/DataMapperApi.md#deletedatamapper) | **DELETE** /v1/data_mappers/{data_mapper_id} | Removes a data mapper
+*DataMapperApi* | [**ListDataMappers**](./Apis/DataMapperApi.md#listdatamappers) | **GET** /v1/data_mappers | Lists data mappers
+*DeletionQueueApi* | [**AddToDeletionQueue**](./Apis/DeletionQueueApi.md#addtodeletionqueue) | **PATCH** /v1/queue | Adds an item to the deletion queue
+*DeletionQueueApi* | [**DeleteMatches**](./Apis/DeletionQueueApi.md#deletematches) | **DELETE** /v1/queue/matches | Removes an item from the deletion queue
+*DeletionQueueApi* | [**ListDeletionQueueMatches**](./Apis/DeletionQueueApi.md#listdeletionqueuematches) | **GET** /v1/queue | Lists deletion queue items
+*DeletionQueueApi* | [**StartDeletionJob**](./Apis/DeletionQueueApi.md#startdeletionjob) | **DELETE** /v1/queue | Starts a job for the items in the deletion queue
+*JobApi* | [**GetJob**](./Apis/JobApi.md#getjob) | **GET** /v1/jobs/{job_id} | Returns the details of a job
+*JobApi* | [**GetJobEvents**](./Apis/JobApi.md#getjobevents) | **GET** /v1/jobs/{job_id}/events | Lists all events for a job
+*JobApi* | [**ListJobs**](./Apis/JobApi.md#listjobs) | **GET** /v1/jobs | Lists all jobs
+*SettingsApi* | [**GetSettings**](./Apis/SettingsApi.md#getsettings) | **GET** /v1/settings | Gets the solution settings
 
 
 <a name="documentation-for-models"></a>

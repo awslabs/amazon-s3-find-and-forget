@@ -143,7 +143,7 @@ def api_client(cognito_token, stack):
             super(ApiGwSession, self).__init__()
 
         def request(self, method, url, data=None, params=None, headers=None, *args, **kwargs):
-            url = urljoin(self.base_url, url)
+            url = urljoin("{}/v1/".format(self.base_url), url)
             if isinstance(headers, dict):
                 self.default_headers.update(headers)
             return super(ApiGwSession, self).request(

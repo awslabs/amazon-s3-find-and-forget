@@ -23,7 +23,7 @@ Amplify.configure({
     endpoints: [
       {
         name: "apiGateway",
-        endpoint: settings.apiUrl,
+        endpoint: `${settings.apiUrl}v1/`,
         region,
         custom_header: async () => {
           const session = await Auth.currentSession();
