@@ -26,7 +26,6 @@ def test_it_gets_jobs(api_client, jobs_endpoint, job_factory, stack, job_table, 
         "GSIBucket": mock.ANY,
         "CreatedAt": mock.ANY,
         "DeletionQueueItems": mock.ANY,
-        "SafeMode": False,
         "AthenaConcurrencyLimit": mock.ANY,
         "DeletionTasksMaxNumber": mock.ANY,
         "QueryExecutionWaitSeconds": mock.ANY,
@@ -130,6 +129,33 @@ def test_it_does_not_delete_in_safe_mode(del_queue_factory, job_factory, dummy_l
     assert "COMPLETED" == job_table.get_item(Key={"Id": job_id, "Sk": job_id})["Item"]["JobStatus"]
     assert 1 == len(query_parquet_file(tmp, "customer_id", "12345"))
     s3_resource.Object(stack["TempBucket"], 'results/{}/{}'.format(dummy_lake["bucket_name"], object_key)).load()
+
+
+def test_it_does_not_permit_unversioned_buckets(
+        del_queue_factory, job_factory, dummy_lake, glue_data_mapper_factory,
+        data_loader, job_finished_waiter, job_table, s3_resource):
+    try:
+        s3_resource.BucketVersioning(dummy_lake["bucket_name"]).suspend()
+        # Generate a parquet file and add it to the lake
+        glue_data_mapper_factory("test", partition_keys=["year", "month", "day"], partitions=[["2019", "08", "20"]])
+        item = del_queue_factory("12345")
+        object_key = "test/2019/08/20/test.parquet"
+        data_loader("basic.parquet", object_key)
+        bucket = dummy_lake["bucket"]
+        job_id = job_factory(del_queue_items=[item], delete_previous_versions=False)["Id"]
+        # Act
+        job_finished_waiter.wait(TableName=job_table.name, Key={"Id": {"S": job_id}, "Sk": {"S": job_id}})
+        # Assert
+        tmp = tempfile.NamedTemporaryFile()
+        bucket.download_fileobj(object_key, tmp)
+        assert "FORGET_PARTIALLY_FAILED" == job_table.get_item(Key={"Id": job_id, "Sk": job_id})["Item"]["JobStatus"]
+        assert 1 == len(query_parquet_file(tmp, "customer_id", "12345"))
+        versions = [
+            v for v in s3_resource.Bucket(dummy_lake["bucket_name"]).object_versions.filter(Prefix=object_key)
+        ]
+        assert 1 == len(versions)
+    finally:
+        s3_resource.BucketVersioning(dummy_lake["bucket_name"]).enable()
 
 
 def test_it_executes_successfully_for_empty_queue(job_factory, job_finished_waiter, job_table):

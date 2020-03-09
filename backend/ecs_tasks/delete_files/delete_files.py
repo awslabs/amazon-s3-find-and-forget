@@ -29,9 +29,7 @@ logger.addHandler(handler)
 
 sqs = boto3.resource('sqs', endpoint_url="https://sqs.{}.amazonaws.com".format(os.getenv("AWS_DEFAULT_REGION")))
 queue = sqs.Queue(os.getenv("DELETE_OBJECTS_QUEUE"))
-safe_mode_bucket = os.getenv("SAFE_MODE_BUCKET")
-safe_mode_prefix = os.getenv("SAFE_MODE_PREFIX")
-s3 = s3fs.S3FileSystem(default_cache_type='none', requester_pays=True, default_fill_cache=False)
+s3 = s3fs.S3FileSystem(default_cache_type='none', requester_pays=True, default_fill_cache=False, version_aware=True)
 
 
 def _remove_none(d: dict):
@@ -62,7 +60,7 @@ def delete_matches_from_file(parquet_file, to_delete):
     total_rows = parquet_file.metadata.num_rows
     stats = Counter({"ProcessedRows": total_rows, "DeletedRows": 0})
     with pa.BufferOutputStream() as out_stream:
-        with pq.ParquetWriter(out_stream, schema, flavor="spark") as writer:
+        with pq.ParquetWriter(out_stream, schema) as writer:
             for row_group in range(parquet_file.num_row_groups):
                 logger.info("Row group {}/{}".format(str(row_group + 1), parquet_file.num_row_groups))
                 df = parquet_file.read_row_group(row_group).to_pandas()
@@ -75,33 +73,34 @@ def delete_matches_from_file(parquet_file, to_delete):
         return out_stream, stats
 
 
-def save(client, buf, bucket, key, in_safe_mode=True):
+def save(client, buf, bucket, key, source_version=None):
     """
     Save a buffer to S3, preserving any existing properties on the object
     """
     # Get Object Settings
     request_payer_args, _ = get_requester_payment(client, bucket)
-    object_info_args, _ = get_object_info(client, bucket, key)
-    tagging_args, _ = get_object_tags(client, bucket, key)
-    acl_args, acl_resp = get_object_acl(client, bucket, key)
+    object_info_args, _ = get_object_info(client, bucket, key, source_version)
+    tagging_args, _ = get_object_tags(client, bucket, key, source_version)
+    acl_args, acl_resp = get_object_acl(client, bucket, key, source_version)
     extra_args = {**request_payer_args, **object_info_args, **tagging_args, **acl_args}
     logger.info("Object settings: {}".format(extra_args))
     # Write Object Back to S3
-    output_bucket = bucket if not in_safe_mode else safe_mode_bucket
-    output_key = key if not in_safe_mode else "{}{}/{}".format(safe_mode_prefix, bucket, key)
-    logger.info("Safe mode is {}. Saving updated object to s3://{}/{}".format(in_safe_mode, output_bucket, output_key))
-    client.upload_fileobj(buf, output_bucket, output_key, ExtraArgs=extra_args)
+    logger.info("Saving updated object to s3://{}/{}".format(bucket, key))
+    with s3.open("s3://{bucket}/{key}", "wb", **extra_args) as f:
+        f.write(buf.getvalue())
+        new_version_id = f.version_id
     logger.info("Object uploaded to S3")
     # GrantWrite cannot be set whilst uploading therefore ACLs need to be restored separately
     write_grantees = ",".join(get_grantees(acl_resp, "WRITE"))
     if write_grantees:
         logger.info("WRITE grant found. Restoring additional grantees for object")
-        client.put_object_acl(Bucket=output_bucket, Key=output_key, **{
+        client.put_object_acl(Bucket=bucket, Key=key, VersionId=source_version, **{
             **request_payer_args,
             **acl_args,
             'GrantWrite': write_grantees,
         })
     logger.info("Processing of file s3://{}/{} complete".format(bucket, key))
+    return new_version_id
 
 
 @lru_cache()
@@ -118,13 +117,20 @@ def get_requester_payment(client, bucket):
 
 
 @lru_cache()
-def get_object_info(client, bucket, key):
+def get_object_info(client, bucket, key, version_id=None):
     """
     Generates a dict containing the non-ACL/Tagging args supported when uploading to S3.
     HeadObject call will be cached
     :returns tuple containing the info formatted for ExtraArgs and the raw response
     """
-    object_info = client.head_object(Bucket=bucket, Key=key, **get_requester_payment(client, bucket)[0])
+    kwargs = {
+        "Bucket": bucket,
+        "Key": key,
+        **get_requester_payment(client, bucket)[0]
+    }
+    if version_id:
+        kwargs["VersionId"] = version_id
+    object_info = client.head_object(**kwargs)
     return (_remove_none({
         'CacheControl': object_info.get("CacheControl"),
         'ContentDisposition': object_info.get("ContentDisposition"),
@@ -142,26 +148,40 @@ def get_object_info(client, bucket, key):
 
 
 @lru_cache()
-def get_object_tags(client, bucket, key):
+def get_object_tags(client, bucket, key, version_id=None):
     """
     Generates a dict containing the Tagging args supported when uploading to S3
     GetObjectTagging call will be cached
     :returns tuple containing tagging formatted for ExtraArgs and the raw response
     """
-    tagging = client.get_object_tagging(Bucket=bucket, Key=key, **get_requester_payment(client, bucket)[0])
+    kwargs = {
+        "Bucket": bucket,
+        "Key": key,
+        **get_requester_payment(client, bucket)[0]
+    }
+    if version_id:
+        kwargs["VersionId"] = version_id
+    tagging = client.get_object_tagging(**kwargs)
     return (_remove_none({
         "Tagging": urlencode({tag["Key"]: tag["Value"] for tag in tagging["TagSet"]}, quote_via=quote_plus)
     }), tagging)
 
 
 @lru_cache()
-def get_object_acl(client, bucket, key):
+def get_object_acl(client, bucket, key, version_id=None):
     """
     Generates a dict containing the ACL args supported when uploading to S3
     GetObjectAcl call will be cached
     :returns tuple containing ACL formatted for ExtraArgs and the raw response
     """
-    acl = client.get_object_acl(Bucket=bucket, Key=key, **get_requester_payment(client, bucket)[0])
+    kwargs = {
+        "Bucket": bucket,
+        "Key": key,
+        **get_requester_payment(client, bucket)[0]
+    }
+    if version_id:
+        kwargs["VersionId"] = version_id
+    acl = client.get_object_acl(**kwargs)
     existing_owner = {"id={}".format(acl["Owner"]["ID"])}
     return (_remove_none({
         'GrantFullControl': ",".join(existing_owner | get_grantees(acl, "FULL_CONTROL")),
@@ -199,12 +219,10 @@ def get_emitter_id():
 
 
 @lru_cache()
-def safe_mode(table, job_id):
-    resp = table.get_item(Key={"Id": job_id, "Sk": job_id})
-    if not resp.get("Item"):
-        raise ValueError("Invalid Job ID")
+def get_bucket_versioning(client, bucket):
+    resp = client.get_bucket_versioning(Bucket=bucket)
 
-    return resp["Item"].get("SafeMode", True)
+    return resp['Status'] == "Enabled"
 
 
 def emit_deletion_event(message_body, stats):
@@ -242,15 +260,13 @@ def validate_message(message):
 
 
 def handle_error(sqs_msg, message_body, err_message):
-    logger.error(err_message)
+    logger.exception(err_message)
     emit_failed_deletion_event(message_body, err_message)
     sqs_msg.change_visibility(VisibilityTimeout=0)
 
 
 def execute(message_body, receipt_handle):
     logger.info("Message received")
-    ddb = boto3.resource("dynamodb")
-    table = ddb.Table(os.getenv("JobTable"))
     client = boto3.client("s3")
     msg = queue.Message(receipt_handle)
     try:
@@ -258,20 +274,24 @@ def execute(message_body, receipt_handle):
         validate_message(message_body)
         body = json.loads(message_body)
         cols, object_path, job_id = itemgetter('Columns', 'Object', 'JobId')(body)
-        in_safe_mode = safe_mode(table, job_id)
         input_bucket, input_key = parse_s3_url(object_path)
+        if not get_bucket_versioning(client, input_bucket):
+            raise ValueError("Bucket {} does not have versioning enabled".format(input_bucket))
         # Download the object in-memory and convert to PyArrow NativeFile
         logger.info("Downloading and opening {} object in-memory".format(object_path))
         with s3.open(object_path, "rb") as f:
+            source_version = f.version_id
+            logger.info("Using object version {} as source".format(source_version))
             infile = load_parquet(f)
             # Write new file in-memory
             logger.info("Generating new parquet file without matches")
             out_sink, stats = delete_matches_from_file(infile, cols)
-            if stats["DeletedRows"] > 0:
-                with pa.BufferReader(out_sink.getvalue()) as output_buf:
-                    save(client, output_buf, input_bucket, input_key, in_safe_mode)
-            else:
-                logger.warning("The object {} was processed successfully but no rows required deletion".format(object_path))
+        if stats["DeletedRows"] > 0:
+            with pa.BufferReader(out_sink.getvalue()) as output_buf:
+                new_version = save(client, output_buf, input_bucket, input_key, source_version)
+                logger.info("New object version: {}".format(new_version))
+        else:
+            logger.warning("The object {} was processed successfully but no rows required deletion".format(object_path))
         msg.delete()
         emit_deletion_event(body, stats)
         return msg

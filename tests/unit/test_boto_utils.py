@@ -251,7 +251,6 @@ def test_it_retrieves_config(mock_client):
                 "QueryExecutionWaitSeconds": 1,
                 "QueryQueueWaitSeconds": 1,
                 "ForgetQueueWaitSeconds": 1,
-                "SafeMode": True
             })
         }
     }
@@ -263,7 +262,6 @@ def test_it_retrieves_config(mock_client):
                "QueryExecutionWaitSeconds": 1,
                "QueryQueueWaitSeconds": 1,
                "ForgetQueueWaitSeconds": 1,
-               "SafeMode": True
            } == resp
 
 

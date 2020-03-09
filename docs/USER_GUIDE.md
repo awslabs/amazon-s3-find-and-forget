@@ -106,10 +106,6 @@ resources.
    this stack in CloudFormation once deployed.
    * **AdminEmail:** The email address you wish to setup as the initial
    user of this Amazon S3 Find and Forget deployment.
-   * **SafeMode:** (Default: true) Whether to operate in safe mode. Whilst Safe
-   Mode is set to true, updated objects will be written to a temporary bucket
-   instead of overwriting the original object. For more information see
-   [Disabling Safe Mode](#disabling-safe-mode)
    * **JobDetailsRetentionDays:** (Default: 0) How long job records should
    remain in the Job table for. Use 0 to retain logs indefinitely. **Note:**
    If the retention setting is changed it will only apply to *new* deletion jobs.
@@ -456,10 +452,6 @@ in terms of data retention and performance:
   time between each check to see whether the Fargate object queue is empty.
   If your jobs fail due to exceeding the Step Functions execution history quota,
   you may have set this value to low.
-* `SafeMode`: Setting this value to true will cause the solution to write
-  updated objects to a temporary bucket rather than to the source bucket/object
-  key. Typically this mode is used when first deploying the solution to verify
-  your configuration.
 * `JobDetailsRetentionDays`: Changing this value will change how long records
   job details and events are retained for. Set this to 0 to retain them
   indefinitely.
