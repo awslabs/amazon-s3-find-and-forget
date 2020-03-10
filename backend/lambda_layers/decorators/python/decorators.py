@@ -26,7 +26,7 @@ def with_logger(handler):
 
     @functools.wraps(handler)
     def wrapper(event, context):
-        logger.info("## HANDLER: %s", handler.__name__)
+        logger.debug("## HANDLER: %s", handler.__name__)
         logger.debug("## ENVIRONMENT VARIABLES")
         logger.debug(json.dumps(os.environ.copy()))
         logger.debug("## EVENT")
