@@ -1,5 +1,6 @@
 import sys
-from collections import Counter, Iterable
+from collections import Counter
+from collections.abc import Iterable
 import signal
 from functools import lru_cache
 from urllib.parse import urlencode, quote_plus
@@ -262,17 +263,15 @@ def validate_message(message):
 
 
 def handle_error(sqs_msg, message_body, err_message):
-    err_message = sanitize_message(message_body, err_message)
-    logger.error(err_message)
+    logger.error(sanitize_message(message_body, err_message))
     emit_failed_deletion_event(message_body, err_message)
     sqs_msg.change_visibility(VisibilityTimeout=0)
 
 
-def sanitize_message(message_body, err_message):
+def sanitize_message(err_message: str, message_body: str):
     try:
         sanitised = err_message
-        if isinstance(message_body, str):
-            message_body = json.loads(message_body)
+        message_body = json.loads(message_body)
         matches = []
         cols = message_body.get("Columns", [])
         for col in cols:

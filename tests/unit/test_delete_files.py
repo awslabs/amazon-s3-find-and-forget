@@ -16,10 +16,10 @@ with patch.dict(os.environ, {
     "DLQ": "https://url/q",
 }):
     from backend.ecs_tasks.delete_files.delete_files import execute, get_emitter_id, \
-         emit_deletion_event, emit_failed_deletion_event, save, get_grantees, \
-         get_object_info, get_object_tags, get_object_acl, get_requester_payment, get_row_count, \
-         delete_from_dataframe, delete_matches_from_file, load_parquet, kill_handler, handle_error, \
-         get_bucket_versioning
+    emit_deletion_event, emit_failed_deletion_event, save, get_grantees, \
+    get_object_info, get_object_tags, get_object_acl, get_requester_payment, get_row_count, \
+    delete_from_dataframe, delete_matches_from_file, load_parquet, kill_handler, handle_error, \
+    get_bucket_versioning, sanitize_message
 
 pytestmark = [pytest.mark.unit]
 
@@ -639,6 +639,17 @@ def test_it_gracefully_handles_cleanup_issues(mock_handler):
         kill_handler([mock_msg, mock_msg], mock_pool)
         assert 2 == mock_handler.call_count
         mock_pool.terminate.assert_called()
+
+
+def test_it_sanitises_matches():
+    assert "This message contains ID *** MATCH ID *** and *** MATCH ID ***" == sanitize_message(
+        "This message contains ID 12345 and 23456", message_stub(Columns=[{
+            "Column": "a", "MatchIds": ["12345", "23456", "34567"]
+        }]))
+
+
+def test_sanitiser_handles_malformed_messages():
+    assert "an error message" == sanitize_message("an error message", "not json")
 
 
 def message_stub(**kwargs):
