@@ -1,6 +1,7 @@
 import os
 from io import BytesIO
 
+import boto3
 from botocore.exceptions import ClientError
 from mock import patch, MagicMock, mock_open, ANY
 
@@ -16,10 +17,10 @@ with patch.dict(os.environ, {
     "DLQ": "https://url/q",
 }):
     from backend.ecs_tasks.delete_files.delete_files import execute, get_emitter_id, \
-         emit_deletion_event, emit_failed_deletion_event, save, get_grantees, \
-         get_object_info, get_object_tags, get_object_acl, get_requester_payment, get_row_count, \
-         delete_from_dataframe, delete_matches_from_file, load_parquet, kill_handler, handle_error, \
-         get_bucket_versioning
+    emit_deletion_event, emit_failed_deletion_event, save, get_grantees, \
+    get_object_info, get_object_tags, get_object_acl, get_requester_payment, get_row_count, \
+    delete_from_dataframe, delete_matches_from_file, load_parquet, kill_handler, handle_error, \
+    get_bucket_versioning, sanitize_message
 
 pytestmark = [pytest.mark.unit]
 
@@ -148,16 +149,59 @@ def test_it_emits_failed_deletions(mock_get_id, mock_emit):
     }, 'ECSTask_4567')
 
 
-@patch("backend.ecs_tasks.delete_files.delete_files.emit_event")
-def test_it_gracefully_handles_missing_job_id(mock_emit):
-    emit_failed_deletion_event("{}", "Some error")
-    mock_emit.assert_not_called()
+def test_it_raises_for_missing_job_id():
+    with pytest.raises(ValueError):
+        emit_failed_deletion_event("{}", "Some error")
 
 
-@patch("backend.ecs_tasks.delete_files.delete_files.emit_event")
-def test_it_gracefully_handles_exceptions(mock_emit):
+@patch("backend.ecs_tasks.delete_files.delete_files.sanitize_message")
+@patch("backend.ecs_tasks.delete_files.delete_files.emit_failed_deletion_event")
+def test_it_gracefully_handles_invalid_message_bodies(mock_emit, mock_sanitize):
+    sqs_message = MagicMock()
+    mock_emit.side_effect = ValueError("Bad message")
+    handle_error(sqs_message, "{}", "Some error")
+    # Verify it attempts to emit the failure
+    mock_sanitize.assert_called()
+    mock_emit.assert_called()
+    # Verify even if emitting fails, the message visibility changes
+    sqs_message.change_visibility.assert_called()
+
+
+@patch("backend.ecs_tasks.delete_files.delete_files.sanitize_message")
+@patch("backend.ecs_tasks.delete_files.delete_files.emit_failed_deletion_event")
+def test_it_gracefully_handles_invalid_job_id(mock_emit, mock_sanitize):
+    sqs_message = MagicMock()
+    mock_emit.side_effect = KeyError("Invalid Job ID")
+    handle_error(sqs_message, "{}", "Some error")
+    # Verify it attempts to emit the failure
+    mock_sanitize.assert_called()
+    mock_emit.assert_called()
+    # Verify even if emitting fails, the message visibility changes
+    sqs_message.change_visibility.assert_called()
+
+
+@patch("backend.ecs_tasks.delete_files.delete_files.sanitize_message")
+@patch("backend.ecs_tasks.delete_files.delete_files.emit_failed_deletion_event")
+def test_it_gracefully_handles_client_errors(mock_emit, mock_sanitize):
+    sqs_message = MagicMock()
     mock_emit.side_effect = ClientError({}, "PutItem")
-    emit_failed_deletion_event(message_stub(), "Some error")
+    handle_error(sqs_message, "{}", "Some error")
+    # Verify it attempts to emit the failure
+    mock_sanitize.assert_called()
+    mock_emit.assert_called()
+    # Verify even if emitting fails, the message visibility changes
+    sqs_message.change_visibility.assert_called()
+
+
+@patch("backend.ecs_tasks.delete_files.delete_files.emit_failed_deletion_event")
+def test_it_gracefully_handles_change_message_visibility_failure(mock_emit):
+    sqs_message = MagicMock()
+    e = boto3.client("sqs").exceptions.ReceiptHandleIsInvalid
+    sqs_message.change_visibility.side_effect = e({}, "ReceiptHandleIsInvalid")
+    handle_error(sqs_message, "{}", "Some error")
+    # Verify it attempts to emit the failure
+    mock_emit.assert_called()
+    sqs_message.change_visibility.assert_called()  # Implicit graceful handling
 
 
 @patch("os.getenv", MagicMock(return_value="/some/path"))
@@ -639,6 +683,17 @@ def test_it_gracefully_handles_cleanup_issues(mock_handler):
         kill_handler([mock_msg, mock_msg], mock_pool)
         assert 2 == mock_handler.call_count
         mock_pool.terminate.assert_called()
+
+
+def test_it_sanitises_matches():
+    assert "This message contains ID *** MATCH ID *** and *** MATCH ID ***" == sanitize_message(
+        "This message contains ID 12345 and 23456", message_stub(Columns=[{
+            "Column": "a", "MatchIds": ["12345", "23456", "34567"]
+        }]))
+
+
+def test_sanitiser_handles_malformed_messages():
+    assert "an error message" == sanitize_message("an error message", "not json")
 
 
 def message_stub(**kwargs):
