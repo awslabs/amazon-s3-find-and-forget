@@ -2,6 +2,9 @@ SHELL := /bin/bash
 
 .PHONY : deploy deploy-containers pre-deploy setup test test-cov test-acceptance test-acceptance-cov test-no-state-machine test-no-state-machine-cov test-unit test-unit-cov
 
+STACK_NAME ?= S3F2
+STACK_PARAMETERS ?= ""
+
 pre-deploy:
 ifndef TEMP_BUCKET
 	$(error TEMP_BUCKET is undefined)
@@ -35,8 +38,8 @@ deploy-vpc:
 
 deploy-cfn:
 	aws cloudformation package --template-file templates/template.yaml --s3-bucket $(TEMP_BUCKET) --output-template-file packaged.yaml
-	aws cloudformation deploy --template-file ./packaged.yaml --stack-name S3F2 --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND \
-		--parameter-overrides CreateCloudFrontDistribution=false EnableContainerInsights=true AdminEmail=$(ADMIN_EMAIL) AccessControlAllowOriginOverride=* PreBuiltArtefactsBucketOverride=$(TEMP_BUCKET) VpcSubnets=${SUBNETS} VpcSecurityGroups=${SEC_GROUPS}
+	aws cloudformation deploy --template-file ./packaged.yaml --stack-name ${STACK_NAME} --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND \
+		--parameter-overrides CreateCloudFrontDistribution=false EnableContainerInsights=true AdminEmail=$(ADMIN_EMAIL) AccessControlAllowOriginOverride=* PreBuiltArtefactsBucketOverride=$(TEMP_BUCKET) VpcSubnets=${SUBNETS} VpcSecurityGroups=${SEC_GROUPS} ${STACK_PARAMETERS}
 
 deploy-artefacts:
 	$(eval VERSION := $(shell $(MAKE) -s version))
@@ -62,14 +65,14 @@ package-artefacts:
 redeploy-containers:
 	$(eval ACCOUNT_ID := $(shell aws sts get-caller-identity --query Account --output text))
 	$(eval REGION := $(shell aws configure get region))
-	$(eval ECR_REPOSITORY := $(shell aws cloudformation describe-stacks --stack-name S3F2 --query 'Stacks[0].Outputs[?OutputKey==`ECRRepository`].OutputValue' --output text))
+	$(eval ECR_REPOSITORY := $(shell aws cloudformation describe-stacks --stack-name ${STACK_NAME} --query 'Stacks[0].Outputs[?OutputKey==`ECRRepository`].OutputValue' --output text))
 	$(shell aws ecr get-login --no-include-email --region $(REGION))
 	docker build -t $(ECR_REPOSITORY) -f backend/ecs_tasks/delete_files/Dockerfile .
 	docker tag $(ECR_REPOSITORY):latest $(ACCOUNT_ID).dkr.ecr.$(REGION).amazonaws.com/$(ECR_REPOSITORY):latest
 	docker push $(ACCOUNT_ID).dkr.ecr.$(REGION).amazonaws.com/$(ECR_REPOSITORY):latest
 
 redeploy-frontend:
-	$(eval WEBUI_BUCKET := $(shell aws cloudformation describe-stacks --stack-name S3F2 --query 'Stacks[0].Outputs[?OutputKey==`WebUIBucket`].OutputValue' --output text))
+	$(eval WEBUI_BUCKET := $(shell aws cloudformation describe-stacks --stack-name ${STACK_NAME} --query 'Stacks[0].Outputs[?OutputKey==`WebUIBucket`].OutputValue' --output text))
 	make build-frontend
 	cd frontend/build && aws s3 cp --recursive . s3://$(WEBUI_BUCKET) --acl public-read --exclude *settings.js
 
@@ -90,7 +93,7 @@ setup:
 	gem install cfn-nag
 
 setup-frontend-local-dev:
-	$(eval WEBUI_BUCKET := $(shell aws cloudformation describe-stacks --stack-name S3F2 --query 'Stacks[0].Outputs[?OutputKey==`WebUIBucket`].OutputValue' --output text))
+	$(eval WEBUI_BUCKET := $(shell aws cloudformation describe-stacks --stack-name ${STACK_NAME} --query 'Stacks[0].Outputs[?OutputKey==`WebUIBucket`].OutputValue' --output text))
 	aws s3 cp s3://$(WEBUI_BUCKET)/settings.js frontend/public/settings.js
 
 setup-predeploy:
@@ -102,7 +105,7 @@ start-frontend-local:
 	cd frontend && npm start
 
 start-frontend-remote:
-	$(eval WEBUI_URL := $(shell aws cloudformation describe-stacks --stack-name S3F2 --query 'Stacks[0].Outputs[?OutputKey==`WebUIUrl`].OutputValue' --output text))
+	$(eval WEBUI_URL := $(shell aws cloudformation describe-stacks --stack-name ${STACK_NAME} --query 'Stacks[0].Outputs[?OutputKey==`WebUIUrl`].OutputValue' --output text))
 	open $(WEBUI_URL)
 
 test-cfn:

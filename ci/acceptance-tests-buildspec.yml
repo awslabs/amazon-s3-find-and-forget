@@ -1,0 +1,27 @@
+---
+version: 0.2
+
+env:
+  variables:
+    STACK_NAME_PREFIX: acceptance-
+    STACK_RESOURCE_PREFIX: ac
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.7
+    commands:
+      - apt-get update
+      - apt-get -y install libsnappy-dev
+  pre_build:
+    commands:
+      - export STACK_NAME="${STACK_NAME_PREFIX}${CODEBUILD_BUILD_NUMBER}"
+      - export STACK_PARAMETERS="ResourcePrefix=${STACK_RESOURCE_PREFIX}${CODEBUILD_BUILD_NUMBER}"
+      - make setup
+  build:
+    commands:
+      - make deploy
+      - make test-acceptance
+    finally:
+      - aws cloudformation delete-stack --stack-name $STACK_NAME
+      - aws cloudformation wait stack-delete-complete --stack-name $STACK_NAME
