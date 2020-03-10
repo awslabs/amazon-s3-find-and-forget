@@ -190,6 +190,7 @@ Resources:
       Parameters:
         ApiUrl: !GetAtt APIStack.Outputs.ApiUrl
         AthenaExecutionRole: !GetAtt StateMachineStack.Outputs.AthenaExecutionRole
+        CloudFrontDistribution: !GetAtt WebUIStack.Outputs.CloudFrontDistribution
         CodeBuildArtefactBucket: !Ref TempBucket
         CognitoIdentityPoolId: !GetAtt AuthStack.Outputs.CognitoIdentityPoolId
         CognitoUserPoolId: !GetAtt AuthStack.Outputs.CognitoUserPoolId

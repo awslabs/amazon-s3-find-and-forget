@@ -16,6 +16,8 @@ Parameters:
     Default: build/s3f2.zip
   AthenaExecutionRole:
     Type: String
+  CloudFrontDistribution:
+    Type: String
   CodeBuildArtefactBucket:
     Type: String
   CognitoIdentityPoolId:
@@ -51,6 +53,9 @@ Parameters:
     Type: String
   WebUIBucket:
     Type: String
+
+Conditions:
+  WithCloudFront: !Equals [!Ref CreateCloudFrontDistribution, "true"]
 
 Resources:
   CodeBuildBackendServiceRole:
@@ -123,6 +128,12 @@ Resources:
               - Resource: !Sub arn:aws:s3:::${WebUIBucket}/*
                 Effect: Allow
                 Action: s3:PutObject*
+              - !If
+                - WithCloudFront
+                - Resource: !Sub arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution}
+                  Effect: Allow
+                  Action: cloudfront:CreateInvalidation
+                - !Ref AWS::NoValue
 
   CodeBuildBackend:
     Type: AWS::CodeBuild::Project
@@ -180,6 +191,14 @@ Resources:
               commands:
                 - cd frontend/build
                 - aws s3 cp . s3://$BUCKET --acl $ACL --recursive
+            post_build:
+              commands:
+                - |
+                  if [ "${CLOUDFRONT_DISTRIBUTION}" = "false" ]; then
+                    echo "Skipping CloudFront invalidation"
+                  else
+                    aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DISTRIBUTION --paths "/*"
+                  fi
       EncryptionKey: alias/aws/s3
       Environment:
         ComputeType: BUILD_GENERAL1_SMALL
@@ -188,6 +207,8 @@ Resources:
         EnvironmentVariables:
           - Name: AWS_DEFAULT_REGION
             Value: !Ref AWS::Region
+          - Name: CLOUDFRONT_DISTRIBUTION
+            Value: !Ref CloudFrontDistribution
           - Name: PRIVATE_ACL
             Value: !Ref CreateCloudFrontDistribution
           - Name: WEB_SETTINGS
