@@ -5,7 +5,7 @@ import os
 
 import boto3
 
-from decorators import with_logger
+from decorators import with_logging
 from boto_utils import paginate, batch_sqs_msgs
 
 athena = boto3.client("athena")
@@ -13,7 +13,7 @@ sqs = boto3.resource("sqs")
 queue = sqs.Queue(os.getenv("QueueUrl"))
 
 
-@with_logger
+@with_logging
 def handler(event, context):
     query_id = event["QueryId"]
     results = paginate(athena, athena.get_query_results, ["ResultSet", "Rows"], **{

@@ -3,12 +3,12 @@ Task to orchestrate scaling for a ECS Service
 """
 import boto3
 
-from decorators import with_logger
+from decorators import with_logging
 
 ecs = boto3.client('ecs')
 
 
-@with_logger
+@with_logging
 def handler(event, context):
     cluster = event["Cluster"]
     max_tasks = event["DeletionTasksMaxNumber"]

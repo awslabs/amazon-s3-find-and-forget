@@ -1,11 +1,11 @@
 import boto3
 
-from decorators import with_logger
+from decorators import with_logging
 
 client = boto3.client("athena")
 
 
-@with_logger
+@with_logging
 def handler(event, context):
     execution_details = client.get_query_execution(
         QueryExecutionId=event

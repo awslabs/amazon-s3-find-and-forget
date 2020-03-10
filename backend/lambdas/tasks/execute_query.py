@@ -2,12 +2,12 @@ import os
 
 import boto3
 
-from decorators import with_logger
+from decorators import with_logging
 
 client = boto3.client("athena")
 
 
-@with_logger
+@with_logging
 def handler(event, context):
     response = client.start_query_execution(
         QueryString=make_query(event["QueryData"]),
@@ -70,7 +70,7 @@ def escape_item(item):
     elif isinstance(item, str):
         return escape_string(item)
     else:
-        raise ValueError("Unable to process supplied value: {}".format(item))
+        raise ValueError("Unable to process supplied value")
 
 
 def escape_number(item):

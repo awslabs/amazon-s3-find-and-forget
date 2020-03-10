@@ -4,10 +4,10 @@ Task to aggregate query results, grouping by file
 
 from collections import defaultdict
 
-from decorators import with_logger
+from decorators import with_logging
 
 
-@with_logger
+@with_logging
 def handler(event, context):
     d = defaultdict(list)
     # Deduplicate paths which appear in multiple query results, concatenating Column lists for each paths

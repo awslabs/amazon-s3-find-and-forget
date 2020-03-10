@@ -7,7 +7,7 @@ import os
 import boto3
 
 from boto_utils import running_job_exists
-from decorators import with_logger, request_validator, catch_errors, add_cors_headers, json_body_loader, load_schema
+from decorators import with_logging, request_validator, catch_errors, add_cors_headers, json_body_loader, load_schema
 
 dynamodb_resource = boto3.resource("dynamodb")
 table = dynamodb_resource.Table(os.getenv("DataMapperTable"))
@@ -18,7 +18,7 @@ SUPPORTED_SERDE_LIBS = [
 ]
 
 
-@with_logger
+@with_logging
 @add_cors_headers
 @catch_errors
 def get_data_mappers_handler(event, context):
@@ -30,7 +30,7 @@ def get_data_mappers_handler(event, context):
     }
 
 
-@with_logger
+@with_logging
 @add_cors_headers
 @json_body_loader
 @request_validator(load_schema("create_data_mapper"))
@@ -54,7 +54,7 @@ def create_data_mapper_handler(event, context):
     }
 
 
-@with_logger
+@with_logging
 @add_cors_headers
 @request_validator(load_schema("delete_data_mapper"))
 @catch_errors

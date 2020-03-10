@@ -8,7 +8,7 @@ import boto3
 from boto3.dynamodb.conditions import Key, Attr
 
 from boto_utils import DecimalEncoder, utc_timestamp
-from decorators import with_logger, request_validator, catch_errors, add_cors_headers, load_schema
+from decorators import with_logging, request_validator, catch_errors, add_cors_headers, load_schema
 
 ddb = boto3.resource("dynamodb")
 table = ddb.Table(os.getenv("JobTable", "S3F2_Jobs"))
@@ -20,7 +20,7 @@ end_events = [
 ]
 
 
-@with_logger
+@with_logging
 @add_cors_headers
 @request_validator(load_schema("get_job"))
 @catch_errors
@@ -44,7 +44,7 @@ def get_job_handler(event, context):
     }
 
 
-@with_logger
+@with_logging
 @add_cors_headers
 @catch_errors
 def list_jobs_handler(event, context):
@@ -78,7 +78,7 @@ def list_jobs_handler(event, context):
     }
 
 
-@with_logger
+@with_logging
 @add_cors_headers
 @catch_errors
 def list_job_events_handler(event, context):

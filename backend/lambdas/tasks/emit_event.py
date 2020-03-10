@@ -4,10 +4,10 @@ Task to emit events
 from uuid import uuid4
 
 from boto_utils import emit_event
-from decorators import with_logger
+from decorators import with_logging
 
 
-@with_logger
+@with_logging
 def handler(event, context):
     job_id = event["JobId"]
     event_name = event["EventName"]

@@ -2,7 +2,7 @@ import json
 import os
 import boto3
 
-from decorators import with_logger, s3_state_store
+from decorators import with_logging, s3_state_store
 from boto_utils import read_queue
 
 queue_url = os.getenv("QueueUrl")
@@ -12,7 +12,7 @@ queue = sqs.Queue(queue_url)
 sf_client = boto3.client("stepfunctions")
 
 
-@with_logger
+@with_logging
 @s3_state_store(offload_keys=["Data"])
 def handler(event, context):
     concurrency_limit = int(event.get("AthenaConcurrencyLimit", 15))

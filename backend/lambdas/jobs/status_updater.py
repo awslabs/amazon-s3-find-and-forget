@@ -57,7 +57,7 @@ def update_status(job_id, events):
 
     if len(attr_updates) > 0:
         job = _update_item(job_id, attr_updates)
-        logger.info("Updated Status for Job ID {}: {}".format(job_id, json.dumps(attr_updates, cls=DecimalEncoder)))
+        logger.info("Updated Status for Job ID %s: %s", job_id, attr_updates)
         return job
 
 
@@ -114,4 +114,4 @@ def _update_item(job_id, attr_updates):
             ReturnValues="ALL_NEW"
         )["Attributes"]
     except ddb.meta.client.exceptions.ConditionalCheckFailedException:
-        logger.warning("Job {} is already in a status which cannot be updated".format(job_id))
+        logger.warning("Job %s is already in a status which cannot be updated", job_id)

@@ -22,14 +22,14 @@ import os
 import boto3
 
 from boto_utils import paginate, batch_sqs_msgs, deserialize_item
-from decorators import with_logger
+from decorators import with_logging
 
 glue_client = boto3.client("glue")
 sqs = boto3.resource("sqs")
 queue = sqs.Queue(os.getenv("QueryQueue"))
 
 
-@with_logger
+@with_logging
 def handler(event, context):
     data_mappers = event["DataMappers"]
     deletion_items = event["DeletionQueue"]

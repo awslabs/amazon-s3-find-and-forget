@@ -9,7 +9,7 @@ import uuid
 import boto3
 
 from boto_utils import DecimalEncoder, get_config, running_job_exists, utc_timestamp
-from decorators import with_logger, catch_errors, add_cors_headers, json_body_loader
+from decorators import with_logging, catch_errors, add_cors_headers, json_body_loader
 
 sfn_client = boto3.client("stepfunctions")
 dynamodb_resource = boto3.resource("dynamodb")
@@ -19,7 +19,7 @@ index = os.getenv("JobTableDateGSI", "Date-GSI")
 bucket_count = int(os.getenv("GSIBucketCount", 1))
 
 
-@with_logger
+@with_logging
 @add_cors_headers
 @json_body_loader
 @catch_errors
@@ -40,7 +40,7 @@ def enqueue_handler(event, context):
     }
 
 
-@with_logger
+@with_logging
 @add_cors_headers
 @catch_errors
 def get_handler(event, context):
@@ -52,7 +52,7 @@ def get_handler(event, context):
     }
 
 
-@with_logger
+@with_logging
 @add_cors_headers
 @json_body_loader
 @catch_errors
@@ -73,7 +73,7 @@ def cancel_handler(event, context):
     }
 
 
-@with_logger
+@with_logging
 @add_cors_headers
 @catch_errors
 def process_handler(event, context):

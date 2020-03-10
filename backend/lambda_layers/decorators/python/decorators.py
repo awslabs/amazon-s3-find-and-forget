@@ -3,6 +3,7 @@ import inspect
 import json
 import logging
 import os
+from copy import deepcopy
 from uuid import uuid4
 
 import boto3
@@ -17,20 +18,20 @@ logger.setLevel(os.getenv("LogLevel", logging.INFO))
 s3 = boto3.resource("s3")
 
 
-def with_logger(handler):
+def with_logging(handler):
     """
     Decorator which performs basic logging and makes logger available on context
     """
+    logging.setLogRecordFactory(LogRecord)
 
     @functools.wraps(handler)
-    def wrapper(event, context):
-        logger.info("## HANDLER: %s", handler.__name__)
+    def wrapper(event, *args, **kwargs):
+        logger.debug("## HANDLER: %s", handler.__name__)
         logger.debug("## ENVIRONMENT VARIABLES")
         logger.debug(json.dumps(os.environ.copy()))
-        logger.info("## EVENT")
-        logger.info(json.dumps(event))
-        context.logger = logger
-        return handler(event, context)
+        logger.debug("## EVENT")
+        logger.debug("Event: %s", event)
+        return handler(event, *args, **kwargs)
 
     return wrapper
 
@@ -60,15 +61,14 @@ def request_validator(request_schema):
             try:
                 jsonschema.validate(to_validate, request_schema)
             except (KeyError, jsonschema.exceptions.SchemaError) as e:
-                logger.fatal("Invalid configuration: {}".format(str(e)))
+                logger.fatal("Invalid configuration: %s", str(e))
                 return {
                     "statusCode": 500,
                     "body": json.dumps({
-                        "Message": "Invalid configuration: ".format(str(e)),
+                        "Message": "Invalid configuration: {}".format(str(e)),
                     })
                 }
             except jsonschema.ValidationError as exception:
-                logger.error("Invalid Request: {}".format(exception.message))
                 return {
                     "statusCode": 422,
                     "body": json.dumps({
@@ -93,7 +93,6 @@ def catch_errors(handler):
         try:
             return handler(event, context)
         except ClientError as e:
-            logger.exception("boto3 client error: {}".format(str(e)))
             return {
                 "statusCode": e.response['ResponseMetadata'].get('HTTPStatusCode', 400),
                 "body": json.dumps({
@@ -101,7 +100,6 @@ def catch_errors(handler):
                 })
             }
         except ValueError as e:
-            logger.exception("Invalid request: {}".format(str(e)))
             return {
                 "statusCode": 400,
                 "body": json.dumps({
@@ -109,8 +107,6 @@ def catch_errors(handler):
                 })
             }
         except Exception as e:
-            # Unknown error so avoid leaking any info
-            logger.exception("Error handling event: {}".format(str(e)))
             return {
                 "statusCode": 400,
                 "body": json.dumps({
@@ -160,13 +156,13 @@ def s3_state_store(load_keys=[], offload_keys=[], should_offload=True, should_lo
 
     def _load_value(value):
         parsed_bucket, parsed_key = parse_s3_url(value)
-        logger.info("Loading data from S3 key {}".format(parsed_key))
+        logger.info("Loading data from S3 key %s", parsed_key)
         obj = s3.Object(parsed_bucket, parsed_key).get()["Body"].read()
         return json.loads(obj)
 
     def _offload_value(value):
         key = "{}{}".format(prefix, uuid4())
-        logger.info("Offloading data to S3 key {}".format(key))
+        logger.info("Offloading data to S3 key %s", key)
         s3.Object(bucket, key).put(Body=json.dumps(value, cls=DecimalEncoder))
         return "s3://{}/{}".format(bucket, key)
 
@@ -208,3 +204,32 @@ def s3_state_store(load_keys=[], offload_keys=[], should_offload=True, should_lo
             return resp
         return wrapper
     return wrapper_wrapper
+
+
+def sanitize_args(args):
+    args = deepcopy(args)
+    disallowed_keys = ["match"]
+    if isinstance(args, dict):
+        for k, v in args.items():
+            if isinstance(k, str) and any([disallowed.lower() in k.lower() for disallowed in disallowed_keys]):
+                if isinstance(v, (list, tuple)):
+                    args[k] = ['*** MATCH ID ***' for _ in v]
+                else:
+                    args[k] = '*** MATCH ID ***'
+            elif isinstance(v, (dict, list, tuple)):
+                args[k] = sanitize_args(v)
+        return args
+    elif isinstance(args, (list, tuple)):
+        is_tuple = isinstance(args, tuple)
+        args = list(args)
+        for i, item in enumerate(args):
+            if isinstance(item, (dict, list)):
+                args[i] = sanitize_args(item)
+        return tuple(args) if is_tuple else args
+    return args
+
+
+class LogRecord(logging.LogRecord):
+    def getMessage(self):
+        self.args = sanitize_args(self.args)
+        return super().getMessage()
