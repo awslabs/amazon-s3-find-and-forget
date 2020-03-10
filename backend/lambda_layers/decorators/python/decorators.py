@@ -212,7 +212,10 @@ def sanitize_args(args):
     if isinstance(args, dict):
         for k, v in args.items():
             if isinstance(k, str) and any([disallowed.lower() in k.lower() for disallowed in disallowed_keys]):
-                args[k] = '*** MATCH ID ***'
+                if isinstance(v, (list, tuple)):
+                    args[k] = ['*** MATCH ID ***' for _ in v]
+                else:
+                    args[k] = '*** MATCH ID ***'
             elif isinstance(v, (dict, list, tuple)):
                 args[k] = sanitize_args(v)
         return args

@@ -369,7 +369,7 @@ def test_it_sanitises_args():
     assert {"MatchId": "*** MATCH ID ***"} == sanitize_args({"MatchId": "1234"})
     assert {"Arg": {"MatchId": "*** MATCH ID ***"}} == sanitize_args({"Arg": {"MatchId": "1234"}})
     # lists
-    assert {"Matches": "*** MATCH ID ***"} == sanitize_args({"Matches": ["1234"]})
+    assert {"Matches": ["*** MATCH ID ***"]} == sanitize_args({"Matches": ["1234"]})
     assert [{"MatchId": "*** MATCH ID ***"}] == sanitize_args([{"MatchId": "1234"}])
     assert {"Arg": [{"MatchId": "*** MATCH ID ***"}]} == sanitize_args({"Arg": [{"MatchId": "1234"}]})
     # tuples
