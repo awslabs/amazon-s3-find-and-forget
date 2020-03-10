@@ -29,8 +29,8 @@ def with_logger(handler):
         logger.info("## HANDLER: %s", handler.__name__)
         logger.debug("## ENVIRONMENT VARIABLES")
         logger.debug(json.dumps(os.environ.copy()))
-        logger.info("## EVENT")
-        logger.info("Event: %s", event)
+        logger.debug("## EVENT")
+        logger.debug("Event: %s", event)
         context.logger = logger
         return handler(event, context)
 
