@@ -181,6 +181,7 @@ Resources:
       Parameters:
         ApiUrl: !GetAtt APIStack.Outputs.ApiUrl
         AthenaExecutionRole: !GetAtt StateMachineStack.Outputs.AthenaExecutionRole
+        CloudFrontDistribution: !GetAtt WebUIStack.Outputs.CloudFrontDistribution
         CodeBuildArtefactBucket: !Ref TempBucket
         CognitoIdentityPoolId: !GetAtt AuthStack.Outputs.CognitoIdentityPoolId
         CognitoUserPoolId: !GetAtt AuthStack.Outputs.CognitoUserPoolId
@@ -191,7 +192,6 @@ Resources:
             - !GetAtt LayersStack.Outputs.BotoUtils
             - !GetAtt LayersStack.Outputs.CustomResourceHelper
             - !GetAtt LayersStack.Outputs.Decorators
-        CreateCloudFrontDistribution: !Ref CreateCloudFrontDistribution
         DeleteTaskRole: !GetAtt DelStack.Outputs.DeleteTaskRole
         ECRRepository: !GetAtt DelStack.Outputs.ECRRepository
         PreBuiltArtefactsBucket: !If [DefaultPreBuiltArtefactsBucket, !Sub "solution-builders-${AWS::Region}", !Ref PreBuiltArtefactsBucketOverride]

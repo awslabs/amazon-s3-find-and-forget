@@ -77,6 +77,11 @@ Resources:
           CloudFrontDefaultCertificate: true
 
 Outputs:
+  CloudFrontDistribution:
+    Value: !If
+      - WithCloudFront
+      - !Ref CloudFrontDistribution
+      - "none"
   Origin:
     Value: !If
       - WithCloudFront

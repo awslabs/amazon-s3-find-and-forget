@@ -16,6 +16,8 @@ Parameters:
     Default: build/s3f2.zip
   AthenaExecutionRole:
     Type: String
+  CloudFrontDistribution:
+    Type: String
   CodeBuildArtefactBucket:
     Type: String
   CognitoIdentityPoolId:
@@ -26,8 +28,6 @@ Parameters:
     Type: String
   CommonLayers:
     Type: CommaDelimitedList
-  CreateCloudFrontDistribution:
-    Type: String
   DeleteTaskRole:
     Type: String
   ECRRepository:
@@ -51,6 +51,9 @@ Parameters:
     Type: String
   WebUIBucket:
     Type: String
+
+Conditions:
+  WithoutCloudFront: !Equals [!Ref CloudFrontDistribution, "none"]
 
 Resources:
   CodeBuildBackendServiceRole:
@@ -123,6 +126,12 @@ Resources:
               - Resource: !Sub arn:aws:s3:::${WebUIBucket}/*
                 Effect: Allow
                 Action: s3:PutObject*
+              - !If
+                - WithoutCloudFront
+                - !Ref AWS::NoValue
+                - Resource: !Sub arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution}
+                  Effect: Allow
+                  Action: cloudfront:CreateInvalidation
 
   CodeBuildBackend:
     Type: AWS::CodeBuild::Project
@@ -172,7 +181,7 @@ Resources:
                 - BUCKET="${WEB_UI_BUCKET}"
                 - ACL="private"
                 - |
-                  if [ "${PRIVATE_ACL}" = "false" ]; then
+                  if [ "${CLOUDFRONT_DISTRIBUTION}" = "none" ]; then
                     ACL="public-read"
                   fi
                 - echo "${WEB_SETTINGS}" > frontend/build/settings.js
@@ -180,6 +189,14 @@ Resources:
               commands:
                 - cd frontend/build
                 - aws s3 cp . s3://$BUCKET --acl $ACL --recursive
+            post_build:
+              commands:
+                - |
+                  if [ "${CLOUDFRONT_DISTRIBUTION}" = "none" ]; then
+                    echo "Skipping CloudFront invalidation"
+                  else
+                    aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DISTRIBUTION --paths "/*"
+                  fi
       EncryptionKey: alias/aws/s3
       Environment:
         ComputeType: BUILD_GENERAL1_SMALL
@@ -188,8 +205,8 @@ Resources:
         EnvironmentVariables:
           - Name: AWS_DEFAULT_REGION
             Value: !Ref AWS::Region
-          - Name: PRIVATE_ACL
-            Value: !Ref CreateCloudFrontDistribution
+          - Name: CLOUDFRONT_DISTRIBUTION
+            Value: !Ref CloudFrontDistribution
           - Name: WEB_SETTINGS
             Value:  !Sub |
               window.s3f2Settings = {
