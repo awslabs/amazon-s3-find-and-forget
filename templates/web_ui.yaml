@@ -81,7 +81,7 @@ Outputs:
     Value: !If
       - WithCloudFront
       - !Ref CloudFrontDistribution
-      - "false"
+      - "none"
   Origin:
     Value: !If
       - WithCloudFront

@@ -28,8 +28,6 @@ Parameters:
     Type: String
   CommonLayers:
     Type: CommaDelimitedList
-  CreateCloudFrontDistribution:
-    Type: String
   DeleteTaskRole:
     Type: String
   ECRRepository:
@@ -55,7 +53,7 @@ Parameters:
     Type: String
 
 Conditions:
-  WithCloudFront: !Equals [!Ref CreateCloudFrontDistribution, "true"]
+  WithoutCloudFront: !Equals [!Ref CloudFrontDistribution, "none"]
 
 Resources:
   CodeBuildBackendServiceRole:
@@ -129,11 +127,11 @@ Resources:
                 Effect: Allow
                 Action: s3:PutObject*
               - !If
-                - WithCloudFront
+                - WithoutCloudFront
+                - !Ref AWS::NoValue
                 - Resource: !Sub arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution}
                   Effect: Allow
                   Action: cloudfront:CreateInvalidation
-                - !Ref AWS::NoValue
 
   CodeBuildBackend:
     Type: AWS::CodeBuild::Project
@@ -183,7 +181,7 @@ Resources:
                 - BUCKET="${WEB_UI_BUCKET}"
                 - ACL="private"
                 - |
-                  if [ "${PRIVATE_ACL}" = "false" ]; then
+                  if [ "${CLOUDFRONT_DISTRIBUTION}" = "none" ]; then
                     ACL="public-read"
                   fi
                 - echo "${WEB_SETTINGS}" > frontend/build/settings.js
@@ -194,7 +192,7 @@ Resources:
             post_build:
               commands:
                 - |
-                  if [ "${CLOUDFRONT_DISTRIBUTION}" = "false" ]; then
+                  if [ "${CLOUDFRONT_DISTRIBUTION}" = "none" ]; then
                     echo "Skipping CloudFront invalidation"
                   else
                     aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DISTRIBUTION --paths "/*"
@@ -209,8 +207,6 @@ Resources:
             Value: !Ref AWS::Region
           - Name: CLOUDFRONT_DISTRIBUTION
             Value: !Ref CloudFrontDistribution
-          - Name: PRIVATE_ACL
-            Value: !Ref CreateCloudFrontDistribution
           - Name: WEB_SETTINGS
             Value:  !Sub |
               window.s3f2Settings = {
