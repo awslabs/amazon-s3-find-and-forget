@@ -238,20 +238,15 @@ def emit_deletion_event(message_body, stats):
 
 
 def emit_failed_deletion_event(message_body, err_message):
-    try:
-        json_body = json.loads(message_body)
-        job_id = json_body.get("JobId")
-        if not job_id:
-            raise ValueError("Message missing Job ID")
-        event_data = {
-            "Error": err_message,
-            'Message': json_body,
-        }
-        emit_event(job_id, "ObjectUpdateFailed", event_data, get_emitter_id())
-    except ValueError:
-        logger.error("Unable to emit failure event due to invalid message")
-    except ClientError as e:
-        logger.exception("Unable to emit failure event: %s", e)
+    json_body = json.loads(message_body)
+    job_id = json_body.get("JobId")
+    if not job_id:
+        raise ValueError("Message missing Job ID")
+    event_data = {
+        "Error": err_message,
+        'Message': json_body,
+    }
+    emit_event(job_id, "ObjectUpdateFailed", event_data, get_emitter_id())
 
 
 def validate_message(message):
@@ -263,15 +258,34 @@ def validate_message(message):
 
 
 def handle_error(sqs_msg, message_body, err_message):
-    logger.error(sanitize_message(message_body, err_message))
-    emit_failed_deletion_event(message_body, err_message)
-    sqs_msg.change_visibility(VisibilityTimeout=0)
+    logger.error(sanitize_message(err_message, message_body))
+    try:
+        emit_failed_deletion_event(message_body, err_message)
+    except KeyError:
+        logger.error("Unable to emit failure event due to invalid Job ID")
+    except (json.decoder.JSONDecodeError, ValueError):
+        logger.error("Unable to emit failure event due to invalid message")
+    except ClientError as e:
+        logger.error("Unable to emit failure event: %s", str(e))
+
+    try:
+        sqs_msg.change_visibility(VisibilityTimeout=0)
+    except (
+        sqs.meta.client.exceptions.MessageNotInflight,
+        sqs.meta.client.exceptions.ReceiptHandleIsInvalid,
+    ) as e:
+        logger.error("Unable to change message visibility: %s", str(e))
 
 
-def sanitize_message(err_message: str, message_body: str):
+def sanitize_message(err_message, message_body):
+    """
+    Obtain all the known match IDs from the original message and ensure
+    they are masked in the given err message
+    """
     try:
         sanitised = err_message
-        message_body = json.loads(message_body)
+        if not isinstance(message_body, dict):
+            message_body = json.loads(message_body)
         matches = []
         cols = message_body.get("Columns", [])
         for col in cols:
@@ -281,7 +295,7 @@ def sanitize_message(err_message: str, message_body: str):
         for m in matches:
             sanitised = sanitised.replace(m, "*** MATCH ID ***")
         return sanitised
-    except ValueError:
+    except (json.decoder.JSONDecodeError, ValueError):
         return err_message
 
 

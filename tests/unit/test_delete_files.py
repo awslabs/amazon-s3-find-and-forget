@@ -1,6 +1,7 @@
 import os
 from io import BytesIO
 
+import boto3
 from botocore.exceptions import ClientError
 from mock import patch, MagicMock, mock_open, ANY
 
@@ -148,16 +149,59 @@ def test_it_emits_failed_deletions(mock_get_id, mock_emit):
     }, 'ECSTask_4567')
 
 
-@patch("backend.ecs_tasks.delete_files.delete_files.emit_event")
-def test_it_gracefully_handles_missing_job_id(mock_emit):
-    emit_failed_deletion_event("{}", "Some error")
-    mock_emit.assert_not_called()
+def test_it_raises_for_missing_job_id():
+    with pytest.raises(ValueError):
+        emit_failed_deletion_event("{}", "Some error")
 
 
-@patch("backend.ecs_tasks.delete_files.delete_files.emit_event")
-def test_it_gracefully_handles_exceptions(mock_emit):
+@patch("backend.ecs_tasks.delete_files.delete_files.sanitize_message")
+@patch("backend.ecs_tasks.delete_files.delete_files.emit_failed_deletion_event")
+def test_it_gracefully_handles_invalid_message_bodies(mock_emit, mock_sanitize):
+    sqs_message = MagicMock()
+    mock_emit.side_effect = ValueError("Bad message")
+    handle_error(sqs_message, "{}", "Some error")
+    # Verify it attempts to emit the failure
+    mock_sanitize.assert_called()
+    mock_emit.assert_called()
+    # Verify even if emitting fails, the message visibility changes
+    sqs_message.change_visibility.assert_called()
+
+
+@patch("backend.ecs_tasks.delete_files.delete_files.sanitize_message")
+@patch("backend.ecs_tasks.delete_files.delete_files.emit_failed_deletion_event")
+def test_it_gracefully_handles_invalid_job_id(mock_emit, mock_sanitize):
+    sqs_message = MagicMock()
+    mock_emit.side_effect = KeyError("Invalid Job ID")
+    handle_error(sqs_message, "{}", "Some error")
+    # Verify it attempts to emit the failure
+    mock_sanitize.assert_called()
+    mock_emit.assert_called()
+    # Verify even if emitting fails, the message visibility changes
+    sqs_message.change_visibility.assert_called()
+
+
+@patch("backend.ecs_tasks.delete_files.delete_files.sanitize_message")
+@patch("backend.ecs_tasks.delete_files.delete_files.emit_failed_deletion_event")
+def test_it_gracefully_handles_client_errors(mock_emit, mock_sanitize):
+    sqs_message = MagicMock()
     mock_emit.side_effect = ClientError({}, "PutItem")
-    emit_failed_deletion_event(message_stub(), "Some error")
+    handle_error(sqs_message, "{}", "Some error")
+    # Verify it attempts to emit the failure
+    mock_sanitize.assert_called()
+    mock_emit.assert_called()
+    # Verify even if emitting fails, the message visibility changes
+    sqs_message.change_visibility.assert_called()
+
+
+@patch("backend.ecs_tasks.delete_files.delete_files.emit_failed_deletion_event")
+def test_it_gracefully_handles_change_message_visibility_failure(mock_emit):
+    sqs_message = MagicMock()
+    e = boto3.client("sqs").exceptions.ReceiptHandleIsInvalid
+    sqs_message.change_visibility.side_effect = e({}, "ReceiptHandleIsInvalid")
+    handle_error(sqs_message, "{}", "Some error")
+    # Verify it attempts to emit the failure
+    mock_emit.assert_called()
+    sqs_message.change_visibility.assert_called()  # Implicit graceful handling
 
 
 @patch("os.getenv", MagicMock(return_value="/some/path"))
