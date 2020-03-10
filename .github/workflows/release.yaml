@@ -31,7 +31,7 @@ jobs:
       # Release if required
       - name: Set version
         id: version
-        run: echo ::set-env name=THIS_VERSION::$(make version)
+        run: echo ::set-env name=THIS_VERSION::$(make version | sed s/^v//)
       - name: Set latest
         id: latest
         run: echo ::set-env name=LATEST::$(git describe --tags $(git rev-list --tags --max-count=1) | sed s/^v// 2> /dev/null || echo '0')
