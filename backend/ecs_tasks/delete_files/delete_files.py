@@ -235,6 +235,18 @@ def validate_bucket_versioning(client, bucket):
     return True
 
 
+def delete_previous_versions(client, input_bucket, input_key, new_version):
+    resp = client.list_object_versions(Bucket=input_bucket, Prefix=input_key)
+    versions = resp.get('Versions', [])
+    delete_markers = resp.get('DeleteMarkers', [])
+    versions.extend(delete_markers)
+    sorted_versions = sorted(versions, key=lambda x: x["LastModified"])
+    version_ids = [v["VersionId"] for v in sorted_versions]
+    idx = version_ids.index(new_version)
+    for version_id in version_ids[:idx]:
+        client.delete_object(Bucket=input_bucket, Key=input_key, VersionId=version_id)
+
+
 def emit_deletion_event(message_body, stats):
     job_id = message_body["JobId"]
     event_data = {
@@ -342,6 +354,8 @@ def execute(message_body, receipt_handle):
                 new_version = save(s3, client, output_buf, input_bucket, input_key, source_version)
                 logger.info("New object version: %s", new_version)
                 verify_object_versions_integrity(client, input_bucket, input_key, source_version, new_version)
+            if body.get("DeleteOldVersions"):
+                delete_previous_versions(client, input_bucket, input_key, new_version)
         else:
             logger.warning("The object %s was processed successfully but no rows required deletion", object_path)
         msg.delete()
@@ -411,7 +425,7 @@ class IntegrityCheckFailedError(Exception):
     pass
 
 def verify_object_versions_integrity(client, bucket, key, from_version_id, to_version_id):
-    
+
     conflict_error_template = "A {} ({}) was detected for the given object between read and write operations ({} and {})."
     not_found_error_template = "Previous version ({}) has been deleted."
 
@@ -431,13 +445,13 @@ def verify_object_versions_integrity(client, bucket, key, from_version_id, to_ve
 
     prev_version = all_versions[0]
     prev_version_id = prev_version['VersionId']
-    
+
     if prev_version_id != from_version_id:
         conflicting_version_type = 'delete marker' if 'ETag' not in prev_version else 'version'
         raise IntegrityCheckFailedError(conflict_error_template.format(
             conflicting_version_type,
             prev_version_id,
-            from_version_id, 
+            from_version_id,
             to_version_id))
 
     return True
