@@ -1,5 +1,5 @@
 import sys
-from collections import Counter
+from collections import Counter, Iterable
 import signal
 from functools import lru_cache
 from urllib.parse import urlencode, quote_plus
@@ -62,7 +62,7 @@ def delete_matches_from_file(parquet_file, to_delete):
     with pa.BufferOutputStream() as out_stream:
         with pq.ParquetWriter(out_stream, schema) as writer:
             for row_group in range(parquet_file.num_row_groups):
-                logger.info("Row group {}/{}".format(str(row_group + 1), parquet_file.num_row_groups))
+                logger.info("Row group %s/%s", str(row_group + 1), str(parquet_file.num_row_groups))
                 df = parquet_file.read_row_group(row_group).to_pandas()
                 current_rows = get_row_count(df)
                 df = delete_from_dataframe(df, to_delete)
@@ -83,9 +83,9 @@ def save(client, buf, bucket, key, source_version=None):
     tagging_args, _ = get_object_tags(client, bucket, key, source_version)
     acl_args, acl_resp = get_object_acl(client, bucket, key, source_version)
     extra_args = {**request_payer_args, **object_info_args, **tagging_args, **acl_args}
-    logger.info("Object settings: {}".format(extra_args))
+    logger.info("Object settings: %s", extra_args)
     # Write Object Back to S3
-    logger.info("Saving updated object to s3://{}/{}".format(bucket, key))
+    logger.info("Saving updated object to s3://%s/%s", bucket, key)
     contents = buf.read()
     with s3.open("s3://{}/{}".format(bucket, key), "wb", **extra_args) as f:
         f.write(contents)
@@ -101,7 +101,7 @@ def save(client, buf, bucket, key, source_version=None):
             **acl_args,
             'GrantWrite': write_grantees,
         })
-    logger.info("Processing of file s3://{}/{} complete".format(bucket, key))
+    logger.info("Processing of file s3://%s/%s complete", bucket, key)
     return new_version_id
 
 
@@ -247,10 +247,10 @@ def emit_failed_deletion_event(message_body, err_message):
             'Message': json_body,
         }
         emit_event(job_id, "ObjectUpdateFailed", event_data, get_emitter_id())
-    except ValueError as e:
-        logger.exception("Unable to emit failure event due to invalid message")
+    except ValueError:
+        logger.error("Unable to emit failure event due to invalid message")
     except ClientError as e:
-        logger.exception("Unable to emit failure event: {}".format(e))
+        logger.exception("Unable to emit failure event: %s", e)
 
 
 def validate_message(message):
@@ -258,13 +258,32 @@ def validate_message(message):
     mandatory_keys = ["JobId", "Object", "Columns"]
     for k in mandatory_keys:
         if k not in body:
-            raise ValueError("Malformed message. Missing key: {}".format(k))
+            raise ValueError("Malformed message. Missing key: %s", k)
 
 
 def handle_error(sqs_msg, message_body, err_message):
-    logger.exception(err_message)
+    err_message = sanitize_message(message_body, err_message)
+    logger.error(err_message)
     emit_failed_deletion_event(message_body, err_message)
     sqs_msg.change_visibility(VisibilityTimeout=0)
+
+
+def sanitize_message(message_body, err_message):
+    try:
+        sanitised = err_message
+        if isinstance(message_body, str):
+            message_body = json.loads(message_body)
+        matches = []
+        cols = message_body.get("Columns", [])
+        for col in cols:
+            match_ids = col.get("MatchIds")
+            if isinstance(match_ids, Iterable):
+                matches.extend(match_ids)
+        for m in matches:
+            sanitised = sanitised.replace(m, "*** MATCH ID ***")
+        return sanitised
+    except ValueError:
+        return err_message
 
 
 def execute(message_body, receipt_handle):
@@ -280,10 +299,10 @@ def execute(message_body, receipt_handle):
         if not get_bucket_versioning(client, input_bucket):
             raise ValueError("Bucket {} does not have versioning enabled".format(input_bucket))
         # Download the object in-memory and convert to PyArrow NativeFile
-        logger.info("Downloading and opening {} object in-memory".format(object_path))
+        logger.info("Downloading and opening %s object in-memory", object_path)
         with s3.open(object_path, "rb") as f:
             source_version = f.version_id
-            logger.info("Using object version {} as source".format(source_version))
+            logger.info("Using object version %s as source", source_version)
             infile = load_parquet(f)
             # Write new file in-memory
             logger.info("Generating new parquet file without matches")
@@ -291,9 +310,9 @@ def execute(message_body, receipt_handle):
         if stats["DeletedRows"] > 0:
             with pa.BufferReader(out_sink.getvalue()) as output_buf:
                 new_version = save(client, output_buf, input_bucket, input_key, source_version)
-                logger.info("New object version: {}".format(new_version))
+                logger.info("New object version: %s", new_version)
         else:
-            logger.warning("The object {} was processed successfully but no rows required deletion".format(object_path))
+            logger.warning("The object %s was processed successfully but no rows required deletion", object_path)
         msg.delete()
         emit_deletion_event(body, stats)
     except (KeyError, ArrowException) as e:
@@ -319,18 +338,18 @@ def execute(message_body, receipt_handle):
 
 
 def kill_handler(msgs, process_pool):
-    logger.info("Received shutdown signal. Cleaning up {} messages".format(len(msgs)))
+    logger.info("Received shutdown signal. Cleaning up %s messages", str(len(msgs)))
     process_pool.terminate()
     for msg in msgs:
         try:
             handle_error(msg, msg.body, "SIGINT/SIGTERM received during processing")
         except (ClientError, ValueError) as e:
-            logger.exception("Unable to gracefully cleanup message: {}".format(str(e)))
+            logger.error("Unable to gracefully cleanup message: %s", str(e))
     sys.exit(1 if len(msgs) > 0 else 0)
 
 
 if __name__ == '__main__':
-    logger.info("CPU count for system: {}".format(cpu_count()))
+    logger.info("CPU count for system: %s", cpu_count())
     messages = []
     with Pool(maxtasksperchild=1) as pool:
         signal.signal(signal.SIGINT, lambda *_: kill_handler(messages, pool))
