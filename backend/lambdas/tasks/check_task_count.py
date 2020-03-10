@@ -25,5 +25,5 @@ def handler(event, context):
             "Total": pending + running
         }
     except IndexError:
-        context.logger.error("Unable to find service {}".format(event["ServiceName"]))
+        context.logger.error("Unable to find service '%s'", event["ServiceName"])
         raise ValueError("Service {} in cluster {} not found".format(event["ServiceName"], event["Cluster"]))

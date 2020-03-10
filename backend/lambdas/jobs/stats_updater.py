@@ -19,7 +19,7 @@ table = ddb.Table(getenv("JobTable", "S3F2_Jobs"))
 def update_stats(job_id, events):
     stats = _aggregate_stats(events)
     job = _update_job(job_id, stats)
-    logger.info("Updated Stats for Job ID {}: {}".format(job_id, json.dumps(stats, cls=DecimalEncoder)))
+    logger.info("Updated Stats for Job ID %s: %s", job_id, stats)
     return job
 
 
@@ -87,4 +87,4 @@ def _update_job(job_id, stats):
             ReturnValues="ALL_NEW"
         )["Attributes"]
     except ddb.meta.client.exceptions.ConditionalCheckFailedException:
-        logger.warning("Job {} does not exist".format(job_id))
+        logger.warning("Job %s does not exist", job_id)

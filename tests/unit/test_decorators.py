@@ -6,7 +6,8 @@ from types import SimpleNamespace
 from mock import patch, MagicMock
 import pytest
 from botocore.exceptions import ClientError
-from decorators import with_logger, catch_errors, request_validator, add_cors_headers, s3_state_store, json_body_loader
+from decorators import with_logger, catch_errors, request_validator, add_cors_headers, s3_state_store, \
+    json_body_loader, sanitize_args, LogRecord
 
 pytestmark = [pytest.mark.unit, pytest.mark.layers]
 
@@ -361,3 +362,19 @@ def test_it_ignores_missing_body_key():
         return event
     loaded = dummy_handler({"pathParameters": {"a": "b"}}, {})
     assert {"pathParameters": {"a": "b"}} == loaded
+
+
+def test_it_sanitises_args():
+    # dicts
+    assert {"MatchId": "*** MATCH ID ***"} == sanitize_args({"MatchId": "1234"})
+    assert {"Arg": {"MatchId": "*** MATCH ID ***"}} == sanitize_args({"Arg": {"MatchId": "1234"}})
+    # lists
+    assert {"Matches": "*** MATCH ID ***"} == sanitize_args({"Matches": ["1234"]})
+    assert [{"MatchId": "*** MATCH ID ***"}] == sanitize_args([{"MatchId": "1234"}])
+    assert {"Arg": [{"MatchId": "*** MATCH ID ***"}]} == sanitize_args({"Arg": [{"MatchId": "1234"}]})
+    # tuples
+    assert ({"MatchId": "*** MATCH ID ***"}) == sanitize_args(({"MatchId": "1234"}))
+
+
+def test_it_passes_through_none_sanitised_types():
+    assert sanitize_args(ValueError("A generic error"))

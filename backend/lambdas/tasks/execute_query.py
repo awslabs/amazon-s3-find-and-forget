@@ -70,7 +70,7 @@ def escape_item(item):
     elif isinstance(item, str):
         return escape_string(item)
     else:
-        raise ValueError("Unable to process supplied value: {}".format(item))
+        raise ValueError("Unable to process supplied value")
 
 
 def escape_number(item):

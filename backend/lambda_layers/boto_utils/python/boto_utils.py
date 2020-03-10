@@ -118,13 +118,13 @@ def get_config():
         param_name = os.getenv("ConfigParam", "S3F2-Configuration")
         return json.loads(ssm.get_parameter(Name=param_name, WithDecryption=True)["Parameter"]["Value"])
     except (KeyError, ValueError) as e:
-        logger.error("Invalid configuration supplied: {}".format(str(e)))
+        logger.error("Invalid configuration supplied: %s", str(e))
         raise e
     except ClientError as e:
-        logger.error("Unable to retrieve config: {}".format(str(e)))
+        logger.error("Unable to retrieve config: %s", str(e))
         raise e
     except Exception as e:
-        logger.error("Unknown error retrieving config: {}".format(str(e)))
+        logger.error("Unknown error retrieving config: %s", str(e))
         raise e
 
 

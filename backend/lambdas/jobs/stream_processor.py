@@ -63,7 +63,7 @@ def process_job(job):
             input=json.dumps(job, cls=DecimalEncoder)
         )
     except client.exceptions.ExecutionAlreadyExists:
-        logger.warning("Execution {} already exists".format(job_id))
+        logger.warning("Execution %s already exists", job_id)
 
 
 def clear_deletion_queue(job):
