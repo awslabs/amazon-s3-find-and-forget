@@ -1,7 +1,7 @@
 import boto3
 from crhelper import CfnResource
 from boto_utils import paginate
-from decorators import with_logger
+from decorators import with_logging
 
 
 helper = CfnResource(json_logging=False, log_level='DEBUG',
@@ -10,14 +10,14 @@ helper = CfnResource(json_logging=False, log_level='DEBUG',
 ecr_client = boto3.client("ecr")
 
 
-@with_logger
+@with_logging
 @helper.create
 @helper.update
 def create(event, context):
     return None
 
 
-@with_logger
+@with_logging
 @helper.delete
 def delete(event, context):
     props = event['ResourceProperties']

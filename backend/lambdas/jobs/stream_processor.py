@@ -10,7 +10,7 @@ from operator import itemgetter
 from stats_updater import update_stats
 from status_updater import update_status, skip_cleanup_states
 from boto_utils import DecimalEncoder, deserialize_item, emit_event, utc_timestamp
-from decorators import with_logger
+from decorators import with_logging
 
 deserializer = TypeDeserializer()
 logger = logging.getLogger()
@@ -21,7 +21,7 @@ ddb = boto3.resource("dynamodb")
 q_table = ddb.Table(getenv("DeletionQueueTable"))
 
 
-@with_logger
+@with_logging
 def handler(event, context):
     records = event["Records"]
     new_jobs = [

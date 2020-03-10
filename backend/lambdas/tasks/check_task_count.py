@@ -1,14 +1,16 @@
 """
 Task to check the number of running and pending tasks
 """
+import logging
 import boto3
 
-from decorators import with_logger
+from decorators import with_logging
 
+logger = logging.getLogger()
 client = boto3.client("ecs")
 
 
-@with_logger
+@with_logging
 def handler(event, context):
     try:
         service = client.describe_services(
@@ -25,5 +27,5 @@ def handler(event, context):
             "Total": pending + running
         }
     except IndexError:
-        context.logger.error("Unable to find service '%s'", event["ServiceName"])
+        logger.error("Unable to find service '%s'", event["ServiceName"])
         raise ValueError("Service {} in cluster {} not found".format(event["ServiceName"], event["Cluster"]))

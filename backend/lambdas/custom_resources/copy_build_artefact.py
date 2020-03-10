@@ -1,6 +1,6 @@
 import boto3
 from crhelper import CfnResource
-from decorators import with_logger
+from decorators import with_logging
 
 
 helper = CfnResource(json_logging=False, log_level='DEBUG',
@@ -8,7 +8,7 @@ helper = CfnResource(json_logging=False, log_level='DEBUG',
 
 s3_client = boto3.client("s3")
 
-@with_logger
+@with_logging
 @helper.create
 @helper.update
 def create(event, context):
@@ -28,7 +28,7 @@ def create(event, context):
     return "arn:aws:s3:::{}/{}".format(destination_bucket, destination_artefact)
 
 
-@with_logger
+@with_logging
 @helper.delete
 def delete(event, context):
     return None

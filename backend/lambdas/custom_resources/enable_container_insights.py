@@ -1,7 +1,7 @@
 import os
 import boto3
 from crhelper import CfnResource
-from decorators import with_logger
+from decorators import with_logging
 
 helper = CfnResource(json_logging=False, log_level='DEBUG',
                      boto_level='CRITICAL')
@@ -9,7 +9,7 @@ helper = CfnResource(json_logging=False, log_level='DEBUG',
 ecs_client = boto3.client("ecs")
 
 
-@with_logger
+@with_logging
 @helper.create
 @helper.update
 def create(event, context):
@@ -25,7 +25,7 @@ def create(event, context):
     return None
 
 
-@with_logger
+@with_logging
 @helper.delete
 def delete(event, context):
     return None

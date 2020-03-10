@@ -2,12 +2,12 @@ import os
 
 import boto3
 
-from decorators import with_logger
+from decorators import with_logging
 
 client = boto3.client("athena")
 
 
-@with_logger
+@with_logging
 def handler(event, context):
     response = client.start_query_execution(
         QueryString=make_query(event["QueryData"]),

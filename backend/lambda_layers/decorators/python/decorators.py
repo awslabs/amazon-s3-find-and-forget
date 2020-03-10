@@ -18,21 +18,20 @@ logger.setLevel(os.getenv("LogLevel", logging.INFO))
 s3 = boto3.resource("s3")
 
 
-def with_logger(handler):
+def with_logging(handler):
     """
     Decorator which performs basic logging and makes logger available on context
     """
     logging.setLogRecordFactory(LogRecord)
 
     @functools.wraps(handler)
-    def wrapper(event, context):
+    def wrapper(event, *args, **kwargs):
         logger.debug("## HANDLER: %s", handler.__name__)
         logger.debug("## ENVIRONMENT VARIABLES")
         logger.debug(json.dumps(os.environ.copy()))
         logger.debug("## EVENT")
         logger.debug("Event: %s", event)
-        context.logger = logger
-        return handler(event, context)
+        return handler(event, *args, **kwargs)
 
     return wrapper
 

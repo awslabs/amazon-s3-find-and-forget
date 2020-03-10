@@ -6,10 +6,10 @@ import json
 import boto3
 
 from boto_utils import get_config, DecimalEncoder
-from decorators import with_logger, catch_errors, add_cors_headers
+from decorators import with_logging, catch_errors, add_cors_headers
 
 
-@with_logger
+@with_logging
 @add_cors_headers
 @catch_errors
 def list_settings_handler(event, context):

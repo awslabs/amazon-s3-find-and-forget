@@ -6,7 +6,7 @@ from types import SimpleNamespace
 from mock import patch, MagicMock
 import pytest
 from botocore.exceptions import ClientError
-from decorators import with_logger, catch_errors, request_validator, add_cors_headers, s3_state_store, \
+from decorators import with_logging, catch_errors, request_validator, add_cors_headers, s3_state_store, \
     json_body_loader, sanitize_args, LogRecord
 
 pytestmark = [pytest.mark.unit, pytest.mark.layers]
@@ -104,15 +104,15 @@ def test_it_catches_unhandled_errors():
 
 
 def test_it_wraps_with_logging():
-    with patch("decorators.logger"):
-        @with_logger
+    with patch("decorators.logger") as logger:
+        @with_logging
         def dummy_handler(event, context):
             return "OK"
 
         ctx = SimpleNamespace()
         resp = dummy_handler({}, ctx)
         assert "OK" == resp
-        assert hasattr(ctx, "logger")
+        logger.debug.assert_called()
 
 
 @patch("os.getenv", MagicMock(return_value='https://site.com'))
