@@ -75,8 +75,9 @@ const BucketPolicy = ({ bucket, accountId, location }) => {
         },
         Action: [
           "s3:GetBucketLocation",
+          "s3:GetBucketVersioning",
           "s3:GetObject*",
-          "s3:ListBucket"
+          "s3:ListBucket*"
         ],
         Resource: [
           `arn:aws:s3:::${bucket}`,
@@ -93,7 +94,6 @@ const BucketPolicy = ({ bucket, accountId, location }) => {
         Action: [
           "s3:AbortMultipartUpload",
           "s3:GetBucketRequestPayment",
-          "s3:ListBucketMultipartUploads",
           "s3:ListMultipartUploadParts",
           "s3:PutObject*"
         ],
@@ -211,8 +211,9 @@ const CrossAccountPolicy = ({ bucket, accountId, location }) => {
         Effect: "Allow",
         Action: [
           "s3:GetBucketLocation",
+          "s3:GetBucketVersioning",
           "s3:GetObject*",
-          "s3:ListBucket"
+          "s3:ListBucket*"
         ],
         Resource: [
           `arn:aws:s3:::${bucket}`,
@@ -257,8 +258,9 @@ const CrossAccountPolicy = ({ bucket, accountId, location }) => {
         Effect: "Allow",
         Action: [
           "s3:GetBucketLocation",
+          "s3:GetBucketVersioning",
           "s3:GetObject*",
-          "s3:ListBucket"
+          "s3:ListBucket*"
         ],
         Resource: [
           `arn:aws:s3:::${bucket}`,
@@ -271,7 +273,6 @@ const CrossAccountPolicy = ({ bucket, accountId, location }) => {
         "Action": [
           "s3:AbortMultipartUpload",
           "s3:GetBucketRequestPayment",
-          "s3:ListBucketMultipartUploads",
           "s3:ListMultipartUploadParts",
           "s3:PutObject*"
         ],

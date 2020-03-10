@@ -459,7 +459,6 @@ components:
         - "ForgetQueueWaitSeconds"
         - "QueryExecutionWaitSeconds"
         - "QueryQueueWaitSeconds"
-        - "SafeMode"
         - "Sk"
         - "Type"
         - "GSIBucket"
@@ -511,10 +510,6 @@ components:
         QueryQueueWaitSeconds:
           type: "integer"
           description: "Query queue worker wait setting for this job"
-        SafeMode:
-          type: "boolean"
-          description: "Safe Mode setting for this job"
-          default: true
         TotalObjectUpdatedCount:
           type: "integer"
           description: "Total number of successfully updated objects"
@@ -608,17 +603,12 @@ components:
         QueryQueueWaitSeconds:
           type: "integer"
           description: "Query queue worker wait setting for this job"
-        SafeMode:
-          type: "boolean"
-          description: "Safe Mode setting for this job"
-          default: true
       required:
         - "AthenaConcurrencyLimit"
         - "DeletionTasksMaxNumber"
         - "ForgetQueueWaitSeconds"
         - "QueryExecutionWaitSeconds"
         - "QueryQueueWaitSeconds"
-        - "SafeMode"
     Error:
       description: "A standard error object"
       type: "object"

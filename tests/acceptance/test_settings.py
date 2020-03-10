@@ -15,7 +15,6 @@ def test_it_gets_settings(api_client, settings_base_endpoint, stack):
     assert response_body["Settings"] == {
         'AthenaConcurrencyLimit': ANY,
         'DeletionTasksMaxNumber': ANY,
-        'SafeMode': ANY,
         'JobDetailsRetentionDays': ANY,
         'ForgetQueueWaitSeconds': ANY,
         'QueryExecutionWaitSeconds': ANY,

@@ -32,6 +32,7 @@ supported:
 
 #### Other Limitations
 
+- Only buckets with versioning set to **Enabled** are supported
 - Decompressed individual object size must be less than the Fargate task memory
 limit (`DeletionTaskMemory`) specified when launching the stack
 - The bucket targeted by a data mapper must be in the same region as the

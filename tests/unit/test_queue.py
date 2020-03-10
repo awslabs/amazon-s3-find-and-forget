@@ -100,7 +100,6 @@ def test_it_process_queue(mock_config, mock_running_job, job_table, q_table, uui
     mock_config.return_value = {
         "AthenaConcurrencyLimit": 15,
         "DeletionTasksMaxNumber": 50,
-        "SafeMode": False,
         "QueryExecutionWaitSeconds": 5,
         "QueryQueueWaitSeconds": 5,
         "ForgetQueueWaitSeconds": 30
@@ -120,7 +119,6 @@ def test_it_process_queue(mock_config, mock_running_job, job_table, q_table, uui
         "DeletionQueueItems": [{"MatchId": "123", "CreatedAt": 123}],
         "AthenaConcurrencyLimit": 15,
         "DeletionTasksMaxNumber": 50,
-        "SafeMode": False,
         "QueryExecutionWaitSeconds": 5,
         "QueryQueueWaitSeconds": 5,
         "ForgetQueueWaitSeconds": 30
@@ -137,7 +135,6 @@ def test_it_process_queue(mock_config, mock_running_job, job_table, q_table, uui
         "DeletionQueueItems": [{"MatchId": "123", "CreatedAt": 123}],
         "AthenaConcurrencyLimit": 15,
         "DeletionTasksMaxNumber": 50,
-        "SafeMode": False,
         "QueryExecutionWaitSeconds": 5,
         "QueryQueueWaitSeconds": 5,
         "ForgetQueueWaitSeconds": 30
@@ -158,7 +155,6 @@ def test_it_applies_expiry(mock_utc, mock_config, mock_running_job, job_table, q
         "AthenaConcurrencyLimit": 15,
         "DeletionTasksMaxNumber": 50,
         "JobDetailsRetentionDays": 30,
-        "SafeMode": False,
         "QueryExecutionWaitSeconds": 5,
         "QueryQueueWaitSeconds": 5,
         "ForgetQueueWaitSeconds": 30
@@ -177,7 +173,6 @@ def test_it_applies_expiry(mock_utc, mock_config, mock_running_job, job_table, q
         "GSIBucket": "0",
         "CreatedAt": ANY,
         "Expires": 12346789,
-        "SafeMode": False,
         "DeletionQueueItems": [{"MatchId": "123", "CreatedAt": 123}],
         "AthenaConcurrencyLimit": 15,
         "DeletionTasksMaxNumber": 50,

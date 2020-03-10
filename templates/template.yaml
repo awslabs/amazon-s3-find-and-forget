@@ -78,13 +78,6 @@ Parameters:
     AllowedValues:
       - "true"
       - "false"
-  SafeMode:
-    Description: Whether to enable safe mode. When enabled, the solution will not overwrite the original object when forgetting but instead save a copy
-    Type: String
-    Default: "true"
-    AllowedValues:
-      - "true"
-      - "false"
   VpcSecurityGroups:
     Description: List of security groups to apply to Fargate tasks
     Type: CommaDelimitedList
@@ -126,7 +119,6 @@ Resources:
         {
           "AthenaConcurrencyLimit": ${AthenaConcurrencyLimit},
           "DeletionTasksMaxNumber": ${DeletionTasksMaxNumber},
-          "SafeMode": ${SafeMode},
           "JobDetailsRetentionDays": ${JobDetailsRetentionDays},
           "QueryExecutionWaitSeconds": ${QueryExecutionWaitSeconds},
           "QueryQueueWaitSeconds": ${QueryQueueWaitSeconds},
@@ -180,7 +172,6 @@ Resources:
         EnableContainerInsights: !Ref EnableContainerInsights
         JobTableName: !GetAtt DDBStack.Outputs.JobTable
         ResourcePrefix: !Ref ResourcePrefix
-        SafeModeBucket: !Ref TempBucket
         VpcSecurityGroups: !Join [",", !Ref VpcSecurityGroups]
         VpcSubnets: !Join [",", !Ref VpcSubnets]
   DeployStack:
@@ -306,7 +297,6 @@ Metadata:
           default: "Admin Configuration"
         Parameters:
           - AdminEmail
-          - SafeMode
           - JobDetailsRetentionDays
       - Label:
           default: "Network Configuration"

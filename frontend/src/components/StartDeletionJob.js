@@ -25,7 +25,6 @@ export default ({ className, gateway, goToJobDetails }) => {
       setSummary({
         "Deletion Queue Size": MatchIds.length,
         "Data Mappers Count": DataMappers.length,
-        "Safe Mode": Settings.SafeMode.toString().toUpperCase(),
         "Job Details Retention (Days)": Settings.JobDetailsRetentionDays,
         "Athena Concurrency Limit": Settings.AthenaConcurrencyLimit,
         "Query Execution Wait Duration (Seconds)":

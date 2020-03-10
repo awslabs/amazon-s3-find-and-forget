@@ -8,6 +8,7 @@ from backend.lambdas.settings import handlers
 
 pytestmark = [pytest.mark.unit, pytest.mark.api, pytest.mark.settings]
 
+
 @patch("backend.lambdas.settings.handlers.get_config")
 def test_it_process_queue(mock_config):
     mock_config.return_value = {
@@ -16,7 +17,6 @@ def test_it_process_queue(mock_config):
         "QueryExecutionWaitSeconds": 5,
         "QueryQueueWaitSeconds": 5,
         "ForgetQueueWaitSeconds": 30,
-        "SafeMode": False
     }
     response = handlers.list_settings_handler({}, SimpleNamespace())
     
@@ -29,6 +29,5 @@ def test_it_process_queue(mock_config):
             "QueryExecutionWaitSeconds": 5,
             "QueryQueueWaitSeconds": 5,
             "ForgetQueueWaitSeconds": 30,
-            "SafeMode": False
         }
     } == json.loads(response["body"])

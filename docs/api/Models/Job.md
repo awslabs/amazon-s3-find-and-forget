@@ -14,7 +14,6 @@ Name | Type | Description | Notes
 **ForgetQueueWaitSeconds** | [**Integer**](integer.md) | Forget queue wait setting for this job | [default to null]
 **QueryExecutionWaitSeconds** | [**Integer**](integer.md) | Query execution wait setting for this job | [default to null]
 **QueryQueueWaitSeconds** | [**Integer**](integer.md) | Query queue worker wait setting for this job | [default to null]
-**SafeMode** | [**Boolean**](boolean.md) | Safe Mode setting for this job | [default to true]
 **TotalObjectUpdatedCount** | [**Integer**](integer.md) | Total number of successfully updated objects | [optional] [default to 0]
 **TotalObjectUpdateFailedCount** | [**Integer**](integer.md) | Total number of objects which could not be successfully updated | [optional] [default to 0]
 **TotalQueryCount** | [**Integer**](integer.md) | Total number of queries executed during the find phase | [optional] [default to 0]
