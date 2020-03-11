@@ -39,7 +39,7 @@ deploy-cfn:
 		--parameter-overrides CreateCloudFrontDistribution=false EnableContainerInsights=true AdminEmail=$(ADMIN_EMAIL) AccessControlAllowOriginOverride=* PreBuiltArtefactsBucketOverride=$(TEMP_BUCKET) VpcSubnets=${SUBNETS} VpcSecurityGroups=${SEC_GROUPS}
 
 deploy-artefacts:
-	$(eval VERSION := $(make version))
+	$(eval VERSION := $(shell $(MAKE) version))
 	make package-artefacts
 	aws s3 cp build.zip s3://$(TEMP_BUCKET)/amazon-s3-find-and-forget/$(VERSION)/build.zip
 
@@ -80,7 +80,7 @@ setup:
 	pip install -r backend/lambda_layers/cr_helper/requirements.txt -t backend/lambda_layers/cr_helper/python
 	pip install -r backend/lambda_layers/decorators/requirements.txt -t backend/lambda_layers/decorators/python
 	pip install -r requirements.txt
-	pre-commit install
+	(! [[ -d .git ]] || pre-commit install)
 	npm i
 	cd frontend && npm i
 	gem install cfn-nag
