@@ -53,7 +53,11 @@ package:
 
 package-artefacts:
 	make build-frontend
-	zip -r build.zip backend/ecs_tasks/delete_files/ frontend/build -x backend/ecs_tasks/delete_files/__pycache* -x *settings.js
+	zip -r build.zip \
+		backend/ecs_tasks/delete_files/ \
+		backend/lambda_layers/boto_utils/ \
+		frontend/build \
+		-x 'backend/ecs_tasks/delete_files/__pycache*' '*settings.js' @
 
 redeploy-containers:
 	$(eval ACCOUNT_ID := $(shell aws sts get-caller-identity --query Account --output text))
