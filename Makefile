@@ -39,7 +39,7 @@ deploy-cfn:
 		--parameter-overrides CreateCloudFrontDistribution=false EnableContainerInsights=true AdminEmail=$(ADMIN_EMAIL) AccessControlAllowOriginOverride=* PreBuiltArtefactsBucketOverride=$(TEMP_BUCKET) VpcSubnets=${SUBNETS} VpcSecurityGroups=${SEC_GROUPS}
 
 deploy-artefacts:
-	$(eval VERSION := $(shell $(MAKE) version))
+	$(eval VERSION := $(shell $(MAKE) -s version))
 	make package-artefacts
 	aws s3 cp build.zip s3://$(TEMP_BUCKET)/amazon-s3-find-and-forget/$(VERSION)/build.zip
 
