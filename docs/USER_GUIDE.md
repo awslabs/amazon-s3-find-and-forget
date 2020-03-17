@@ -494,7 +494,7 @@ After reviewing the [Changelog], obtain the `Template Link` url of the latest ve
 ### Minor Upgrades: Perform CloudFormation Stack Update
 
 To deploy via AWS Console:
-1. Open the [CloudFormation Console Page] and choose the Solution by clicking to the stack's radio button, then choose "Update"
+1. Open the [CloudFormation Console Page] and choose the Solution by selecting to the stack's radio button, then choose "Update"
 2. Choose "Replace current template" and then input the template URL for the version you wish to deploy in the "Amazon S3 URL" textbox, then choose "Next"
 3. On the *Stack Details* screen, review the Parameters and then choose "Next"
 4. On the *Configure stack options* screen, choose "Next"
