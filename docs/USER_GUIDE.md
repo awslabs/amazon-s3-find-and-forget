@@ -18,7 +18,12 @@ Forget solution.
     * [Deletion Job Statuses](#deletion-job-statuses)
     * [Deletion Job Event Types](#deletion-job-event-types)
 * [Adjusting Configuration](#adjusting-configuration)
-* [Updating the Stack](#updating-the-stack)
+* [Updating the Solution](#updating-the-solution)
+    * [Identify current solution version](#identify-current-solution-version)
+    * [Identify the Stack URL to deploy](#identify-the-stack-url-to-deploy)
+    * [CloudFormation Stack Update](#cloudformation-stack-update)
+    * [Manual Rolling Deployment](#manual-rolling-deployment)
+* [Deleting the Solution](#deleting-the-solution)
 
 
 ## Pre-requisite: Configuring a VPC for the Solution
@@ -153,7 +158,7 @@ resources.
 
    When completed, click *Next*
 5. [Configure stack options](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-add-tags.html) if desired, then click *Next*.
-6. On the review you screen, you must check the boxes for:
+6. On the review screen, you must check the boxes for:
    * "*I acknowledge that AWS CloudFormation might create IAM resources*" 
    * "*I acknowledge that AWS CloudFormation might create IAM resources
    with custom names*" 
@@ -164,11 +169,9 @@ resources.
 8. On the *Change Set* screen, click *Execute* to launch your stack.
    * You may need to wait for the *Execution status* of the change set to
    become "*AVAILABLE*" before the "*Execute*" button becomes available.
-9. Wait for the CloudFormation stack to launch. Completion is indicated when
-   the "Stack status" is "*CREATE_COMPLETE*".
+9. Wait for the CloudFormation stack to launch. Completion is indicated when the "Stack status" is "*CREATE_COMPLETE*".
    * You can monitor the stack creation progress in the "Events" tab.
-10. Note the *WebUIUrl* displayed in the *Outputs* tab for the stack. This is
-   used to access the application.
+10. Note the *WebUIUrl* displayed in the *Outputs* tab for the stack. This is used to access the application.
 
 ## Configuring Data Mappers
 
@@ -472,8 +475,64 @@ configuration values are displayed when confirming that you wish to start a job.
 You can only update the vCPUs/memory allocated to Fargate tasks by performing a
 stack update. For more information, see [Updating the Stack](#updating-the-stack).
 
-## Updating the Stack
-*TODO*
+## Updating the Solution
+
+It is recommended to periodically visit the [Changelog] and keep the solution up-to-date to benefit from the latest features and security updates.
+
+There are two main ways to update the solution. When the new version is a *minor* upgrade (for instance, from version 3.45 to 3.67) it is recommended to deploy via CloudFormation Stack Update. When the new version is a *major* upgrade (for instance, from 2.34 to 3.0), it is recommended to perform a manual rolling deployment.
+
+Major releases are published when there are breaking changes between versions and they occur very rarely.
+
+### Identify current solution version
+
+To find out which version is currently deployed, open the CloudFormation stack's output and check the `SolutionVersion`'s value. The solution version is shown in the home page of the Web UI as well.
+
+### Identify the Stack URL to deploy
+
+After consulting the [Changelog], consult the ["Deploying the Solution" section](#deploying-the-solution) and take note of the `Template Link` url (it will be similar to `https://solution-builders-us-east-1.s3.us-east-1.amazonaws.com/amazon-s3-find-and-forget/latest/template.yaml`. If you wish to deploy the latest version you're all set. If you wish to deploy a specific version, replace `latest` from the url with the chosen version, for instance `https://solution-builders-us-east-1.s3.us-east-1.amazonaws.com/amazon-s3-find-and-forget/v0.2/template.yaml`.
+
+### CloudFormation Stack Update
+
+Updating the Stack via CloudFormation is the recommended approach for all minor upgrades as there are no risks of data loss or breaking API contracts with existing consumers.
+
+To deploy via AWS Console:
+1. Open the [CloudFormation Console Page] and select the Solution by clicking to the stack's radio button, then select "Update"
+2. Click "Replace current template" and then insert the CloudFormation stack URL in the "Amazon S3 URL" textbox, then select "Next"
+3. On the *Stack Details* screen, review the Parameters and then click "Next"
+4. On the *Configure stack options* screen, select "Next"
+5. On the *Review stack* screen, you must check the boxes for:
+   * "*I acknowledge that AWS CloudFormation might create IAM resources*"
+   * "*I acknowledge that AWS CloudFormation might create IAM resources
+   with custom names*"
+   * "*I acknowledge that AWS CloudFormation might require the following capability: CAPABILITY_AUTO_EXPAND*"
+
+   These are required to allow CloudFormation to create a Role to allow access
+   to resources needed by the stack and name the resources in a dynamic way.
+6. Select "Update stack" to start the stack update.
+7. Wait for the CloudFormation stack to finish updating. Completion is indicated when the "Stack status" is "*UPDATE_COMPLETE*".
+
+To deploy via the AWS CLI [consult the documentation](https://docs.aws.amazon.com/cli/latest/reference/cloudformation/update-stack.html).
+
+
+### Manual Rolling Deployment
+
+A manual rolling deployment consists on creating a new stack from scratch, exporting the data from the old stack to the new stack, migrating consumers to new API and Web UI urls, and then disposing the old stack.
+
+1. Deploy a new instance of the Solution by following the instructions contained in the ["Deploying the Solution" section](#deploying-the-solution). Make sure you use unique values for Stack Name and ResourcePrefix parameter compared to the existing stack.
+2. Migrate Data from DynamoDB to ensure the new stack contains the necessary configuration related to Data Mappers and settings. When both stacks are deployed in the same account and region, the simpler way to migrate is via [On-Demand Backup and Restore]. If the stacks are deployed in different regions or accounts, you can use [AWS Data Pipeline].
+3. You will need to make sure all the Bucket Policies for the Data Mappers are in place to ensure the new stack can perform the necessary actions to complete a Deletion Job. Consult the ["Granting Access to Data" section](#granting-access-to-data) to learn about it.
+4. Consult the [Changelog] and look for the documentation related to breaking changes included in the new deploument. These will help for coordinating the work you need to do to migrate consumers to use the new system.
+5. After all the consumers are migrated to the new stack (API and Web UI), you can delete the old stack. 
+
+## Deleting the Solution
+
+To delete a stack via AWS Console:
+1. Open the [CloudFormation Console Page] and select the Solution by clicking to the stack's radio button, then select "Delete"
+2. When the confirmation modal shows up, select "Delete stack".
+3. Wait for the CloudFormation stack to finish updating. Completion is indicated when the "Stack status" is "*DELETE_COMPLETE*".
+
+To delete a stack via the AWS CLI [consult the documentation](https://docs.aws.amazon.com/cli/latest/reference/cloudformation/delete-stack.html).
+
 
 [API Documentation]: api/README.md
 [Troubleshooting]: TROUBLESHOOTING.md
@@ -489,3 +548,7 @@ stack update. For more information, see [Updating the Stack](#updating-the-stack
 [Cross Account KMS Access]: https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-modifying-external-accounts.html
 [Updating an SSM Parameter]: https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-cli.html
 [deploy using the aws cli]: https://docs.aws.amazon.com/cli/latest/reference/cloudformation/deploy/index.html
+[cloudformation console page]: https://console.aws.amazon.com/cloudformation/home
+[changelog]: ../CHANGELOG.md
+[on-demand backup and restore]: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/BackupRestore.html
+[aws data pipeline]: https://aws.amazon.com/datapipeline
