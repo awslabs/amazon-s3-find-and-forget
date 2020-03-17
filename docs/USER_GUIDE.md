@@ -485,7 +485,7 @@ Major version releases are rare and only occur when a non-backwards compatible c
 
 ### Identify current solution version
 
-To find out which version is currently deployed, open the CloudFormation stack's output and check the `SolutionVersion`'s value. The solution version is shown in the home page of the Web UI as well.
+To find out which version is currently deployed, check the value of the `SolutionVersion` output for the solution stack. The solution version is also shown on the Dashboard of the Web UI.
 
 ### Identify the Stack URL to deploy
 
