@@ -527,7 +527,7 @@ In a manual rolling deployment you will: create a new stack from scratch, export
 ## Deleting the Solution
 
 To delete a stack via AWS Console:
-1. Open the [CloudFormation Console Page] and select the Solution by clicking to the stack's radio button, then select "Delete"
+1. Open the [CloudFormation Console Page] and choose the solution stack, then choose "Delete"
 2. When the confirmation modal shows up, choose "Delete stack".
 3. Wait for the CloudFormation stack to finish updating. Completion is indicated when the "Stack status" is "*DELETE_COMPLETE*".
 
