@@ -496,7 +496,7 @@ After consulting the [Changelog], consult the ["Deploying the Solution" section]
 Updating the Stack via CloudFormation is the recommended approach for all minor upgrades as there are no risks of data loss or breaking API contracts with existing consumers.
 
 To deploy via AWS Console:
-1. Open the [CloudFormation Console Page] and select the Solution by clicking to the stack's radio button, then select "Update"
+1. Open the [CloudFormation Console Page] and choose the Solution by clicking to the stack's radio button, then choose "Update"
 2. Choose "Replace current template" and then input the template URL for the version you wish to deploy in the "Amazon S3 URL" textbox, then choose "Next"
 3. On the *Stack Details* screen, review the Parameters and then click "Next"
 4. On the *Configure stack options* screen, select "Next"
