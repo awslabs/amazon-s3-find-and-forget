@@ -8,6 +8,8 @@ Metadata:
         - W1001
 
 Parameters:
+  EnableBackups:
+    Type: String
   RetainTables:
     Type: String
 
@@ -41,6 +43,8 @@ Resources:
           AttributeName: CreatedAt
           KeyType: RANGE
       BillingMode: PAY_PER_REQUEST
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: !Ref EnableBackups
 
   DeletionQueueTableRetain:
     Type: AWS::DynamoDB::Table
@@ -63,6 +67,8 @@ Resources:
           AttributeName: CreatedAt
           KeyType: RANGE
       BillingMode: PAY_PER_REQUEST
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: !Ref EnableBackups
 
   DataMapperTableNotRetain:
     Type: AWS::DynamoDB::Table
@@ -79,6 +85,8 @@ Resources:
           AttributeName: DataMapperId
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: !Ref EnableBackups
 
   DataMapperTableRetain:
     Type: AWS::DynamoDB::Table
@@ -95,6 +103,8 @@ Resources:
           AttributeName: DataMapperId
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: !Ref EnableBackups
 
   JobTableNotRetain:
     Type: AWS::DynamoDB::Table
@@ -140,6 +150,8 @@ Resources:
               KeyType: RANGE
           Projection:
             ProjectionType: ALL
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: !Ref EnableBackups
 
   JobTableRetain:
     Type: AWS::DynamoDB::Table
@@ -185,6 +197,8 @@ Resources:
               KeyType: RANGE
           Projection:
             ProjectionType: ALL
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: !Ref EnableBackups
           
 Outputs:
   DeletionQueueTable:

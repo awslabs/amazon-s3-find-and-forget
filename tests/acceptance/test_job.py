@@ -9,6 +9,14 @@ from tests.acceptance import query_parquet_file
 pytestmark = [pytest.mark.acceptance, pytest.mark.api, pytest.mark.jobs, pytest.mark.usefixtures("empty_jobs")]
 
 
+@pytest.mark.auth
+def test_auth(api_client, jobs_endpoint):
+    headers = {"Authorization": None}
+    assert 401 == api_client.get("{}/{}".format(jobs_endpoint, "a"), headers=headers).status_code
+    assert 401 == api_client.get(jobs_endpoint, headers=headers).status_code
+    assert 401 == api_client.get("{}/{}/events".format(jobs_endpoint, "a"), headers=headers).status_code
+
+
 def test_it_gets_jobs(api_client, jobs_endpoint, job_factory, stack, job_table, job_exists_waiter):
     # Arrange
     job_id = job_factory()["Id"]

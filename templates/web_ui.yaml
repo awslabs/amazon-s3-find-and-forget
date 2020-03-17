@@ -26,19 +26,48 @@ Resources:
             AllowedOrigins: ["*"]
             Id: !Sub ${ResourcePrefix}CorsRule
             MaxAge: 3600
-
-  WebUIBucketReadPolicy:
+  
+  WebUIBucketPolicy:
     Type: AWS::S3::BucketPolicy
-    Condition: WithCloudFront
     Properties:
       Bucket: !Ref WebUIBucket
       PolicyDocument:
         Statement:
-          - Action: s3:GetObject
-            Effect: Allow
+          - Sid: HttpsOnly
+            Action: '*'
+            Effect: Deny
             Resource: !Sub arn:aws:s3:::${WebUIBucket}/*
-            Principal:
-              CanonicalUser: !GetAtt CloudFrontOriginAccessIdentity.S3CanonicalUserId
+            Principal: '*'
+            Condition:
+              Bool:
+                'aws:SecureTransport': 'false'
+          - Sid: DenyIncorrectEncryptionHeader
+            Action: s3:PutObject*
+            Effect: Deny
+            Resource: !Sub arn:aws:s3:::${WebUIBucket}/*
+            Principal: '*'
+            Condition:
+              StringNotEquals:
+                's3:x-amz-server-side-encryption':
+                  - AES256
+                  - aws:kms
+          - Sid: DenyUnEncryptedObjectUploads
+            Action: s3:PutObject*
+            Effect: Deny
+            Resource: !Sub arn:aws:s3:::${WebUIBucket}/*
+            Principal: '*'
+            Condition:
+              'Null':
+                's3:x-amz-server-side-encryption': true
+          - !If
+            - WithCloudFront
+            - Sid: CloudFrontOriginOnly
+              Action: s3:GetObject
+              Effect: Allow
+              Resource: !Sub arn:aws:s3:::${WebUIBucket}/*
+              Principal:
+                CanonicalUser: !GetAtt CloudFrontOriginAccessIdentity.S3CanonicalUserId
+            - !Ref AWS::NoValue
 
   CloudFrontOriginAccessIdentity:
     Type: AWS::CloudFront::CloudFrontOriginAccessIdentity

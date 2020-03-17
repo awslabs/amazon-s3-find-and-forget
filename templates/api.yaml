@@ -37,6 +37,9 @@ Parameters:
   DeletionQueueTableName:
     Description: Table name for Deletion Queue Table
     Type: String
+  EnableAccessLogging:
+    Description: Whether to enable access logs
+    Type: String
   JobTableDateGSI:
     Description: Date ordered GSI for Jobs Table
     Type: String
@@ -58,6 +61,7 @@ Parameters:
     Type: String
 
 Conditions:
+  EnableAccessLogging: !Equals [!Ref EnableAccessLogging, "true"]
   DefaultAccessControlOrigin: !Equals [!Ref AccessControlAllowOriginOverride, "false"]
   
 Resources:
@@ -66,6 +70,14 @@ Resources:
     Properties:
       OpenApiVersion: '3.0.1'
       StageName: Prod
+      MethodSettings:
+        !If
+        - EnableAccessLogging
+        - - LoggingLevel: INFO
+            DataTraceEnabled: false
+            ResourcePath: '/*'
+            HttpMethod: '*'
+        - !Ref AWS::NoValue
       DefinitionBody:
         'Fn::Transform':
           Name: 'AWS::Include'

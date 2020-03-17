@@ -1,0 +1,23 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "List Job Events Handler",
+    "type": "object",
+    "properties": {
+        "queryStringParameters": {
+            "description": "Query string parameters for the request",
+            "type": [ "object", "null" ],
+            "properties": {
+                "start_at": {
+                    "description": "Starting watermark",
+                    "type": "string",
+                    "pattern": "^([0-9]+)#([a-zA-Z0-9-\\.]+)$"
+                },
+                "page_size": {
+                    "description": "Maximum page size",
+                    "type": "string",
+                    "pattern": "^[0-9]+$"
+                }
+            }
+        }
+    }
+}

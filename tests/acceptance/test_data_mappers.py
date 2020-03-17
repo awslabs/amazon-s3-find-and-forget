@@ -4,6 +4,14 @@ from boto3.dynamodb.conditions import Key
 pytestmark = [pytest.mark.acceptance, pytest.mark.api, pytest.mark.data_mappers]
 
 
+@pytest.mark.auth
+def test_auth(api_client, data_mapper_base_endpoint):
+    headers = {"Authorization": None}
+    assert 401 == api_client.put("{}/{}".format(data_mapper_base_endpoint, "a"), headers=headers).status_code
+    assert 401 == api_client.get(data_mapper_base_endpoint, headers=headers).status_code
+    assert 401 == api_client.delete("{}/{}".format(data_mapper_base_endpoint, "a"), headers=headers).status_code
+
+
 def test_it_creates_data_mapper(api_client, data_mapper_base_endpoint, data_mapper_table, glue_table_factory, stack):
     # Arrange
     table = glue_table_factory()

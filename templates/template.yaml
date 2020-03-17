@@ -14,7 +14,7 @@ Parameters:
   AthenaConcurrencyLimit:
     Description: How many Athena queries should be scheduled concurrently
     Type: Number
-    Default: 20 
+    Default: 20
   AthenaWorkGroup:
     Description: WorkGroup to use for Athena queries
     Type: String
@@ -39,8 +39,22 @@ Parameters:
     Description: The memory to be allocated to the Deletion Fargate Task
     Type: String
     Default: '30720'
+  EnableAccessLogging:
+    Description: Whether to enable API Gateway access logging. Enabling access logging will incur additional CloudWatch Logs charges
+    Type: String
+    Default: "false"
+    AllowedValues:
+      - "true"
+      - "false"
   EnableContainerInsights:
     Description: Enable ECS Container Insights
+    Type: String
+    Default: "false"
+    AllowedValues:
+      - "true"
+      - "false"
+  EnableDynamoDBBackups:
+    Description: Whether to enable point in time recovery for the DynamoDB tables
     Type: String
     Default: "false"
     AllowedValues:
@@ -72,7 +86,7 @@ Parameters:
     Default: S3F2
     AllowedPattern: ^[a-zA-Z0-9]*$
   RetainDynamoDBTables:
-    Description: Wheter to retain the DynamoDB tables upon Stack Update and Stack Deletion
+    Description: Whether to retain the DynamoDB tables upon Stack Update and Stack Deletion
     Type: String
     Default: "true"
     AllowedValues:
@@ -141,6 +155,7 @@ Resources:
             - !GetAtt LayersStack.Outputs.BotoUtils
         DeletionQueueTableName: !GetAtt DDBStack.Outputs.DeletionQueueTable
         DataMapperTableName: !GetAtt DDBStack.Outputs.DataMapperTable
+        EnableAccessLogging: !Ref EnableAccessLogging
         JobTableDateGSI: !GetAtt DDBStack.Outputs.JobTableDateGSI
         JobTableName: !GetAtt DDBStack.Outputs.JobTable
         WebUIOrigin: !GetAtt WebUIStack.Outputs.Origin
@@ -156,6 +171,7 @@ Resources:
     Properties:
       TemplateURL: ./ddb.yaml
       Parameters:
+        EnableBackups: !Ref EnableDynamoDBBackups
         RetainTables: !Ref RetainDynamoDBTables
   DelStack:
     Type: AWS::CloudFormation::Stack
@@ -308,6 +324,7 @@ Metadata:
           - VpcSubnets
           - CreateCloudFrontDistribution
           - AccessControlAllowOriginOverride
+          - EnableAccessLogging
       - Label:
           default: "Performance Configuration"
         Parameters:
@@ -328,4 +345,5 @@ Metadata:
           - EnableContainerInsights
           - PreBuiltArtefactsBucketOverride
           - ResourcePrefix
+          - EnableDynamoDBBackups
           - RetainDynamoDBTables

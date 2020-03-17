@@ -43,7 +43,7 @@ def test_it_retrieves_returns_job_not_found(table):
 def test_it_lists_jobs(table):
     stub = job_stub()
     table.query.return_value = {"Items": [stub]}
-    response = handlers.list_jobs_handler({}, SimpleNamespace())
+    response = handlers.list_jobs_handler({"queryStringParameters": None}, SimpleNamespace())
     resp_body = json.loads(response["body"])
     assert 200 == response["statusCode"]
     assert 1 == len(resp_body["Jobs"])
@@ -55,7 +55,7 @@ def test_it_lists_jobs(table):
 def test_it_queries_all_gsi_buckets(table):
     stub = job_stub()
     table.query.return_value = {"Items": [stub]}
-    handlers.list_jobs_handler({}, SimpleNamespace())
+    handlers.list_jobs_handler({"queryStringParameters": None}, SimpleNamespace())
     assert 3 == table.query.call_count
 
 
@@ -73,7 +73,7 @@ def test_it_handles_list_job_start_at_qs(table, k):
 def test_it_respects_list_job_page_size(table):
     stub = job_stub()
     table.query.return_value = {"Items": [stub for _ in range(0, 3)]}
-    handlers.list_jobs_handler({"queryStringParameters": {"page_size": 3}}, SimpleNamespace())
+    handlers.list_jobs_handler({"queryStringParameters": {"page_size": "3"}}, SimpleNamespace())
     table.query.assert_called_with(
         IndexName=ANY,
         KeyConditionExpression=ANY,
@@ -82,11 +82,34 @@ def test_it_respects_list_job_page_size(table):
     )
 
 
+def test_it_rejects_invalid_page_size_for_list_jobs():
+    response = handlers.list_jobs_handler({"queryStringParameters": {"page_size": "NaN"}}, SimpleNamespace())
+    assert 422 == response["statusCode"]
+
+
+def test_it_rejects_invalid_start_at_for_list_jobs():
+    response = handlers.list_jobs_handler({"queryStringParameters": {"start_at": "badformat"}}, SimpleNamespace())
+    assert 422 == response["statusCode"]
+
+
+def test_it_rejects_invalid_page_size_for_list_job_events():
+    response = handlers.list_jobs_handler({"queryStringParameters": {"page_size": "NaN"}}, SimpleNamespace())
+    assert 422 == response["statusCode"]
+
+
+@patch("backend.lambdas.jobs.handlers.table")
+def test_it_rejects_invalid_start_at_for_list_job_events(table):
+    stub = job_stub()
+    table.query.return_value = {"Items": [stub for _ in range(0, 3)]}
+    response = handlers.list_jobs_handler({"queryStringParameters": {"page_size": "badformat"}}, SimpleNamespace())
+    assert 422 == response["statusCode"]
+
+
 @patch("backend.lambdas.jobs.handlers.bucket_count", 3)
 @patch("backend.lambdas.jobs.handlers.table")
 def test_it_respects_list_job_page_size_with_multiple_buckets(table):
     table.query.return_value = {"Items": [job_stub() for _ in range(0, 5)]}
-    resp = handlers.list_jobs_handler({"queryStringParameters": {"page_size": 5}}, SimpleNamespace())
+    resp = handlers.list_jobs_handler({"queryStringParameters": {"page_size": "5"}}, SimpleNamespace())
     assert 3 == table.query.call_count
     assert 5 == len(json.loads(resp["body"])["Jobs"])
 
@@ -96,7 +119,8 @@ def test_it_lists_jobs_events(table):
     stub = job_event_stub()
     table.get_item.return_value = job_stub()
     table.query.return_value = {"Items": [stub]}
-    response = handlers.list_job_events_handler({"pathParameters": {"job_id": "test"}}, SimpleNamespace())
+    response = handlers.list_job_events_handler({"queryStringParameters": None, "pathParameters": {"job_id": "test"}},
+                                                SimpleNamespace())
     resp_body = json.loads(response["body"])
     assert 200 == response["statusCode"]
     assert 1 == len(resp_body["JobEvents"])
@@ -114,7 +138,7 @@ def test_it_respects_jobs_events_page_size(table):
     }
     response = handlers.list_job_events_handler({
         "pathParameters": {"job_id": "test"},
-        "queryStringParameters": {"page_size": 3},
+        "queryStringParameters": {"page_size": "3"},
     }, SimpleNamespace())
     resp_body = json.loads(response["body"])
     table.query.assert_called_with(
@@ -135,7 +159,8 @@ def test_it_starts_at_earliest_by_default(table):
     stub = job_event_stub()
     table.get_item.return_value = job_stub()
     table.query.return_value = {"Items": [stub]}
-    response = handlers.list_job_events_handler({"pathParameters": {"job_id": "test"}}, SimpleNamespace())
+    response = handlers.list_job_events_handler({"queryStringParameters": None,"pathParameters": {"job_id": "test"}},
+                                                SimpleNamespace())
     assert 200 == response["statusCode"]
     table.query.assert_called_with(
         KeyConditionExpression=mock.ANY,
@@ -153,10 +178,10 @@ def test_it_starts_at_earliest_by_default(table):
 def test_it_starts_at_supplied_watermark(table):
     stub = job_event_stub()
     table.get_item.return_value = job_stub()
-    table.query.return_value = {"Items": [stub], "LastEvaluatedKey": {"Id": "test", "Sk": "12345"}}
+    table.query.return_value = {"Items": [stub], "LastEvaluatedKey": {"Id": "test", "Sk": "12345#test"}}
     response = handlers.list_job_events_handler({
         "pathParameters": {"job_id": "test"},
-        "queryStringParameters": {"start_at": "12345"},
+        "queryStringParameters": {"start_at": "12345#test"},
     }, SimpleNamespace())
     resp_body = json.loads(response["body"])
     assert 200 == response["statusCode"]
@@ -168,7 +193,7 @@ def test_it_starts_at_supplied_watermark(table):
         FilterExpression=mock.ANY,
         ExclusiveStartKey={
             "Id": "test",
-            "Sk": "12345"
+            "Sk": "12345#test"
         },
     )
 
@@ -191,6 +216,7 @@ def test_it_returns_watermark_where_not_last_page_and_job_complete(table):
     table.get_item.return_value = job_stub(JobFinishTime=12345)
     table.query.return_value = {"Items": [job_event_stub(Sk=str(i)) for i in range(0, 20)]}
     response = handlers.list_job_events_handler({
+        "queryStringParameters": None,
         "pathParameters": {"job_id": "test"},
     }, SimpleNamespace())
     resp_body = json.loads(response["body"])
@@ -207,7 +233,7 @@ def test_it_does_not_return_watermark_if_last_page_reached(table):
         table.query.return_value = {"Items": [stub]}
         response = handlers.list_job_events_handler({
             "pathParameters": {"job_id": "test"},
-            "queryStringParameters": {"page_size": 1}
+            "queryStringParameters": {"page_size": "1"}
         }, SimpleNamespace())
         resp_body = json.loads(response["body"])
         assert 200 == response["statusCode"]
@@ -219,7 +245,7 @@ def test_it_errors_if_job_not_found(table):
     table.get_item.side_effect = ClientError({"ResponseMetadata": {"HTTPStatusCode": 404}}, "get_item")
     response = handlers.list_job_events_handler({
         "pathParameters": {"job_id": "test"},
-        "queryStringParameters": {"start_at": "12345"},
+        "queryStringParameters": {"start_at": "12345#test"},
     }, SimpleNamespace())
     assert 404 == response["statusCode"]
 
@@ -229,7 +255,7 @@ def test_it_returns_error_if_invalid_watermark_supplied_for_completed_job(table)
     table.get_item.return_value = job_stub(JobFinishTime=12345)
     response = handlers.list_job_events_handler({
         "pathParameters": {"job_id": "test"},
-        "queryStringParameters": {"start_at": "999999999999999"},
+        "queryStringParameters": {"start_at": "999999999999999#test"},
     }, SimpleNamespace())
     assert 400 == response["statusCode"]
 
@@ -239,7 +265,7 @@ def test_it_returns_error_if_invalid_watermark_supplied_for_running_job(table):
     table.get_item.return_value = job_stub()
     response = handlers.list_job_events_handler({
         "pathParameters": {"job_id": "test"},
-        "queryStringParameters": {"start_at": "999999999999999"},
+        "queryStringParameters": {"start_at": "999999999999999#test"},
     }, SimpleNamespace())
     assert 400 == response["statusCode"]
 

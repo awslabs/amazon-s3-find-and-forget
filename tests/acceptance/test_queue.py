@@ -5,6 +5,15 @@ from boto3.dynamodb.conditions import Key
 pytestmark = [pytest.mark.acceptance, pytest.mark.api, pytest.mark.queue, pytest.mark.usefixtures("empty_jobs")]
 
 
+@pytest.mark.auth
+def test_auth(api_client, queue_base_endpoint):
+    headers = {"Authorization": None}
+    assert 401 == api_client.patch(queue_base_endpoint, json={}, headers=headers).status_code
+    assert 401 == api_client.get(queue_base_endpoint, headers=headers).status_code
+    assert 401 == api_client.delete("{}/matches".format(queue_base_endpoint), json={}, headers=headers).status_code
+    assert 401 == api_client.delete(queue_base_endpoint, headers=headers).status_code
+
+
 def test_it_adds_to_queue(api_client, queue_base_endpoint, queue_table, stack):
     # Arrange
     key = "test"

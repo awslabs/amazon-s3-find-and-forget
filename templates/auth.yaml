@@ -24,7 +24,6 @@ Resources:
       IdentityPoolId: !Ref CognitoIdentityPool
       Roles:
         authenticated: !GetAtt ServiceInvokeRole.Arn
-        unauthenticated: !GetAtt ServiceInvokeRole.Arn
 
   CognitoUserPool:
     Type: AWS::Cognito::UserPool
@@ -40,6 +39,10 @@ Resources:
       Policies:
         PasswordPolicy:
           MinimumLength: 8
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+          RequireUppercase: true
           
   CognitoUserPoolClient:
     Type: AWS::Cognito::UserPoolClient
