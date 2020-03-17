@@ -489,7 +489,7 @@ To find out which version is currently deployed, check the value of the `Solutio
 
 ### Identify the Stack URL to deploy
 
-After consulting the [Changelog], consult the ["Deploying the Solution" section](#deploying-the-solution) and take note of the `Template Link` url (it will be similar to `https://solution-builders-us-east-1.s3.us-east-1.amazonaws.com/amazon-s3-find-and-forget/latest/template.yaml`. If you wish to deploy the latest version you're all set. If you wish to deploy a specific version, replace `latest` from the url with the chosen version, for instance `https://solution-builders-us-east-1.s3.us-east-1.amazonaws.com/amazon-s3-find-and-forget/v0.2/template.yaml`.
+After reviewing the [Changelog], obtain the `Template Link` url of the latest version from ["Deploying the Solution"](#deploying-the-solution) (it will be similar to `https://solution-builders-us-east-1.s3.us-east-1.amazonaws.com/amazon-s3-find-and-forget/latest/template.yaml`. If you wish to deploy a specific version rather than the latest version, replace `latest` from the url with the chosen version, for instance `https://solution-builders-us-east-1.s3.us-east-1.amazonaws.com/amazon-s3-find-and-forget/v0.2/template.yaml`.
 
 ### Perform CloudFormation Stack Update
 
