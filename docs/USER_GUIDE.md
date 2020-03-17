@@ -523,7 +523,7 @@ The process for a manual rolling deployment is as follows:
 
 The steps for performing this process are:
 
-1. Deploy a new instance of the Solution by following the instructions contained in the ["Deploying the Solution" section](#deploying-the-solution). Make sure you use unique values for Stack Name and ResourcePrefix parameter compared to the existing stack.
+1. Deploy a new instance of the Solution by following the instructions contained in the ["Deploying the Solution" section](#deploying-the-solution). Make sure you use unique values for Stack Name and ResourcePrefix parameter which differ from existing stack.
 2. Migrate Data from DynamoDB to ensure the new stack contains the necessary configuration related to Data Mappers and settings. When both stacks are deployed in the same account and region, the simpler way to migrate is via [On-Demand Backup and Restore]. If the stacks are deployed in different regions or accounts, you can use [AWS Data Pipeline].
 3. Ensure that all the bucket policies for the Data Mappers are in place for the new stack. See the ["Granting Access to Data" section](#granting-access-to-data) for steps to do this.
 4. Review the [Changelog] for changes that may affect how you use the new deployment. This may require you to make changes to any software you have that interacts with the solution's API.
