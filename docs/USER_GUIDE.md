@@ -481,7 +481,7 @@ In order to benefit from the latest features and security updates, you should ai
 
 There are two ways to update the solution depending on the type of upgrade between versions. When the new version is a *minor* upgrade (for instance, from version 3.45 to 3.67) it is recommended to deploy via CloudFormation Stack Update. When the new version is a *major* upgrade (for instance, from 2.34 to 3.0), it is recommended to perform a manual rolling deployment.
 
-Major releases are published when there are breaking changes between versions and they occur very rarely.
+Major version releases are rare and only occur when a non-backwards compatible change is made to the solution.
 
 ### Identify current solution version
 
