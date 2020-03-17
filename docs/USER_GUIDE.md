@@ -142,6 +142,9 @@ resources.
    checking if the Forget phase is complete
    * **AthenaWorkGroup:** (Default: primary) The Athena work group that should
    be used for when the solution runs Athena queries.
+   * **EnableAccessLogging:** (Default: false) Whether to enable access logging
+   via CloudWatch Logs for API Gateway. Enabling this feature will incur
+   additional costs.
    * **EnableContainerInsights:** (Default: false) Whether to enable CloudWatch
    Container Insights.
    * **PreBuiltArtefactsBucketOverride:** (Default: false) Overrides the default

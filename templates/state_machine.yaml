@@ -909,11 +909,6 @@ Resources:
           Effect: "Allow"
           Resource:
           - !GetAtt QueryQueue.Arn
-        - Action:
-          - "logs:Describe*"
-          - "logs:Filter*"
-          Effect: "Allow"
-          Resource: !Sub "arn:${AWS::Partition}:logs:*:*:*"
 
   DeleteQueueMessage:
     Type: AWS::Serverless::Function
