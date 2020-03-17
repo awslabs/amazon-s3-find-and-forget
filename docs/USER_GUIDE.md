@@ -508,7 +508,7 @@ To deploy via AWS Console:
 
    These are required to allow CloudFormation to create a Role to allow access
    to resources needed by the stack and name the resources in a dynamic way.
-6. Select "Update stack" to start the stack update.
+6. Choose "Update stack" to start the stack update.
 7. Wait for the CloudFormation stack to finish updating. Completion is indicated when the "Stack status" is "*UPDATE_COMPLETE*".
 
 To deploy via the AWS CLI [consult the documentation](https://docs.aws.amazon.com/cli/latest/reference/cloudformation/update-stack.html).
