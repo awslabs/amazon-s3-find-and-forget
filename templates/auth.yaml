@@ -24,7 +24,6 @@ Resources:
       IdentityPoolId: !Ref CognitoIdentityPool
       Roles:
         authenticated: !GetAtt ServiceInvokeRole.Arn
-        unauthenticated: !GetAtt ServiceInvokeRole.Arn
 
   CognitoUserPool:
     Type: AWS::Cognito::UserPool
