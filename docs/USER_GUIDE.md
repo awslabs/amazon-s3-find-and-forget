@@ -520,7 +520,7 @@ In a manual rolling deployment you will: create a new stack from scratch, export
 
 1. Deploy a new instance of the Solution by following the instructions contained in the ["Deploying the Solution" section](#deploying-the-solution). Make sure you use unique values for Stack Name and ResourcePrefix parameter compared to the existing stack.
 2. Migrate Data from DynamoDB to ensure the new stack contains the necessary configuration related to Data Mappers and settings. When both stacks are deployed in the same account and region, the simpler way to migrate is via [On-Demand Backup and Restore]. If the stacks are deployed in different regions or accounts, you can use [AWS Data Pipeline].
-3. You will need to make sure all the Bucket Policies for the Data Mappers are in place to ensure the new stack can perform the necessary actions to complete a Deletion Job. Consult the ["Granting Access to Data" section](#granting-access-to-data) to learn about it.
+3. Ensure that all the bucket policies for the Data Mappers are in place for the new stack. See the ["Granting Access to Data" section](#granting-access-to-data) for steps to do this.
 4. Consult the [Changelog] and look for the documentation related to breaking changes included in the new deploument. These will help for coordinating the work you need to do to migrate consumers to use the new system.
 5. Once all the consumers are migrated to the new stack (API and Web UI), delete the old stack. 
 
