@@ -9,6 +9,7 @@ Parameters:
 
 Conditions:
   WithCloudFront: !Equals [!Ref CreateCloudFrontDistribution, "true"]
+  WithoutCloudFront: !Not [!Equals [!Ref CreateCloudFrontDistribution, "true"]]
 
 Resources:
 
@@ -26,6 +27,21 @@ Resources:
             AllowedOrigins: ["*"]
             Id: !Sub ${ResourcePrefix}CorsRule
             MaxAge: 3600
+  
+  WebUIBucketHttpsOnlyPolicy:
+    Type: AWS::S3::BucketPolicy
+    Condition: WithoutCloudFront
+    Properties:
+      Bucket: !Ref WebUIBucket
+      PolicyDocument:
+        Statement:
+          - Action: s3:GetObject
+            Effect: Deny
+            Resource: !Sub arn:aws:s3:::${WebUIBucket}/*
+            Principal: '*'
+            Condition:
+              Bool:
+                'aws:SecureTransport': 'false'
 
   WebUIBucketReadPolicy:
     Type: AWS::S3::BucketPolicy
