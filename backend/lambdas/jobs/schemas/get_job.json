@@ -6,10 +6,12 @@
         "pathParameters": {
             "description": "Path parameters for the request",
             "type": "object",
-            "job_id": {
-                "description": "ID of the Job",
-                "type": "string",
-                "pattern": "^([A-Za-z0-9-])+$"
+            "properties": {
+                "job_id": {
+                    "description": "ID of the Job",
+                    "type": "string",
+                    "pattern": "^([A-Za-z0-9-])+$"
+                }
             },
             "required": ["job_id"]
         }
