@@ -491,7 +491,7 @@ To find out which version is currently deployed, open the CloudFormation stack's
 
 After consulting the [Changelog], consult the ["Deploying the Solution" section](#deploying-the-solution) and take note of the `Template Link` url (it will be similar to `https://solution-builders-us-east-1.s3.us-east-1.amazonaws.com/amazon-s3-find-and-forget/latest/template.yaml`. If you wish to deploy the latest version you're all set. If you wish to deploy a specific version, replace `latest` from the url with the chosen version, for instance `https://solution-builders-us-east-1.s3.us-east-1.amazonaws.com/amazon-s3-find-and-forget/v0.2/template.yaml`.
 
-### CloudFormation Stack Update
+### Perform CloudFormation Stack Update
 
 Updating the Stack via CloudFormation is the recommended approach for all minor upgrades as there are no risks of data loss or breaking API contracts with existing consumers.
 
