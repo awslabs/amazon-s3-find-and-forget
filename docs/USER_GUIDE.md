@@ -479,7 +479,7 @@ stack update. For more information, see [Updating the Solution](#updating-the-so
 
 In order to benefit from the latest features and security updates, you should aim to always have the latest solution version deployed. To find out what the latest version is and what has changed since your currently deployed version, check the [Changelog].
 
-There are two main ways to update the solution. When the new version is a *minor* upgrade (for instance, from version 3.45 to 3.67) it is recommended to deploy via CloudFormation Stack Update. When the new version is a *major* upgrade (for instance, from 2.34 to 3.0), it is recommended to perform a manual rolling deployment.
+There are two ways to update the solution depending on the type of upgrade between versions. When the new version is a *minor* upgrade (for instance, from version 3.45 to 3.67) it is recommended to deploy via CloudFormation Stack Update. When the new version is a *major* upgrade (for instance, from 2.34 to 3.0), it is recommended to perform a manual rolling deployment.
 
 Major releases are published when there are breaking changes between versions and they occur very rarely.
 
