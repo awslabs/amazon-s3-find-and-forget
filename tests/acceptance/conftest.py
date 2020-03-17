@@ -1,6 +1,7 @@
 import datetime
 import json
 import logging
+from copy import deepcopy
 from os import getenv
 from pathlib import Path
 from urllib.parse import urljoin
@@ -98,7 +99,7 @@ def cognito_token(stack):
     user_pool_id = stack["CognitoUserPoolId"]
     client_id = stack["CognitoUserPoolClientId"]
     username = "aws-uk-sa-builders@amazon.com"
-    pwd = "acceptance-tests-password"
+    pwd = "!Acceptance1Tests2password!"
     auth_data = {"USERNAME": username, "PASSWORD": pwd}
     provider_client = boto3.client("cognito-idp")
     # Create the User
@@ -144,10 +145,11 @@ def api_client(cognito_token, stack):
 
         def request(self, method, url, data=None, params=None, headers=None, *args, **kwargs):
             url = urljoin("{}/v1/".format(self.base_url), url)
+            merged_headers = deepcopy(self.default_headers)
             if isinstance(headers, dict):
-                self.default_headers.update(headers)
+                merged_headers.update(headers)
             return super(ApiGwSession, self).request(
-                method, url, data, params, headers=self.default_headers, *args, **kwargs
+                method, url, data, params, headers=merged_headers, *args, **kwargs
             )
 
     hds = {
