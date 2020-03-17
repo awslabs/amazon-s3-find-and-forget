@@ -279,7 +279,9 @@ Outputs:
   JobTable:
     Value: !GetAtt DDBStack.Outputs.JobTable
   QueryQueueUrl:
-     Value: !GetAtt StateMachineStack.Outputs.QueryQueueUrl
+    Value: !GetAtt StateMachineStack.Outputs.QueryQueueUrl
+  SolutionVersion:
+    Value: !FindInMap [Solution, Constants, Version]
   StateMachineArn:
     Value: !GetAtt StateMachineStack.Outputs.StateMachineArn
   StateMachineRoleArn:
