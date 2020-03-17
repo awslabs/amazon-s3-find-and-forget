@@ -46,6 +46,7 @@ def get_job_handler(event, context):
 
 @with_logging
 @add_cors_headers
+@request_validator(load_schema("list_jobs"))
 @catch_errors
 def list_jobs_handler(event, context):
     qs = event.get("queryStringParameters")
@@ -80,6 +81,7 @@ def list_jobs_handler(event, context):
 
 @with_logging
 @add_cors_headers
+@request_validator(load_schema("list_job_events"))
 @catch_errors
 def list_job_events_handler(event, context):
     job_id = event["pathParameters"]["job_id"]
