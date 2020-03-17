@@ -522,7 +522,7 @@ A manual rolling deployment consists on creating a new stack from scratch, expor
 2. Migrate Data from DynamoDB to ensure the new stack contains the necessary configuration related to Data Mappers and settings. When both stacks are deployed in the same account and region, the simpler way to migrate is via [On-Demand Backup and Restore]. If the stacks are deployed in different regions or accounts, you can use [AWS Data Pipeline].
 3. You will need to make sure all the Bucket Policies for the Data Mappers are in place to ensure the new stack can perform the necessary actions to complete a Deletion Job. Consult the ["Granting Access to Data" section](#granting-access-to-data) to learn about it.
 4. Consult the [Changelog] and look for the documentation related to breaking changes included in the new deploument. These will help for coordinating the work you need to do to migrate consumers to use the new system.
-5. After all the consumers are migrated to the new stack (API and Web UI), you can delete the old stack. 
+5. Once all the consumers are migrated to the new stack (API and Web UI), delete the old stack. 
 
 ## Deleting the Solution
 
