@@ -21,8 +21,8 @@ Forget solution.
 * [Updating the Solution](#updating-the-solution)
     * [Identify current solution version](#identify-current-solution-version)
     * [Identify the Stack URL to deploy](#identify-the-stack-url-to-deploy)
-    * [Perform CloudFormation Stack Update](#perform-cloudformation-stack-update)
-    * [Manual Rolling Deployment](#manual-rolling-deployment)
+    * [Minor Upgrades: Perform CloudFormation Stack Update](#minor-upgrades-perform-cloudformation-stack-update)
+    * [Major Upgrades: Manual Rolling Deployment](#major-upgrades-manual-rolling-deployment)
 * [Deleting the Solution](#deleting-the-solution)
 
 
@@ -491,9 +491,7 @@ To find out which version is currently deployed, check the value of the `Solutio
 
 After reviewing the [Changelog], obtain the `Template Link` url of the latest version from ["Deploying the Solution"](#deploying-the-solution) (it will be similar to `https://solution-builders-us-east-1.s3.us-east-1.amazonaws.com/amazon-s3-find-and-forget/latest/template.yaml`). If you wish to deploy a specific version rather than the latest version, replace `latest` from the url with the chosen version, for instance `https://solution-builders-us-east-1.s3.us-east-1.amazonaws.com/amazon-s3-find-and-forget/v0.2/template.yaml`.
 
-### Perform CloudFormation Stack Update
-
-Updating the Stack via CloudFormation is the recommended approach for all minor upgrades as there are no risks of data loss or breaking API contracts with existing consumers.
+### Minor Upgrades: Perform CloudFormation Stack Update
 
 To deploy via AWS Console:
 1. Open the [CloudFormation Console Page] and choose the Solution by clicking to the stack's radio button, then choose "Update"
@@ -514,7 +512,7 @@ To deploy via AWS Console:
 To deploy via the AWS CLI [consult the documentation](https://docs.aws.amazon.com/cli/latest/reference/cloudformation/update-stack.html).
 
 
-### Manual Rolling Deployment
+### Major Upgrades: Manual Rolling Deployment
 
 In a manual rolling deployment you will: create a new stack from scratch, export the data from the old stack to the new stack, migrate consumers to new API and Web UI URLs, and then delete the old stack.
 
