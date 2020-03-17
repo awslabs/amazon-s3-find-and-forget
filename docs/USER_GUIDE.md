@@ -514,7 +514,14 @@ To deploy via the AWS CLI [consult the documentation](https://docs.aws.amazon.co
 
 ### Major Upgrades: Manual Rolling Deployment
 
-In a manual rolling deployment you will: create a new stack from scratch, export the data from the old stack to the new stack, migrate consumers to new API and Web UI URLs, and then delete the old stack.
+The process for a manual rolling deployment is as follows: 
+
+1. Create a new stack from scratch
+2. Export the data from the old stack to the new stack
+3. Migrate consumers to new API and Web UI URLs
+4. Delete the old stack.
+
+The steps for performing this process are:
 
 1. Deploy a new instance of the Solution by following the instructions contained in the ["Deploying the Solution" section](#deploying-the-solution). Make sure you use unique values for Stack Name and ResourcePrefix parameter compared to the existing stack.
 2. Migrate Data from DynamoDB to ensure the new stack contains the necessary configuration related to Data Mappers and settings. When both stacks are deployed in the same account and region, the simpler way to migrate is via [On-Demand Backup and Restore]. If the stacks are deployed in different regions or accounts, you can use [AWS Data Pipeline].
