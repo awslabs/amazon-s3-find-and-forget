@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Col, Row, Spinner } from "react-bootstrap";
 
+import { repoUrl } from "../../utils";
+
 import Alert from "../Alert";
 import MetricsDashboard from "../MetricsDashboard";
 import StartDeletionJob from "../StartDeletionJob";
@@ -44,7 +46,11 @@ export default ({ gateway, goToJobDetails, goToPage }) => {
             value: dataMappers.DataMappers.length,
             link: 1
           },
-          { title: "Solution Version", value: version }
+          {
+            title: "Solution Version",
+            value: version,
+            link: repoUrl("blob/master/CHANGELOG.md")
+          }
         ]);
         setFormState("data-loaded");
       } catch (e) {
