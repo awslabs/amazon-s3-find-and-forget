@@ -39,6 +39,13 @@ Parameters:
     Description: The memory to be allocated to the Deletion Fargate Task
     Type: String
     Default: '30720'
+  EnableAccessLogging:
+    Description: Whether to enable API Gateway access logging. Enabling access logging will incur additional CloudWatch Logs charges
+    Type: String
+    Default: "false"
+    AllowedValues:
+      - "true"
+      - "false"
   EnableContainerInsights:
     Description: Enable ECS Container Insights
     Type: String
@@ -141,6 +148,7 @@ Resources:
             - !GetAtt LayersStack.Outputs.BotoUtils
         DeletionQueueTableName: !GetAtt DDBStack.Outputs.DeletionQueueTable
         DataMapperTableName: !GetAtt DDBStack.Outputs.DataMapperTable
+        EnableAccessLogging: !Ref EnableAccessLogging
         JobTableDateGSI: !GetAtt DDBStack.Outputs.JobTableDateGSI
         JobTableName: !GetAtt DDBStack.Outputs.JobTable
         WebUIOrigin: !GetAtt WebUIStack.Outputs.Origin
@@ -306,6 +314,7 @@ Metadata:
           - VpcSubnets
           - CreateCloudFrontDistribution
           - AccessControlAllowOriginOverride
+          - EnableAccessLogging
       - Label:
           default: "Performance Configuration"
         Parameters:
