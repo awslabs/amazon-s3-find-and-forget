@@ -5,7 +5,7 @@
     "properties": {
         "queryStringParameters": {
             "description": "Query string parameters for the request",
-            "type": "object",
+            "type": [ "object", "null" ],
             "properties": {
                 "start_at": {
                     "description": "Starting watermark",
