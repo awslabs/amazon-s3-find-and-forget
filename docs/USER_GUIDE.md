@@ -473,7 +473,7 @@ In progress and previous executions will **not** be affected. The current
 configuration values are displayed when confirming that you wish to start a job.
 
 You can only update the vCPUs/memory allocated to Fargate tasks by performing a
-stack update. For more information, see [Updating the Stack](#updating-the-stack).
+stack update. For more information, see [Updating the Solution](#updating-the-solution).
 
 ## Updating the Solution
 
