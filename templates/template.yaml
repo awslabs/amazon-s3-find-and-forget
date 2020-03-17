@@ -14,7 +14,7 @@ Parameters:
   AthenaConcurrencyLimit:
     Description: How many Athena queries should be scheduled concurrently
     Type: Number
-    Default: 20 
+    Default: 20
   AthenaWorkGroup:
     Description: WorkGroup to use for Athena queries
     Type: String
@@ -46,6 +46,13 @@ Parameters:
     AllowedValues:
       - "true"
       - "false"
+  EnableDynamoDBBackups:
+    Description: Whether to enable point in time recovery for the DynamoDB tables
+    Type: String
+    Default: "false"
+    AllowedValues:
+      - "true"
+      - "false"
   ForgetQueueWaitSeconds:
     Description: Wait interval for checking Forget progress
     Type: Number
@@ -72,7 +79,7 @@ Parameters:
     Default: S3F2
     AllowedPattern: ^[a-zA-Z0-9]*$
   RetainDynamoDBTables:
-    Description: Wheter to retain the DynamoDB tables upon Stack Update and Stack Deletion
+    Description: Whether to retain the DynamoDB tables upon Stack Update and Stack Deletion
     Type: String
     Default: "true"
     AllowedValues:
@@ -156,6 +163,7 @@ Resources:
     Properties:
       TemplateURL: ./ddb.yaml
       Parameters:
+        EnableBackups: !Ref EnableDynamoDBBackups
         RetainTables: !Ref RetainDynamoDBTables
   DelStack:
     Type: AWS::CloudFormation::Stack
@@ -326,4 +334,5 @@ Metadata:
           - EnableContainerInsights
           - PreBuiltArtefactsBucketOverride
           - ResourcePrefix
+          - EnableDynamoDBBackups
           - RetainDynamoDBTables

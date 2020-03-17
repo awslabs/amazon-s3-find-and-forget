@@ -149,7 +149,10 @@ resources.
    if you are using a customised version of these artefacts.
    * **ResourcePrefix:** (Default: S3F2) Resource prefix to apply to resource
    names when creating statically named resources.
-   * **RetainDynamoDBTables:** (Default: true) Wheter to retain the DynamoDB tables upon Stack Update and Stack Deletion.
+   * **EnableDynamoDBBackups:** (Default: false) Whether to enable [DynamoDB Point-in-Time Recovery]
+   for the DynamoDB tables. Enabling this feature will incur additional costs. See
+   the [DynamoDB Pricing] page for the associated costs.
+   * **RetainDynamoDBTables:** (Default: true) Whether to retain the DynamoDB tables upon Stack Update and Stack Deletion.
 
    When completed, click *Next*
 5. [Configure stack options](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-add-tags.html) if desired, then click *Next*.
@@ -480,6 +483,8 @@ stack update. For more information, see [Updating the Stack](#updating-the-stack
 [Fargate Configuration]: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html#fargate-tasks-size
 [VPC Endpoints]: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-endpoints.html
 [DynamoDB Streams]: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Streams.html
+[DynamoDB Point-in-Time Recovery]: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/PointInTimeRecovery.html
+[DynamoDB Pricing]: https://aws.amazon.com/dynamodb/pricing/on-demand/
 [Defining Glue Tables]: https://docs.aws.amazon.com/glue/latest/dg/tables-described.html
 [S3 Bucket Policies]: https://docs.aws.amazon.com/AmazonS3/latest/dev/using-iam-policies.html
 [Using SSE with CMKs]: https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingKMSEncryption.html
