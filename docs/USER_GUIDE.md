@@ -21,7 +21,7 @@ Forget solution.
 * [Updating the Solution](#updating-the-solution)
     * [Identify current solution version](#identify-current-solution-version)
     * [Identify the Stack URL to deploy](#identify-the-stack-url-to-deploy)
-    * [CloudFormation Stack Update](#cloudformation-stack-update)
+    * [Perform CloudFormation Stack Update](#perform-cloudformation-stack-update)
     * [Manual Rolling Deployment](#manual-rolling-deployment)
 * [Deleting the Solution](#deleting-the-solution)
 
