@@ -18,7 +18,12 @@ Forget solution.
     * [Deletion Job Statuses](#deletion-job-statuses)
     * [Deletion Job Event Types](#deletion-job-event-types)
 * [Adjusting Configuration](#adjusting-configuration)
-* [Updating the Stack](#updating-the-stack)
+* [Updating the Solution](#updating-the-solution)
+    * [Identify current solution version](#identify-current-solution-version)
+    * [Identify the Stack URL to deploy](#identify-the-stack-url-to-deploy)
+    * [Minor Upgrades: Perform CloudFormation Stack Update](#minor-upgrades-perform-cloudformation-stack-update)
+    * [Major Upgrades: Manual Rolling Deployment](#major-upgrades-manual-rolling-deployment)
+* [Deleting the Solution](#deleting-the-solution)
 
 
 ## Pre-requisite: Configuring a VPC for the Solution
@@ -159,7 +164,7 @@ resources.
 
    When completed, click *Next*
 5. [Configure stack options](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-add-tags.html) if desired, then click *Next*.
-6. On the review you screen, you must check the boxes for:
+6. On the review screen, you must check the boxes for:
    * "*I acknowledge that AWS CloudFormation might create IAM resources*" 
    * "*I acknowledge that AWS CloudFormation might create IAM resources
    with custom names*" 
@@ -170,11 +175,9 @@ resources.
 8. On the *Change Set* screen, click *Execute* to launch your stack.
    * You may need to wait for the *Execution status* of the change set to
    become "*AVAILABLE*" before the "*Execute*" button becomes available.
-9. Wait for the CloudFormation stack to launch. Completion is indicated when
-   the "Stack status" is "*CREATE_COMPLETE*".
+9. Wait for the CloudFormation stack to launch. Completion is indicated when the "Stack status" is "*CREATE_COMPLETE*".
    * You can monitor the stack creation progress in the "Events" tab.
-10. Note the *WebUIUrl* displayed in the *Outputs* tab for the stack. This is
-   used to access the application.
+10. Note the *WebUIUrl* displayed in the *Outputs* tab for the stack. This is used to access the application.
 
 ## Configuring Data Mappers
 
@@ -476,10 +479,71 @@ In progress and previous executions will **not** be affected. The current
 configuration values are displayed when confirming that you wish to start a job.
 
 You can only update the vCPUs/memory allocated to Fargate tasks by performing a
-stack update. For more information, see [Updating the Stack](#updating-the-stack).
+stack update. For more information, see [Updating the Solution](#updating-the-solution).
 
-## Updating the Stack
-*TODO*
+## Updating the Solution
+
+To benefit from the latest features and improvements, you should update the solution deployed to your account when a new version is published. To find out what the latest version is and what has changed since your currently deployed version, check the [Changelog].
+
+How you update the solution depends on the difference between versions. If the new version is a *minor* upgrade (for instance, from version 3.45 to 3.67) you should deploy using a CloudFormation Stack Update. If the new version is a *major* upgrade (for instance, from 2.34 to 3.0) you should perform a manual rolling deployment.
+
+Major version releases are made in exceptional circumstances and may contain changes that prohibit backward compatibility. Minor versions releases are backward-compatible.
+
+### Identify current solution version
+
+You can find the version of the currently deployed solution by retrieving the `SolutionVersion` output for the solution stack. The solution version is also shown on the Dashboard of the Web UI.
+
+### Identify the Stack URL to deploy
+
+After reviewing the [Changelog], obtain the `Template Link` url of the latest version from ["Deploying the Solution"](#deploying-the-solution) (it will be similar to `https://solution-builders-us-east-1.s3.us-east-1.amazonaws.com/amazon-s3-find-and-forget/latest/template.yaml`). If you wish to deploy a specific version rather than the latest version, replace `latest` from the url with the chosen version, for instance `https://solution-builders-us-east-1.s3.us-east-1.amazonaws.com/amazon-s3-find-and-forget/v0.2/template.yaml`.
+
+### Minor Upgrades: Perform CloudFormation Stack Update
+
+To deploy via AWS Console:
+1. Open the [CloudFormation Console Page] and choose the Solution by selecting to the stack's radio button, then choose "Update"
+2. Choose "Replace current template" and then input the template URL for the version you wish to deploy in the "Amazon S3 URL" textbox, then choose "Next"
+3. On the *Stack Details* screen, review the Parameters and then choose "Next"
+4. On the *Configure stack options* screen, choose "Next"
+5. On the *Review stack* screen, you must check the boxes for:
+   * "*I acknowledge that AWS CloudFormation might create IAM resources*"
+   * "*I acknowledge that AWS CloudFormation might create IAM resources
+   with custom names*"
+   * "*I acknowledge that AWS CloudFormation might require the following capability: CAPABILITY_AUTO_EXPAND*"
+
+   These are required to allow CloudFormation to create a Role to allow access
+   to resources needed by the stack and name the resources in a dynamic way.
+6. Choose "Update stack" to start the stack update.
+7. Wait for the CloudFormation stack to finish updating. Completion is indicated when the "Stack status" is "*UPDATE_COMPLETE*".
+
+To deploy via the AWS CLI [consult the documentation](https://docs.aws.amazon.com/cli/latest/reference/cloudformation/update-stack.html).
+
+
+### Major Upgrades: Manual Rolling Deployment
+
+The process for a manual rolling deployment is as follows: 
+
+1. Create a new stack from scratch
+2. Export the data from the old stack to the new stack
+3. Migrate consumers to new API and Web UI URLs
+4. Delete the old stack.
+
+The steps for performing this process are:
+
+1. Deploy a new instance of the Solution by following the instructions contained in the ["Deploying the Solution" section](#deploying-the-solution). Make sure you use unique values for Stack Name and ResourcePrefix parameter which differ from existing stack.
+2. Migrate Data from DynamoDB to ensure the new stack contains the necessary configuration related to Data Mappers and settings. When both stacks are deployed in the same account and region, the simplest way to migrate is via [On-Demand Backup and Restore]. If the stacks are deployed in different regions or accounts, you can use [AWS Data Pipeline].
+3. Ensure that all the bucket policies for the Data Mappers are in place for the new stack. See the ["Granting Access to Data" section](#granting-access-to-data) for steps to do this.
+4. Review the [Changelog] for changes that may affect how you use the new deployment. This may require you to make changes to any software you have that interacts with the solution's API.
+5. Once all the consumers are migrated to the new stack (API and Web UI), delete the old stack. 
+
+## Deleting the Solution
+
+To delete a stack via AWS Console:
+1. Open the [CloudFormation Console Page] and choose the solution stack, then choose "Delete"
+2. Once the confirmation modal appears, choose "Delete stack".
+3. Wait for the CloudFormation stack to finish updating. Completion is indicated when the "Stack status" is "*DELETE_COMPLETE*".
+
+To delete a stack via the AWS CLI [consult the documentation](https://docs.aws.amazon.com/cli/latest/reference/cloudformation/delete-stack.html).
+
 
 [API Documentation]: api/README.md
 [Troubleshooting]: TROUBLESHOOTING.md
@@ -497,3 +561,7 @@ stack update. For more information, see [Updating the Stack](#updating-the-stack
 [Cross Account KMS Access]: https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-modifying-external-accounts.html
 [Updating an SSM Parameter]: https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-cli.html
 [deploy using the aws cli]: https://docs.aws.amazon.com/cli/latest/reference/cloudformation/deploy/index.html
+[cloudformation console page]: https://console.aws.amazon.com/cloudformation/home
+[changelog]: ../CHANGELOG.md
+[on-demand backup and restore]: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/BackupRestore.html
+[aws data pipeline]: https://aws.amazon.com/datapipeline
