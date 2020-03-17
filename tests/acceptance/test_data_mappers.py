@@ -3,6 +3,7 @@ from boto3.dynamodb.conditions import Key
 
 pytestmark = [pytest.mark.acceptance, pytest.mark.api, pytest.mark.data_mappers]
 
+
 @pytest.mark.auth
 def test_auth(api_client, data_mapper_base_endpoint):
     headers = {"Authorization": None}

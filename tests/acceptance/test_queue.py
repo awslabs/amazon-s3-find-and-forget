@@ -8,7 +8,7 @@ pytestmark = [pytest.mark.acceptance, pytest.mark.api, pytest.mark.queue, pytest
 @pytest.mark.auth
 def test_auth(api_client, queue_base_endpoint):
     headers = {"Authorization": None}
-    assert 401 == api_client.patch(queue_base_endpoint, json={}).status_code
+    assert 401 == api_client.patch(queue_base_endpoint, json={}, headers=headers).status_code
     assert 401 == api_client.get(queue_base_endpoint, headers=headers).status_code
     assert 401 == api_client.delete("{}/matches".format(queue_base_endpoint), json={}, headers=headers).status_code
     assert 401 == api_client.delete(queue_base_endpoint, headers=headers).status_code
