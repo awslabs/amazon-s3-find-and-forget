@@ -142,7 +142,8 @@ resources.
    * **ForgetQueueWaitSeconds:** (Default: 30) How long to wait when
    checking if the Forget phase is complete
    * **CognitoAdvancedSecurity:** (Default: "OFF") The setting to use for Cognito
-   advanced security.
+   advanced security. Allowed values for this parameter are: OFF, AUDIT and
+   ENFORCED. For more information on this parameter, see [Cognito Advanced Security]
    * **EnableAccessLogging:** (Default: false) Whether to enable access logging
    via CloudWatch Logs for API Gateway. Enabling this feature will incur
    additional costs.
@@ -562,8 +563,9 @@ To delete a stack via the AWS CLI [consult the documentation](https://docs.aws.a
 [Cross Account S3 Access]: https://docs.aws.amazon.com/AmazonS3/latest/dev/example-walkthroughs-managing-access-example2.html
 [Cross Account KMS Access]: https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-modifying-external-accounts.html
 [Updating an SSM Parameter]: https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-cli.html
-[deploy using the aws cli]: https://docs.aws.amazon.com/cli/latest/reference/cloudformation/deploy/index.html
+[deploy using the AWS CLI]: https://docs.aws.amazon.com/cli/latest/reference/cloudformation/deploy/index.html
 [cloudformation console page]: https://console.aws.amazon.com/cloudformation/home
 [changelog]: ../CHANGELOG.md
 [on-demand backup and restore]: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/BackupRestore.html
-[aws data pipeline]: https://aws.amazon.com/datapipeline
+[AWS Data Pipeline]: https://aws.amazon.com/datapipeline
+[Cognito Advanced Security]: https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-settings-advanced-security.html
