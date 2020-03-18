@@ -3,36 +3,24 @@ update_configs:
   - package_manager: "javascript"
     directory: "/frontend"
     update_schedule: "monthly"
-    allowed_updates:
-      - match:
-          update_type: "security"
     default_labels:
       - "frontend"
       - "dependencies"
   - package_manager: "javascript"
     directory: "/"
     update_schedule: "monthly"
-    allowed_updates:
-      - match:
-          update_type: "security"
     default_labels:
       - "ci"
       - "dependencies"
   - package_manager: "python"
     directory: "/"
     update_schedule: "monthly"
-    allowed_updates:
-      - match:
-          update_type: "security"
     default_labels:
       - "backend"
       - "dependencies"
   - package_manager: "docker"
     directory: "/backend/ecs_tasks/delete_files"
     update_schedule: "monthly"
-    allowed_updates:
-      - match:
-          update_type: "security"
     default_labels:
       - "backend"
       - "dependencies"
