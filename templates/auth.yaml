@@ -5,6 +5,8 @@ Description: Amazon S3 Find and Forget Auth Infrastructure
 Parameters:
   AdminEmail:
     Type: String
+  CognitoAdvancedSecurity:
+    Type: String
   ResourcePrefix:
     Type: String
 
@@ -37,7 +39,7 @@ Resources:
       AutoVerifiedAttributes:
         - email
       UserPoolAddOns:
-        AdvancedSecurityMode: AUDIT
+        AdvancedSecurityMode: !Ref CognitoAdvancedSecurity
       Policies:
         PasswordPolicy:
           MinimumLength: 8

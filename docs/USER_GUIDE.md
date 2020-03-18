@@ -111,10 +111,6 @@ resources.
    this stack in CloudFormation once deployed.
    * **AdminEmail:** The email address you wish to setup as the initial
    user of this Amazon S3 Find and Forget deployment.
-   * **JobDetailsRetentionDays:** (Default: 0) How long job records should
-   remain in the Job table for. Use 0 to retain logs indefinitely. **Note:**
-   If the retention setting is changed it will only apply to *new* deletion jobs.
-   Existing deletion jobs will retain the TTL at the time they were ran.
    * **VpcSecurityGroups:** List of security group IDs to apply to Fargate
    deletion tasks. For more information on how to obtain these IDs, see
    [Obtaining VPC Information](#obtaining-vpc-information)
@@ -145,22 +141,28 @@ resources.
    specified concurrency limit.
    * **ForgetQueueWaitSeconds:** (Default: 30) How long to wait when
    checking if the Forget phase is complete
-   * **AthenaWorkGroup:** (Default: primary) The Athena work group that should
-   be used for when the solution runs Athena queries.
+   * **CognitoAdvancedSecurity:** (Default: "OFF") The setting to use for Cognito
+   advanced security.
    * **EnableAccessLogging:** (Default: false) Whether to enable access logging
    via CloudWatch Logs for API Gateway. Enabling this feature will incur
    additional costs.
    * **EnableContainerInsights:** (Default: false) Whether to enable CloudWatch
    Container Insights.
+   * **JobDetailsRetentionDays:** (Default: 0) How long job records should
+   remain in the Job table for. Use 0 to retain logs indefinitely. **Note:**
+   If the retention setting is changed it will only apply to *new* deletion jobs.
+   Existing deletion jobs will retain the TTL at the time they were ran.
+   * **EnableDynamoDBBackups:** (Default: false) Whether to enable [DynamoDB Point-in-Time Recovery]
+   for the DynamoDB tables. Enabling this feature will incur additional costs. See
+   the [DynamoDB Pricing] page for the associated costs.
+   * **RetainDynamoDBTables:** (Default: true) Whether to retain the DynamoDB tables upon Stack Update and Stack Deletion.
+   * **AthenaWorkGroup:** (Default: primary) The Athena work group that should
+   be used for when the solution runs Athena queries.
    * **PreBuiltArtefactsBucketOverride:** (Default: false) Overrides the default
    Bucket containing Front-end and Back-end pre-built artefacts. Use this
    if you are using a customised version of these artefacts.
    * **ResourcePrefix:** (Default: S3F2) Resource prefix to apply to resource
    names when creating statically named resources.
-   * **EnableDynamoDBBackups:** (Default: false) Whether to enable [DynamoDB Point-in-Time Recovery]
-   for the DynamoDB tables. Enabling this feature will incur additional costs. See
-   the [DynamoDB Pricing] page for the associated costs.
-   * **RetainDynamoDBTables:** (Default: true) Whether to retain the DynamoDB tables upon Stack Update and Stack Deletion.
 
    When completed, click *Next*
 5. [Configure stack options](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-add-tags.html) if desired, then click *Next*.
