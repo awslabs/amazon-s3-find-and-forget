@@ -41,24 +41,6 @@ Resources:
             Condition:
               Bool:
                 'aws:SecureTransport': 'false'
-          - Sid: DenyIncorrectEncryptionHeader
-            Action: s3:PutObject*
-            Effect: Deny
-            Resource: !Sub arn:aws:s3:::${WebUIBucket}/*
-            Principal: '*'
-            Condition:
-              StringNotEquals:
-                's3:x-amz-server-side-encryption':
-                  - AES256
-                  - aws:kms
-          - Sid: DenyUnEncryptedObjectUploads
-            Action: s3:PutObject*
-            Effect: Deny
-            Resource: !Sub arn:aws:s3:::${WebUIBucket}/*
-            Principal: '*'
-            Condition:
-              'Null':
-                's3:x-amz-server-side-encryption': true
           - !If
             - WithCloudFront
             - Sid: CloudFrontOriginOnly
