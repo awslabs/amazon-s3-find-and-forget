@@ -46,6 +46,14 @@ Parameters:
     AllowedValues:
       - "true"
       - "false"
+  CognitoAdvancedSecurity:
+    Description: The type of Cognito advanced security to enable. Disabled by default.
+    Type: String
+    Default: "OFF"
+    AllowedValues:
+      - "OFF"
+      - "AUDIT"
+      - "ENFORCED"
   EnableContainerInsights:
     Description: Enable ECS Container Insights
     Type: String
@@ -165,6 +173,7 @@ Resources:
       TemplateURL: ./auth.yaml
       Parameters:
         AdminEmail: !Ref AdminEmail
+        CognitoAdvancedSecurity: !Ref CognitoAdvancedSecurity
         ResourcePrefix: !Ref ResourcePrefix
   DDBStack:
     Type: AWS::CloudFormation::Stack
@@ -313,18 +322,16 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: "Admin Configuration"
+          default: "Required"
         Parameters:
           - AdminEmail
-          - JobDetailsRetentionDays
+          - VpcSecurityGroups
+          - VpcSubnets
       - Label:
           default: "Network Configuration"
         Parameters:
-          - VpcSecurityGroups
-          - VpcSubnets
           - CreateCloudFrontDistribution
           - AccessControlAllowOriginOverride
-          - EnableAccessLogging
       - Label:
           default: "Performance Configuration"
         Parameters:
@@ -339,11 +346,17 @@ Metadata:
           - QueryQueueWaitSeconds
           - ForgetQueueWaitSeconds
       - Label:
+          default: "Auditing, Logging & Monitoring"
+        Parameters:
+          - CognitoAdvancedSecurity
+          - EnableAccessLogging
+          - EnableContainerInsights
+          - JobDetailsRetentionDays
+      - Label:
           default: "Advanced Configuration"
         Parameters:
-          - AthenaWorkGroup
-          - EnableContainerInsights
-          - PreBuiltArtefactsBucketOverride
-          - ResourcePrefix
           - EnableDynamoDBBackups
           - RetainDynamoDBTables
+          - AthenaWorkGroup
+          - PreBuiltArtefactsBucketOverride
+          - ResourcePrefix
