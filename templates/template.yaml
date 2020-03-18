@@ -124,6 +124,21 @@ Resources:
             ExpirationInDays: 1
             NoncurrentVersionExpirationInDays: 1
 
+  TempBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref TempBucket
+      PolicyDocument:
+        Statement:
+          - Sid: HttpsOnly
+            Action: '*'
+            Effect: Deny
+            Resource: !Sub arn:aws:s3:::${TempBucket}/*
+            Principal: '*'
+            Condition:
+              Bool:
+                'aws:SecureTransport': 'false'
+
   ConfigParameter:
     Type: AWS::SSM::Parameter
     Properties:
