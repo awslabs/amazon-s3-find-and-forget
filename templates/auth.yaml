@@ -36,6 +36,8 @@ Resources:
           EmailSubject: 'Your temporary password for Amazon S3 Find and Forget'
       AutoVerifiedAttributes:
         - email
+      UserPoolAddOns:
+        AdvancedSecurityMode: AUDIT
       Policies:
         PasswordPolicy:
           MinimumLength: 8
