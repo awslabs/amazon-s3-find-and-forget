@@ -10,7 +10,7 @@ repos:
     hooks:
     -   id: git-secrets
 -   repo: https://github.com/aws-cloudformation/cfn-python-lint
-    rev: v0.28.2
+    rev: v0.29.0
     hooks:
     -   id: cfn-python-lint
         args: [--ignore-templates=templates/api.definition.yml]

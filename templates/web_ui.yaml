@@ -1,9 +1,29 @@
 AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
 Description: Amazon S3 Find and Forget Web UI
 
+Globals:
+  Function:
+    Runtime: python3.7
+    Timeout: 3
+    Layers: !Ref CommonLayers
+
 Parameters:
+  CommonLayers:
+    Type: CommaDelimitedList
   CreateCloudFrontDistribution:
     Type: String
+  LogLevel:
+    Type: String
+    Default: INFO
+    AllowedValues:
+    - CRITICAL
+    - FATAL
+    - ERROR
+    - WARNING
+    - INFO
+    - DEBUG
+    - NOTSET
   ResourcePrefix:
     Type: String
 
@@ -83,9 +103,58 @@ Resources:
             Cookies:
               Forward: none
           ViewerProtocolPolicy: redirect-to-https
+          LambdaFunctionAssociations:
+            - EventType: origin-response
+              IncludeBody: false
+              LambdaFunctionARN: !GetAtt CreateRegionalEdgeLambda.FunctionArnWithVersion
         PriceClass: PriceClass_All
         ViewerCertificate:
           CloudFrontDefaultCertificate: true
+
+  CreateRegionalEdgeLambdaFunction:
+    Type: AWS::Serverless::Function
+    Condition: WithCloudFront
+    Properties:
+      Handler: create_regional_edge_lambda.handler
+      CodeUri: ../backend/lambdas/custom_resources/
+      Description: Custom Lambda resource for the Amazon S3 Find and Forget Cloudformation Stack
+      Policies:
+        - Statement:
+          - Effect: Allow
+            Action:
+              - lambda:CreateFunction
+              - lambda:DeleteFunction
+            Resource: !Sub arn:aws:lambda:us-east-1:${AWS::AccountId}:function:${ResourcePrefix}*
+          - Effect: Allow
+            Action: iam:PassRole
+            Resource: !GetAtt LambdaEdgeFunctionRole.Arn
+
+  CreateRegionalEdgeLambda:
+    Type: Custom::Setup
+    Condition: WithCloudFront
+    Properties:
+      ServiceToken: !GetAtt CreateRegionalEdgeLambdaFunction.Arn
+      LogLevel: !Ref LogLevel
+      RoleArn: !GetAtt LambdaEdgeFunctionRole.Arn
+      ResourcePrefix: !Ref ResourcePrefix
+
+  LambdaEdgeFunctionRole:
+    Type: AWS::IAM::Role
+    Condition: WithCloudFront
+    Properties:
+        Path: "/"
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Sid: AllowLambdaServiceToAssumeRole
+              Effect: Allow
+              Action: sts:AssumeRole
+              Principal:
+                Service: 
+                  - lambda.amazonaws.com
+                  - edgelambda.amazonaws.com
 
 Outputs:
   CloudFrontDistribution:

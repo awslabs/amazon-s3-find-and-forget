@@ -282,6 +282,12 @@ Resources:
     Properties:
       TemplateURL: ./web_ui.yaml
       Parameters:
+        CommonLayers: !Join
+          - ","
+          - - !GetAtt LayersStack.Outputs.AWSSDKLayer
+            - !GetAtt LayersStack.Outputs.Decorators
+            - !GetAtt LayersStack.Outputs.BotoUtils
+            - !GetAtt LayersStack.Outputs.CustomResourceHelper
         CreateCloudFrontDistribution: !Ref CreateCloudFrontDistribution
         ResourcePrefix: !Ref ResourcePrefix
 
