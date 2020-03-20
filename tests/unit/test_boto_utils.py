@@ -9,7 +9,8 @@ from botocore.exceptions import ClientError
 from mock import MagicMock, ANY, patch
 
 from boto_utils import convert_iso8601_to_epoch, paginate, batch_sqs_msgs, read_queue, emit_event, DecimalEncoder, \
-    normalise_dates, deserialize_item, running_job_exists, get_config, utc_timestamp, get_job_expiry, parse_s3_url
+    normalise_dates, deserialize_item, running_job_exists, get_config, utc_timestamp, get_job_expiry, parse_s3_url, \
+    get_user_info
 
 pytestmark = [pytest.mark.unit, pytest.mark.layers]
 
@@ -322,3 +323,26 @@ def test_it_throws_for_invalid_urls():
         parse_s3_url("not a url")
     with pytest.raises(ValueError):
         parse_s3_url(["s3://", "not", "string"])
+
+def test_it_fetches_userinfo_from_lambda_event():
+    result = get_user_info({
+        "requestContext": {
+            "authorizer": {
+                "claims": {
+                    "sub": "12345678-1234-1234-1234-123456123456",
+                    "aud": "12345678901234567890123456",
+                    "email_verified": "true",
+                    "event_id": "12345678-1234-1234-1234-654321654321",
+                    "token_use": "id",
+                    "auth_time": "1581433394",
+                    "iss": "https://cognito-idp.eu-west-1.amazonaws.com/eu-west-1_123456789",
+                    "cognito:username": "email@test.com",
+                    "exp": "Tue Feb 18 18:41:50 UTC 2020",
+                    "iat": "Tue Feb 18 17:41:50 UTC 2020",
+                    "email": "email@test.com"
+                }
+            }
+        }
+    })
+
+    assert result == {"Username": "email@test.com", "Sub": "12345678-1234-1234-1234-123456123456"}
