@@ -97,7 +97,7 @@ def save(client, buf, bucket, key, source_version=None):
     write_grantees = ",".join(get_grantees(acl_resp, "WRITE"))
     if write_grantees:
         logger.info("WRITE grant found. Restoring additional grantees for object")
-        client.put_object_acl(Bucket=bucket, Key=key, VersionId=source_version, **{
+        client.put_object_acl(Bucket=bucket, Key=key, VersionId=new_version_id, **{
             **request_payer_args,
             **acl_args,
             'GrantWrite': write_grantees,

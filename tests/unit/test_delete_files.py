@@ -603,12 +603,12 @@ def test_it_restores_write_permissions(mock_grantees, mock_acl, mock_tagging, mo
     mock_grantees.return_value = {"id=123"}
     buf = BytesIO()
     mock_s3.open.return_value = mock_s3
-    mock_s3.__enter__.return_value = MagicMock(version_id="abc123")
+    mock_s3.__enter__.return_value = MagicMock(version_id="new_version123")
     save(mock_client, buf, "bucket", "key", "abc123")
     mock_client.put_object_acl.assert_called_with(
         Bucket="bucket",
         Key="key",
-        VersionId="abc123",
+        VersionId="new_version123",
         GrantFullControl="id=abc",
         GrantWrite="id=123"
     )
