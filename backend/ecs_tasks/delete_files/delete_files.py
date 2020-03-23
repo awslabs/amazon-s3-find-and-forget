@@ -227,6 +227,10 @@ def get_bucket_versioning(client, bucket):
 
     return resp['Status'] == "Enabled"
 
+def get_object_version(client, bucket, key):
+    resp = client.head_object(Bucket=bucket, Key=key)
+
+    return resp['VersionId']
 
 def emit_deletion_event(message_body, stats):
     job_id = message_body["JobId"]
@@ -321,6 +325,9 @@ def execute(message_body, receipt_handle):
             logger.info("Generating new parquet file without matches")
             out_sink, stats = delete_matches_from_file(infile, cols)
         if stats["DeletedRows"] > 0:
+            latest_version = get_object_version(client, input_bucket, input_key)
+            if not latest_version == source_version:
+                raise ValueError("Object versions consistency check failed. Race condition detected (Expected version: {}, detected: {})".format(source_version, latest_version))
             with pa.BufferReader(out_sink.getvalue()) as output_buf:
                 new_version = save(client, output_buf, input_bucket, input_key, source_version)
                 logger.info("New object version: %s", new_version)

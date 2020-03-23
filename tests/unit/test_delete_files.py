@@ -20,12 +20,13 @@ with patch.dict(os.environ, {
     emit_deletion_event, emit_failed_deletion_event, save, get_grantees, \
     get_object_info, get_object_tags, get_object_acl, get_requester_payment, get_row_count, \
     delete_from_dataframe, delete_matches_from_file, load_parquet, kill_handler, handle_error, \
-    get_bucket_versioning, sanitize_message
+    get_bucket_versioning, sanitize_message, get_object_version
 
 pytestmark = [pytest.mark.unit]
 
 
 @patch.dict(os.environ, {'JobTable': 'test'})
+@patch("backend.ecs_tasks.delete_files.delete_files.get_object_version", MagicMock(return_value="abc123"))
 @patch("backend.ecs_tasks.delete_files.delete_files.get_bucket_versioning", MagicMock(return_value=True))
 @patch("backend.ecs_tasks.delete_files.delete_files.validate_message", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.queue", MagicMock())
@@ -354,6 +355,12 @@ def test_it_returns_bucket_versioning_disabled():
     assert not get_bucket_versioning(client, "bucket")
 
 
+def test_it_returns_latest_object_version():
+    client = MagicMock()
+    client.head_object.return_value = {"VersionId": "versionABC"}
+    assert get_object_version(client,  "", "") == 'versionABC'
+
+
 def test_it_returns_requester_pays():
     get_requester_payment.cache_clear()
     client = MagicMock()
@@ -615,25 +622,53 @@ def test_it_restores_write_permissions(mock_grantees, mock_acl, mock_tagging, mo
 
 
 @patch.dict(os.environ, {'JobTable': 'test'})
+@patch("backend.ecs_tasks.delete_files.delete_files.get_object_version", MagicMock(return_value="abc123"))
 @patch("backend.ecs_tasks.delete_files.delete_files.get_bucket_versioning", MagicMock(return_value=True))
 @patch("backend.ecs_tasks.delete_files.delete_files.validate_message", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.queue", MagicMock())
-@patch("backend.ecs_tasks.delete_files.delete_files.s3", MagicMock())
+@patch("backend.ecs_tasks.delete_files.delete_files.s3")
 @patch("backend.ecs_tasks.delete_files.delete_files.load_parquet")
 @patch("backend.ecs_tasks.delete_files.delete_files.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.delete_files.handle_error")
 @patch("backend.ecs_tasks.delete_files.delete_files.save")
-def test_it_provides_logs_for_acl_fail(mock_save, mock_handler, mock_delete, mock_load):
+def test_it_provides_logs_for_acl_fail(mock_save, mock_handler, mock_delete, mock_load, mock_s3):
     parquet_file = MagicMock()
     parquet_file.num_row_groups = 1
     mock_load.return_value = parquet_file
     mock_save.side_effect = ClientError({}, "PutObjectAcl")
     mock_delete.return_value = pa.BufferOutputStream(), {"DeletedRows": 1}
+    mock_s3.open.return_value = mock_s3
+    mock_s3.__enter__.return_value = MagicMock(version_id="abc123")
     execute(message_stub(), "receipt_handle")
     mock_save.assert_called()
     mock_handler.assert_called_with(ANY, ANY, "ClientError: An error occurred (Unknown) when calling the PutObjectAcl "
                                               "operation: Unknown. Redacted object uploaded successfully but unable to "
                                               "restore WRITE ACL")
+
+
+@patch.dict(os.environ, {'JobTable': 'test'})
+@patch("backend.ecs_tasks.delete_files.delete_files.get_object_version", MagicMock(return_value="version2"))
+@patch("backend.ecs_tasks.delete_files.delete_files.get_bucket_versioning", MagicMock(return_value=True))
+@patch("backend.ecs_tasks.delete_files.delete_files.validate_message", MagicMock())
+@patch("backend.ecs_tasks.delete_files.delete_files.queue", MagicMock())
+@patch("backend.ecs_tasks.delete_files.delete_files.s3")
+@patch("backend.ecs_tasks.delete_files.delete_files.load_parquet")
+@patch("backend.ecs_tasks.delete_files.delete_files.delete_matches_from_file")
+@patch("backend.ecs_tasks.delete_files.delete_files.handle_error")
+@patch("backend.ecs_tasks.delete_files.delete_files.save")
+def test_it_skip_saving_and_provides_logs_for_version_conflict(mock_save, mock_handler, mock_delete, mock_load, mock_s3):
+    parquet_file = MagicMock()
+    parquet_file.num_row_groups = 1
+    mock_load.return_value = parquet_file
+    mock_save.side_effect = ClientError({}, "PutObjectAcl")
+    mock_delete.return_value = pa.BufferOutputStream(), {"DeletedRows": 1}
+    mock_s3.open.return_value = mock_s3
+    mock_s3.__enter__.return_value = MagicMock(version_id="version1")
+    execute(message_stub(), "receipt_handle")
+    mock_save.assert_not_called()
+    mock_handler.assert_called_with(ANY, ANY, "Unprocessable message: Object versions consistency check failed. "
+                                              "Race condition detected (Expected version: version1, detected: version2)")
+
 
 
 def test_it_loads_parquet_files():
