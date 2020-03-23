@@ -55,6 +55,7 @@ Resources:
       ClientName: !Sub ${ResourcePrefix}UserPoolClientName
       GenerateSecret: false
       RefreshTokenValidity: 30
+      PreventUserExistenceErrors: ENABLED
 
   CognitoUserPoolUser:
     Type: AWS::Cognito::UserPoolUser
