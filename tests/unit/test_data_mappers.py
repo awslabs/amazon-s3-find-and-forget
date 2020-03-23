@@ -11,16 +11,24 @@ with patch.dict(os.environ, {"DataMapperTable": "DataMapperTable"}):
 
 pytestmark = [pytest.mark.unit, pytest.mark.api, pytest.mark.data_mappers]
 
+autorization_mock = {
+    "authorizer": {
+        "claims": {
+            "sub": "cognitoSub",
+            "cognito:username": "cognitoUsername"
+        }
+    }
+}
 
 @patch("backend.lambdas.data_mappers.handlers.table")
 def test_it_retrieves_all_items(table):
     table.scan.return_value = {"Items": []}
     response = handlers.get_data_mappers_handler({}, SimpleNamespace())
     assert {
-               "statusCode": 200,
-               "body": json.dumps({"DataMappers": []}),
-               "headers": ANY
-           } == response
+        "statusCode": 200,
+        "body": json.dumps({"DataMappers": []}),
+        "headers": ANY
+    } == response
 
 
 @patch("backend.lambdas.data_mappers.handlers.table")
@@ -39,7 +47,8 @@ def test_it_creates_data_mapper(validate_mapper, table):
                 "Table": "test"
             },
             "Format": "parquet"
-        })
+        }),
+        "requestContext": autorization_mock
     }, SimpleNamespace())
 
     assert 201 == response["statusCode"]
@@ -52,7 +61,11 @@ def test_it_creates_data_mapper(validate_mapper, table):
                    "Database": "test",
                    "Table": "test"
                },
-               "Format": "parquet"
+               "Format": "parquet",
+               "CreatedBy": {
+                   "Username": "cognitoUsername",
+                   "Sub": "cognitoSub"
+               }
            } == json.loads(response["body"])
 
 
@@ -70,22 +83,27 @@ def test_it_provides_default_format(validate_mapper, table):
                 "DataCatalogProvider": "glue",
                 "Database": "test",
                 "Table": "test"
-            },
-        })
+            }
+        }),
+        "requestContext": autorization_mock
     }, SimpleNamespace())
 
     assert 201 == response["statusCode"]
     assert {
-               "DataMapperId": "test",
-               "Columns": ["column"],
-               "QueryExecutor": "athena",
-               "QueryExecutorParameters": {
-                   "DataCatalogProvider": "glue",
-                   "Database": "test",
-                   "Table": "test"
-               },
-               "Format": "parquet"
-           } == json.loads(response["body"])
+        "DataMapperId": "test",
+        "Columns": ["column"],
+        "QueryExecutor": "athena",
+        "QueryExecutorParameters": {
+            "DataCatalogProvider": "glue",
+            "Database": "test",
+            "Table": "test"
+        },
+        "Format": "parquet",
+        "CreatedBy": {
+            "Username": "cognitoUsername",
+            "Sub": "cognitoSub"
+        }
+    } == json.loads(response["body"])
 
 
 @patch("backend.lambdas.data_mappers.handlers.validate_mapper")
@@ -104,7 +122,8 @@ def test_it_rejects_where_glue_validation_fails(validate_mapper):
                 "Database": "test",
                 "Table": "test"
             },
-        })
+        }),
+        "requestContext": autorization_mock
     }, SimpleNamespace())
     assert 400 == response["statusCode"]
 
@@ -118,9 +137,9 @@ def test_it_deletes_data_mapper(table):
         }
     }, SimpleNamespace())
     assert {
-               "statusCode": 204,
-               "headers": ANY
-           } == response
+        "statusCode": 204,
+        "headers": ANY
+    } == response
 
 
 @patch("backend.lambdas.data_mappers.handlers.running_job_exists", Mock(return_value=True))

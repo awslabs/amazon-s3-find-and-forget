@@ -1,4 +1,6 @@
+import mock
 import pytest
+from copy import deepcopy
 from boto3.dynamodb.conditions import Key
 
 pytestmark = [pytest.mark.acceptance, pytest.mark.api, pytest.mark.data_mappers]
@@ -25,19 +27,24 @@ def test_it_creates_data_mapper(api_client, data_mapper_base_endpoint, data_mapp
             "Database": table["Database"],
             "Table": table["Table"]
         },
-        "Format": "parquet",
+        "Format": "parquet"
     }
     # Act
     response = api_client.put("{}/{}".format(data_mapper_base_endpoint, key), json=data_mapper)
     response_body = response.json()
     # Assert
+    expected = deepcopy(data_mapper)
+    expected['CreatedBy'] = {
+        "Username": "aws-uk-sa-builders@amazon.com",
+        "Sub": mock.ANY
+    }
     # Check the response is ok
     assert 201 == response.status_code
-    assert data_mapper == response_body
+    assert expected == response_body
     # Check the item exists in the DDB Table
     query_result = data_mapper_table.query(KeyConditionExpression=Key("DataMapperId").eq(key))
     assert 1 == len(query_result["Items"])
-    assert data_mapper == query_result["Items"][0]
+    assert expected == query_result["Items"][0]
     assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
 
 

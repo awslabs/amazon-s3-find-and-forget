@@ -6,7 +6,7 @@ import os
 
 import boto3
 
-from boto_utils import running_job_exists
+from boto_utils import get_user_info, running_job_exists
 from decorators import with_logging, request_validator, catch_errors, add_cors_headers, json_body_loader, load_schema
 
 dynamodb_resource = boto3.resource("dynamodb")
@@ -44,7 +44,8 @@ def create_data_mapper_handler(event, context):
         "Columns": body["Columns"],
         "Format": body.get("Format", "parquet"),
         "QueryExecutor": body["QueryExecutor"],
-        "QueryExecutorParameters": body["QueryExecutorParameters"]
+        "QueryExecutorParameters": body["QueryExecutorParameters"],
+        "CreatedBy": get_user_info(event)
     }
     table.put_item(Item=item)
 

@@ -10,6 +10,14 @@ with patch.dict(os.environ, {"DeletionQueueTable": "DeletionQueueTable"}):
 
 pytestmark = [pytest.mark.unit, pytest.mark.api, pytest.mark.queue]
 
+autorization_mock = {
+    "authorizer": {
+        "claims": {
+            "sub": "cognitoSub",
+            "cognito:username": "cognitoUsername"
+        }
+    }
+}
 
 @patch("backend.lambdas.queue.handlers.deletion_queue_table")
 def test_it_retrieves_all_items(table):
@@ -27,8 +35,9 @@ def test_it_add_to_queue(table):
     response = handlers.enqueue_handler({
         "body": json.dumps({
             "MatchId": "test",
-            "DataMappers": ["a"],
-        })
+            "DataMappers": ["a"]
+        }),
+        "requestContext": autorization_mock
     }, SimpleNamespace())
 
     assert 201 == response["statusCode"]
@@ -36,6 +45,10 @@ def test_it_add_to_queue(table):
         "MatchId": "test",
         "CreatedAt": ANY,
         "DataMappers": ["a"],
+        "CreatedBy": {
+            "Username": "cognitoUsername",
+            "Sub": "cognitoSub"
+        }
     } == json.loads(response["body"])
 
 
@@ -44,7 +57,8 @@ def test_it_provides_default_data_mappers(table):
     response = handlers.enqueue_handler({
         "body": json.dumps({
             "MatchId": "test",
-        })
+        }),
+        "requestContext": autorization_mock
     }, SimpleNamespace())
 
     assert 201 == response["statusCode"]
@@ -52,6 +66,10 @@ def test_it_provides_default_data_mappers(table):
         "MatchId": "test",
         "CreatedAt": ANY,
         "DataMappers": [],
+        "CreatedBy": {
+            "Username": "cognitoUsername",
+            "Sub": "cognitoSub"
+        }
     } == json.loads(response["body"])
 
 
@@ -107,7 +125,8 @@ def test_it_process_queue(mock_config, mock_running_job, job_table, q_table, uui
     q_table.scan.return_value = {"Items": [{"MatchId": "123", "CreatedAt": 123}]}
     uuid.uuid4.return_value = 123
     response = handlers.process_handler({
-        "body": ""
+        "body": "",
+        "requestContext": autorization_mock
     }, SimpleNamespace())
     job_table.put_item.assert_called_with(Item={
         "Id": "123",
@@ -121,7 +140,11 @@ def test_it_process_queue(mock_config, mock_running_job, job_table, q_table, uui
         "DeletionTasksMaxNumber": 50,
         "QueryExecutionWaitSeconds": 5,
         "QueryQueueWaitSeconds": 5,
-        "ForgetQueueWaitSeconds": 30
+        "ForgetQueueWaitSeconds": 30,
+        "CreatedBy": {
+            "Username": "cognitoUsername",
+            "Sub": "cognitoSub"
+        }
     })
     assert 202 == response["statusCode"]
     assert "headers" in response
@@ -137,7 +160,11 @@ def test_it_process_queue(mock_config, mock_running_job, job_table, q_table, uui
         "DeletionTasksMaxNumber": 50,
         "QueryExecutionWaitSeconds": 5,
         "QueryQueueWaitSeconds": 5,
-        "ForgetQueueWaitSeconds": 30
+        "ForgetQueueWaitSeconds": 30,
+        "CreatedBy": {
+            "Username": "cognitoUsername",
+            "Sub": "cognitoSub"
+        }
     } == json.loads(response["body"])
 
 
@@ -162,7 +189,8 @@ def test_it_applies_expiry(mock_utc, mock_config, mock_running_job, job_table, q
     q_table.scan.return_value = {"Items": [{"MatchId": "123", "CreatedAt": 123}]}
     uuid.uuid4.return_value = 123
     response = handlers.process_handler({
-        "body": ""
+        "body": "",
+        "requestContext": autorization_mock
     }, SimpleNamespace())
     mock_utc.assert_called_with(days=30)
     job_table.put_item.assert_called_with(Item={
@@ -178,7 +206,11 @@ def test_it_applies_expiry(mock_utc, mock_config, mock_running_job, job_table, q
         "DeletionTasksMaxNumber": 50,
         "QueryExecutionWaitSeconds": 5,
         "QueryQueueWaitSeconds": 5,
-        "ForgetQueueWaitSeconds": 30
+        "ForgetQueueWaitSeconds": 30,
+        "CreatedBy": {
+            "Username": "cognitoUsername",
+            "Sub": "cognitoSub"
+        }
     })
     assert 202 == response["statusCode"]
 
@@ -187,7 +219,8 @@ def test_it_applies_expiry(mock_utc, mock_config, mock_running_job, job_table, q
 def test_it_prevents_concurrent_running_jobs(mock_running_job):
     mock_running_job.return_value = True
     response = handlers.process_handler({
-        "body": ""
+        "body": "",
+        "requestContext": autorization_mock
     }, SimpleNamespace())
 
     assert 400 == response["statusCode"]
