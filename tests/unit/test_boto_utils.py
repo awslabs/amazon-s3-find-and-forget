@@ -324,6 +324,7 @@ def test_it_throws_for_invalid_urls():
     with pytest.raises(ValueError):
         parse_s3_url(["s3://", "not", "string"])
 
+
 def test_it_fetches_userinfo_from_lambda_event():
     result = get_user_info({
         "requestContext": {
@@ -346,3 +347,8 @@ def test_it_fetches_userinfo_from_lambda_event():
     })
 
     assert result == {"Username": "email@test.com", "Sub": "12345678-1234-1234-1234-123456123456"}
+
+
+def test_it_fetches_userinfo_from_lambda_event_with_failover_in_place():
+    result = get_user_info({ "requestContext": {}})
+    assert result == {"Username": "N/A", "Sub": "N/A"}

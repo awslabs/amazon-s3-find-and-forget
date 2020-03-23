@@ -174,5 +174,10 @@ def parse_s3_url(s3_url):
 
 
 def get_user_info(event):
-    user_data = event['requestContext']['authorizer']['claims']
-    return {'Username': user_data['cognito:username'], 'Sub': user_data['sub']}
+    req = event.get('requestContext', {})
+    auth = req.get('authorizer', {})
+    claims = auth.get('claims', {})
+    return {
+        'Username': claims.get('cognito:username', 'N/A'),
+        'Sub': claims.get('sub', 'N/A')
+    }
