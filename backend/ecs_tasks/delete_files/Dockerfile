@@ -26,12 +26,14 @@ FROM base
 ARG src_path
 ARG layers_path
 
-RUN mkdir /app
+RUN groupadd -r s3f2 && useradd --no-log-init -r -m -g s3f2 s3f2
+USER s3f2
+RUN mkdir /home/s3f2/app
 RUN echo ${src_path}
-COPY --from=builder /install /root/.local/lib/python3.7/site-packages/
-WORKDIR /app
+COPY --from=builder /install /home/s3f2/.local/lib/python3.7/site-packages/
+WORKDIR /home/s3f2/app
 COPY $src_path/delete_files.py \
      $layers_path/boto_utils/python/boto_utils.py \
-     /app/
+     /home/s3f2/app/
 
 CMD ["python3", "-u", "delete_files.py"]
