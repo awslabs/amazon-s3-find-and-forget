@@ -33,6 +33,7 @@ Resources:
       LoggingConfiguration: !If
         - WithAccessLogs
         - DestinationBucketName: !Ref AccessLogsBucket
+          LogFilePrefix: !Sub ${ResourcePrefix}/
         - !Ref AWS::NoValue
 
   WebUIBucketPolicy:
@@ -98,6 +99,7 @@ Resources:
           - WithAccessLogs
           - Bucket: !Sub ${AccessLogsBucket}.s3.amazonaws.com
             IncludeCookies: false
+            Prefix: !Sub ${ResourcePrefix}/
           - !Ref AWS::NoValue
 
 Outputs:
