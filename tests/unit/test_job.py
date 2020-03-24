@@ -193,7 +193,7 @@ def test_it_accepts_starting_watermark(table):
         FilterExpression=mock.ANY,
         ExclusiveStartKey={
             "Id": "test",
-            "Sk": "12345#test"
+            "Sk": "0"
         },
     )
 
