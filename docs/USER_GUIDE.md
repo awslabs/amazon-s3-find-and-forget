@@ -141,10 +141,15 @@ resources.
    specified concurrency limit.
    * **ForgetQueueWaitSeconds:** (Default: 30) How long to wait when
    checking if the Forget phase is complete
+   * **AccessLogsBucket:** (Default: "") The name of the bucket to use for storing the Web
+   UI access logs. Leave blank to disable UI access logging. Ensure the provided
+   bucket has the appropriate permissions configured. For more information see
+   [CloudFront Access Logging Permissions] if **CreateCloudFrontDistribution** is
+   set to true, or [S3 Access Logging Permissions] if not.
    * **CognitoAdvancedSecurity:** (Default: "OFF") The setting to use for Cognito
    advanced security. Allowed values for this parameter are: OFF, AUDIT and
    ENFORCED. For more information on this parameter, see [Cognito Advanced Security]
-   * **EnableAccessLogging:** (Default: false) Whether to enable access logging
+   * **EnableAPIAccessLogging:** (Default: false) Whether to enable access logging
    via CloudWatch Logs for API Gateway. Enabling this feature will incur
    additional costs.
    * **EnableContainerInsights:** (Default: false) Whether to enable CloudWatch
@@ -569,3 +574,5 @@ To delete a stack via the AWS CLI [consult the documentation](https://docs.aws.a
 [on-demand backup and restore]: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/BackupRestore.html
 [AWS Data Pipeline]: https://aws.amazon.com/datapipeline
 [Cognito Advanced Security]: https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-settings-advanced-security.html
+[CloudFront Access Logging Permissions]: https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html#AccessLogsBucketAndFileOwnership
+[S3 Access Logging Permissions]: https://docs.aws.amazon.com/AmazonS3/latest/dev/enable-logging-programming.html#grant-log-delivery-permissions-general

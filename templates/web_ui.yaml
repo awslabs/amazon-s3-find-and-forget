@@ -2,12 +2,16 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: Amazon S3 Find and Forget Web UI
 
 Parameters:
+  AccessLogsBucket:
+    Type: String
+    Default: ""
   CreateCloudFrontDistribution:
     Type: String
   ResourcePrefix:
     Type: String
 
 Conditions:
+  WithAccessLogs: !Not [!Equals [!Ref AccessLogsBucket, ""]]
   WithCloudFront: !Equals [!Ref CreateCloudFrontDistribution, "true"]
 
 Resources:
@@ -26,7 +30,12 @@ Resources:
             AllowedOrigins: ["*"]
             Id: !Sub ${ResourcePrefix}CorsRule
             MaxAge: 3600
-  
+      LoggingConfiguration: !If
+        - WithAccessLogs
+        - DestinationBucketName: !Ref AccessLogsBucket
+          LogFilePrefix: !Sub ${ResourcePrefix}/
+        - !Ref AWS::NoValue
+
   WebUIBucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
@@ -86,6 +95,12 @@ Resources:
         PriceClass: PriceClass_All
         ViewerCertificate:
           CloudFrontDefaultCertificate: true
+        Logging: !If
+          - WithAccessLogs
+          - Bucket: !Sub ${AccessLogsBucket}.s3.amazonaws.com
+            IncludeCookies: false
+            Prefix: !Sub ${ResourcePrefix}/
+          - !Ref AWS::NoValue
 
 Outputs:
   CloudFrontDistribution:

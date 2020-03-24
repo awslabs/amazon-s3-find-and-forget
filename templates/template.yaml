@@ -7,6 +7,10 @@ Parameters:
     Description: Overrides the default Allow-Control-Allow-Origin setting for the API and Reports Bucket. When "false" the only origin allowed is the Web UI url. This must be set to "*" if no restriction is required.
     Type: String
     Default: "false"
+  AccessLogsBucket:
+    Description: Optional S3 Bucket to send access logs for the Web UI to. Incurs additional cost. Leave blank to disable
+    Type: String
+    Default: ""
   AdminEmail:
     Description: Creates a username to be used for authentication. It needs to be an e-mail address.
     Type: String
@@ -39,7 +43,7 @@ Parameters:
     Description: The memory to be allocated to the Deletion Fargate Task
     Type: String
     Default: '30720'
-  EnableAccessLogging:
+  EnableAPIAccessLogging:
     Description: Whether to enable API Gateway access logging. Enabling access logging will incur additional CloudWatch Logs charges
     Type: String
     Default: "false"
@@ -178,7 +182,7 @@ Resources:
             - !GetAtt LayersStack.Outputs.BotoUtils
         DeletionQueueTableName: !GetAtt DDBStack.Outputs.DeletionQueueTable
         DataMapperTableName: !GetAtt DDBStack.Outputs.DataMapperTable
-        EnableAccessLogging: !Ref EnableAccessLogging
+        EnableAccessLogging: !Ref EnableAPIAccessLogging
         JobTableDateGSI: !GetAtt DDBStack.Outputs.JobTableDateGSI
         JobTableName: !GetAtt DDBStack.Outputs.JobTable
         WebUIOrigin: !GetAtt WebUIStack.Outputs.Origin
@@ -282,6 +286,7 @@ Resources:
     Properties:
       TemplateURL: ./web_ui.yaml
       Parameters:
+        AccessLogsBucket: !Ref AccessLogsBucket
         CreateCloudFrontDistribution: !Ref CreateCloudFrontDistribution
         ResourcePrefix: !Ref ResourcePrefix
 
@@ -363,8 +368,9 @@ Metadata:
       - Label:
           default: "Auditing, Logging & Monitoring"
         Parameters:
+          - AccessLogsBucket
           - CognitoAdvancedSecurity
-          - EnableAccessLogging
+          - EnableAPIAccessLogging
           - EnableContainerInsights
           - JobDetailsRetentionDays
       - Label:
