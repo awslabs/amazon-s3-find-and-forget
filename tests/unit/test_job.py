@@ -175,6 +175,30 @@ def test_it_starts_at_earliest_by_default(table):
 
 
 @patch("backend.lambdas.jobs.handlers.table")
+def test_it_accepts_starting_watermark(table):
+    stub = job_event_stub()
+    table.get_item.return_value = job_stub()
+    table.query.return_value = {"Items": [stub], "LastEvaluatedKey": {"Id": "test", "Sk": "12345#test"}}
+    response = handlers.list_job_events_handler({
+        "pathParameters": {"job_id": "test"},
+        "queryStringParameters": {"start_at": "0"},
+    }, SimpleNamespace())
+    resp_body = json.loads(response["body"])
+    assert 200 == response["statusCode"]
+    assert "NextStart" in resp_body
+    table.query.assert_called_with(
+        KeyConditionExpression=mock.ANY,
+        ScanIndexForward=mock.ANY,
+        Limit=mock.ANY,
+        FilterExpression=mock.ANY,
+        ExclusiveStartKey={
+            "Id": "test",
+            "Sk": "12345#test"
+        },
+    )
+
+
+@patch("backend.lambdas.jobs.handlers.table")
 def test_it_starts_at_supplied_watermark(table):
     stub = job_event_stub()
     table.get_item.return_value = job_stub()

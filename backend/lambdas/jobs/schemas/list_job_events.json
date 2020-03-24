@@ -10,7 +10,7 @@
                 "start_at": {
                     "description": "Starting watermark",
                     "type": "string",
-                    "pattern": "^([0-9]+)#([a-zA-Z0-9-\\.]+)$"
+                    "pattern": "^(0|([0-9]+)#([a-zA-Z0-9-\\.]+))$"
                 },
                 "page_size": {
                     "description": "Maximum page size",
