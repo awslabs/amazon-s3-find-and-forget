@@ -96,7 +96,7 @@ Resources:
           CloudFrontDefaultCertificate: true
         Logging: !If
           - WithAccessLogs
-          - Bucket: !Ref AccessLogsBucket
+          - Bucket: !Sub ${AccessLogsBucket}.s3.amazonaws.com
             IncludeCookies: false
           - !Ref AWS::NoValue
 
