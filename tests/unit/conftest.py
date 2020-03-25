@@ -1,3 +1,4 @@
+import json
 import sys
 
 from mock import MagicMock
@@ -24,3 +25,8 @@ def cr_helper_mocks(monkeypatch):
 
     import crhelper
     monkeypatch.setattr(crhelper, "CfnResource", MagicMock())
+
+@pytest.fixture(scope="module")
+def list_object_versions_stub():
+    with open('./tests/unit/fixtures/list_object_versions_stub.json') as stub:
+        return json.load(stub)

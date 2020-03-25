@@ -17,6 +17,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 batch_size = 10  # SQS Max Batch Size
 
+s3 = boto3.client('s3')
 ssm = boto3.client('ssm')
 ddb = boto3.resource("dynamodb")
 table = ddb.Table(os.getenv("JobTable", "S3F2_Jobs"))
@@ -181,3 +182,82 @@ def get_user_info(event):
         'Username': claims.get('cognito:username', 'N/A'),
         'Sub': claims.get('sub', 'N/A')
     }
+
+
+def verify_object_versions_integrity(bucket, key, from_version, to_version):
+
+    def is_delete_marker(item):
+        return 'ETag' not in item
+
+    def fetch_group(group_key):
+        return list(paginate(s3, s3.list_object_versions, group_key, **{
+            "Bucket": bucket,
+            "Prefix": key
+        }))
+
+    versions = fetch_group('Versions')
+    delete_markers = fetch_group('DeleteMarkers')    
+    all_versions = sorted(versions + delete_markers, key=lambda x: x['LastModified'])
+
+    is_valid = True
+    from_index = to_index = -1
+    
+    for i,version in enumerate(all_versions):
+        if version['VersionId'] == from_version:
+            from_index = i
+        if version['VersionId'] == to_version:
+            to_index = i
+
+    if(from_index == -1):
+        raise ValueError("version_from ({}) not found".format(from_version))
+    if(to_index == -1):
+        raise ValueError("version_to ({}) not found".format(to_version))
+    if(to_index < from_index):
+        raise ValueError("from_version ({}) was more recent than to_version ({})".format(
+            from_version,
+            to_version
+        ))
+
+    for i in range(from_index + 1, to_index + 1):
+        if i != to_index:
+            current = all_versions[i]
+            if is_delete_marker(current) or current['ETag'] != all_versions[i - 1]['ETag']:
+                is_valid = False
+                break
+    
+    result = { 'IsValid': is_valid }
+
+    if not is_valid:
+        damages = []
+        related_versions_messages = []
+        any_delete_marker = any_version_skip = False
+        version_description = "{} was last modified at {}"
+        delete_marker_description = "{} was introduced as delete marker at {}"
+        error_template = 'There is a conflict between {} and {} that could result in {}. {}.'
+
+        for i in range(from_index, to_index + 1):
+            item = all_versions[i]
+            version_summary = version_description
+            if i > from_index and i < to_index:
+                if is_delete_marker(item):
+                    any_delete_marker = True
+                    version_summary = delete_marker_description
+                else:
+                    any_version_skip = True
+
+            related_versions_messages.append(version_summary.format(
+                item['VersionId'],
+                item['LastModified']))
+
+        if any_delete_marker:
+            damages.append('data inconsistencies')
+        if any_version_skip:
+            damages.append('data loss')
+
+        result['Error'] = error_template.format(
+            from_version,
+            to_version,
+            ' and/or '.join(damages),
+            ', '.join(related_versions_messages))
+    
+    return result

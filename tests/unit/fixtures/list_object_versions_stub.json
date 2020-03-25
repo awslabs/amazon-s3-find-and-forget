@@ -1,0 +1,63 @@
+{
+    "Versions": [
+        {
+            "ETag": "\"etag4\"",
+            "Size": 309,
+            "StorageClass": "STANDARD",
+            "Key": "requirements.txt",
+            "VersionId": "v6",
+            "IsLatest": true,
+            "LastModified": "2020-03-25T11:22:31.000Z",
+            "Owner": { "DisplayName": "username", "ID": "long-id" }
+        },
+        {
+            "ETag": "\"etag3\"",
+            "Size": 311,
+            "StorageClass": "STANDARD",
+            "Key": "requirements.txt",
+            "VersionId": "v4",
+            "IsLatest": false,
+            "LastModified": "2020-03-25T11:19:08.000Z",
+            "Owner": { "DisplayName": "username", "ID": "long-id" }
+        },
+        {
+            "ETag": "\"etag2\"",
+            "Size": 311,
+            "StorageClass": "STANDARD",
+            "Key": "requirements.txt",
+            "VersionId": "v3",
+            "IsLatest": false,
+            "LastModified": "2020-03-25T11:19:06.000Z",
+            "Owner": { "DisplayName": "username", "ID": "long-id" }
+        },
+        {
+            "ETag": "\"etag1\"",
+            "Size": 309,
+            "StorageClass": "STANDARD",
+            "Key": "requirements.txt",
+            "VersionId": "v2",
+            "IsLatest": false,
+            "LastModified": "2020-03-25T11:18:55.000Z",
+            "Owner": { "DisplayName": "username", "ID": "long-id" }
+        },
+        {
+            "ETag": "\"etag1\"",
+            "Size": 309,
+            "StorageClass": "STANDARD",
+            "Key": "requirements.txt",
+            "VersionId": "v1",
+            "IsLatest": false,
+            "LastModified": "2020-03-25T11:18:36.000Z",
+            "Owner": { "DisplayName": "username", "ID": "long-id" }
+        }
+    ],
+    "DeleteMarkers": [
+        {
+            "Owner": { "DisplayName": "username", "ID": "long-id" },
+            "Key": "requirements.txt",
+            "VersionId": "v5",
+            "IsLatest": false,
+            "LastModified": "2020-03-25T11:22:15.000Z"
+        }
+    ]
+}
