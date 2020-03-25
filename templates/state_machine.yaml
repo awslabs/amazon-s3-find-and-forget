@@ -721,6 +721,23 @@ Resources:
       KmsMasterKeyId: alias/aws/sqs
       VisibilityTimeout: 120
 
+  QueryQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      PolicyDocument:
+        Id: QueryQueuePolicy
+        Statement:
+          - Sid: RestrictQueueAccess
+            Effect: Deny
+            NotPrincipal:
+              AWS:
+                - !GetAtt GenerateQueriesRole.Arn
+            Action:
+              - sqs:SendMessage
+            Resource: !GetAtt QueryQueue.Arn
+      Queues:
+        - !Ref QueryQueue
+
   # Tasks
   ScanTable:
     Type: AWS::Serverless::Function

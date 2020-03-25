@@ -91,6 +91,14 @@ Resources:
       PolicyDocument:
         Id: FargateConsumerPolicy
         Statement:
+          - Sid: RestrictQueueAccess
+            Effect: Deny
+            NotPrincipal:
+              AWS:
+                - !Ref AWS::AccountId
+            Action:
+              - sqs:SendMessage
+            Resource: !GetAtt DelObjQ.Arn
           - Sid: AllowFargateAccess
             Effect: Allow
             Principal:
