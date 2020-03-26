@@ -6,7 +6,7 @@ import mock
 
 import pytest
 from botocore.exceptions import ClientError
-from mock import MagicMock, ANY, patch, call
+from mock import MagicMock, ANY, patch
 
 from boto_utils import convert_iso8601_to_epoch, paginate, batch_sqs_msgs, read_queue, emit_event, DecimalEncoder, \
     normalise_dates, deserialize_item, running_job_exists, get_config, utc_timestamp, get_job_expiry, parse_s3_url, \
@@ -410,86 +410,6 @@ def test_it_fails_integrity_when_other_version_between(s3_mock):
 
     assert not result['IsValid']
     assert result['Error'] == 'A version (v6) was detected for the given object between read and write operations (v5 and v7).'
-
-
-# @patch("boto_utils.s3")
-# @patch("boto_utils.paginate")
-# def test_it_verifies_integrity_for_conflicting_object_versions_with_subsequent_etags(
-#     paginate_mock, s3_client, list_object_versions_stub):
-
-#     paginate_mock.side_effect = [
-#         iter(list_object_versions_stub.get('Versions')),
-#         iter(list_object_versions_stub.get('DeleteMarkers'))]
-
-#     result = verify_object_versions_integrity('bucket', 'requirements.txt', 'v1', 'v3')
-#     assert result == {
-#         'IsValid': False,
-#         'Severity': 'Warning',
-#         'VersionIdRef': 'v2',
-#         'Error': 'There is a conflict betwen v1 and v3 that could result in data loss. '
-#                  'v1 was last modified at 2020-03-25T11:18:36.000Z, v2 was last modified at '
-#                  '2020-03-25T11:18:55.000Z, v3 was last modified at 2020-03-25T11:19:06.000Z.'
-#                  'v1 and v2 have the same ETag.'
-
-
-
-# @patch("boto_utils.s3")
-# @patch("boto_utils.paginate")
-# def test_it_verifies_integrity_for_conflicting_object_versions(paginate_mock, s3_client, list_object_versions_stub):
-#     paginate_mock.side_effect = [
-#         iter(list_object_versions_stub.get('Versions')),
-#         iter(list_object_versions_stub.get('DeleteMarkers'))]
-
-#     result = verify_object_versions_integrity('bucket', 'requirements.txt', 'v2', 'v4')
-
-#     assert result == {
-#         'IsValid': False,
-#         'Severity': 'Fatal',
-#         'Error': 'There is a conflict between v2 and v4 that could result in data loss. '
-#                  'v2 was last modified at 2020-03-25T11:18:55.000Z, v3 was last modified at '
-#                  '2020-03-25T11:19:06.000Z, v4 was last modified at 2020-03-25T11:19:08.000Z.'
-#     }
-
-
-# @patch("boto_utils.s3")
-# @patch("boto_utils.paginate")
-# def test_it_verifies_integrity_for_conflicting_object_versions_due_to_delete_markers(
-#     paginate_mock, s3_client, list_object_versions_stub):
-
-#     paginate_mock.side_effect = [
-#         iter(list_object_versions_stub.get('Versions')),
-#         iter(list_object_versions_stub.get('DeleteMarkers'))]
-
-#     result = verify_object_versions_integrity('bucket', 'requirements.txt', 'v4', 'v6')
-
-#     assert result == {
-#         'IsValid': False,
-#         'Severity': 'Warning',
-#         'Error': 'There is a conflict between v4 and v6 that could result in data inconsistencies. '
-#                  'v4 was last modified at 2020-03-25T11:19:08.000Z, v5 was introduced as delete marker at '
-#                  '2020-03-25T11:22:15.000Z, v6 was last modified at 2020-03-25T11:22:31.000Z.'
-#     }
-
-
-# @patch("boto_utils.s3")
-# @patch("boto_utils.paginate")
-# def test_it_verifies_integrity_for_conflicting_object_versions_with_both_delete_markers_and_skipped_versions(
-#     paginate_mock, s3_client, list_object_versions_stub):
-
-#     paginate_mock.side_effect = [
-#         iter(list_object_versions_stub.get('Versions')),
-#         iter(list_object_versions_stub.get('DeleteMarkers'))]
-
-#     result = verify_object_versions_integrity('bucket', 'requirements.txt', 'v2', 'v6')
-
-#     assert result == {
-#         'IsValid': False,
-#         'Severity': 'Warning',
-#         'Error': 'There is a conflict between v2 and v6 that could result in data inconsistencies. '
-#                  'v2 was last modified at 2020-03-25T11:18:55.000Z, v3 was last modified at 2020-03-25T11:19:06.000Z, '
-#                  'v4 was last modified at 2020-03-25T11:19:08.000Z, v5 was introduced as delete marker at '
-#                  '2020-03-25T11:22:15.000Z, v6 was last modified at 2020-03-25T11:22:31.000Z.'
-#     }
 
 
 @patch("boto_utils.s3")
