@@ -208,7 +208,7 @@ def verify_object_versions_integrity(bucket, key, from_version, to_version):
         if version['VersionId'] == to_version:
             to_index = i
 
-    if(from_index == -1):
+    if from_index == -1:
         raise ValueError("version_from ({}) not found".format(from_version))
     if(to_index == -1):
         raise ValueError("version_to ({}) not found".format(to_version))
