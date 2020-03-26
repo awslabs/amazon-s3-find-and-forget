@@ -186,27 +186,18 @@ def get_user_info(event):
 
 def verify_object_versions_integrity(bucket, key, from_version, to_version):
 
-    def is_delete_marker(item):
-        return 'ETag' not in item
-
-    def fetch_group(group_key):
-        return list(paginate(s3, s3.list_object_versions, group_key, **{
-            "Bucket": bucket,
-            "Prefix": key
-        }))
-
-    versions = fetch_group('Versions')
-    delete_markers = fetch_group('DeleteMarkers')    
-    all_versions = sorted(versions + delete_markers, key=lambda x: x['LastModified'])
-
-    is_valid = True
+    result = { 'IsValid': True }
     from_index = to_index = -1
+    error_template = "A {} ({}) was detected for the given object between read and write operations ({} and {})."
+
+    object_versions = s3.list_object_versions(Bucket=bucket, Prefix=key, VersionIdMarker=from_version)
+    versions = object_versions['Versions']
+    delete_markers = object_versions['DeleteMarkers']
+    all_versions = sorted(versions + delete_markers, key=lambda x: x['LastModified'])
     
     for i,version in enumerate(all_versions):
-        if version['VersionId'] == from_version:
-            from_index = i
-        if version['VersionId'] == to_version:
-            to_index = i
+        if version['VersionId'] == from_version: from_index = i
+        if version['VersionId'] == to_version: to_index = i
 
     if from_index == -1:
         raise ValueError("version_from ({}) not found".format(from_version))
@@ -218,46 +209,15 @@ def verify_object_versions_integrity(bucket, key, from_version, to_version):
             to_version
         ))
 
-    for i in range(from_index + 1, to_index + 1):
-        if i != to_index:
-            current = all_versions[i]
-            if is_delete_marker(current) or current['ETag'] != all_versions[i - 1]['ETag']:
-                is_valid = False
-                break
-    
-    result = { 'IsValid': is_valid }
-
-    if not is_valid:
-        damages = []
-        related_versions_messages = []
-        any_delete_marker = any_version_skip = False
-        version_description = "{} was last modified at {}"
-        delete_marker_description = "{} was introduced as delete marker at {}"
-        error_template = 'There is a conflict between {} and {} that could result in {}. {}.'
-
-        for i in range(from_index, to_index + 1):
-            item = all_versions[i]
-            version_summary = version_description
-            if i > from_index and i < to_index:
-                if is_delete_marker(item):
-                    any_delete_marker = True
-                    version_summary = delete_marker_description
-                else:
-                    any_version_skip = True
-
-            related_versions_messages.append(version_summary.format(
-                item['VersionId'],
-                item['LastModified']))
-
-        if any_delete_marker:
-            damages.append('data inconsistencies')
-        if any_version_skip:
-            damages.append('data loss')
-
+    if to_index - from_index != 1:
+        result['IsValid'] = False
+        conflicting = all_versions[to_index - 1]
+        conflicting_version = conflicting['VersionId']
+        conflicting_version_type = 'delete marker' if 'ETag' not in conflicting else 'version'
         result['Error'] = error_template.format(
-            from_version,
-            to_version,
-            ' and/or '.join(damages),
-            ', '.join(related_versions_messages))
-    
+            conflicting_version_type,
+            conflicting_version,
+            from_version, 
+            to_version)
+
     return result

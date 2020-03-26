@@ -355,131 +355,183 @@ def test_it_fetches_userinfo_from_lambda_event_with_failover_in_place():
 
 
 @patch("boto_utils.s3")
-@patch("boto_utils.paginate")
-def test_it_verifies_integrity_for_subsequent_object_versions(paginate_mock, s3_mock, list_object_versions_stub):
-    paginate_mock.side_effect = [
-        iter(list_object_versions_stub.get('Versions')),
-        iter(list_object_versions_stub.get('DeleteMarkers'))]
+def test_it_verifies_integrity_happy_path(s3_mock):
 
-    result = verify_object_versions_integrity('bucket', 'requirements.txt', 'v2', 'v3')
+    s3_mock.list_object_versions.return_value = {
+        "Versions": [
+            { "VersionId": "v7", "IsLatest": True, "LastModified": "2020-03-25T11:23:31.000Z", "ETag": 'a' },
+            { "VersionId": "v6", "IsLatest": False, "LastModified": "2020-03-25T11:22:31.000Z", "ETag": 'b' }
+        ],
+        "DeleteMarkers": []
+    }
+
+    result = verify_object_versions_integrity('bucket', 'requirements.txt', 'v6', 'v7')
 
     assert result['IsValid']
-    paginate_mock.assert_has_calls([
-        call(
-            s3_mock,
-            s3_mock.list_object_versions,
-            "Versions",
-            **{ "Bucket": 'bucket', "Prefix": 'requirements.txt' }
-        ),
-        call(
-            s3_mock,
-            s3_mock.list_object_versions,
-            "DeleteMarkers",
-            **{ "Bucket": 'bucket', "Prefix": 'requirements.txt' }
-        )
-    ])
+
+    s3_mock.list_object_versions.assert_called_with(
+        Bucket='bucket',
+        Prefix='requirements.txt',
+        VersionIdMarker='v6')
 
 
 @patch("boto_utils.s3")
-@patch("boto_utils.paginate")
-def test_it_verifies_integrity_for_conflicting_object_versions_with_subsequent_etags(
-    paginate_mock, s3_client, list_object_versions_stub):
+def test_it_fails_integrity_when_delete_marker_between(s3_mock):
 
-    paginate_mock.side_effect = [
-        iter(list_object_versions_stub.get('Versions')),
-        iter(list_object_versions_stub.get('DeleteMarkers'))]
-
-    result = verify_object_versions_integrity('bucket', 'requirements.txt', 'v1', 'v3')
-    assert result['IsValid']
-
-
-@patch("boto_utils.s3")
-@patch("boto_utils.paginate")
-def test_it_verifies_integrity_for_conflicting_object_versions(paginate_mock, s3_client, list_object_versions_stub):
-    paginate_mock.side_effect = [
-        iter(list_object_versions_stub.get('Versions')),
-        iter(list_object_versions_stub.get('DeleteMarkers'))]
-
-    result = verify_object_versions_integrity('bucket', 'requirements.txt', 'v2', 'v4')
-
-    assert result == {
-        'IsValid': False,
-        'Error': 'There is a conflict between v2 and v4 that could result in data loss. '
-                 'v2 was last modified at 2020-03-25T11:18:55.000Z, v3 was last modified at '
-                 '2020-03-25T11:19:06.000Z, v4 was last modified at 2020-03-25T11:19:08.000Z.'
+    s3_mock.list_object_versions.return_value = {
+        "Versions": [
+            { "VersionId": "v7", "IsLatest": True, "LastModified": "2020-03-25T11:23:31.000Z", "ETag": 'a' },
+            { "VersionId": "v5", "IsLatest": False, "LastModified": "2020-03-25T11:22:31.000Z", "ETag": 'b' }
+        ],
+        "DeleteMarkers": [
+            { "VersionId": "v6", "IsLatest": False, "LastModified": "2020-03-25T11:22:54.000Z" }
+        ]
     }
 
+    result = verify_object_versions_integrity('bucket', 'requirements.txt', 'v5', 'v7')
+
+    assert not result['IsValid']
+    assert result['Error'] == 'A delete marker (v6) was detected for the given object between read and write operations (v5 and v7).'
+
 
 @patch("boto_utils.s3")
-@patch("boto_utils.paginate")
-def test_it_verifies_integrity_for_conflicting_object_versions_due_to_delete_markers(
-    paginate_mock, s3_client, list_object_versions_stub):
+def test_it_fails_integrity_when_other_version_between(s3_mock):
 
-    paginate_mock.side_effect = [
-        iter(list_object_versions_stub.get('Versions')),
-        iter(list_object_versions_stub.get('DeleteMarkers'))]
-
-    result = verify_object_versions_integrity('bucket', 'requirements.txt', 'v4', 'v6')
-
-    assert result == {
-        'IsValid': False,
-        'Error': 'There is a conflict between v4 and v6 that could result in data inconsistencies. '
-                 'v4 was last modified at 2020-03-25T11:19:08.000Z, v5 was introduced as delete marker at '
-                 '2020-03-25T11:22:15.000Z, v6 was last modified at 2020-03-25T11:22:31.000Z.'
+    s3_mock.list_object_versions.return_value = {
+        "Versions": [
+            { "VersionId": "v7", "IsLatest": True, "LastModified": "2020-03-25T11:23:31.000Z", "ETag": 'a' },
+            { "VersionId": "v6", "IsLatest": False, "LastModified": "2020-03-25T11:22:54.000Z", "ETag": 'b' },
+            { "VersionId": "v5", "IsLatest": False, "LastModified": "2020-03-25T11:22:31.000Z", "ETag": 'c' }
+        ],
+        "DeleteMarkers": []
     }
 
+    result = verify_object_versions_integrity('bucket', 'requirements.txt', 'v5', 'v7')
+
+    assert not result['IsValid']
+    assert result['Error'] == 'A version (v6) was detected for the given object between read and write operations (v5 and v7).'
+
+
+# @patch("boto_utils.s3")
+# @patch("boto_utils.paginate")
+# def test_it_verifies_integrity_for_conflicting_object_versions_with_subsequent_etags(
+#     paginate_mock, s3_client, list_object_versions_stub):
+
+#     paginate_mock.side_effect = [
+#         iter(list_object_versions_stub.get('Versions')),
+#         iter(list_object_versions_stub.get('DeleteMarkers'))]
+
+#     result = verify_object_versions_integrity('bucket', 'requirements.txt', 'v1', 'v3')
+#     assert result == {
+#         'IsValid': False,
+#         'Severity': 'Warning',
+#         'VersionIdRef': 'v2',
+#         'Error': 'There is a conflict betwen v1 and v3 that could result in data loss. '
+#                  'v1 was last modified at 2020-03-25T11:18:36.000Z, v2 was last modified at '
+#                  '2020-03-25T11:18:55.000Z, v3 was last modified at 2020-03-25T11:19:06.000Z.'
+#                  'v1 and v2 have the same ETag.'
+
+
+
+# @patch("boto_utils.s3")
+# @patch("boto_utils.paginate")
+# def test_it_verifies_integrity_for_conflicting_object_versions(paginate_mock, s3_client, list_object_versions_stub):
+#     paginate_mock.side_effect = [
+#         iter(list_object_versions_stub.get('Versions')),
+#         iter(list_object_versions_stub.get('DeleteMarkers'))]
+
+#     result = verify_object_versions_integrity('bucket', 'requirements.txt', 'v2', 'v4')
+
+#     assert result == {
+#         'IsValid': False,
+#         'Severity': 'Fatal',
+#         'Error': 'There is a conflict between v2 and v4 that could result in data loss. '
+#                  'v2 was last modified at 2020-03-25T11:18:55.000Z, v3 was last modified at '
+#                  '2020-03-25T11:19:06.000Z, v4 was last modified at 2020-03-25T11:19:08.000Z.'
+#     }
+
+
+# @patch("boto_utils.s3")
+# @patch("boto_utils.paginate")
+# def test_it_verifies_integrity_for_conflicting_object_versions_due_to_delete_markers(
+#     paginate_mock, s3_client, list_object_versions_stub):
+
+#     paginate_mock.side_effect = [
+#         iter(list_object_versions_stub.get('Versions')),
+#         iter(list_object_versions_stub.get('DeleteMarkers'))]
+
+#     result = verify_object_versions_integrity('bucket', 'requirements.txt', 'v4', 'v6')
+
+#     assert result == {
+#         'IsValid': False,
+#         'Severity': 'Warning',
+#         'Error': 'There is a conflict between v4 and v6 that could result in data inconsistencies. '
+#                  'v4 was last modified at 2020-03-25T11:19:08.000Z, v5 was introduced as delete marker at '
+#                  '2020-03-25T11:22:15.000Z, v6 was last modified at 2020-03-25T11:22:31.000Z.'
+#     }
+
+
+# @patch("boto_utils.s3")
+# @patch("boto_utils.paginate")
+# def test_it_verifies_integrity_for_conflicting_object_versions_with_both_delete_markers_and_skipped_versions(
+#     paginate_mock, s3_client, list_object_versions_stub):
+
+#     paginate_mock.side_effect = [
+#         iter(list_object_versions_stub.get('Versions')),
+#         iter(list_object_versions_stub.get('DeleteMarkers'))]
+
+#     result = verify_object_versions_integrity('bucket', 'requirements.txt', 'v2', 'v6')
+
+#     assert result == {
+#         'IsValid': False,
+#         'Severity': 'Warning',
+#         'Error': 'There is a conflict between v2 and v6 that could result in data inconsistencies. '
+#                  'v2 was last modified at 2020-03-25T11:18:55.000Z, v3 was last modified at 2020-03-25T11:19:06.000Z, '
+#                  'v4 was last modified at 2020-03-25T11:19:08.000Z, v5 was introduced as delete marker at '
+#                  '2020-03-25T11:22:15.000Z, v6 was last modified at 2020-03-25T11:22:31.000Z.'
+#     }
+
 
 @patch("boto_utils.s3")
-@patch("boto_utils.paginate")
-def test_it_verifies_integrity_for_conflicting_object_versions_with_both_delete_markers_and_skipped_versions(
-    paginate_mock, s3_client, list_object_versions_stub):
-
-    paginate_mock.side_effect = [
-        iter(list_object_versions_stub.get('Versions')),
-        iter(list_object_versions_stub.get('DeleteMarkers'))]
-
-    result = verify_object_versions_integrity('bucket', 'requirements.txt', 'v2', 'v6')
-
-    assert result == {
-        'IsValid': False,
-        'Error': 'There is a conflict between v2 and v6 that could result in data inconsistencies and/or data loss. '
-                 'v2 was last modified at 2020-03-25T11:18:55.000Z, v3 was last modified at 2020-03-25T11:19:06.000Z, '
-                 'v4 was last modified at 2020-03-25T11:19:08.000Z, v5 was introduced as delete marker at '
-                 '2020-03-25T11:22:15.000Z, v6 was last modified at 2020-03-25T11:22:31.000Z.'
+def test_it_errors_when_version_to_is_minor_than_from(s3_mock):
+    s3_mock.list_object_versions.return_value = {
+        "Versions": [
+            { "VersionId": "v7", "IsLatest": True, "LastModified": "2020-03-25T11:23:31.000Z" },
+            { "VersionId": "v6", "IsLatest": False, "LastModified": "2020-03-25T11:22:31.000Z" }
+        ],
+        "DeleteMarkers": []
     }
 
-
-@patch("boto_utils.s3")
-@patch("boto_utils.paginate")
-def test_it_errors_when_version_to_is_minor_than_from(paginate_mock, s3_client, list_object_versions_stub):
-    paginate_mock.side_effect = [
-        iter(list_object_versions_stub.get('Versions')),
-        iter(list_object_versions_stub.get('DeleteMarkers'))]
-
     with pytest.raises(ValueError) as e:
-        result = verify_object_versions_integrity('bucket', 'requirements.txt', 'v3', 'v1')
-    assert e.value.args[0] == 'from_version (v3) is more recent than to_version (v1)'
+        result = verify_object_versions_integrity('bucket', 'requirements.txt', 'v7', 'v6')
+    assert e.value.args[0] == 'from_version (v7) is more recent than to_version (v6)'
 
 
 @patch("boto_utils.s3")
-@patch("boto_utils.paginate")
-def test_it_errors_when_version_from_not_found(paginate_mock, s3_client, list_object_versions_stub):
-    paginate_mock.side_effect = [
-        iter(list_object_versions_stub.get('Versions')),
-        iter(list_object_versions_stub.get('DeleteMarkers'))]
+def test_it_errors_when_version_from_not_found(s3_mock):
+    s3_mock.list_object_versions.return_value = {
+        "Versions": [
+            { "VersionId": "v7", "IsLatest": True, "LastModified": "2020-03-25T11:23:31.000Z" },
+            { "VersionId": "v6", "IsLatest": False, "LastModified": "2020-03-25T11:22:31.000Z" }
+        ],
+        "DeleteMarkers": []
+    }
 
     with pytest.raises(ValueError) as e:
-        result = verify_object_versions_integrity('bucket', 'requirements.txt', 'v0', 'v1')
-    assert e.value.args[0] == 'version_from (v0) not found'
+        result = verify_object_versions_integrity('bucket', 'requirements.txt', 'v5', 'v6')
+    assert e.value.args[0] == 'version_from (v5) not found'
 
 
 @patch("boto_utils.s3")
-@patch("boto_utils.paginate")
-def test_it_errors_when_version_to_not_found(paginate_mock, s3_client, list_object_versions_stub):
-    paginate_mock.side_effect = [
-        iter(list_object_versions_stub.get('Versions')),
-        iter(list_object_versions_stub.get('DeleteMarkers'))]
+def test_it_errors_when_version_to_not_found(s3_mock):
+    s3_mock.list_object_versions.return_value = {
+        "Versions": [
+            { "VersionId": "v7", "IsLatest": True, "LastModified": "2020-03-25T11:23:31.000Z" },
+            { "VersionId": "v6", "IsLatest": False, "LastModified": "2020-03-25T11:22:31.000Z" }
+        ],
+        "DeleteMarkers": []
+    }
 
     with pytest.raises(ValueError) as e:
-        result = verify_object_versions_integrity('bucket', 'requirements.txt', 'v6', 'v7')
-    assert e.value.args[0] == 'version_to (v7) not found'
+        result = verify_object_versions_integrity('bucket', 'requirements.txt', 'v7', 'v8')
+    assert e.value.args[0] == 'version_to (v8) not found'
