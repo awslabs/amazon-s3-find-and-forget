@@ -361,6 +361,45 @@ def kill_handler(msgs, process_pool):
     sys.exit(1 if len(msgs) > 0 else 0)
 
 
+def verify_object_versions_integrity(client, bucket, key, from_version, to_version):
+
+    result = { 'IsValid': True }
+    from_index = to_index = -1
+    error_template = "A {} ({}) was detected for the given object between read and write operations ({} and {})."
+
+    object_versions = client.list_object_versions(Bucket=bucket, Prefix=key, VersionIdMarker=from_version)
+    versions = object_versions['Versions']
+    delete_markers = object_versions['DeleteMarkers']
+    all_versions = sorted(versions + delete_markers, key=lambda x: x['LastModified'])
+    
+    for i,version in enumerate(all_versions):
+        if version['VersionId'] == from_version: from_index = i
+        if version['VersionId'] == to_version: to_index = i
+
+    if from_index == -1:
+        raise ValueError("version_from ({}) not found".format(from_version))
+    if to_index == -1:
+        raise ValueError("version_to ({}) not found".format(to_version))
+    if to_index < from_index:
+        raise ValueError("from_version ({}) is more recent than to_version ({})".format(
+            from_version,
+            to_version
+        ))
+
+    if to_index - from_index != 1:
+        result['IsValid'] = False
+        conflicting = all_versions[to_index - 1]
+        conflicting_version = conflicting['VersionId']
+        conflicting_version_type = 'delete marker' if 'ETag' not in conflicting else 'version'
+        result['Error'] = error_template.format(
+            conflicting_version_type,
+            conflicting_version,
+            from_version, 
+            to_version)
+
+    return result
+
+
 if __name__ == '__main__':
     logger.info("CPU count for system: %s", cpu_count())
     messages = []

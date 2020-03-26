@@ -20,7 +20,7 @@ with patch.dict(os.environ, {
     emit_deletion_event, emit_failed_deletion_event, save, get_grantees, \
     get_object_info, get_object_tags, get_object_acl, get_requester_payment, get_row_count, \
     delete_from_dataframe, delete_matches_from_file, load_parquet, kill_handler, handle_error, \
-    get_bucket_versioning, sanitize_message
+    get_bucket_versioning, sanitize_message, verify_object_versions_integrity
 
 pytestmark = [pytest.mark.unit]
 
@@ -703,3 +703,103 @@ def message_stub(**kwargs):
         "Columns": [{"Column": "customer_id", "MatchIds": ["12345", "23456"]}],
         **kwargs
     })
+
+
+def test_it_verifies_integrity_happy_path():
+    s3_mock = MagicMock()
+    s3_mock.list_object_versions.return_value = {
+        "Versions": [
+            { "VersionId": "v7", "IsLatest": True, "LastModified": "2020-03-25T11:23:31.000Z", "ETag": 'a' },
+            { "VersionId": "v6", "IsLatest": False, "LastModified": "2020-03-25T11:22:31.000Z", "ETag": 'b' }
+        ],
+        "DeleteMarkers": []
+    }
+
+    result = verify_object_versions_integrity(s3_mock, 'bucket', 'requirements.txt', 'v6', 'v7')
+
+    assert result['IsValid']
+
+    s3_mock.list_object_versions.assert_called_with(
+        Bucket='bucket',
+        Prefix='requirements.txt',
+        VersionIdMarker='v6')
+
+
+def test_it_fails_integrity_when_delete_marker_between():
+    s3_mock = MagicMock()
+    s3_mock.list_object_versions.return_value = {
+        "Versions": [
+            { "VersionId": "v7", "IsLatest": True, "LastModified": "2020-03-25T11:23:31.000Z", "ETag": 'a' },
+            { "VersionId": "v5", "IsLatest": False, "LastModified": "2020-03-25T11:22:31.000Z", "ETag": 'b' }
+        ],
+        "DeleteMarkers": [
+            { "VersionId": "v6", "IsLatest": False, "LastModified": "2020-03-25T11:22:54.000Z" }
+        ]
+    }
+
+    result = verify_object_versions_integrity(s3_mock, 'bucket', 'requirements.txt', 'v5', 'v7')
+
+    assert not result['IsValid']
+    assert result['Error'] == 'A delete marker (v6) was detected for the given object between read and write operations (v5 and v7).'
+
+
+def test_it_fails_integrity_when_other_version_between():
+    s3_mock = MagicMock()
+    s3_mock.list_object_versions.return_value = {
+        "Versions": [
+            { "VersionId": "v7", "IsLatest": True, "LastModified": "2020-03-25T11:23:31.000Z", "ETag": 'a' },
+            { "VersionId": "v6", "IsLatest": False, "LastModified": "2020-03-25T11:22:54.000Z", "ETag": 'b' },
+            { "VersionId": "v5", "IsLatest": False, "LastModified": "2020-03-25T11:22:31.000Z", "ETag": 'c' }
+        ],
+        "DeleteMarkers": []
+    }
+
+    result = verify_object_versions_integrity(s3_mock, 'bucket', 'requirements.txt', 'v5', 'v7')
+
+    assert not result['IsValid']
+    assert result['Error'] == 'A version (v6) was detected for the given object between read and write operations (v5 and v7).'
+
+
+def test_it_errors_when_version_to_is_minor_than_from():
+    s3_mock = MagicMock()
+    s3_mock.list_object_versions.return_value = {
+        "Versions": [
+            { "VersionId": "v7", "IsLatest": True, "LastModified": "2020-03-25T11:23:31.000Z" },
+            { "VersionId": "v6", "IsLatest": False, "LastModified": "2020-03-25T11:22:31.000Z" }
+        ],
+        "DeleteMarkers": []
+    }
+
+    with pytest.raises(ValueError) as e:
+        result = verify_object_versions_integrity(s3_mock, 'bucket', 'requirements.txt', 'v7', 'v6')
+    assert e.value.args[0] == 'from_version (v7) is more recent than to_version (v6)'
+
+
+def test_it_errors_when_version_from_not_found():
+    s3_mock = MagicMock()
+    s3_mock.list_object_versions.return_value = {
+        "Versions": [
+            { "VersionId": "v7", "IsLatest": True, "LastModified": "2020-03-25T11:23:31.000Z" },
+            { "VersionId": "v6", "IsLatest": False, "LastModified": "2020-03-25T11:22:31.000Z" }
+        ],
+        "DeleteMarkers": []
+    }
+
+    with pytest.raises(ValueError) as e:
+        result = verify_object_versions_integrity(s3_mock, 'bucket', 'requirements.txt', 'v5', 'v6')
+    assert e.value.args[0] == 'version_from (v5) not found'
+
+
+def test_it_errors_when_version_to_not_found():
+    s3_mock = MagicMock()
+    s3_mock.list_object_versions.return_value = {
+        "Versions": [
+            { "VersionId": "v7", "IsLatest": True, "LastModified": "2020-03-25T11:23:31.000Z" },
+            { "VersionId": "v6", "IsLatest": False, "LastModified": "2020-03-25T11:22:31.000Z" }
+        ],
+        "DeleteMarkers": []
+    }
+
+    with pytest.raises(ValueError) as e:
+        result = verify_object_versions_integrity(s3_mock, 'bucket', 'requirements.txt', 'v7', 'v8')
+    assert e.value.args[0] == 'version_to (v8) not found'

@@ -10,7 +10,7 @@ from mock import MagicMock, ANY, patch
 
 from boto_utils import convert_iso8601_to_epoch, paginate, batch_sqs_msgs, read_queue, emit_event, DecimalEncoder, \
     normalise_dates, deserialize_item, running_job_exists, get_config, utc_timestamp, get_job_expiry, parse_s3_url, \
-    get_user_info, verify_object_versions_integrity
+    get_user_info
 
 pytestmark = [pytest.mark.unit, pytest.mark.layers]
 
@@ -352,106 +352,3 @@ def test_it_fetches_userinfo_from_lambda_event():
 def test_it_fetches_userinfo_from_lambda_event_with_failover_in_place():
     result = get_user_info({ "requestContext": {}})
     assert result == {"Username": "N/A", "Sub": "N/A"}
-
-
-@patch("boto_utils.s3")
-def test_it_verifies_integrity_happy_path(s3_mock):
-
-    s3_mock.list_object_versions.return_value = {
-        "Versions": [
-            { "VersionId": "v7", "IsLatest": True, "LastModified": "2020-03-25T11:23:31.000Z", "ETag": 'a' },
-            { "VersionId": "v6", "IsLatest": False, "LastModified": "2020-03-25T11:22:31.000Z", "ETag": 'b' }
-        ],
-        "DeleteMarkers": []
-    }
-
-    result = verify_object_versions_integrity('bucket', 'requirements.txt', 'v6', 'v7')
-
-    assert result['IsValid']
-
-    s3_mock.list_object_versions.assert_called_with(
-        Bucket='bucket',
-        Prefix='requirements.txt',
-        VersionIdMarker='v6')
-
-
-@patch("boto_utils.s3")
-def test_it_fails_integrity_when_delete_marker_between(s3_mock):
-
-    s3_mock.list_object_versions.return_value = {
-        "Versions": [
-            { "VersionId": "v7", "IsLatest": True, "LastModified": "2020-03-25T11:23:31.000Z", "ETag": 'a' },
-            { "VersionId": "v5", "IsLatest": False, "LastModified": "2020-03-25T11:22:31.000Z", "ETag": 'b' }
-        ],
-        "DeleteMarkers": [
-            { "VersionId": "v6", "IsLatest": False, "LastModified": "2020-03-25T11:22:54.000Z" }
-        ]
-    }
-
-    result = verify_object_versions_integrity('bucket', 'requirements.txt', 'v5', 'v7')
-
-    assert not result['IsValid']
-    assert result['Error'] == 'A delete marker (v6) was detected for the given object between read and write operations (v5 and v7).'
-
-
-@patch("boto_utils.s3")
-def test_it_fails_integrity_when_other_version_between(s3_mock):
-
-    s3_mock.list_object_versions.return_value = {
-        "Versions": [
-            { "VersionId": "v7", "IsLatest": True, "LastModified": "2020-03-25T11:23:31.000Z", "ETag": 'a' },
-            { "VersionId": "v6", "IsLatest": False, "LastModified": "2020-03-25T11:22:54.000Z", "ETag": 'b' },
-            { "VersionId": "v5", "IsLatest": False, "LastModified": "2020-03-25T11:22:31.000Z", "ETag": 'c' }
-        ],
-        "DeleteMarkers": []
-    }
-
-    result = verify_object_versions_integrity('bucket', 'requirements.txt', 'v5', 'v7')
-
-    assert not result['IsValid']
-    assert result['Error'] == 'A version (v6) was detected for the given object between read and write operations (v5 and v7).'
-
-
-@patch("boto_utils.s3")
-def test_it_errors_when_version_to_is_minor_than_from(s3_mock):
-    s3_mock.list_object_versions.return_value = {
-        "Versions": [
-            { "VersionId": "v7", "IsLatest": True, "LastModified": "2020-03-25T11:23:31.000Z" },
-            { "VersionId": "v6", "IsLatest": False, "LastModified": "2020-03-25T11:22:31.000Z" }
-        ],
-        "DeleteMarkers": []
-    }
-
-    with pytest.raises(ValueError) as e:
-        result = verify_object_versions_integrity('bucket', 'requirements.txt', 'v7', 'v6')
-    assert e.value.args[0] == 'from_version (v7) is more recent than to_version (v6)'
-
-
-@patch("boto_utils.s3")
-def test_it_errors_when_version_from_not_found(s3_mock):
-    s3_mock.list_object_versions.return_value = {
-        "Versions": [
-            { "VersionId": "v7", "IsLatest": True, "LastModified": "2020-03-25T11:23:31.000Z" },
-            { "VersionId": "v6", "IsLatest": False, "LastModified": "2020-03-25T11:22:31.000Z" }
-        ],
-        "DeleteMarkers": []
-    }
-
-    with pytest.raises(ValueError) as e:
-        result = verify_object_versions_integrity('bucket', 'requirements.txt', 'v5', 'v6')
-    assert e.value.args[0] == 'version_from (v5) not found'
-
-
-@patch("boto_utils.s3")
-def test_it_errors_when_version_to_not_found(s3_mock):
-    s3_mock.list_object_versions.return_value = {
-        "Versions": [
-            { "VersionId": "v7", "IsLatest": True, "LastModified": "2020-03-25T11:23:31.000Z" },
-            { "VersionId": "v6", "IsLatest": False, "LastModified": "2020-03-25T11:22:31.000Z" }
-        ],
-        "DeleteMarkers": []
-    }
-
-    with pytest.raises(ValueError) as e:
-        result = verify_object_versions_integrity('bucket', 'requirements.txt', 'v7', 'v8')
-    assert e.value.args[0] == 'version_to (v8) not found'
