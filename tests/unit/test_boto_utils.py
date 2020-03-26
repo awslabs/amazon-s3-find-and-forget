@@ -458,7 +458,7 @@ def test_it_errors_when_version_to_is_minor_than_from(paginate_mock, s3_client, 
 
     with pytest.raises(ValueError) as e:
         result = verify_object_versions_integrity('bucket', 'requirements.txt', 'v3', 'v1')
-    assert e.value.args[0] == 'from_version (v3) was more recent than to_version (v1)'
+    assert e.value.args[0] == 'from_version (v3) is more recent than to_version (v1)'
 
 
 @patch("boto_utils.s3")
