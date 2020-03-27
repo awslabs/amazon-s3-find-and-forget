@@ -369,7 +369,7 @@ def verify_object_versions_integrity(client, bucket, key, from_version, to_versi
 
     object_versions = client.list_object_versions(Bucket=bucket, Prefix=key, VersionIdMarker=from_version)
     versions = object_versions['Versions']
-    delete_markers = object_versions['DeleteMarkers']
+    delete_markers = object_versions.get('DeleteMarkers', [])
     all_versions = sorted(versions + delete_markers, key=lambda x: x['LastModified'])
     
     for i,version in enumerate(all_versions):
