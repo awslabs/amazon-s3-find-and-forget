@@ -711,8 +711,7 @@ def test_it_verifies_integrity_happy_path():
         "Versions": [
             { "VersionId": "v7", "IsLatest": True, "LastModified": "2020-03-25T11:23:31.000Z", "ETag": 'a' },
             { "VersionId": "v6", "IsLatest": False, "LastModified": "2020-03-25T11:22:31.000Z", "ETag": 'b' }
-        ],
-        "DeleteMarkers": []
+        ]
     }
 
     result = verify_object_versions_integrity(s3_mock, 'bucket', 'requirements.txt', 'v6', 'v7')
@@ -750,8 +749,7 @@ def test_it_fails_integrity_when_other_version_between():
             { "VersionId": "v7", "IsLatest": True, "LastModified": "2020-03-25T11:23:31.000Z", "ETag": 'a' },
             { "VersionId": "v6", "IsLatest": False, "LastModified": "2020-03-25T11:22:54.000Z", "ETag": 'b' },
             { "VersionId": "v5", "IsLatest": False, "LastModified": "2020-03-25T11:22:31.000Z", "ETag": 'c' }
-        ],
-        "DeleteMarkers": []
+        ]
     }
 
     result = verify_object_versions_integrity(s3_mock, 'bucket', 'requirements.txt', 'v5', 'v7')
@@ -766,8 +764,7 @@ def test_it_errors_when_version_to_is_minor_than_from():
         "Versions": [
             { "VersionId": "v7", "IsLatest": True, "LastModified": "2020-03-25T11:23:31.000Z" },
             { "VersionId": "v6", "IsLatest": False, "LastModified": "2020-03-25T11:22:31.000Z" }
-        ],
-        "DeleteMarkers": []
+        ]
     }
 
     with pytest.raises(ValueError) as e:
@@ -781,8 +778,7 @@ def test_it_errors_when_version_from_not_found():
         "Versions": [
             { "VersionId": "v7", "IsLatest": True, "LastModified": "2020-03-25T11:23:31.000Z" },
             { "VersionId": "v6", "IsLatest": False, "LastModified": "2020-03-25T11:22:31.000Z" }
-        ],
-        "DeleteMarkers": []
+        ]
     }
 
     with pytest.raises(ValueError) as e:
@@ -796,8 +792,7 @@ def test_it_errors_when_version_to_not_found():
         "Versions": [
             { "VersionId": "v7", "IsLatest": True, "LastModified": "2020-03-25T11:23:31.000Z" },
             { "VersionId": "v6", "IsLatest": False, "LastModified": "2020-03-25T11:22:31.000Z" }
-        ],
-        "DeleteMarkers": []
+        ]
     }
 
     with pytest.raises(ValueError) as e:
