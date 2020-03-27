@@ -44,29 +44,28 @@ def handler(event, context):
         ]
         columns = [c for c in data_mapper["Columns"]]
         # Handle unpartitioned data
+        msg = {
+            "DataMapperId": data_mapper["DataMapperId"],
+            "Database": db,
+            "Table": table_name,
+            "Columns": columns,
+            "PartitionKeys": []
+        }
+        if data_mapper.get("RoleArn", None):
+            msg["RoleArn"] = data_mapper["RoleArn"]
         if len(partition_keys) == 0:
-            queries.append({
-                "DataMapperId": data_mapper["DataMapperId"],
-                "Database": db,
-                "Table": table_name,
-                "Columns": columns,
-                "PartitionKeys": []
-            })
+            queries.append(msg)
         else:
             partitions = get_partitions(db, table_name)
             for partition in partitions:
                 values = partition["Values"]
                 queries.append({
-                    "DataMapperId": data_mapper["DataMapperId"],
-                    "Database": db,
-                    "Table": table_name,
-                    "Columns": columns,
+                    **msg,
                     "PartitionKeys": [
                         {"Key": partition_keys[i], "Value": v}
                         for i, v in enumerate(values)
                     ],
                 })
-
         # Workout which deletion items should be included in this query
         filtered = []
         for i, query in enumerate(queries):
