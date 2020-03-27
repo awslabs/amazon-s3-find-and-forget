@@ -11,12 +11,12 @@ from boto3.dynamodb.conditions import Key
 from boto3.dynamodb.types import TypeDeserializer
 from botocore.exceptions import ClientError
 
-
 deserializer = TypeDeserializer()
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 batch_size = 10  # SQS Max Batch Size
 
+sts = boto3.client('sts')
 ssm = boto3.client('ssm')
 ddb = boto3.resource("dynamodb")
 table = ddb.Table(os.getenv("JobTable", "S3F2_Jobs"))
@@ -181,3 +181,12 @@ def get_user_info(event):
         'Username': claims.get('cognito:username', 'N/A'),
         'Sub': claims.get('sub', 'N/A')
     }
+
+
+def get_session(assume_role_arn=None, role_session_name="s3f2"):
+    if assume_role_arn:
+        response = sts.assume_role(RoleArn=assume_role_arn, RoleSessionName=role_session_name)
+        return boto3.session.Session(aws_access_key_id=response['Credentials']['AccessKeyId'],
+                                     aws_secret_access_key=response['Credentials']['SecretAccessKey'],
+                                     aws_session_token=response['Credentials']['SessionToken'])
+    return boto3.session.Session()

@@ -19,7 +19,7 @@ import s3fs
 from botocore.exceptions import ClientError
 from pyarrow.lib import ArrowException
 
-from boto_utils import emit_event, parse_s3_url
+from boto_utils import emit_event, parse_s3_url, get_session
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -30,7 +30,6 @@ logger.addHandler(handler)
 
 sqs = boto3.resource('sqs', endpoint_url="https://sqs.{}.amazonaws.com".format(os.getenv("AWS_DEFAULT_REGION")))
 queue = sqs.Queue(os.getenv("DELETE_OBJECTS_QUEUE"))
-s3 = s3fs.S3FileSystem(default_cache_type='none', requester_pays=True, default_fill_cache=False, version_aware=True)
 
 
 def _remove_none(d: dict):
@@ -74,7 +73,7 @@ def delete_matches_from_file(parquet_file, to_delete):
         return out_stream, stats
 
 
-def save(client, buf, bucket, key, source_version=None):
+def save(s3, client, buf, bucket, key, source_version=None):
     """
     Save a buffer to S3, preserving any existing properties on the object
     """
@@ -301,16 +300,27 @@ def sanitize_message(err_message, message_body):
 
 def execute(message_body, receipt_handle):
     logger.info("Message received")
-    client = boto3.client("s3")
     msg = queue.Message(receipt_handle)
     try:
         # Parse and validate incoming message
         validate_message(message_body)
         body = json.loads(message_body)
+        session = get_session(body.get("RoleArn"))
+        client = session.client("s3")
         cols, object_path, job_id = itemgetter('Columns', 'Object', 'JobId')(body)
         input_bucket, input_key = parse_s3_url(object_path)
         if not get_bucket_versioning(client, input_bucket):
             raise ValueError("Bucket {} does not have versioning enabled".format(input_bucket))
+        creds = session.get_credentials().get_frozen_credentials()
+        s3 = s3fs.S3FileSystem(
+            key=creds.access_key,
+            secret=creds.secret_key,
+            token=creds.token,
+            default_cache_type='none',
+            requester_pays=True,
+            default_fill_cache=False,
+            version_aware=True
+        )
         # Download the object in-memory and convert to PyArrow NativeFile
         logger.info("Downloading and opening %s object in-memory", object_path)
         with s3.open(object_path, "rb") as f:
@@ -322,7 +332,7 @@ def execute(message_body, receipt_handle):
             out_sink, stats = delete_matches_from_file(infile, cols)
         if stats["DeletedRows"] > 0:
             with pa.BufferReader(out_sink.getvalue()) as output_buf:
-                new_version = save(client, output_buf, input_bucket, input_key, source_version)
+                new_version = save(s3, client, output_buf, input_bucket, input_key, source_version)
                 logger.info("New object version: %s", new_version)
         else:
             logger.warning("The object %s was processed successfully but no rows required deletion", object_path)
