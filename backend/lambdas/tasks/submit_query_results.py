@@ -25,11 +25,17 @@ def handler(event, context):
                             None)
 
     paths = [row["Data"][path_field_index]["VarCharValue"] for row in rows]
-    batch_sqs_msgs(queue, [{
-        "JobId": event["JobId"],
-        "Object": p,
-        "Columns": event["Columns"]
-    } for p in paths])
+    messages = []
+    for p in paths:
+        msg = {
+            "JobId": event["JobId"],
+            "Object": p,
+            "Columns": event["Columns"],
+            "RoleArn": event.get("RoleArn", None),
+        }
+        messages.append({k: v for k, v in msg.items() if v is not None})
+
+    batch_sqs_msgs(queue, messages)
 
     return paths
 
