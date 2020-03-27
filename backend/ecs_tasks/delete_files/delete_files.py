@@ -368,7 +368,7 @@ def verify_object_versions_integrity(client, bucket, key, from_version, to_versi
     error_template = "A {} ({}) was detected for the given object between read and write operations ({} and {})."
 
     object_versions = client.list_object_versions(Bucket=bucket, Prefix=key, VersionIdMarker=from_version)
-    versions = object_versions['Versions']
+    versions = object_versions.get('Versions', [])
     delete_markers = object_versions.get('DeleteMarkers', [])
     all_versions = sorted(versions + delete_markers, key=lambda x: x['LastModified'])
     
