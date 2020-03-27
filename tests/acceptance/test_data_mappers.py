@@ -3,7 +3,8 @@ import pytest
 from copy import deepcopy
 from boto3.dynamodb.conditions import Key
 
-pytestmark = [pytest.mark.acceptance, pytest.mark.api, pytest.mark.data_mappers]
+pytestmark = [pytest.mark.acceptance, pytest.mark.api, pytest.mark.data_mappers,
+              pytest.mark.usefixtures("empty_data_mappers")]
 
 
 @pytest.mark.auth
@@ -28,7 +29,7 @@ def test_it_creates_data_mapper(api_client, data_mapper_base_endpoint, data_mapp
             "Table": table["Table"]
         },
         "Format": "parquet",
-        "RoleArn": "arn:aws:iam:123456789012::role/S3F2DeletionTaskRole"
+        "RoleArn": "arn:aws:iam::123456789012:role/S3F2DeletionTaskRole"
     }
     # Act
     response = api_client.put("{}/{}".format(data_mapper_base_endpoint, key), json=data_mapper)
@@ -97,7 +98,7 @@ def test_it_rejects_invalid_data_mapper(api_client, data_mapper_base_endpoint, g
             "Database": table["Database"],
             "Table": table["Table"]
         },
-        "RoleArn": "arn:aws:iam:123456789012::role/WrongRoleName"
+        "RoleArn": "arn:aws:iam::123456789012:role/WrongRoleName"
     }
     # Act
     response = api_client.put("{}/{}".format(data_mapper_base_endpoint, key), json=data_mapper)
