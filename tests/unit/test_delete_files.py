@@ -252,6 +252,7 @@ def test_it_provides_default_id():
 @patch("backend.ecs_tasks.delete_files.delete_files.get_bucket_versioning", MagicMock(return_value=True))
 @patch("backend.ecs_tasks.delete_files.delete_files.validate_message", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.s3fs", MagicMock())
+@patch("backend.ecs_tasks.delete_files.delete_files.get_session", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.load_parquet")
 @patch("backend.ecs_tasks.delete_files.delete_files.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.delete_files.handle_error")
@@ -271,6 +272,7 @@ def test_it_handles_missing_col_exceptions(mock_handler, mock_delete, mock_load)
 @patch("backend.ecs_tasks.delete_files.delete_files.get_bucket_versioning", MagicMock(return_value=True))
 @patch("backend.ecs_tasks.delete_files.delete_files.validate_message", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.s3fs", MagicMock())
+@patch("backend.ecs_tasks.delete_files.delete_files.get_session", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.load_parquet")
 @patch("backend.ecs_tasks.delete_files.delete_files.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.delete_files.handle_error")
@@ -307,6 +309,7 @@ def test_it_validates_messages_with_invalid_body(mock_handler):
 
 @patch.dict(os.environ, {'JobTable': 'test'})
 @patch("backend.ecs_tasks.delete_files.delete_files.get_bucket_versioning", MagicMock(return_value=True))
+@patch("backend.ecs_tasks.delete_files.delete_files.get_session", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.s3fs")
 @patch("backend.ecs_tasks.delete_files.delete_files.handle_error")
 def test_it_handles_s3_permission_issues(mock_handler, mock_s3):
@@ -321,6 +324,7 @@ def test_it_handles_s3_permission_issues(mock_handler, mock_s3):
 
 @patch.dict(os.environ, {'JobTable': 'test'})
 @patch("backend.ecs_tasks.delete_files.delete_files.get_bucket_versioning", MagicMock(return_value=True))
+@patch("backend.ecs_tasks.delete_files.delete_files.get_session", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.s3fs")
 @patch("backend.ecs_tasks.delete_files.delete_files.handle_error")
 def test_it_handles_io_errors(mock_handler, mock_s3):
@@ -335,6 +339,7 @@ def test_it_handles_io_errors(mock_handler, mock_s3):
 
 @patch.dict(os.environ, {'JobTable': 'test'})
 @patch("backend.ecs_tasks.delete_files.delete_files.get_bucket_versioning", MagicMock(return_value=True))
+@patch("backend.ecs_tasks.delete_files.delete_files.get_session", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.s3fs")
 @patch("backend.ecs_tasks.delete_files.delete_files.handle_error")
 def test_it_handles_file_too_big(mock_handler, mock_s3):
@@ -349,6 +354,7 @@ def test_it_handles_file_too_big(mock_handler, mock_s3):
 
 @patch.dict(os.environ, {'JobTable': 'test'})
 @patch("backend.ecs_tasks.delete_files.delete_files.get_bucket_versioning", MagicMock(return_value=True))
+@patch("backend.ecs_tasks.delete_files.delete_files.get_session", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.s3fs")
 @patch("backend.ecs_tasks.delete_files.delete_files.handle_error")
 def test_it_handles_generic_error(mock_handler, mock_s3):
