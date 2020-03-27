@@ -5,12 +5,13 @@ import types
 import mock
 
 import pytest
+from boto3.session import Session
 from botocore.exceptions import ClientError
 from mock import MagicMock, ANY, patch
 
 from boto_utils import convert_iso8601_to_epoch, paginate, batch_sqs_msgs, read_queue, emit_event, DecimalEncoder, \
     normalise_dates, deserialize_item, running_job_exists, get_config, utc_timestamp, get_job_expiry, parse_s3_url, \
-    get_user_info
+    get_user_info, get_session
 
 pytestmark = [pytest.mark.unit, pytest.mark.layers]
 
@@ -352,3 +353,29 @@ def test_it_fetches_userinfo_from_lambda_event():
 def test_it_fetches_userinfo_from_lambda_event_with_failover_in_place():
     result = get_user_info({ "requestContext": {}})
     assert result == {"Username": "N/A", "Sub": "N/A"}
+
+
+@patch("boto_utils.sts")
+def test_it_returns_default_session(mock_sts):
+    resp = get_session()
+    mock_sts.assume_role.assert_not_called()
+    assert isinstance(resp, Session)
+
+
+@patch("boto_utils.boto3")
+@patch("boto_utils.sts")
+def test_it_assumes_role_for_session_where_given(mock_sts, mock_boto):
+    mock_sts.assume_role.return_value = {
+        "Credentials": {
+            "AccessKeyId": "a",
+            "SecretAccessKey": "b",
+            "SessionToken": "c",
+        }
+    }
+    get_session(assume_role_arn="arn:aws:iam:accountid::role/rolename")
+    mock_sts.assume_role.assert_called_with(RoleArn="arn:aws:iam:accountid::role/rolename", RoleSessionName=ANY)
+    mock_boto.session.Session.assert_called_with(
+        aws_access_key_id="a",
+        aws_secret_access_key="b",
+        aws_session_token="c",
+    )
