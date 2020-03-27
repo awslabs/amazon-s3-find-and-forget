@@ -46,7 +46,8 @@ def test_it_creates_data_mapper(validate_mapper, table):
                 "Database": "test",
                 "Table": "test"
             },
-            "Format": "parquet"
+            "Format": "parquet",
+            "RoleArn": "arn:aws:iam::accountid:role/S3F2DeletionTaskRole",
         }),
         "requestContext": autorization_mock
     }, SimpleNamespace())
@@ -65,13 +66,14 @@ def test_it_creates_data_mapper(validate_mapper, table):
                "CreatedBy": {
                    "Username": "cognitoUsername",
                    "Sub": "cognitoSub"
-               }
+               },
+               "RoleArn": "arn:aws:iam::accountid:role/S3F2DeletionTaskRole",
            } == json.loads(response["body"])
 
 
 @patch("backend.lambdas.data_mappers.handlers.table")
 @patch("backend.lambdas.data_mappers.handlers.validate_mapper")
-def test_it_provides_default_format(validate_mapper, table):
+def test_it_supports_optionals(validate_mapper, table):
     response = handlers.create_data_mapper_handler({
         "pathParameters": {
             "data_mapper_id": "test"

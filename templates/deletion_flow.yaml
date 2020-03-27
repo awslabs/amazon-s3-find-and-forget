@@ -169,6 +169,10 @@ Resources:
             - logs:PutLogEvents
             Effect: Allow
             Resource: "arn:aws:logs:*:*:*"
+          - Action:
+            - sts:AssumeRole
+            Effect: Allow
+            Resource: !Sub "arn:${AWS::Partition}:iam::*:role/S3F2DeletionTaskRole"
 
   DeleteTaskLogGroup:
     Type: AWS::Logs::LogGroup

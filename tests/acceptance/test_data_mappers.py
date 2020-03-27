@@ -27,7 +27,8 @@ def test_it_creates_data_mapper(api_client, data_mapper_base_endpoint, data_mapp
             "Database": table["Database"],
             "Table": table["Table"]
         },
-        "Format": "parquet"
+        "Format": "parquet",
+        "RoleArn": "arn:aws:iam:123456789012::role/S3F2DeletionTaskRole"
     }
     # Act
     response = api_client.put("{}/{}".format(data_mapper_base_endpoint, key), json=data_mapper)
@@ -48,7 +49,65 @@ def test_it_creates_data_mapper(api_client, data_mapper_base_endpoint, data_mapp
     assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
 
 
-def test_it_rejects_invalid_data_mapper(api_client, data_mapper_base_endpoint, stack):
+def test_it_creates_without_optionals(api_client, data_mapper_base_endpoint, data_mapper_table, glue_table_factory,
+                                      stack):
+    # Arrange
+    table = glue_table_factory()
+    key = "test"
+    data_mapper = {
+        "DataMapperId": key,
+        "Columns": ["a"],
+        "QueryExecutor": "athena",
+        "QueryExecutorParameters": {
+            "DataCatalogProvider": "glue",
+            "Database": table["Database"],
+            "Table": table["Table"]
+        },
+    }
+    # Act
+    response = api_client.put("{}/{}".format(data_mapper_base_endpoint, key), json=data_mapper)
+    response_body = response.json()
+    # Assert
+    expected = deepcopy(data_mapper)
+    expected["Format"] = "parquet"
+    expected['CreatedBy'] = {
+        "Username": "aws-uk-sa-builders@amazon.com",
+        "Sub": mock.ANY
+    }
+    # Check the response is ok
+    assert 201 == response.status_code
+    assert expected == response_body
+    # Check the item exists in the DDB Table
+    query_result = data_mapper_table.query(KeyConditionExpression=Key("DataMapperId").eq(key))
+    assert 1 == len(query_result["Items"])
+    assert expected == query_result["Items"][0]
+    assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
+
+
+def test_it_rejects_invalid_data_mapper(api_client, data_mapper_base_endpoint, glue_table_factory, stack):
+    # Arrange
+    table = glue_table_factory()
+    key = "test"
+    data_mapper = {
+        "DataMapperId": key,
+        "Columns": ["a"],
+        "QueryExecutor": "athena",
+        "QueryExecutorParameters": {
+            "DataCatalogProvider": "glue",
+            "Database": table["Database"],
+            "Table": table["Table"]
+        },
+        "RoleArn": "arn:aws:iam:123456789012::role/WrongRoleName"
+    }
+    # Act
+    response = api_client.put("{}/{}".format(data_mapper_base_endpoint, key), json=data_mapper)
+    response_body = response.json()
+    # Assert
+    assert 422 == response.status_code
+    assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
+
+
+def test_it_rejects_invalid_role(api_client, data_mapper_base_endpoint, stack):
     key = "test"
     response = api_client.put("{}/{}".format(data_mapper_base_endpoint, key), json={"INVALID": "PAYLOAD"})
     assert 422 == response.status_code
