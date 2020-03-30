@@ -364,7 +364,7 @@ class RetryableClientError(Exception):
     """ Raised by clients when error is due to eventual consistency"""
     pass
 
-def retry_wrapper(fn, args, retry_wait_seconds = 2, retry_factor = 2, max_retries = 5):
+def retry_wrapper(fn, args = [], retry_wait_seconds = 2, retry_factor = 2, max_retries = 5):
     """ Exponential back-off retry wrapper """
     retry_current = 0
     last_error = None
@@ -391,10 +391,8 @@ def verify_object_versions_integrity(client, bucket, key, from_version_id, to_ve
         versions = object_versions.get('Versions', [])
         delete_markers = object_versions.get('DeleteMarkers', [])
         all_versions = sorted(versions + delete_markers, key=lambda x: x['LastModified'])
-        
-        for i,version in enumerate(all_versions):
-            if version['VersionId'] == from_version_id: from_index = i
-            if version['VersionId'] == to_version_id: to_index = i
+        from_index = next((i for i, item in enumerate(all_versions) if item['VersionId'] == from_version_id), -1)
+        to_index = next((i for i, item in enumerate(all_versions) if item['VersionId'] == to_version_id), -1)
 
         if from_index == -1:
             raise ValueError("from_version_id ({}) not found".format(from_version_id))
@@ -409,7 +407,7 @@ def verify_object_versions_integrity(client, bucket, key, from_version_id, to_ve
         return all_versions, from_index, to_index
 
     error_template = "A {} ({}) was detected for the given object between read and write operations ({} and {})."
-    all_versions, from_index, to_index = retry_wrapper(fetch_object_versions, [])
+    all_versions, from_index, to_index = retry_wrapper(fetch_object_versions)
     if to_index - from_index != 1:
         conflicting = all_versions[to_index - 1]
         conflicting_version = conflicting['VersionId']
