@@ -36,7 +36,7 @@ export default ({ gateway, goToDataMappers }) => {
   const isGlueDatabaseValid = !isEmpty(glueDatabase) && glueDatabase !== "-1";
   const isGlueTableValid = !isEmpty(glueTable) && glueTable !== "-1";
   const isColumnsValid = !isEmpty(columns);
-  const isRoleValid = !isEmpty(roleArn) && isRoleArnValid(dataMapperId);
+  const isRoleValid = !isEmpty(roleArn) && isRoleArnValid(roleArn);
 
   const isFormValid =
     isDataMapperIdValid &&
@@ -66,7 +66,8 @@ export default ({ gateway, goToDataMappers }) => {
           dataMapperId,
           glueDatabase,
           glueTable,
-          columns
+          columns,
+          roleArn
         );
         setFormState("saved");
       } catch (e) {

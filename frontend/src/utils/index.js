@@ -25,7 +25,7 @@ export const isIdValid = x => {
 };
 
 export const isRoleArnValid = x => {
-  const arnRegex = /^arn:(aws[a-zA-Z-]*)?:iam::\d{12}:role\/S3F2DeletionTaskRole$/;
+  const arnRegex = /^arn:(aws[a-zA-Z-]*)?:iam::\d{12}:role\/S3F2DataAccessRole$/;
   return arnRegex.test(x);
 };
 

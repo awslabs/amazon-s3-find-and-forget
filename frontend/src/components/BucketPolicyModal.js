@@ -3,23 +3,19 @@ import { Button, Modal, Tabs, Tab } from "react-bootstrap";
 import ReactJson from "react-json-view";
 import Alert from "./Alert";
 
-const { athenaExecutionRole, deleteTaskRole, region } = window.s3f2Settings;
+const { athenaExecutionRole, region } = window.s3f2Settings;
 
-export default ({ accountId, bucket, close, show, location }) => {
+export default ({ accountId, bucket, roleArn, close, show, location }) => {
   const [key, setKey] = useState('bucket');
   const locationWithoutProtocol = location.replace("s3://", "")
   const tabs = [{
     key: "bucket",
     title: "Bucket Access",
-    content: <BucketPolicy bucket={bucket} accountId={accountId} location={locationWithoutProtocol} />
+    content: <BucketPolicy bucket={bucket} accountId={accountId} location={locationWithoutProtocol} roleArn={roleArn} />
   }, {
     key: "kms",
     title: "KMS Access",
-    content: <KmsPolicy bucket={bucket} accountId={accountId} location={locationWithoutProtocol} />
-  }, {
-    key: "ca",
-    title: "Cross Account Access",
-    content: <CrossAccountPolicy bucket={bucket} accountId={accountId} location={locationWithoutProtocol} />
+    content: <KmsPolicy bucket={bucket} accountId={accountId} location={locationWithoutProtocol} roleArn={roleArn} />
   }]
 
   return (
@@ -60,7 +56,7 @@ const PolicyJson = ({policy}) =>(<ReactJson
 />)
 
 
-const BucketPolicy = ({ bucket, accountId, location }) => {
+const BucketPolicy = ({ bucket, accountId, location, roleArn }) => {
   const bucketPolicy = {
     Version: "2012-10-17",
     Statement: [
@@ -70,7 +66,7 @@ const BucketPolicy = ({ bucket, accountId, location }) => {
         Principal: {
           AWS: [
             `arn:aws:iam::${accountId}:role/${athenaExecutionRole}`,
-            `arn:aws:iam::${accountId}:role/${deleteTaskRole}`
+            roleArn
           ]
         },
         Action: [
@@ -88,7 +84,7 @@ const BucketPolicy = ({ bucket, accountId, location }) => {
         Effect: "Allow",
         Principal: {
           AWS: [
-            `arn:aws:iam::${accountId}:role/${deleteTaskRole}`
+            roleArn
           ]
         },
         Action: [
@@ -131,14 +127,14 @@ const BucketPolicy = ({ bucket, accountId, location }) => {
 }
 
 
-const KmsPolicy = ({ bucket, accountId, location }) => {
+const KmsPolicy = ({ bucket, accountId, location, roleArn }) => {
   const keyPolicy = [{
     "Sid": "AllowS3F2Usage",
     "Effect": "Allow",
     "Principal": {
       AWS: [
         `arn:aws:iam::${accountId}:role/${athenaExecutionRole}`,
-        `arn:aws:iam::${accountId}:role/${deleteTaskRole}`
+        roleArn
       ]
     },
     "Action": [
@@ -155,7 +151,7 @@ const KmsPolicy = ({ bucket, accountId, location }) => {
     "Principal": {
       AWS: [
         `arn:aws:iam::${accountId}:role/${athenaExecutionRole}`,
-        `arn:aws:iam::${accountId}:role/${deleteTaskRole}`
+        roleArn
       ]
     },
     "Action": [
@@ -199,174 +195,5 @@ const KmsPolicy = ({ bucket, accountId, location }) => {
         <PolicyJson policy={keyPolicy}/>
       </li>
     </ol>
-  </>)
-}
-
-const CrossAccountPolicy = ({ bucket, accountId, location }) => {
-  const athenaIamPolicy = {
-    Version: "2012-10-17",
-    Statement: [
-      {
-        Sid: "AllowS3F2Read",
-        Effect: "Allow",
-        Action: [
-          "s3:GetBucketLocation",
-          "s3:GetBucketVersioning",
-          "s3:GetObject*",
-          "s3:ListBucket*"
-        ],
-        Resource: [
-          `arn:aws:s3:::${bucket}`,
-          `arn:aws:s3:::${location}*`
-        ]
-      },
-      {
-        "Sid": "AllowS3F2Usage",
-        "Effect": "Allow",
-        "Action": [
-          "kms:Encrypt",
-          "kms:Decrypt",
-          "kms:ReEncrypt*",
-          "kms:GenerateDataKey*",
-          "kms:DescribeKey"
-        ],
-        "Resource": "<your-cmk-arn>"
-      }, 
-      {
-        "Sid": "AllowS3F2Grants",
-        "Effect": "Allow",
-        "Action": [
-          "kms:CreateGrant",
-          "kms:ListGrants",
-          "kms:RevokeGrant"
-        ],
-        "Resource": "<your-cmk-arn>",
-        "Condition": {
-          "Bool": {
-            "kms:GrantIsForAWSResource": "true"
-          }
-        }
-      }
-    ]
-  }
-
-  const fargateIamPolicy = {
-    Version: "2012-10-17",
-    Statement: [
-      {
-        Sid: "AllowS3F2Read",
-        Effect: "Allow",
-        Action: [
-          "s3:GetBucketLocation",
-          "s3:GetBucketVersioning",
-          "s3:GetObject*",
-          "s3:ListBucket*"
-        ],
-        Resource: [
-          `arn:aws:s3:::${bucket}`,
-          `arn:aws:s3:::${location}*`
-        ]
-      },
-      {
-        "Sid": "AllowS3F2Write",
-        "Effect": "Allow",
-        "Action": [
-          "s3:AbortMultipartUpload",
-          "s3:GetBucketRequestPayment",
-          "s3:ListMultipartUploadParts",
-          "s3:PutObject*"
-        ],
-        "Resource": [
-          `arn:aws:s3:::${bucket}`,
-          `arn:aws:s3:::${location}*`
-        ]
-      },
-      {
-        "Sid": "AllowS3F2Usage",
-        "Effect": "Allow",
-        "Action": [
-          "kms:Encrypt",
-          "kms:Decrypt",
-          "kms:ReEncrypt*",
-          "kms:GenerateDataKey*",
-          "kms:DescribeKey"
-        ],
-        "Resource": "<your-cmk-arn>"
-      }, 
-      {
-        "Sid": "AllowS3F2Grants",
-        "Effect": "Allow",
-        "Action": [
-          "kms:CreateGrant",
-          "kms:ListGrants",
-          "kms:RevokeGrant"
-        ],
-        "Resource": "<your-cmk-arn>",
-        "Condition": {
-          "Bool": {
-            "kms:GrantIsForAWSResource": "true"
-          }
-        }
-      }
-    ]
-  }
-  return (<>
-    <Alert type="info" title="Additional Permissions">
-        If your bucket and Customer Managed CMK key used for encrypting objects are owned by the
-        account <strong>{accountId}</strong>, you can skip this step
-    </Alert>
-    <ol>
-      <li>
-        <p>
-          Open the{" "}
-          <a
-            href={`https://console.aws.amazon.com/iam/home?region=${region}#/roles/${athenaExecutionRole.split('/').pop()}`}
-            target="_new"
-          >
-            Athena Query Executor role in the IAM console
-          </a>{" "}
-          and then choose <strong>Add inline policy</strong> then choose the{" "}
-          <strong>JSON</strong> tab.
-        </p>
-      </li>
-      <li>
-        <p>
-          Add a Policy to grant the Athena Query Executor read access to the S3 Bucket
-          then choose <strong>Review Policy</strong>. Input a name for the policy and
-          choose <strong>Create Policy</strong>. An example IAM policy is provided below.
-        </p>
-        <p>
-          <strong>Note:</strong> you only need to include the AllowS3F2Usage and AllowS3F2Grants
-          statements if you are using a Customer Managed CMK to encrypt objects in the bucket. If so, replace{" "}
-          <strong>&lt;your-cmk-arn&gt;</strong> with the ARN of your CMK.
-        </p>
-        <PolicyJson policy={athenaIamPolicy} />
-      </li>
-      <li>
-        <p>
-          Open the{" "}
-          <a
-            href={`https://console.aws.amazon.com/iam/home?region=${region}#/roles/${deleteTaskRole.split('/').pop()}`}
-            target="_new"
-          >
-            Deletion Task role in the IAM console
-          </a>{" "}
-          and then choose <strong>Add inline policy</strong> then choose the <strong>JSON</strong> tab.
-        </p>
-      </li>
-      <li>
-        <p>
-          Add a Policy to grant the Deletion Task read/write access to the S3 Bucket
-          then choose <strong>Review Policy</strong>. Input a name for the policy and
-          choose <strong>Create Policy</strong>. An example IAM policy is provided below.
-        </p>
-        <p>
-          <strong>Note:</strong> you only need to include the AllowS3F2Usage and AllowS3F2Grants
-          if you are using a Customer Managed CMK to encrypt objects in the bucket. If so, replace{" "}
-          <strong>&lt;your-cmk-arn&gt;</strong> with the ARN of your CMK.
-        </p>
-        <PolicyJson policy={fargateIamPolicy} />
-      </li>
-    </ol>  
   </>)
 }
