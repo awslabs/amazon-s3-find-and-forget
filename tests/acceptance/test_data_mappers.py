@@ -139,6 +139,7 @@ def test_it_rejects_invalid_data_catalog_provider(api_client, data_mapper_base_e
             "DataCatalogProvider": "invalid",
         },
         "Format": "parquet",
+        "RoleArn": "arn:aws:iam::123456789012:role/S3F2DeletionTaskRole"
     })
     assert 422 == response.status_code
     assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
@@ -155,6 +156,7 @@ def test_it_rejects_missing_glue_catalog(api_client, data_mapper_base_endpoint, 
             "DataCatalogProvider": "glue",
         },
         "Format": "parquet",
+        "RoleArn": "arn:aws:iam::123456789012:role/S3F2DeletionTaskRole"
     })
     assert 400 == response.status_code
     assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
