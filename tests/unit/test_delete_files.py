@@ -3,7 +3,7 @@ from io import BytesIO
 
 import boto3
 from botocore.exceptions import ClientError
-from mock import patch, MagicMock, mock_open, ANY
+from mock import patch, MagicMock, mock_open, ANY, call
 
 import json
 import pyarrow as pa
@@ -20,7 +20,8 @@ with patch.dict(os.environ, {
     emit_deletion_event, emit_failed_deletion_event, save, get_grantees, \
     get_object_info, get_object_tags, get_object_acl, get_requester_payment, get_row_count, \
     delete_from_dataframe, delete_matches_from_file, load_parquet, kill_handler, handle_error, \
-    get_bucket_versioning, sanitize_message, verify_object_versions_integrity
+    get_bucket_versioning, sanitize_message, verify_object_versions_integrity, \
+    RetryableClientError, retry_wrapper
 
 pytestmark = [pytest.mark.unit]
 
@@ -713,11 +714,27 @@ def test_it_verifies_integrity_happy_path():
             { "VersionId": "v6", "IsLatest": False, "LastModified": "2020-03-25T11:22:31.000Z", "ETag": 'b' }
         ]
     }
-
     result = verify_object_versions_integrity(s3_mock, 'bucket', 'requirements.txt', 'v6', 'v7')
 
-    assert result['IsValid']
+    assert result
+    s3_mock.list_object_versions.assert_called_with(
+        Bucket='bucket',
+        Prefix='requirements.txt',
+        VersionIdMarker='v6')
 
+
+def test_it_verifies_integrity_when_not_latest():
+    s3_mock = MagicMock()
+    s3_mock.list_object_versions.return_value = {
+        "Versions": [
+            { "VersionId": "v8", "IsLatest": True, "LastModified": "2020-03-25T11:24:31.000Z", "ETag": 'a' },
+            { "VersionId": "v7", "IsLatest": False, "LastModified": "2020-03-25T11:23:31.000Z", "ETag": 'b' },
+            { "VersionId": "v6", "IsLatest": False, "LastModified": "2020-03-25T11:22:31.000Z", "ETag": 'c' }
+        ]
+    }
+    result = verify_object_versions_integrity(s3_mock, 'bucket', 'requirements.txt', 'v6', 'v7')
+
+    assert result
     s3_mock.list_object_versions.assert_called_with(
         Bucket='bucket',
         Prefix='requirements.txt',
@@ -735,11 +752,10 @@ def test_it_fails_integrity_when_delete_marker_between():
             { "VersionId": "v6", "IsLatest": False, "LastModified": "2020-03-25T11:22:54.000Z" }
         ]
     }
-
-    result = verify_object_versions_integrity(s3_mock, 'bucket', 'requirements.txt', 'v5', 'v7')
-
-    assert not result['IsValid']
-    assert result['Error'] == 'A delete marker (v6) was detected for the given object between read and write operations (v5 and v7).'
+    
+    with pytest.raises(ValueError) as e:
+        result = verify_object_versions_integrity(s3_mock, 'bucket', 'requirements.txt', 'v5', 'v7')
+    assert e.value.args[0] == 'A delete marker (v6) was detected for the given object between read and write operations (v5 and v7).'
 
 
 def test_it_fails_integrity_when_other_version_between():
@@ -752,10 +768,10 @@ def test_it_fails_integrity_when_other_version_between():
         ]
     }
 
-    result = verify_object_versions_integrity(s3_mock, 'bucket', 'requirements.txt', 'v5', 'v7')
+    with pytest.raises(ValueError) as e:
+        result = verify_object_versions_integrity(s3_mock, 'bucket', 'requirements.txt', 'v5', 'v7')
 
-    assert not result['IsValid']
-    assert result['Error'] == 'A version (v6) was detected for the given object between read and write operations (v5 and v7).'
+    assert e.value.args[0] == 'A version (v6) was detected for the given object between read and write operations (v5 and v7).'
 
 
 def test_it_errors_when_version_to_is_minor_than_from():
@@ -769,7 +785,7 @@ def test_it_errors_when_version_to_is_minor_than_from():
 
     with pytest.raises(ValueError) as e:
         result = verify_object_versions_integrity(s3_mock, 'bucket', 'requirements.txt', 'v7', 'v6')
-    assert e.value.args[0] == 'from_version (v7) is more recent than to_version (v6)'
+    assert e.value.args[0] == 'from_version_id (v7) is more recent than to_version_id (v6)'
 
 
 def test_it_errors_when_version_from_not_found():
@@ -783,10 +799,12 @@ def test_it_errors_when_version_from_not_found():
 
     with pytest.raises(ValueError) as e:
         result = verify_object_versions_integrity(s3_mock, 'bucket', 'requirements.txt', 'v5', 'v6')
-    assert e.value.args[0] == 'version_from (v5) not found'
+    assert e.value.args[0] == 'from_version_id (v5) not found'
 
 
-def test_it_errors_when_version_to_not_found():
+@patch("time.sleep")
+def test_it_errors_when_version_to_not_found(sleep_mock):
+    sleep_mock = MagicMock()
     s3_mock = MagicMock()
     s3_mock.list_object_versions.return_value = {
         "Versions": [
@@ -797,4 +815,60 @@ def test_it_errors_when_version_to_not_found():
 
     with pytest.raises(ValueError) as e:
         result = verify_object_versions_integrity(s3_mock, 'bucket', 'requirements.txt', 'v7', 'v8')
-    assert e.value.args[0] == 'version_to (v8) not found'
+    assert e.value.args[0] == 'to_version_id (v8) not found'
+
+
+@patch("time.sleep")
+def test_it_doesnt_retry_success_fn(sleep_mock):
+    sleep = MagicMock()
+    fn = MagicMock()
+    fn.side_effect = [31, 32]
+    result = retry_wrapper(fn, [25], retry_wait_seconds=1, retry_factor=3)
+
+    assert result == 31
+    assert fn.call_args_list == [call(25)]
+    assert not sleep_mock.called
+
+
+@patch("time.sleep")
+def test_it_retries_retriable_fn(sleep_mock):
+    sleep = MagicMock()
+    fn = MagicMock()
+    fn.side_effect = [
+        RetryableClientError("fail 1"),
+        RetryableClientError("fail 2"),
+        32]
+    result = retry_wrapper(fn, [22], retry_wait_seconds=1, retry_factor=3)
+
+    assert result == 32
+    assert fn.call_args_list == [call(22), call(22), call(22)]
+    assert sleep_mock.call_args_list == [call(1), call(3)]
+
+
+@patch("time.sleep")
+def test_it_doesnt_retry_non_retriable_fn(sleep_mock):
+    sleep = MagicMock()
+    fn = MagicMock()
+    fn.side_effect = [NameError("fail!")]
+
+    with pytest.raises(NameError) as e:
+        result = retry_wrapper(fn, [22], retry_wait_seconds=1, retry_factor=3)
+
+    assert e.value.args[0] == 'fail!'
+    assert fn.call_args_list == [call(22)]
+    assert not sleep_mock.called
+
+
+@patch("time.sleep")
+def test_it_retries_and_gives_up_fn(sleep_mock):
+    sleep = MagicMock()
+    fn = MagicMock()
+    e = RetryableClientError("oops")
+    fn.side_effect = [e, e, e, e]
+
+    with pytest.raises(ValueError) as e:
+        result = retry_wrapper(fn, [22], max_retries=3)
+
+    assert e.value.args[0] == 'oops'
+    assert fn.call_args_list == [call(22), call(22), call(22), call(22)]
+    assert sleep_mock.call_args_list == [call(2), call(4), call(8)]

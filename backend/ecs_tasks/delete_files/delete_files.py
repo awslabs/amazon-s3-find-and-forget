@@ -360,44 +360,67 @@ def kill_handler(msgs, process_pool):
             logger.error("Unable to gracefully cleanup message: %s", str(e))
     sys.exit(1 if len(msgs) > 0 else 0)
 
+class RetryableClientError(Exception):
+    """ Raised by clients when error is due to eventual consistency"""
+    pass
 
-def verify_object_versions_integrity(client, bucket, key, from_version, to_version):
+def retry_wrapper(fn, args, retry_wait_seconds = 2, retry_factor = 2, max_retries = 5):
+    """ Exponential back-off retry wrapper """
+    retry_current = 0
+    last_error = None
 
-    result = { 'IsValid': True }
-    from_index = to_index = -1
+    while retry_current <= max_retries:
+        try:
+            return fn(*args)
+        except(RetryableClientError) as e:
+            if(retry_current == max_retries):
+                break
+            last_error = e
+            retry_current += 1
+            time.sleep(retry_wait_seconds)
+            retry_wait_seconds = retry_wait_seconds * retry_factor
+
+    raise ValueError(str(last_error))
+
+
+def verify_object_versions_integrity(client, bucket, key, from_version_id, to_version_id):
+
+    def fetch_object_versions():
+        from_index = to_index = -1
+        object_versions = client.list_object_versions(Bucket=bucket, Prefix=key, VersionIdMarker=from_version_id)
+        versions = object_versions.get('Versions', [])
+        delete_markers = object_versions.get('DeleteMarkers', [])
+        all_versions = sorted(versions + delete_markers, key=lambda x: x['LastModified'])
+        
+        for i,version in enumerate(all_versions):
+            if version['VersionId'] == from_version_id: from_index = i
+            if version['VersionId'] == to_version_id: to_index = i
+
+        if from_index == -1:
+            raise ValueError("from_version_id ({}) not found".format(from_version_id))
+        if to_index == -1:
+            raise RetryableClientError("to_version_id ({}) not found".format(to_version_id))
+        if to_index < from_index:
+            raise ValueError("from_version_id ({}) is more recent than to_version_id ({})".format(
+                from_version_id,
+                to_version_id
+            ))
+        
+        return all_versions, from_index, to_index
+
     error_template = "A {} ({}) was detected for the given object between read and write operations ({} and {})."
-
-    object_versions = client.list_object_versions(Bucket=bucket, Prefix=key, VersionIdMarker=from_version)
-    versions = object_versions.get('Versions', [])
-    delete_markers = object_versions.get('DeleteMarkers', [])
-    all_versions = sorted(versions + delete_markers, key=lambda x: x['LastModified'])
-    
-    for i,version in enumerate(all_versions):
-        if version['VersionId'] == from_version: from_index = i
-        if version['VersionId'] == to_version: to_index = i
-
-    if from_index == -1:
-        raise ValueError("version_from ({}) not found".format(from_version))
-    if to_index == -1:
-        raise ValueError("version_to ({}) not found".format(to_version))
-    if to_index < from_index:
-        raise ValueError("from_version ({}) is more recent than to_version ({})".format(
-            from_version,
-            to_version
-        ))
-
+    all_versions, from_index, to_index = retry_wrapper(fetch_object_versions, [])
     if to_index - from_index != 1:
-        result['IsValid'] = False
         conflicting = all_versions[to_index - 1]
         conflicting_version = conflicting['VersionId']
         conflicting_version_type = 'delete marker' if 'ETag' not in conflicting else 'version'
-        result['Error'] = error_template.format(
+        raise ValueError(error_template.format(
             conflicting_version_type,
             conflicting_version,
-            from_version, 
-            to_version)
+            from_version_id, 
+            to_version_id))
 
-    return result
+    return True
 
 
 if __name__ == '__main__':
