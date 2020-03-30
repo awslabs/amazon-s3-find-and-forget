@@ -747,6 +747,20 @@ def test_it_fails_integrity_when_other_version_between():
 
     assert e.value.args[0] == 'A version (v6) was detected for the given object between read and write operations (v5 and v7).'
 
+
+def test_it_fails_integrity_when_no_other_version_before():
+    s3_mock = MagicMock()
+    s3_mock.list_object_versions.return_value = {
+        "VersionIdMarker": "v7",
+        "Versions": []
+    }
+
+    with pytest.raises(ValueError) as e:
+        result = verify_object_versions_integrity(s3_mock, 'bucket', 'requirements.txt', 'v5', 'v7')
+
+    assert e.value.args[0] == 'Previous version (v5) has been deleted.'
+
+
 def get_list_object_versions_error():
     return ClientError({
         'Error': {
@@ -755,20 +769,19 @@ def get_list_object_versions_error():
         }
     }, "ListObjectVersions")
 
-@patch("time.sleep")
-def test_it_errors_when_version_to_not_found(sleep_mock):
-    sleep_mock = MagicMock()
-    s3_mock = MagicMock()
-    s3_mock.list_object_versions.side_effect = get_list_object_versions_error()
+
+@patch("backend.ecs_tasks.delete_files.delete_files.retry_wrapper")
+def test_it_errors_when_version_to_not_found_after_retries(retry_wrapper_mock):
+    retry_wrapper_mock.side_effect = get_list_object_versions_error()
 
     with pytest.raises(ClientError) as e:
-        result = verify_object_versions_integrity(s3_mock, 'bucket', 'requirements.txt', 'v7', 'v8')
+        result = verify_object_versions_integrity(MagicMock(), 'bucket', 'requirements.txt', 'v7', 'v8')
+    assert retry_wrapper_mock.called
     assert e.value.args[0] == 'An error occurred (InvalidArgument) when calling the ListObjectVersions operation: Invalid version id specified'
 
 
 @patch("time.sleep")
 def test_it_doesnt_retry_success_fn(sleep_mock):
-    sleep = MagicMock()
     fn = MagicMock()
     fn.side_effect = [31, 32]
     result = retry_wrapper(fn, [25], retry_wait_seconds=1, retry_factor=3)
@@ -780,7 +793,6 @@ def test_it_doesnt_retry_success_fn(sleep_mock):
 
 @patch("time.sleep")
 def test_it_retries_retriable_fn(sleep_mock):
-    sleep = MagicMock()
     fn = MagicMock()
     e = get_list_object_versions_error()
     fn.side_effect = [e, e, 32]
@@ -793,9 +805,8 @@ def test_it_retries_retriable_fn(sleep_mock):
 
 @patch("time.sleep")
 def test_it_doesnt_retry_non_retriable_fn(sleep_mock):
-    sleep = MagicMock()
     fn = MagicMock()
-    fn.side_effect = [NameError("fail!")]
+    fn.side_effect = NameError("fail!")
 
     with pytest.raises(NameError) as e:
         result = retry_wrapper(fn, [22], retry_wait_seconds=1, retry_factor=3)
@@ -807,10 +818,8 @@ def test_it_doesnt_retry_non_retriable_fn(sleep_mock):
 
 @patch("time.sleep")
 def test_it_retries_and_gives_up_fn(sleep_mock):
-    sleep = MagicMock()
     fn = MagicMock()
-    e = get_list_object_versions_error()
-    fn.side_effect = [e, e, e, e]
+    fn.side_effect = get_list_object_versions_error()
 
     with pytest.raises(ClientError) as e:
         result = retry_wrapper(fn, [22], max_retries=3)

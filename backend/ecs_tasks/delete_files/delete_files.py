@@ -389,17 +389,22 @@ def verify_object_versions_integrity(client, bucket, key, from_version_id, to_ve
             KeyMarker=key,
             MaxKeys=1)
     
-    error_template = "A {} ({}) was detected for the given object between read and write operations ({} and {})."
+    conflict_error_template = "A {} ({}) was detected for the given object between read and write operations ({} and {})."
+    not_found_error_template = "Previous version ({}) has been deleted."
     object_versions = retry_wrapper(fetch_object_versions)
     versions = object_versions.get('Versions', [])
     delete_markers = object_versions.get('DeleteMarkers', [])
     all_versions = versions + delete_markers
+
+    if not len(all_versions):
+        raise ValueError(not_found_error_template.format(from_version_id))
+
     prev_version = all_versions[0]
     prev_version_id = prev_version['VersionId']
     
     if prev_version_id != from_version_id:
         conflicting_version_type = 'delete marker' if 'ETag' not in prev_version else 'version'
-        raise ValueError(error_template.format(
+        raise ValueError(conflict_error_template.format(
             conflicting_version_type,
             prev_version_id,
             from_version_id, 
