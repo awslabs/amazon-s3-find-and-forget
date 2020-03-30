@@ -47,6 +47,18 @@ test("isIdValid", () => {
   );
 });
 
+test("isRoleArnValid", () => {
+  const scenarios = [
+    { test: "abc_ABC-123", expected: false },
+    { test: "arn:aws:iam::123456789012:role/OtherRole", expected: false },
+    { test: "arn:aws:iam::123456789012:role/S3F2DeletionTaskRole", expected: true },
+  ];
+
+  scenarios.forEach(scenario =>
+    expect(isIdValid(scenario.test)).toEqual(scenario.expected)
+  );
+});
+
 test("sortBy", () => {
   const scenarios = [
     { test: [{ a: "ee" }, { a: "cc" }], expected: [{ a: "cc" }, { a: "ee" }] },

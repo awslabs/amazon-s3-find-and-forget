@@ -92,6 +92,9 @@ Resources:
             Version: "2012-10-17"
             Statement:
               - Effect: Allow
+                Action: "s3:ListAllMyBuckets"
+                Resource: !Sub "arn:${AWS::Partition}:s3:::*"
+              - Effect: Allow
                 Action: "sts:GetCallerIdentity"
                 Resource: "*"
               - Effect: "Allow"

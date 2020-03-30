@@ -24,6 +24,11 @@ export const isIdValid = x => {
   return idRegex.test(x);
 };
 
+export const isRoleArnValid = x => {
+  const arnRegex = /^arn:(aws[a-zA-Z-]*)?:iam::\d{12}:role\/S3F2DeletionTaskRole$/;
+  return arnRegex.test(x);
+};
+
 export const sortBy = (obj, key) =>
   obj.sort((a, b) => (a[key] > b[key] ? 1 : a[key] < b[key] ? -1 : 0));
 
