@@ -172,7 +172,7 @@ Resources:
           - Action:
             - sts:AssumeRole
             Effect: Allow
-            Resource: !Sub "arn:${AWS::Partition}:iam::*:role/S3F2DeletionTaskRole"
+            Resource: !Sub "arn:${AWS::Partition}:iam::*:role/S3F2DataAccessRole"
 
   DeleteTaskLogGroup:
     Type: AWS::Logs::LogGroup

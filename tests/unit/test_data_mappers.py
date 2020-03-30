@@ -47,7 +47,7 @@ def test_it_creates_data_mapper(validate_mapper, table):
                 "Table": "test"
             },
             "Format": "parquet",
-            "RoleArn": "arn:aws:iam::accountid:role/S3F2DeletionTaskRole",
+            "RoleArn": "arn:aws:iam::accountid:role/S3F2DataAccessRole",
         }),
         "requestContext": autorization_mock
     }, SimpleNamespace())
@@ -67,7 +67,7 @@ def test_it_creates_data_mapper(validate_mapper, table):
                    "Username": "cognitoUsername",
                    "Sub": "cognitoSub"
                },
-               "RoleArn": "arn:aws:iam::accountid:role/S3F2DeletionTaskRole",
+               "RoleArn": "arn:aws:iam::accountid:role/S3F2DataAccessRole",
            } == json.loads(response["body"])
 
 
@@ -86,7 +86,7 @@ def test_it_supports_optionals(validate_mapper, table):
                 "Database": "test",
                 "Table": "test"
             },
-            "RoleArn": "arn:aws:iam::accountid:role/S3F2DeletionTaskRole",
+            "RoleArn": "arn:aws:iam::accountid:role/S3F2DataAccessRole",
         }),
         "requestContext": autorization_mock
     }, SimpleNamespace())
@@ -102,7 +102,7 @@ def test_it_supports_optionals(validate_mapper, table):
             "Table": "test"
         },
         "Format": "parquet",
-        "RoleArn": "arn:aws:iam::accountid:role/S3F2DeletionTaskRole",
+        "RoleArn": "arn:aws:iam::accountid:role/S3F2DataAccessRole",
         "CreatedBy": {
             "Username": "cognitoUsername",
             "Sub": "cognitoSub"
