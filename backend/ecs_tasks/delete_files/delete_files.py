@@ -386,7 +386,6 @@ def retry_wrapper(fn, args = [], retry_wait_seconds = 2, retry_factor = 2, max_r
 def verify_object_versions_integrity(client, bucket, key, from_version_id, to_version_id):
 
     def fetch_object_versions():
-        from_index = to_index = -1
         object_versions = client.list_object_versions(Bucket=bucket, Prefix=key, VersionIdMarker=from_version_id)
         versions = object_versions.get('Versions', [])
         delete_markers = object_versions.get('DeleteMarkers', [])
