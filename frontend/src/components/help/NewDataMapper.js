@@ -41,7 +41,7 @@ export default () => (
       to perform any required deletions.
     </p>
     <p className="separator-bottom">
-      The deletion task requires you to have provisioned the **S3F2DataAccessRole**
+      The deletion task requires you to have provisioned the <strong>S3F2DataAccessRole</strong>{" "}
       in the account which owns the bucket referenced by the data mapper.
       For more information on how to provision this role, check the{" "}
       <a href={docsUrl("USER_GUIDE.md#provisioning-data-access-iam-roles")} target="_blank" rel="noopener noreferrer" className="learnMoreLink">user guide</a>.
