@@ -64,6 +64,7 @@ def test_it_creates_without_optionals(api_client, data_mapper_base_endpoint, dat
             "Database": table["Database"],
             "Table": table["Table"]
         },
+        "RoleArn": "arn:aws:iam::123456789012:role/S3F2DeletionTaskRole"
     }
     # Act
     response = api_client.put("{}/{}".format(data_mapper_base_endpoint, key), json=data_mapper)

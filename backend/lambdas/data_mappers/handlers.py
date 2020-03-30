@@ -46,9 +46,8 @@ def create_data_mapper_handler(event, context):
         "QueryExecutor": body["QueryExecutor"],
         "QueryExecutorParameters": body["QueryExecutorParameters"],
         "CreatedBy": get_user_info(event),
-        "RoleArn": body.get("RoleArn", None)
+        "RoleArn": body["RoleArn"]
     }
-    item = {k: v for k, v in item.items() if v is not None}
     table.put_item(Item=item)
 
     return {

@@ -85,7 +85,8 @@ def test_it_supports_optionals(validate_mapper, table):
                 "DataCatalogProvider": "glue",
                 "Database": "test",
                 "Table": "test"
-            }
+            },
+            "RoleArn": "arn:aws:iam::accountid:role/S3F2DeletionTaskRole",
         }),
         "requestContext": autorization_mock
     }, SimpleNamespace())
@@ -101,6 +102,7 @@ def test_it_supports_optionals(validate_mapper, table):
             "Table": "test"
         },
         "Format": "parquet",
+        "RoleArn": "arn:aws:iam::accountid:role/S3F2DeletionTaskRole",
         "CreatedBy": {
             "Username": "cognitoUsername",
             "Sub": "cognitoSub"
