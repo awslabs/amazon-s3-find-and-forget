@@ -370,6 +370,7 @@ components:
         - "Columns"
         - "QueryExecutor"
         - "QueryExecutorParameters"
+        - "RoleArn"
       type: "object"
       properties:
         DataMapperId:
@@ -410,6 +411,10 @@ components:
           required:
             - "Database"
             - "Table"
+        RoleArn:
+          type: "string"
+          description: "Role ARN to assume when performing operations in S3 for this data mapper. The role must have the exact name 'S3F2DataAccessRole'."
+          pattern: '^arn:(aws[a-zA-Z-]*)?:iam::\d{12}:role\/S3F2DataAccessRole$'
     DeletionQueueItem:
       description: "A Deletion Queue Item object"
       type: "object"

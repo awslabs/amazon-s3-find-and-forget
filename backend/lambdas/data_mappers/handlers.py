@@ -45,7 +45,8 @@ def create_data_mapper_handler(event, context):
         "Format": body.get("Format", "parquet"),
         "QueryExecutor": body["QueryExecutor"],
         "QueryExecutorParameters": body["QueryExecutorParameters"],
-        "CreatedBy": get_user_info(event)
+        "CreatedBy": get_user_info(event),
+        "RoleArn": body["RoleArn"]
     }
     table.put_item(Item=item)
 

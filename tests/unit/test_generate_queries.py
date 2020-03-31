@@ -215,7 +215,7 @@ def test_it_propagates_role_for_partitioned_data(batch_sqs_msgs_mock, get_partit
                 "Database": "test_db",
                 "Table": "test_table"
             },
-            "RoleArn": "arn:aws:iam:accountid::role/rolename",
+            "RoleArn": "arn:aws:iam::accountid:role/rolename",
         }],
         "DeletionQueue": [{
             "MatchId": "hi",
@@ -232,7 +232,7 @@ def test_it_propagates_role_for_partitioned_data(batch_sqs_msgs_mock, get_partit
                 {'Key': 'year', 'Value': '2018'},
                 {'Key': 'month', 'Value': '12'}
             ],
-            "RoleArn": "arn:aws:iam:accountid::role/rolename",
+            "RoleArn": "arn:aws:iam::accountid:role/rolename",
         },
         {
             "DataMapperId": "a",
@@ -243,7 +243,7 @@ def test_it_propagates_role_for_partitioned_data(batch_sqs_msgs_mock, get_partit
                 {'Key': 'year', 'Value': '2019'},
                 {'Key': 'month', 'Value': '01'}
             ],
-            "RoleArn": "arn:aws:iam:accountid::role/rolename",
+            "RoleArn": "arn:aws:iam::accountid:role/rolename",
         }
     ])
 
@@ -366,7 +366,7 @@ def test_it_propagates_role_arn_for_unpartitioned_data(batch_sqs_msgs_mock, get_
                 "Database": "test_db",
                 "Table": "test_table"
             },
-            "RoleArn": "arn:aws:iam:accountid::role/rolename",
+            "RoleArn": "arn:aws:iam::accountid:role/rolename",
         }],
         "DeletionQueue": [{
             "MatchId": "123",
@@ -380,7 +380,7 @@ def test_it_propagates_role_arn_for_unpartitioned_data(batch_sqs_msgs_mock, get_
             'Table': 'test_table',
             'Columns': [{'Column': 'customer_id', 'MatchIds': ['123']}],
             'PartitionKeys': [],
-            "RoleArn": "arn:aws:iam:accountid::role/rolename",
+            "RoleArn": "arn:aws:iam::accountid:role/rolename",
         },
     ])
 

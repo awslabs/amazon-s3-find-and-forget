@@ -205,7 +205,7 @@ def data_mapper_table(ddb_resource, stack):
     return ddb_resource.Table(stack["DataMapperTable"])
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def empty_data_mappers(data_mapper_table):
     empty_table(data_mapper_table, "DataMapperId")
     yield
