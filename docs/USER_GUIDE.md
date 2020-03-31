@@ -377,7 +377,8 @@ there is already at least 1 match present in the object contents.
 
 > **Important**
 >
-> It is your responsibility to make sure no write/delete actions to data lake objects are performed by other systems while a Job is running. This is necessary to ensure no race conditions are encountered while processing specific objects. While the Solution has some safeguards in place to check objects' integrity between read and write operations, in case of conflicts it's your responsibility to perform the actions needed to remediate and avoid data losses.
+> Ensure no external processes perform write/delete actions against exist objects
+  whilst a job is running. For more information, consult the [Limits] guide
 
 ### Deletion Job Statuses
 
@@ -392,7 +393,9 @@ The list of possible job statuses is as follows:
 - `COMPLETED_CLEANUP_FAILED`: The job finished successfully however the
   deletion queue items could not be removed. You should manually remove these
   or leave them to be removed on the next job
-- `FORGET_PARTIALLY_FAILED`: The job finished but it encountered some issues while processing one or more objects. The Deletion DLQ for messages will contain a message per object that could not be updated.
+- `FORGET_PARTIALLY_FAILED`: The job finished but it was unable to successfully
+  process one or more objects. The Deletion DLQ for messages will contain a message
+  per object that could not be updated.
 - `FIND_FAILED`: The job failed during the Find phase as there was an issue
   querying one or more data mappers.
 - `FORGET_FAILED`: The job failed during the Forget phase as there was an issue
@@ -438,7 +441,8 @@ The list of events is as follows:
 - `QueryFailed`: Emitted whenever a single query fails.
 - `ObjectUpdated`: Emitted whenever an updated object is written to S3 and
   any associated deletions are complete.
-- `ObjectUpdateFailed`: Emitted whenever an object cannot be updated, an object version integrity check fails or an associated deletion fails.
+- `ObjectUpdateFailed`: Emitted whenever an object cannot be updated, an object
+  version integrity check fails or an associated deletion fails.
 - `Exception`: Emitted whenever a generic error occurs during the
   job execution. Causes the status to transition to `FAILED`.
 
@@ -577,3 +581,4 @@ To delete a stack via the AWS CLI [consult the documentation](https://docs.aws.a
 [Cognito Advanced Security]: https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-settings-advanced-security.html
 [CloudFront Access Logging Permissions]: https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html#AccessLogsBucketAndFileOwnership
 [S3 Access Logging Permissions]: https://docs.aws.amazon.com/AmazonS3/latest/dev/enable-logging-programming.html#grant-log-delivery-permissions-general
+[Limits]: LIMITS.md
