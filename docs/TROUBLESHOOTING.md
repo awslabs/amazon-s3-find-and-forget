@@ -23,15 +23,16 @@ If a job remains in a QUEUED or RUNNING status for much longer than expected,
 there may be an issue relating to:
 
 - AWS Fargate accessing the ECR service endpoint. Enabling the required network
-access from the subnets/security groups in which Forget Fargate tasks are
-launched will unblock the job without requiring manual intervention. For more
-information see [VPC Configuration] in the [User Guide].
+  access from the subnets/security groups in which Forget Fargate tasks are
+  launched will unblock the job without requiring manual intervention. For more
+  information see [VPC Configuration] in the [User Guide].
 - Errors in job table stream processor. [Check the logs](https://docs.aws.amazon.com/lambda/latest/dg/monitoring-functions-logs.html)
   of the stream processor Lambda function for errors.
 - Unhandled state machine execution errors. If there are no errors in the job
   event history which indicate an issue, check the state machine execution
   history of the execution with the same name as the blocked job ID.
-- The containers have exausted memory or vCPUs capacity while processing large (+GB size) files. See also [Service Level Monitoring](MONITORING.md#service-level-monitoring).
+- The containers have exausted memory or vCPUs capacity while processing large
+  (+GB size) files. See also [Service Level Monitoring](MONITORING.md#service-level-monitoring).
 
 If the state machine is still executing but in a non-recoverable state, you
 can stop the state machine execution manually which will trigger an Exception
@@ -132,8 +133,11 @@ cause of the failure.
 A `FORGET_PARTIALLY_FAILED` status indicates that the job has completed, but
 that the _forget_ phase was unable to successfully process one or more objects.
 
-Each object that was not correctly processed will result in a message sent to the object dead letter queue ("DLQ"; see `DLQUrl` in the CloudFormation stack outputs) and an **ObjectUpdateFailed** event in the job event history containing error
-information. Check the content of any **ObjectUpdateFailed** events to ascertain the root cause of an issue.
+Each object that was not correctly processed will result in a message sent to
+the object dead letter queue ("DLQ"; see `DLQUrl` in the CloudFormation stack
+outputs) and an **ObjectUpdateFailed** event in the job event history containing
+error information. Check the content of any **ObjectUpdateFailed** events to
+ascertain the root cause of an issue.
 
 Verify the following:
 
