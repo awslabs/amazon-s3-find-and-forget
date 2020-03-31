@@ -355,7 +355,7 @@ page will automatically refresh and to display the current status and
 statistics for the job. For more information on the possible statuses and
 their meaning, see [Deletion Job Statuses](#deletion-job-statuses).
 
-You can also start jobs and check their status directly via the API. For more information, see the
+You can also start jobs and check their status using the API. For more information, see the
 [API Documentation].
 
 Job events are continuously emitted whilst a job is running. These events are
