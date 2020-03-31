@@ -770,13 +770,15 @@ def get_list_object_versions_error():
     }, "ListObjectVersions")
 
 
-@patch("backend.ecs_tasks.delete_files.delete_files.retry_wrapper")
-def test_it_errors_when_version_to_not_found_after_retries(retry_wrapper_mock):
-    retry_wrapper_mock.side_effect = get_list_object_versions_error()
+@patch("time.sleep")
+def test_it_errors_when_version_to_not_found_after_retries(sleep_mock):
+    s3_mock = MagicMock()
+    s3_mock.list_object_versions.side_effect = get_list_object_versions_error()
 
     with pytest.raises(ClientError) as e:
-        result = verify_object_versions_integrity(MagicMock(), 'bucket', 'requirements.txt', 'v7', 'v8')
-    assert retry_wrapper_mock.called
+        result = verify_object_versions_integrity(s3_mock, 'bucket', 'requirements.txt', 'v7', 'v8')
+    
+    assert sleep_mock.call_args_list == [call(2), call(4), call(8), call(16), call(32)]
     assert e.value.args[0] == 'An error occurred (InvalidArgument) when calling the ListObjectVersions operation: Invalid version id specified'
 
 
@@ -784,7 +786,7 @@ def test_it_errors_when_version_to_not_found_after_retries(retry_wrapper_mock):
 def test_it_doesnt_retry_success_fn(sleep_mock):
     fn = MagicMock()
     fn.side_effect = [31, 32]
-    result = retry_wrapper(fn, [25], retry_wait_seconds=1, retry_factor=3)
+    result = retry_wrapper(fn, retry_wait_seconds=1, retry_factor=3)(25)
 
     assert result == 31
     assert fn.call_args_list == [call(25)]
@@ -796,7 +798,7 @@ def test_it_retries_retriable_fn(sleep_mock):
     fn = MagicMock()
     e = get_list_object_versions_error()
     fn.side_effect = [e, e, 32]
-    result = retry_wrapper(fn, [22], retry_wait_seconds=1, retry_factor=3)
+    result = retry_wrapper(fn, retry_wait_seconds=1, retry_factor=3)(22)
 
     assert result == 32
     assert fn.call_args_list == [call(22), call(22), call(22)]
@@ -809,7 +811,7 @@ def test_it_doesnt_retry_non_retriable_fn(sleep_mock):
     fn.side_effect = NameError("fail!")
 
     with pytest.raises(NameError) as e:
-        result = retry_wrapper(fn, [22], retry_wait_seconds=1, retry_factor=3)
+        result = retry_wrapper(fn, retry_wait_seconds=1, retry_factor=3)(22)
 
     assert e.value.args[0] == 'fail!'
     assert fn.call_args_list == [call(22)]
@@ -822,7 +824,7 @@ def test_it_retries_and_gives_up_fn(sleep_mock):
     fn.side_effect = get_list_object_versions_error()
 
     with pytest.raises(ClientError) as e:
-        result = retry_wrapper(fn, [22], max_retries=3)
+        result = retry_wrapper(fn, max_retries=3)(22)
 
     assert e.value.args[0] == 'An error occurred (InvalidArgument) when calling the ListObjectVersions operation: Invalid version id specified'
     assert fn.call_args_list == [call(22), call(22), call(22), call(22)]

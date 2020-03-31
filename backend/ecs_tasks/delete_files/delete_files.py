@@ -360,38 +360,43 @@ def kill_handler(msgs, process_pool):
             logger.error("Unable to gracefully cleanup message: %s", str(e))
     sys.exit(1 if len(msgs) > 0 else 0)
 
-def retry_wrapper(fn, args = [], retry_wait_seconds = 2, retry_factor = 2, max_retries = 5):
-    """ Exponential back-off retry wrapper """
-    retry_current = 0
-    last_error = None
 
-    while retry_current <= max_retries:
-        try:
-            return fn(*args)
-        except(ClientError) as e:
-            if(retry_current == max_retries):
-                break
-            last_error = e
-            retry_current += 1
-            time.sleep(retry_wait_seconds)
-            retry_wait_seconds = retry_wait_seconds * retry_factor
+def retry_wrapper(fn, retry_wait_seconds = 2, retry_factor = 2, max_retries = 5):
+    """ Exponential back-off retry wrapper for ClientError exceptions """
 
-    raise last_error
+    def wrapper(*args, **kwargs):
+        retry_current = 0
+        last_error = None
+
+        while retry_current <= max_retries:
+            try:
+                return fn(*args, **kwargs)
+            except(ClientError) as e:
+                nonlocal retry_wait_seconds
+                if(retry_current == max_retries):
+                    break
+                last_error = e
+                retry_current += 1
+                time.sleep(retry_wait_seconds)
+                retry_wait_seconds *= retry_factor
+
+        raise last_error
+
+    return wrapper
 
 
 def verify_object_versions_integrity(client, bucket, key, from_version_id, to_version_id):
-
-    def fetch_object_versions():
-        return client.list_object_versions(
-            Bucket=bucket,
-            Prefix=key,
-            VersionIdMarker=to_version_id,
-            KeyMarker=key,
-            MaxKeys=1)
     
     conflict_error_template = "A {} ({}) was detected for the given object between read and write operations ({} and {})."
     not_found_error_template = "Previous version ({}) has been deleted."
-    object_versions = retry_wrapper(fetch_object_versions)
+
+    object_versions = retry_wrapper(client.list_object_versions)(
+        Bucket=bucket,
+        Prefix=key,
+        VersionIdMarker=to_version_id,
+        KeyMarker=key,
+        MaxKeys=1)
+
     versions = object_versions.get('Versions', [])
     delete_markers = object_versions.get('DeleteMarkers', [])
     all_versions = versions + delete_markers
