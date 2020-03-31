@@ -137,7 +137,11 @@ information. Check the content of any **ObjectUpdateFailed** events to ascertain
 
 Verify the following:
 
-- You don't interact with the Data Lake while a job is running. When the system writes a new version of a object, an integrity check is performed to verify nobody altered or deleted the object after reading it. If the check fails, an error log will include information about how to take action to prevent data loss.
+- No processes are writing new version of existing objects while a job is running.
+  When the system writes a new version of a object, an integrity check is performed
+  to verify that during processing, no new versions of an object were created and that a
+  delete marker for the object was not created. If the check failed, an
+  **ObjectUpdateFailed** event will be present in the job event history..
 - You have granted permissions to the Fargate task IAM role for access to the
   S3 buckets referenced by your data mappers **and** any AWS KMS keys used to
   encrypt the data. For more information see [Permissions Configuration] in the
