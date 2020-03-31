@@ -133,7 +133,7 @@ A `FORGET_PARTIALLY_FAILED` status indicates that the job has completed, but
 that the _forget_ phase was unable to successfully process one or more objects.
 
 Each object that was not correctly processed will result in a message sent to the object dead letter queue ("DLQ"; see `DLQUrl` in the CloudFormation stack outputs) and an **ObjectUpdateFailed** event in the job event history containing error
-information. **Please take the time to read about the error information in the logs to ensure you address all the issues.**
+information. Check the content of any **ObjectUpdateFailed** events to ascertain the root cause of an issue.
 
 Verify the following:
 
