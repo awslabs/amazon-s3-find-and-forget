@@ -20,27 +20,38 @@ with patch.dict(os.environ, {
     emit_deletion_event, emit_failed_deletion_event, save, get_grantees, \
     get_object_info, get_object_tags, get_object_acl, get_requester_payment, get_row_count, \
     delete_from_dataframe, delete_matches_from_file, load_parquet, kill_handler, handle_error, \
-    get_bucket_versioning, sanitize_message, verify_object_versions_integrity, retry_wrapper
+    get_bucket_versioning, sanitize_message, verify_object_versions_integrity, retry_wrapper, \
+    IntegrityCheckFailedError
 
 pytestmark = [pytest.mark.unit]
+
+
+def get_list_object_versions_error():
+    return ClientError({
+        'Error': {
+            'Code': 'InvalidArgument',
+            'Message': 'Invalid version id specified'
+        }
+    }, "ListObjectVersions")
 
 
 @patch.dict(os.environ, {'JobTable': 'test'})
 @patch("backend.ecs_tasks.delete_files.delete_files.get_bucket_versioning", MagicMock(return_value=True))
 @patch("backend.ecs_tasks.delete_files.delete_files.validate_message", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.queue", MagicMock())
+@patch("backend.ecs_tasks.delete_files.delete_files.verify_object_versions_integrity")
 @patch("backend.ecs_tasks.delete_files.delete_files.get_session")
 @patch("backend.ecs_tasks.delete_files.delete_files.load_parquet")
 @patch("backend.ecs_tasks.delete_files.delete_files.s3fs")
 @patch("backend.ecs_tasks.delete_files.delete_files.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.delete_files.emit_deletion_event")
 @patch("backend.ecs_tasks.delete_files.delete_files.save")
-def test_happy_path_when_queue_not_empty(mock_save, mock_emit, mock_delete, mock_s3, mock_load, mock_session):
+def test_happy_path_when_queue_not_empty(mock_save, mock_emit, mock_delete, mock_s3, mock_load, mock_session, mock_verify_integrity):
     mock_s3.S3FileSystem.return_value = mock_s3
-    column = {"Column": "customer_id",
-              "MatchIds": ["12345", "23456"]}
+    column = {"Column": "customer_id", "MatchIds": ["12345", "23456"]}
     parquet_file = MagicMock()
     parquet_file.num_row_groups = 1
+    mock_save.return_value="new_version123"
     mock_s3.open.return_value = mock_s3
     mock_s3.__enter__.return_value = MagicMock(version_id="abc123")
     mock_load.return_value = parquet_file
@@ -51,6 +62,7 @@ def test_happy_path_when_queue_not_empty(mock_save, mock_emit, mock_delete, mock
     mock_save.assert_called_with(ANY, ANY, ANY, "bucket", "path/basic.parquet", "abc123")
     mock_emit.assert_called()
     mock_session.assert_called_with(None)
+    mock_verify_integrity.assert_called_with(ANY, 'bucket', 'path/basic.parquet', 'abc123', 'new_version123')
     buf = mock_save.call_args[0][2]
     assert buf.read
     assert isinstance(buf, pa.BufferReader)  # must be BufferReader for zero-copy
@@ -678,6 +690,52 @@ def test_it_provides_logs_for_acl_fail(mock_save, mock_handler, mock_delete, moc
                                               "restore WRITE ACL")
 
 
+@patch.dict(os.environ, {'JobTable': 'test'})
+@patch("backend.ecs_tasks.delete_files.delete_files.get_bucket_versioning", MagicMock(return_value=True))
+@patch("backend.ecs_tasks.delete_files.delete_files.save", MagicMock(return_value="new_version"))
+@patch("backend.ecs_tasks.delete_files.delete_files.validate_message", MagicMock())
+@patch("backend.ecs_tasks.delete_files.delete_files.queue", MagicMock())
+@patch("backend.ecs_tasks.delete_files.delete_files.s3fs", MagicMock())
+@patch("backend.ecs_tasks.delete_files.delete_files.get_session", MagicMock())
+@patch("backend.ecs_tasks.delete_files.delete_files.verify_object_versions_integrity")
+@patch("backend.ecs_tasks.delete_files.delete_files.load_parquet")
+@patch("backend.ecs_tasks.delete_files.delete_files.delete_matches_from_file")
+@patch("backend.ecs_tasks.delete_files.delete_files.handle_error")
+def test_it_provides_logs_for_failed_version_integrity_check(mock_handler, mock_delete, mock_load, mock_verify_integrity):
+    parquet_file = MagicMock()
+    parquet_file.num_row_groups = 1
+    mock_load.return_value = parquet_file
+    mock_verify_integrity.side_effect = IntegrityCheckFailedError("Some error")
+    mock_delete.return_value = pa.BufferOutputStream(), {"DeletedRows": 1}
+    execute(message_stub(), "receipt_handle")
+    mock_verify_integrity.assert_called()
+    mock_handler.assert_called_with(ANY, ANY, "Object version integrity check failed: Some error")
+
+
+@patch.dict(os.environ, {'JobTable': 'test'})
+@patch("backend.ecs_tasks.delete_files.delete_files.get_bucket_versioning", MagicMock(return_value=True))
+@patch("backend.ecs_tasks.delete_files.delete_files.save", MagicMock(return_value="new_version"))
+@patch("backend.ecs_tasks.delete_files.delete_files.validate_message", MagicMock())
+@patch("backend.ecs_tasks.delete_files.delete_files.queue", MagicMock())
+@patch("backend.ecs_tasks.delete_files.delete_files.s3fs", MagicMock())
+@patch("backend.ecs_tasks.delete_files.delete_files.get_session", MagicMock())
+@patch("backend.ecs_tasks.delete_files.delete_files.verify_object_versions_integrity")
+@patch("backend.ecs_tasks.delete_files.delete_files.load_parquet")
+@patch("backend.ecs_tasks.delete_files.delete_files.delete_matches_from_file")
+@patch("backend.ecs_tasks.delete_files.delete_files.handle_error")
+def test_it_provides_logs_for_get_latest_version_fail(mock_handler, mock_delete, mock_load, mock_verify_integrity):
+    parquet_file = MagicMock()
+    parquet_file.num_row_groups = 1
+    mock_load.return_value = parquet_file
+    mock_verify_integrity.side_effect = get_list_object_versions_error()
+    mock_delete.return_value = pa.BufferOutputStream(), {"DeletedRows": 1}
+    execute(message_stub(), "receipt_handle")
+    mock_verify_integrity.assert_called()
+    mock_handler.assert_called_with(ANY, ANY, "ClientError: An error occurred (InvalidArgument) when calling the "
+                                              "ListObjectVersions operation: Invalid version id specified. Could "
+                                              "not verify redacted object version integrity")
+
+
 def test_it_loads_parquet_files():
     data = [{'customer_id': '12345'}, {'customer_id': '23456'}]
     df = pd.DataFrame(data)
@@ -772,7 +830,7 @@ def test_it_fails_integrity_when_delete_marker_between():
         "DeleteMarkers": [{ "VersionId": "v6" }]
     }
     
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(IntegrityCheckFailedError) as e:
         result = verify_object_versions_integrity(s3_mock, 'bucket', 'requirements.txt', 'v5', 'v7')
     assert e.value.args[0] == 'A delete marker (v6) was detected for the given object between read and write operations (v5 and v7).'
 
@@ -784,7 +842,7 @@ def test_it_fails_integrity_when_other_version_between():
         "Versions": [{ "VersionId": "v6", "ETag": "a" }]
     }
 
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(IntegrityCheckFailedError) as e:
         result = verify_object_versions_integrity(s3_mock, 'bucket', 'requirements.txt', 'v5', 'v7')
 
     assert e.value.args[0] == 'A version (v6) was detected for the given object between read and write operations (v5 and v7).'
@@ -797,19 +855,10 @@ def test_it_fails_integrity_when_no_other_version_before():
         "Versions": []
     }
 
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(IntegrityCheckFailedError) as e:
         result = verify_object_versions_integrity(s3_mock, 'bucket', 'requirements.txt', 'v5', 'v7')
 
     assert e.value.args[0] == 'Previous version (v5) has been deleted.'
-
-
-def get_list_object_versions_error():
-    return ClientError({
-        'Error': {
-            'Code': 'InvalidArgument',
-            'Message': 'Invalid version id specified'
-        }
-    }, "ListObjectVersions")
 
 
 @patch("time.sleep")

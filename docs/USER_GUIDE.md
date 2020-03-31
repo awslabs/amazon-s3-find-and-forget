@@ -349,14 +349,14 @@ deletion queue, you can stat a job.
 3. If you are happy with the current solution configuration choose **Start
    a Deletion Job**. The job details page should be displayed.
    
-You can also start jobs directly via the API. For more information, see the
-[API Documentation].
-   
 Once a job has started, you can leave the page and return to view its progress
 at point by choosing the job ID from the Deletion Jobs list. The job details
 page will automatically refresh and to display the current status and
 statistics for the job. For more information on the possible statuses and
 their meaning, see [Deletion Job Statuses](#deletion-job-statuses).
+
+You can also start jobs and check their status directly via the API. For more information, see the
+[API Documentation].
 
 Job events are continuously emitted whilst a job is running. These events are
 used to update the status and statistics for the job. You can view all the
@@ -375,6 +375,10 @@ the Find phase (where the data mappers searched are the same). Similarly, the
 marginal cost of removing an additional match from an object is negligible when
 there is already at least 1 match present in the object contents.
 
+> **Important**
+>
+> It is your responsibility to make sure no write/delete actions to data lake objects are performed by other systems while a Job is running. This is necessary to ensure no race conditions are encountered while processing specific objects. While the Solution has some safeguards in place to check objects' integrity between read and write operations, in case of conflicts it's your responsibility to perform the actions needed to remediate and avoid data losses.
+
 ### Deletion Job Statuses
 
 The list of possible job statuses is as follows:
@@ -388,9 +392,7 @@ The list of possible job statuses is as follows:
 - `COMPLETED_CLEANUP_FAILED`: The job finished successfully however the
   deletion queue items could not be removed. You should manually remove these
   or leave them to be removed on the next job
-- `FORGET_PARTIALLY_FAILED`: The job finished but one or more objects could not
-  be updated. The Deletion DLQ for messages will contain a message per object
-  that could not be updated.
+- `FORGET_PARTIALLY_FAILED`: The job finished but it encountered some issues while processing one or more objects. The Deletion DLQ for messages will contain a message per object that could not be updated.
 - `FIND_FAILED`: The job failed during the Find phase as there was an issue
   querying one or more data mappers.
 - `FORGET_FAILED`: The job failed during the Forget phase as there was an issue
@@ -436,8 +438,7 @@ The list of events is as follows:
 - `QueryFailed`: Emitted whenever a single query fails.
 - `ObjectUpdated`: Emitted whenever an updated object is written to S3 and
   any associated deletions are complete.
-- `ObjectUpdateFailed`: Emitted whenever an object cannot be updated or an
-  associated deletion fails.
+- `ObjectUpdateFailed`: Emitted whenever an object cannot be updated, an object version integrity check fails or an associated deletion fails.
 - `Exception`: Emitted whenever a generic error occurs during the
   job execution. Causes the status to transition to `FAILED`.
 
