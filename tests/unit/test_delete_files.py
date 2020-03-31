@@ -3,7 +3,7 @@ from io import BytesIO
 
 import boto3
 from botocore.exceptions import ClientError
-from mock import patch, MagicMock, mock_open, ANY
+from mock import patch, MagicMock, mock_open, ANY, call
 
 import json
 import pyarrow as pa
@@ -20,7 +20,7 @@ with patch.dict(os.environ, {
     emit_deletion_event, emit_failed_deletion_event, save, get_grantees, \
     get_object_info, get_object_tags, get_object_acl, get_requester_payment, get_row_count, \
     delete_from_dataframe, delete_matches_from_file, load_parquet, kill_handler, handle_error, \
-    get_bucket_versioning, sanitize_message
+    get_bucket_versioning, sanitize_message, verify_object_versions_integrity, retry_wrapper
 
 pytestmark = [pytest.mark.unit]
 
@@ -745,3 +745,129 @@ def message_stub(**kwargs):
         "Columns": [{"Column": "customer_id", "MatchIds": ["12345", "23456"]}],
         **kwargs
     })
+
+
+def test_it_verifies_integrity_happy_path():
+    s3_mock = MagicMock()
+    s3_mock.list_object_versions.return_value = {
+        "VersionIdMarker": "v7",
+        "Versions": [{ "VersionId": "v6", "ETag": "a" }]
+    }
+    result = verify_object_versions_integrity(s3_mock, 'bucket', 'requirements.txt', 'v6', 'v7')
+
+    assert result
+    s3_mock.list_object_versions.assert_called_with(
+        Bucket='bucket',
+        Prefix='requirements.txt',
+        VersionIdMarker='v7',
+        KeyMarker='requirements.txt',
+        MaxKeys=1)
+
+
+def test_it_fails_integrity_when_delete_marker_between():
+    s3_mock = MagicMock()
+    s3_mock.list_object_versions.return_value = {
+        "VersionIdMarker": "v7",
+        "Versions": [],
+        "DeleteMarkers": [{ "VersionId": "v6" }]
+    }
+    
+    with pytest.raises(ValueError) as e:
+        result = verify_object_versions_integrity(s3_mock, 'bucket', 'requirements.txt', 'v5', 'v7')
+    assert e.value.args[0] == 'A delete marker (v6) was detected for the given object between read and write operations (v5 and v7).'
+
+
+def test_it_fails_integrity_when_other_version_between():
+    s3_mock = MagicMock()
+    s3_mock.list_object_versions.return_value = {
+        "VersionIdMarker": "v7",
+        "Versions": [{ "VersionId": "v6", "ETag": "a" }]
+    }
+
+    with pytest.raises(ValueError) as e:
+        result = verify_object_versions_integrity(s3_mock, 'bucket', 'requirements.txt', 'v5', 'v7')
+
+    assert e.value.args[0] == 'A version (v6) was detected for the given object between read and write operations (v5 and v7).'
+
+
+def test_it_fails_integrity_when_no_other_version_before():
+    s3_mock = MagicMock()
+    s3_mock.list_object_versions.return_value = {
+        "VersionIdMarker": "v7",
+        "Versions": []
+    }
+
+    with pytest.raises(ValueError) as e:
+        result = verify_object_versions_integrity(s3_mock, 'bucket', 'requirements.txt', 'v5', 'v7')
+
+    assert e.value.args[0] == 'Previous version (v5) has been deleted.'
+
+
+def get_list_object_versions_error():
+    return ClientError({
+        'Error': {
+            'Code': 'InvalidArgument',
+            'Message': 'Invalid version id specified'
+        }
+    }, "ListObjectVersions")
+
+
+@patch("time.sleep")
+def test_it_errors_when_version_to_not_found_after_retries(sleep_mock):
+    s3_mock = MagicMock()
+    s3_mock.list_object_versions.side_effect = get_list_object_versions_error()
+
+    with pytest.raises(ClientError) as e:
+        result = verify_object_versions_integrity(s3_mock, 'bucket', 'requirements.txt', 'v7', 'v8')
+    
+    assert sleep_mock.call_args_list == [call(2), call(4), call(8), call(16), call(32)]
+    assert e.value.args[0] == 'An error occurred (InvalidArgument) when calling the ListObjectVersions operation: Invalid version id specified'
+
+
+@patch("time.sleep")
+def test_it_doesnt_retry_success_fn(sleep_mock):
+    fn = MagicMock()
+    fn.side_effect = [31, 32]
+    result = retry_wrapper(fn, retry_wait_seconds=1, retry_factor=3)(25)
+
+    assert result == 31
+    assert fn.call_args_list == [call(25)]
+    assert not sleep_mock.called
+
+
+@patch("time.sleep")
+def test_it_retries_retriable_fn(sleep_mock):
+    fn = MagicMock()
+    e = get_list_object_versions_error()
+    fn.side_effect = [e, e, 32]
+    result = retry_wrapper(fn, retry_wait_seconds=1, retry_factor=3)(22)
+
+    assert result == 32
+    assert fn.call_args_list == [call(22), call(22), call(22)]
+    assert sleep_mock.call_args_list == [call(1), call(3)]
+
+
+@patch("time.sleep")
+def test_it_doesnt_retry_non_retriable_fn(sleep_mock):
+    fn = MagicMock()
+    fn.side_effect = NameError("fail!")
+
+    with pytest.raises(NameError) as e:
+        result = retry_wrapper(fn, retry_wait_seconds=1, retry_factor=3)(22)
+
+    assert e.value.args[0] == 'fail!'
+    assert fn.call_args_list == [call(22)]
+    assert not sleep_mock.called
+
+
+@patch("time.sleep")
+def test_it_retries_and_gives_up_fn(sleep_mock):
+    fn = MagicMock()
+    fn.side_effect = get_list_object_versions_error()
+
+    with pytest.raises(ClientError) as e:
+        result = retry_wrapper(fn, max_retries=3)(22)
+
+    assert e.value.args[0] == 'An error occurred (InvalidArgument) when calling the ListObjectVersions operation: Invalid version id specified'
+    assert fn.call_args_list == [call(22), call(22), call(22), call(22)]
+    assert sleep_mock.call_args_list == [call(2), call(4), call(8)]

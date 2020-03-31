@@ -371,6 +371,63 @@ def kill_handler(msgs, process_pool):
     sys.exit(1 if len(msgs) > 0 else 0)
 
 
+def retry_wrapper(fn, retry_wait_seconds = 2, retry_factor = 2, max_retries = 5):
+    """ Exponential back-off retry wrapper for ClientError exceptions """
+
+    def wrapper(*args, **kwargs):
+        retry_current = 0
+        last_error = None
+
+        while retry_current <= max_retries:
+            try:
+                return fn(*args, **kwargs)
+            except(ClientError) as e:
+                nonlocal retry_wait_seconds
+                if(retry_current == max_retries):
+                    break
+                last_error = e
+                retry_current += 1
+                time.sleep(retry_wait_seconds)
+                retry_wait_seconds *= retry_factor
+
+        raise last_error
+
+    return wrapper
+
+
+def verify_object_versions_integrity(client, bucket, key, from_version_id, to_version_id):
+    
+    conflict_error_template = "A {} ({}) was detected for the given object between read and write operations ({} and {})."
+    not_found_error_template = "Previous version ({}) has been deleted."
+
+    object_versions = retry_wrapper(client.list_object_versions)(
+        Bucket=bucket,
+        Prefix=key,
+        VersionIdMarker=to_version_id,
+        KeyMarker=key,
+        MaxKeys=1)
+
+    versions = object_versions.get('Versions', [])
+    delete_markers = object_versions.get('DeleteMarkers', [])
+    all_versions = versions + delete_markers
+
+    if not len(all_versions):
+        raise ValueError(not_found_error_template.format(from_version_id))
+
+    prev_version = all_versions[0]
+    prev_version_id = prev_version['VersionId']
+    
+    if prev_version_id != from_version_id:
+        conflicting_version_type = 'delete marker' if 'ETag' not in prev_version else 'version'
+        raise ValueError(conflict_error_template.format(
+            conflicting_version_type,
+            prev_version_id,
+            from_version_id, 
+            to_version_id))
+
+    return True
+
+
 if __name__ == '__main__':
     logger.info("CPU count for system: %s", cpu_count())
     messages = []
