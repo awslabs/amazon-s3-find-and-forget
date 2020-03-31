@@ -131,7 +131,7 @@ cause of the failure.
 ### Job status: FORGET_PARTIALLY_FAILED
 
 A `FORGET_PARTIALLY_FAILED` status indicates that the job has completed, but
-that the _forget_ phase was unable to successfully process one or more objects.
+that the _forget_ phase was unable to process one or more objects.
 
 Each object that was not correctly processed will result in a message sent to
 the object dead letter queue ("DLQ"; see `DLQUrl` in the CloudFormation stack
