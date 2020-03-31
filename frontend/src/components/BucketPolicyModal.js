@@ -116,8 +116,8 @@ const BucketPolicy = ({ bucket, accountId, location, roleArn }) => {
       </li>
       <li>
         <p>
-          Edit the Policy to grant the Athena Query Executor and Delete
-          Task IAM roles read/write access to the S3 Bucket and then choose{" "}
+          Edit the Policy to grant the Athena Query Executor and Data
+          Access IAM roles read/write access to the S3 Bucket and then choose{" "}
           <strong>Save</strong>. The following is an example bucket policy:
         </p>
         <PolicyJson policy={bucketPolicy}/>
@@ -188,7 +188,7 @@ const KmsPolicy = ({ bucket, accountId, location, roleArn }) => {
       </li>
       <li>
         <p>
-          Update the Key Policy to add the Athena Query Executor and Delete Task IAM
+          Update the Key Policy to add the Athena Query Executor and Data Access IAM
           roles as <strong>Key users</strong>. If using the policy view, here are example
           statements you can add to the key policy to grant the required access:
         </p>

@@ -40,6 +40,7 @@ Endpoints]:
 - Amazon CloudWatch (monitoring and logs)
 - AWS ECR
 - Amazon SQS
+- AWS STS
 
 #### Creating a New VPC
 
@@ -84,7 +85,7 @@ aws ec2 describe-security-groups \
 
 The Fargate tasks used by this solution to perform deletions require a specific
 role to exist in every account that owns a bucket which will be connected
-to the solution. The role must have the exact name **S3F2DeletionRole** (no
+to the solution. The role must have the exact name **S3F2DataAccessRole** (no
 path).
 
 A CloudFormation template is available as part of this solution which can be

@@ -16,7 +16,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 batch_size = 10  # SQS Max Batch Size
 
-sts = boto3.client('sts')
+sts = boto3.client('sts', endpoint_url="https://sts.{}.amazonaws.com".format(os.getenv("AWS_DEFAULT_REGION")))
 ssm = boto3.client('ssm')
 ddb = boto3.resource("dynamodb")
 table = ddb.Table(os.getenv("JobTable", "S3F2_Jobs"))

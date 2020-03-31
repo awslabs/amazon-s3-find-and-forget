@@ -256,6 +256,19 @@ Resources:
       ServiceName: !Sub 'com.amazonaws.${AWS::Region}.dynamodb'
       VpcId: !Ref VPC
 
+  STSEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      PrivateDnsEnabled: true
+      SecurityGroupIds: [!Ref SecurityGroup]
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.sts'
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+        - !If [HasThreeAZs, !Ref PrivateSubnet3, !Ref 'AWS::NoValue']
+      VpcEndpointType: Interface
+      VpcId: !Ref VPC
+
 Outputs:
   Subnets:
     Value: !If

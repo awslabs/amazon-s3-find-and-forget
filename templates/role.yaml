@@ -11,7 +11,7 @@ Resources:
   Role:
     Type: "AWS::IAM::Role"
     Properties:
-      RoleName: S3F2DeletionRole
+      RoleName: S3F2DataAccessRole
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
