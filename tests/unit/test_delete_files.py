@@ -26,6 +26,15 @@ with patch.dict(os.environ, {
 pytestmark = [pytest.mark.unit]
 
 
+def message_stub(**kwargs):
+    return json.dumps({
+        "JobId": "1234",
+        "Object": "s3://bucket/path/basic.parquet",
+        "Columns": [{"Column": "customer_id", "MatchIds": ["12345", "23456"]}],
+        **kwargs
+    })
+
+
 def get_list_object_versions_error():
     return ClientError({
         'Error': {
@@ -70,6 +79,7 @@ def test_happy_path_when_queue_not_empty(mock_save, mock_emit, mock_delete, mock
 
 @patch.dict(os.environ, {'JobTable': 'test'})
 @patch("backend.ecs_tasks.delete_files.delete_files.get_bucket_versioning", MagicMock(return_value=True))
+@patch("backend.ecs_tasks.delete_files.delete_files.verify_object_versions_integrity", MagicMock(return_value=True))
 @patch("backend.ecs_tasks.delete_files.delete_files.validate_message", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.queue", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.emit_deletion_event", MagicMock())
@@ -794,15 +804,6 @@ def test_it_sanitises_matches():
 
 def test_sanitiser_handles_malformed_messages():
     assert "an error message" == sanitize_message("an error message", "not json")
-
-
-def message_stub(**kwargs):
-    return json.dumps({
-        "JobId": "1234",
-        "Object": "s3://bucket/path/basic.parquet",
-        "Columns": [{"Column": "customer_id", "MatchIds": ["12345", "23456"]}],
-        **kwargs
-    })
 
 
 def test_it_verifies_integrity_happy_path():
