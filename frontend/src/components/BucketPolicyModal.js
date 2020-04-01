@@ -107,6 +107,7 @@ const BucketPolicy = ({ bucket, accountId, location, roleArn }) => {
         },
         Action: [
           "s3:AbortMultipartUpload",
+          "s3:DeleteObjectVersion",
           "s3:GetBucket*",
           "s3:GetObject*",
           "s3:ListBucket*",
