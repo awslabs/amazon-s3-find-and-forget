@@ -9,6 +9,7 @@ from uuid import uuid4
 
 import boto3
 import pytest
+from botocore.exceptions import ClientError
 from botocore.waiter import WaiterModel, create_waiter_with_client
 from requests import Session
 
@@ -91,6 +92,11 @@ def glue_client():
 @pytest.fixture(scope="session")
 def ssm_client():
     return boto3.client("ssm")
+
+
+@pytest.fixture(scope="session")
+def iam_client():
+    return boto3.client("iam")
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -304,7 +310,7 @@ def glue_data_mapper_factory(glue_client, data_mapper_table, glue_table_factory)
     items = []
 
     def factory(data_mapper_id="test", columns=["customer_id"], fmt="parquet", database="acceptancetests",
-                table="acceptancetests", partition_keys=[], partitions=[]):
+                table="acceptancetests", partition_keys=[], partitions=[], role_arn=None, delete_old_versions=False):
         item = {
             "DataMapperId": data_mapper_id,
             "Columns": columns,
@@ -315,7 +321,10 @@ def glue_data_mapper_factory(glue_client, data_mapper_table, glue_table_factory)
                 "Table": table
             },
             "Format": fmt,
+            "DeleteOldVersions": delete_old_versions,
         }
+        if role_arn:
+            item["RoleArn"] = role_arn
         data_mapper_table.put_item(Item=item)
         glue_table_factory(prefix=data_mapper_id, columns=columns, fmt=fmt, database=database,
                            table=table, partition_keys=partition_keys, partitions=partitions)
@@ -423,7 +432,7 @@ def empty_lake(dummy_lake):
 
 
 @pytest.fixture(scope="session")
-def dummy_lake(s3_resource, stack):
+def dummy_lake(s3_resource, stack, data_access_role):
     # Lake Config
     bucket_name = "test-" + str(uuid4())
     # Create the bucket and Glue table
@@ -434,16 +443,19 @@ def dummy_lake(s3_resource, stack):
     }, )
     bucket.wait_until_exists()
     s3_resource.BucketVersioning(bucket_name).enable()
+    roles = [
+        stack["AthenaExecutionRoleArn"],
+        stack["DeleteTaskRoleArn"]
+    ]
+    if data_access_role:
+        roles.append(data_access_role["Arn"])
     policy.put(Policy=json.dumps({
         "Version": "2012-10-17",
         "Statement": [
             {
                 "Effect": "Allow",
                 "Principal": {
-                    "AWS": [
-                        stack["AthenaExecutionRoleArn"],
-                        stack["DeleteTaskRoleArn"],
-                    ]
+                    "AWS": roles
                 },
                 "Action": "s3:*",
                 "Resource": [
@@ -516,3 +528,12 @@ def queue_reader(sf_client):
         return messages
 
     return read
+
+
+@pytest.fixture(scope="session")
+def data_access_role(iam_client):
+    try:
+        return iam_client.get_role(RoleName="S3F2DataAccessRole")["Role"]
+    except ClientError as e:
+        logger.warning(str(e))
+        return None
