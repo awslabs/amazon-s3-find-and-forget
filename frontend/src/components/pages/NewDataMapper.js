@@ -4,8 +4,12 @@ import { Button, Form, Spinner } from "react-bootstrap";
 import Alert from "../Alert";
 
 import {
-  formatErrorMessage, isEmpty, isIdValid, isRoleArnValid
+  formatErrorMessage,
+  isEmpty,
+  isIdValid,
+  isRoleArnValid
 } from "../../utils";
+
 import { glueSerializer } from "../../utils/glueSerializer";
 
 const region = window.s3f2Settings.region;
@@ -137,13 +141,13 @@ export default ({ gateway, goToDataMappers }) => {
         <>
           <div className="form-container">
             <Alert type="info" title="Action needed">
-              You must update the S3 Bucket Policy for the S3 Bucket
-              referenced by the data mapper to grant read permission to the IAM
-              role assumed by the query executor (e.g. Amazon Athena), and
-              read/write permission to the IAM role used by AWS Fargate to
-              perform any required deletions. On the Data Mappers page you can
-              see the required policies by choosing a Data Mapper from the list
-              and then choosing <strong>View S3 Bucket Policy</strong>.
+              You must update the S3 Bucket Policy for the S3 Bucket referenced
+              by the data mapper to grant read permission to the IAM role
+              assumed by the query executor (e.g. Amazon Athena), and read/write
+              permission to the IAM role used by AWS Fargate to perform any
+              required deletions. On the Data Mappers page you can see the
+              required policies by choosing a Data Mapper from the list and then
+              choosing <strong>Generate Access Policies</strong>.
             </Alert>
           </div>
           <div className="form-container submit-container">
@@ -272,13 +276,11 @@ export default ({ gateway, goToDataMappers }) => {
                     {...validationAttributes(isColumnsValid)}
                   />
                 ))}
-                {
-                  columnsForSelectedTable.length === 0 && (
-                    <Form.Text className="text-muted">
-                     No table selected
-                    </Form.Text>
-                  )
-                }
+                {columnsForSelectedTable.length === 0 && (
+                  <Form.Text className="text-muted">
+                    No table selected
+                  </Form.Text>
+                )}
               </Form.Group>
               <Form.Group controlId="glueTable">
                 <Form.Label>AWS IAM Role ARN</Form.Label>
