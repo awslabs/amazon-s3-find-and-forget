@@ -74,13 +74,15 @@ export const successJobClass = status => {
 
 export const last = x => (x.length > 0 ? x[x.length - 1] : null);
 
-const trimTrailingSlash = x => x.replace(/\/+$/, '');
-const trimLeadingSlash = x => x.replace(/\/+$/, '');
+const trimTrailingSlash = x => x.replace(/\/+$/, "");
+const trimLeadingSlash = x => x.replace(/\/+$/, "");
 
 export const repoUrl = x => {
-  const baseUrl = trimTrailingSlash(process.env.REACT_APP_REPO_URL.replace("git+", "").replace(".git", ""));
+  const baseUrl = trimTrailingSlash(
+    process.env.REACT_APP_REPO_URL.replace("git+", "").replace(".git", "")
+  );
   const path = trimLeadingSlash(x);
   return trimTrailingSlash(`${baseUrl}/${path}`);
-}
+};
 
 export const docsUrl = x => repoUrl(`blob/master/docs/${trimLeadingSlash(x)}`);

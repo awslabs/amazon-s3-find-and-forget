@@ -107,7 +107,9 @@ const BucketPolicy = ({ bucket, accountId, location, roleArn }) => {
         },
         Action: [
           "s3:AbortMultipartUpload",
-          "s3:GetBucketRequestPayment",
+          "s3:GetBucket*",
+          "s3:GetObject*",
+          "s3:ListBucket*",
           "s3:ListMultipartUploadParts",
           "s3:PutObject*"
         ],
@@ -177,7 +179,7 @@ const KmsPolicy = ({ bucket, accountId, location, roleArn }) => {
   return (
     <>
       <Alert type="info" title="Additional Permissions">
-        If none of the objects stored in <strong>{location}</strong> are
+        If your none of the objects stored in <strong>{location}</strong> are
         encrypted with a Customer Managed CMK, you can skip this step.
       </Alert>
       <ol>

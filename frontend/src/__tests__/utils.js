@@ -10,7 +10,7 @@ import {
   sortBy,
   withDefault,
   repoUrl,
-  docsUrl,
+  docsUrl
 } from "../utils";
 
 test("isEmpty", () => {
@@ -52,7 +52,10 @@ test("isRoleArnValid", () => {
   const scenarios = [
     { test: "abc_ABC-123", expected: false },
     { test: "arn:aws:iam::123456789012:role/OtherRole", expected: false },
-    { test: "arn:aws:iam::123456789012:role/S3F2DataAccessRole", expected: true },
+    {
+      test: "arn:aws:iam::123456789012:role/S3F2DataAccessRole",
+      expected: true
+    }
   ];
 
   scenarios.forEach(scenario =>
@@ -136,12 +139,11 @@ test("formatErrorMessage", () => {
   ).toEqual("Error from API");
 });
 
-
 describe("urls", () => {
   const OLD_ENV = process.env;
 
   beforeEach(() => {
-    jest.resetModules()
+    jest.resetModules();
     process.env = { ...OLD_ENV, REACT_APP_REPO_URL: "git+https://example.com" };
   });
 
@@ -150,12 +152,14 @@ describe("urls", () => {
   });
 
   test("repoUrl", () => {
-      expect(repoUrl("/")).toEqual("https://example.com");
-      expect(repoUrl("test")).toEqual("https://example.com/test");
-  })
+    expect(repoUrl("/")).toEqual("https://example.com");
+    expect(repoUrl("test")).toEqual("https://example.com/test");
+  });
 
   test("docsUrl", () => {
-      expect(docsUrl("/")).toEqual("https://example.com/blob/master/docs");
-      expect(docsUrl("test")).toEqual("https://example.com/blob/master/docs/test");
-  })
+    expect(docsUrl("/")).toEqual("https://example.com/blob/master/docs");
+    expect(docsUrl("test")).toEqual(
+      "https://example.com/blob/master/docs/test"
+    );
+  });
 });
