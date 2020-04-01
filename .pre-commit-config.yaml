@@ -5,6 +5,12 @@ repos:
         name: Generate API Docs
         entry: make generate-api-docs
         language: system
+-   repo: local
+    hooks:
+    -   id: format-docs
+        name: Format Markdown docs
+        entry: make format-docs
+        language: system
 -   repo: https://github.com/awslabs/git-secrets
     rev: 5e28df337746db4f070c84f7069d365bfd0d72a8
     hooks:

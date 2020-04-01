@@ -1,5 +1,4 @@
-Amazon S3 Find and Forget
-=========================
+# Amazon S3 Find and Forget
 
 > Warning: This project is currently in beta and should not be used for
 > production purposes.
@@ -25,6 +24,7 @@ The solution provides a web user interface, and a REST API to allow you to
 integrate it in your own applications.
 
 ## Documentation
+
 - [User Guide](docs/USER_GUIDE.md)
 - [API Specification](docs/api/README.md)
 - [Architecture](docs/ARCHITECTURE.md)

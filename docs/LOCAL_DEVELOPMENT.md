@@ -1,16 +1,17 @@
 # Local Development
 
 This section details how to run the solution locally and deploy
-your code changes from the command line. 
+your code changes from the command line.
 
 ## Pre-Reqs
 
 The following dependencies must be installed:
-* AWS CLI
-* Python >=3.7 and pip
-* node.js >= v12
-* virtualenv
-* Ruby >= 2.6
+
+- AWS CLI
+- Python >=3.7 and pip
+- node.js >= v12
+- virtualenv
+- Ruby >= 2.6
 
 Once you have installed all pre-requisites, you must run the following
 command to create a `virtualenv` and install all frontend/backend
@@ -45,35 +46,36 @@ profile of the current shell. By default this will be the profile `default`.
 The following commands are also available:
 
 - `make deploy-artefacts`: Packages and uploads the Forget task Docker image
-and frontend React app to the solution bucket. This will trigger CodePipeline
-to automatically deploy these artefacts 
+  and frontend React app to the solution bucket. This will trigger CodePipeline
+  to automatically deploy these artefacts
 - `make deploy-vpc`: Deploys only the VPC CloudFormation template
 - `make deploy-cfn`: Deploys only the CloudFormation template
 - `make redeploy-containers`: Manually packages and deploys the
-Forget task Docker image to ECR via the AWS CLI rather than using CodePipeline.
+  Forget task Docker image to ECR via the AWS CLI rather than using CodePipeline.
 - `make redeploy-frontend`: Manually packages and deploys the
-frontend React app to S3 via the AWS CLI rather than using CodePipeline.
+  frontend React app to S3 via the AWS CLI rather than using CodePipeline.
 - `make start-frontend-remote`: Opens the frontend of the deployed Amazon S3
-Find and Forget solution
+  Find and Forget solution
 
 ## Running Locally
 
 > **Important**: Running the frontend/forget task locally requires the
-> solution CloudFormation stack to be deployed. For more info, see 
+> solution CloudFormation stack to be deployed. For more info, see
 > [Build and Deploy From Source](#build-and-deploy-from-source)
 
 To run the frontend locally, run the following commands:
 
 - `make setup-frontend-local-dev`: Downloads a copy of the configuration file
-required for the frontend app to run locally
+  required for the frontend app to run locally
 - `make start-frontend-local`: Runs the frontend app locally on
-`localhost:3000`
+  `localhost:3000`
 
 > In order to allow your locally running frontend to connect to the deployed
 > API, you will need to set the `AccessControlAllowOriginOverride` parameter
-> to * when deploying the solution stack
+> to \* when deploying the solution stack
 
 To run the "Forget" task locally using Docker, run the following command:
+
 ```bash
 docker build -f backend/ecs_tasks/delete_files/Dockerfile -t s3f2 .
 make run-local-container ROLE_NAME=<your-sqs-access-role-name>
@@ -89,6 +91,7 @@ the container as environment variables.
 
 The command uses your default CLI profile to assume the role. You can override
 the profile being used as follows:
+
 ```bash
 make run-local-container ROLE_NAME=<your-sqs-access-role-name> AWS_PROFILE=my-profile
 ```

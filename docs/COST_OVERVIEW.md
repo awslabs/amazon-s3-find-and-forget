@@ -10,23 +10,23 @@ usage of the solution.
 
 ## Index
 
-* [Overview](#overview)
-  * [AWS Fargate](#aws-fargate)
-  * [AWS Glue](#aws-glue)
-  * [AWS Lambda](#aws-lambda)
-  * [AWS Step Functions](#aws-step-functions)
-  * [Amazon API Gateway](#amazon-api-gateway)
-  * [Amazon Athena](#amazon-athena)
-  * [Amazon CloudFront](#amazon-cloudfront)
-  * [Amazon Cognito](#amazon-cognito)
-  * [Amazon DynamoDB](#amazon-dynamodb)
-  * [Amazon S3](#amazon-s3)
-  * [Amazon SQS](#amazon-sqs)
-  * [Amazon VPC](#amazon-vpc)
-  * [Other Supporting Services](#other-supporting-services)
-* [Solution Cost Estimate](#solution-cost-estimate)
-  * [Scenario 1](#scenario-1)
-  * [Scenario 2](#scenario-2)
+- [Overview](#overview)
+  - [AWS Fargate](#aws-fargate)
+  - [AWS Glue](#aws-glue)
+  - [AWS Lambda](#aws-lambda)
+  - [AWS Step Functions](#aws-step-functions)
+  - [Amazon API Gateway](#amazon-api-gateway)
+  - [Amazon Athena](#amazon-athena)
+  - [Amazon CloudFront](#amazon-cloudfront)
+  - [Amazon Cognito](#amazon-cognito)
+  - [Amazon DynamoDB](#amazon-dynamodb)
+  - [Amazon S3](#amazon-s3)
+  - [Amazon SQS](#amazon-sqs)
+  - [Amazon VPC](#amazon-vpc)
+  - [Other Supporting Services](#other-supporting-services)
+- [Solution Cost Estimate](#solution-cost-estimate)
+  - [Scenario 1](#scenario-1)
+  - [Scenario 2](#scenario-2)
 
 ## Overview
 
@@ -65,8 +65,7 @@ interface, API, and when a deletion job runs.
 AWS Step Functions Standard Workflows are used when a deletion job runs. You pay for the amount of state transitions in the Step Function Workflow. The number of
 state transitions will increase with the number of data mappers, and partitions in those data mappers, included in a deletion job.
 
-[AWS Step Functions Pricing]
-[Deletion Job Workflow]
+[AWS Step Functions Pricing][deletion job workflow]
 
 ### Amazon API Gateway
 
@@ -102,8 +101,8 @@ the Cognito User Pool.
 Amazon DynamoDB stores internal state data for the solution. All tables created by the solution use the on-demand capacity mode of pricing. You pay for storage used by
 these tables, and DynamoDB capacity used when interacting with the solution web interface, API, or running a deletion job.
 
-* [Amazon DynamoDB Pricing]
-* [Solution Persistence Layer]
+- [Amazon DynamoDB Pricing]
+- [Solution Persistence Layer]
 
 ### Amazon S3
 
@@ -134,7 +133,7 @@ increases with the number of data mappers, partitions in those data mappers, and
 
 ### Amazon VPC
 
-Amazon VPC provides network connectivity for AWS Fargate tasks that run during the _Forget_ phase. 
+Amazon VPC provides network connectivity for AWS Fargate tasks that run during the _Forget_ phase.
 
 How you build the VPC will determine the prices you pay. For example, VPC
 Endpoints and NAT Gateways are two different ways to provide network access to
@@ -144,8 +143,8 @@ for data transferred.
 The sample VPC provided in this solution makes use of VPC Endpoints, which have an hourly cost as well as data transfer cost. You can choose to use this sample VPC,
 however it may be more cost-efficient to use an existing suitable VPC in your account if you have one.
 
-* [Amazon VPC Pricing]
-* [AWS PrivateLink Pricing]
+- [Amazon VPC Pricing]
+- [AWS PrivateLink Pricing]
 
 ### Other Supporting Services
 
@@ -166,13 +165,13 @@ This example shows how the charges would be calculated for a deletion job where:
 - The Find phase returns 15 objects which need to be modified
 - The Forget phase uses 3 Fargate tasks with 4 vCPUs each, running concurrently for 60 minutes
 
-|Service|Spending|Notes|
-|-|-|-|
-|Amazon Athena|$0.03|6.8GB of data scanned|
-|AWS Fargate|$0.89 |3 tasks x 4 vCPUs x 1 hour|
-|Amazon S3|$0.1 |$0.1 of requests and data retrieval. $0 of data transfer|
-|Other services|$0.05|n/a|
-|Total|$0.98 |n/a|
+| Service        | Spending | Notes                                                    |
+| -------------- | -------- | -------------------------------------------------------- |
+| Amazon Athena  | \$0.03   | 6.8GB of data scanned                                    |
+| AWS Fargate    | \$0.89   | 3 tasks x 4 vCPUs x 1 hour                               |
+| Amazon S3      | \$0.1    | $0.1 of requests and data retrieval. $0 of data transfer |
+| Other services | \$0.05   | n/a                                                      |
+| Total          | \$0.98   | n/a                                                      |
 
 ### Scenario 2
 
@@ -184,34 +183,35 @@ This example shows how the charges would be calculated for a deletion job where:
 - The Find phase returns 1000 objects which need to be modified
 - The Forget phase uses 50 Fargate tasks with 4 vCPUs each, running concurrently for 45 minutes
 
-|Service|Spending|Notes|
-|-|-|-|
-|Amazon Athena|$0.05|10GB of data scanned|
-|AWS Fargate|$6|50 tasks x 4 vCPUs x 0.75 hours|
-|Amazon S3|$7|$7 of requests and data retrieval. $0 of data transfer|
-|Other services|$0.01|n/a|
-|Total|$13.06|n/a|
+| Service        | Spending | Notes                                                  |
+| -------------- | -------- | ------------------------------------------------------ |
+| Amazon Athena  | \$0.05   | 10GB of data scanned                                   |
+| AWS Fargate    | \$6      | 50 tasks x 4 vCPUs x 0.75 hours                        |
+| Amazon S3      | \$7      | $7 of requests and data retrieval. $0 of data transfer |
+| Other services | \$0.01   | n/a                                                    |
+| Total          | \$13.06  | n/a                                                    |
 
-[AWS CloudFormation]: https://aws.amazon.com/cloudformation/
-[AWS CodeBuild]: https://aws.amazon.com/codebuild/pricing/
-[AWS CodePipeline]: https://aws.amazon.com/codepipeline/pricing/
-[AWS Fargate Pricing]: https://aws.amazon.com/fargate/pricing/
-[AWS Fargate]: https://aws.amazon.com/fargate/pricing/
-[AWS Glue Pricing]: https://aws.amazon.com/glue/pricing/
-[AWS Lambda Pricing]: https://aws.amazon.com/lambda/pricing/
-[AWS Lambda]: https://aws.amazon.com/lambda/pricing/
-[AWS PrivateLink Pricing]: https://aws.amazon.com/privatelink/pricing/
-[AWS Step Functions Pricing]: https://aws.amazon.com/step-functions/pricing/
-[Amazon API Gateway Pricing]: https://aws.amazon.com/api-gateway/pricing/
-[Amazon Athena Pricing]: https://aws.amazon.com/athena/pricing/
-[Amazon CloudFront Pricing]: https://aws.amazon.com/cloudfront/pricing/
-[Amazon Cognito Pricing]: https://aws.amazon.com/cognito/pricing/
-[Amazon DynamoDB Pricing]: https://aws.amazon.com/dynamodb/pricing/
-[Amazon Elastic Container Registry]: https://aws.amazon.com/ecr/pricing/
-[Amazon S3 Pricing]: https://aws.amazon.com/s3/pricing/
-[Amazon SQS Pricing]: https://aws.amazon.com/sqs/pricing/
-[Amazon VPC Pricing]: https://aws.amazon.com/vpc/pricing/
-[Deletion Job Workflow]: ARCHITECTURE.md#deletion-job-workflow
-[Solution Persistence Layer]: ARCHITECTURE.md#persistence-layer
-[VPC Configuration]: USER_GUIDE.md#pre-requisite-Configuring-a-vpc-for-the-solution
+[aws cloudformation]: https://aws.amazon.com/cloudformation/
+[aws codebuild]: https://aws.amazon.com/codebuild/pricing/
+[aws codepipeline]: https://aws.amazon.com/codepipeline/pricing/
+[aws fargate pricing]: https://aws.amazon.com/fargate/pricing/
+[aws fargate]: https://aws.amazon.com/fargate/pricing/
+[aws glue pricing]: https://aws.amazon.com/glue/pricing/
+[aws lambda pricing]: https://aws.amazon.com/lambda/pricing/
+[aws lambda]: https://aws.amazon.com/lambda/pricing/
+[aws privatelink pricing]: https://aws.amazon.com/privatelink/pricing/
+[aws step functions pricing]: https://aws.amazon.com/step-functions/pricing/
+[amazon api gateway pricing]: https://aws.amazon.com/api-gateway/pricing/
+[amazon athena pricing]: https://aws.amazon.com/athena/pricing/
+[amazon cloudfront pricing]: https://aws.amazon.com/cloudfront/pricing/
+[amazon cognito pricing]: https://aws.amazon.com/cognito/pricing/
+[amazon dynamodb pricing]: https://aws.amazon.com/dynamodb/pricing/
+[amazon elastic container registry]: https://aws.amazon.com/ecr/pricing/
+[amazon s3 pricing]: https://aws.amazon.com/s3/pricing/
+[amazon sqs pricing]: https://aws.amazon.com/sqs/pricing/
+[amazon vpc pricing]: https://aws.amazon.com/vpc/pricing/
+[deletion job workflow]: ARCHITECTURE.md#deletion-job-workflow
+[solution persistence layer]: ARCHITECTURE.md#persistence-layer
+[vpc configuration]: USER_GUIDE.md#pre-requisite-Configuring-a-vpc-for-the-solution
+
 [some VPC endpoints]: [https://github.com/awslabs/amazon-s3-find-and-forget/blob/master/templates/vpc.yaml]

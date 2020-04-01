@@ -44,7 +44,7 @@ deploy-artefacts:
 	aws s3 cp build.zip s3://$(TEMP_BUCKET)/amazon-s3-find-and-forget/$(VERSION)/build.zip
 
 format-docs:
-	npx prettier-eslint docs/**.md --write
+	npx prettier-eslint *.md docs/*.md --write
 
 generate-api-docs:
 	npx openapi-generator generate -i ./templates/api.definition.yml -g markdown -t ./docs/templates/ -o docs/api

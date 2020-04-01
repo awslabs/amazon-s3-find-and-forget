@@ -23,9 +23,9 @@ If a job remains in a QUEUED or RUNNING status for much longer than expected,
 there may be an issue relating to:
 
 - AWS Fargate accessing the ECR service endpoint. Enabling the required network
-access from the subnets/security groups in which Forget Fargate tasks are
-launched will unblock the job without requiring manual intervention. For more
-information see [VPC Configuration] in the [User Guide].
+  access from the subnets/security groups in which Forget Fargate tasks are
+  launched will unblock the job without requiring manual intervention. For more
+  information see [VPC Configuration] in the [User Guide].
 - Errors in job table stream processor. [Check the logs](https://docs.aws.amazon.com/lambda/latest/dg/monitoring-functions-logs.html)
   of the stream processor Lambda function for errors.
 - Unhandled state machine execution errors. If there are no errors in the job
@@ -35,13 +35,13 @@ information see [VPC Configuration] in the [User Guide].
 
 If the state machine is still executing but in a non-recoverable state, you
 can stop the state machine execution manually which will trigger an Exception
-job event — the job will enter a `FAILED` status. 
+job event — the job will enter a `FAILED` status.
 
 If this doesn't resolve the issue or the execution isn't running, you can
 manually update the job status to FAILED or remove the job and any associated
-events from the Jobs table<sup>*</sup>.
+events from the Jobs table<sup>\*</sup>.
 
-<sup>*</sup> **WARNING:** You should manually intervene only when there as been
+<sup>\*</sup> **WARNING:** You should manually intervene only when there as been
 a fatal error from which the system cannot recover.
 
 ### Job status: COMPLETED_CLEANUP_FAILED
@@ -68,7 +68,7 @@ As the processed matches will still be on the queue, you can choose to either:
 ### Job status: FAILED
 
 A `FAILED` status indicates that the job has terminated due to a generic
-exception. 
+exception.
 
 Some possible causes for this are:
 
@@ -98,7 +98,7 @@ following:
   in the [User Guide].
 - The concurrency setting for the solution does not exceed the limits for
   concurrent Athena queries for your AWS account or the Athena workgroup the
-  solution is configured to use.  For more information see [Performance
+  solution is configured to use. For more information see [Performance
   Configuration] in the [User Guide].
 - Your data is compatible within the [solution limits].
 
@@ -106,7 +106,7 @@ If you made any changes whilst verifying the prior points, you should attempt
 to run a new deletion job.
 
 To find further details of the cause of the failure you should inspect the
-deletion job log and inspect the event data for any **QueryFailed** events. 
+deletion job log and inspect the event data for any **QueryFailed** events.
 
 Athena queries may fail if the length of a query sent to Athena exceed the
 Athena query string length limit (see [Athena Service Quotas]). If queries are
@@ -143,7 +143,7 @@ Verify the following:
   S3 buckets referenced by your data mappers **and** any AWS KMS keys used to
   encrypt the data. For more information see [Permissions Configuration] in the
   [User Guide].
-- You have configured the VPC used for the Fargate tasks according to the 
+- You have configured the VPC used for the Fargate tasks according to the
   [VPC Configuration] section.
 - Your data is compatible within the [solution limits].
 - Your data is not corrupted.
@@ -151,13 +151,12 @@ Verify the following:
 To reprocess the objects, populate the deletion queue with the same matches
 and run a new deletion job.
 
-
-[User Guide]: USER_GUIDE.md
-[VPC Configuration]: USER_GUIDE.md#pre-requisite-configuring-a-vpc-for-the-solution
-[Permissions Configuration]: USER_GUIDE.md#granting-access-to-data
-[Performance Configuration]: USER_GUIDE.md#adjusting-performance-configuration
-[Athena Service Quotas]: https://docs.aws.amazon.com/athena/latest/ug/service-limits.html
-[Athena Query History]: https://docs.aws.amazon.com/athena/latest/ug/querying.html#queries-viewing-history
-[Athena Troubleshooting]: https://docs.aws.amazon.com/athena/latest/ug/troubleshooting.html
+[user guide]: USER_GUIDE.md
+[vpc configuration]: USER_GUIDE.md#pre-requisite-configuring-a-vpc-for-the-solution
+[permissions configuration]: USER_GUIDE.md#granting-access-to-data
+[performance configuration]: USER_GUIDE.md#adjusting-performance-configuration
+[athena service quotas]: https://docs.aws.amazon.com/athena/latest/ug/service-limits.html
+[athena query history]: https://docs.aws.amazon.com/athena/latest/ug/querying.html#queries-viewing-history
+[athena troubleshooting]: https://docs.aws.amazon.com/athena/latest/ug/troubleshooting.html
 [solution limits]: LIMITS.md
-[CloudWatch Container Insights]: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContainerInsights.html
+[cloudwatch container insights]: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContainerInsights.html

@@ -9,8 +9,8 @@ our [Issue Tracker].
 
 The following data formats are supported:
 
-| Data Format | Compression |
-| --- | --- |
+| Data Format    | Compression                         |
+| -------------- | ----------------------------------- |
 | Apache Parquet | SNAPPY (default for Apache Parquet) |
 
 #### Supported Query Providers
@@ -19,31 +19,31 @@ The following data catalog provider and query executor combinations are
 supported:
 
 | Catalog Provider | Query Executor |
-| --- | --- |
-| AWS Glue | Amazon Athena |
+| ---------------- | -------------- |
+| AWS Glue         | Amazon Athena  |
 
 #### Concurrency Limits
 
-| Catalog Provider | Query Executor |
-| --- | --- |
-| Max Concurrent Jobs | 1 |
-| Max Athena Concurrency | See account service quota |
+| Catalog Provider        | Query Executor            |
+| ----------------------- | ------------------------- |
+| Max Concurrent Jobs     | 1                         |
+| Max Athena Concurrency  | See account service quota |
 | Max Fargate Concurrency | See account service quota |
 
 #### Other Limitations
 
 - Only buckets with versioning set to **Enabled** are supported
 - Decompressed individual object size must be less than the Fargate task memory
-limit (`DeletionTaskMemory`) specified when launching the stack
+  limit (`DeletionTaskMemory`) specified when launching the stack
 - The bucket targeted by a data mapper must be in the same region as the
-Amazon S3 Find and Forget deployment
+  Amazon S3 Find and Forget deployment
 - S3 Objects encrypted with SSE-C are not supported
 - If the bucket targeted by a data mapper belongs to an account other than
-the account that the Amazon S3 Find and Forget Solution is deployed in,
-a CMK must be used for encryption
+  the account that the Amazon S3 Find and Forget Solution is deployed in,
+  a CMK must be used for encryption
 - After a deletion occurs, the S3 object owner will always be the account that
-the Amazon S3 Find and Forget solution is deployed in. The previous owner will
-also be granted `FULL_ACCESS`
+  the Amazon S3 Find and Forget solution is deployed in. The previous owner will
+  also be granted `FULL_ACCESS`
 
 #### Service Quotas
 
@@ -65,11 +65,11 @@ for the service in question:
 - [Step Functions Service Quotas]
 - [DynamoDB Service Quotas]
 
-[Issue Tracker]: https://github.com/awslabs/amazon-s3-find-and-forget/issues
-[Service Quotas]: https://docs.aws.amazon.com/general/latest/gr/aws_service_limits.html
-[Service Quotas]: https://docs.aws.amazon.com/general/latest/gr/aws_service_limits.html
-[Athena Service Quotas]: https://docs.aws.amazon.com/athena/latest/ug/service-limits.html
-[Fargate Service Quotas]: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/service-quotas.html
-[Step Functions Service Quotas]: https://docs.aws.amazon.com/step-functions/latest/dg/limits.html
-[SQS Service Quotas]: https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-quotas.html
-[DynamoDB Service Quotas]: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Limits.html
+[issue tracker]: https://github.com/awslabs/amazon-s3-find-and-forget/issues
+[service quotas]: https://docs.aws.amazon.com/general/latest/gr/aws_service_limits.html
+[service quotas]: https://docs.aws.amazon.com/general/latest/gr/aws_service_limits.html
+[athena service quotas]: https://docs.aws.amazon.com/athena/latest/ug/service-limits.html
+[fargate service quotas]: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/service-quotas.html
+[step functions service quotas]: https://docs.aws.amazon.com/step-functions/latest/dg/limits.html
+[sqs service quotas]: https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-quotas.html
+[dynamodb service quotas]: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Limits.html

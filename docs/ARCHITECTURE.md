@@ -1,18 +1,19 @@
 # Architecture
 
 ## Index
-* [Design Principles](#design-principles)
-* [Core Components](#core-components)
-    * [Data Mappers](#data-mappers)
-    * [Deletion Queue](#deletion-queue)
-    * [Deletion Jobs](#deletion-jobs)
-* [High-level Overview](#high-level-overview)
-* [User Interface](#user-interface)
-* [Persistence Layer](#persistence-layer)
-* [Deletion Job Workflow](#deletion-job-workflow)
-    * [The Athena Find workflow](#the-athena-find-workflow)
-    * [The Forget workflow](#the-forget-workflow)
-* [See Also](#see-also)
+
+- [Design Principles](#design-principles)
+- [Core Components](#core-components)
+  - [Data Mappers](#data-mappers)
+  - [Deletion Queue](#deletion-queue)
+  - [Deletion Jobs](#deletion-jobs)
+- [High-level Overview](#high-level-overview)
+- [User Interface](#user-interface)
+- [Persistence Layer](#persistence-layer)
+- [Deletion Job Workflow](#deletion-job-workflow)
+  - [The Athena Find workflow](#the-athena-find-workflow)
+  - [The Forget workflow](#the-forget-workflow)
+- [See Also](#see-also)
 
 ## Design Principles
 
@@ -33,8 +34,8 @@ Data Mappers instruct the Amazon S3 Find and Forget solution how and where to se
 
 To find data, a Data Mapper uses:
 
-* A table in a supported *data catalog provider* which describes the location and structure of the data you want to connect to the solution. Currently, AWS Glue is the only supported data catalog provider.
-* A *query executor* which is the service the Amazon S3 Find and Forget solution will use to query the data. Currently, Amazon Athena is the only supported query executor.
+- A table in a supported _data catalog provider_ which describes the location and structure of the data you want to connect to the solution. Currently, AWS Glue is the only supported data catalog provider.
+- A _query executor_ which is the service the Amazon S3 Find and Forget solution will use to query the data. Currently, Amazon Athena is the only supported query executor.
 
 Data Mappers can be created at any time, and removed when no deletion job is running.
 
@@ -64,18 +65,20 @@ Customers can also send authenticated requests directly to the API Gateway ([API
 ## Persistence Layer
 
 Data Persistence is handled differently depending on the cirumstances:
-* The customer performs an action that synchronously affects state such as making an API call that results on a write or update of a document in DynamoDB. In that case the Lambda API Handlers directly interact with the Database and respond accordingly following the [API specification].
-* The customer performs an action that results in a contract for a asynchronous promise to be fullfilled such as running a deletion Job. In that case, the synchronous write to the database will trigger an asynchronous Lambda Job Stream Processor that will perform a variety of actions depending on the scenario, such as executing the Deletion Job Step Function. Asynchronous actions generally handle state by writing event documents to DynamoDB that are occasionally subject to further actions by the Job Stream Processor.
+
+- The customer performs an action that synchronously affects state such as making an API call that results on a write or update of a document in DynamoDB. In that case the Lambda API Handlers directly interact with the Database and respond accordingly following the [API specification].
+- The customer performs an action that results in a contract for a asynchronous promise to be fullfilled such as running a deletion Job. In that case, the synchronous write to the database will trigger an asynchronous Lambda Job Stream Processor that will perform a variety of actions depending on the scenario, such as executing the Deletion Job Step Function. Asynchronous actions generally handle state by writing event documents to DynamoDB that are occasionally subject to further actions by the Job Stream Processor.
 
 The data is stored in DynamoDB using 3 tables:
-* **DataMappers**: Metadata for mapping S3 buckets to the solution.
-* **DeletionQueue**: The queue of matches to be deleted. This data is stored in DynamoDB in order to provide an API that easily allows to inspect and occasionally amend the data between deletion jobs.
-* **Jobs**: Data about deletion jobs, including the Job Summary (that contains an up-to-date representation of specific jobs over time) and Job Events (documents containing metadata about discrete events affecting a running job).
+
+- **DataMappers**: Metadata for mapping S3 buckets to the solution.
+- **DeletionQueue**: The queue of matches to be deleted. This data is stored in DynamoDB in order to provide an API that easily allows to inspect and occasionally amend the data between deletion jobs.
+- **Jobs**: Data about deletion jobs, including the Job Summary (that contains an up-to-date representation of specific jobs over time) and Job Events (documents containing metadata about discrete events affecting a running job).
   Job records will be retained for the duration specified in the settings after which they will be removed using the [DynamoDB TTL] feature.
 
 ## Deletion Job Workflow
 
-The Deletion Job workflow is implemented as an AWS Step Function. 
+The Deletion Job workflow is implemented as an AWS Step Function.
 
 When a Deletion Job starts, the solution gathers all the configured data mappers then proceeds to the Find phase.
 
@@ -104,13 +107,13 @@ When the workflow starts, a fleet of AWS Fargate tasks is instantiated to consum
 
 ## See Also
 
-* [API Specification]
-* [Cost Overview guide]
-* [Limits]
-* [Monitoring guide]
+- [API Specification]
+- [Cost Overview guide]
+- [Limits]
+- [Monitoring guide]
 
-[API Specification]: ./api/README.md
-[Cost Overview guide]: COST_OVERVIEW.md
-[Limits]: LIMITS.md
-[Monitoring guide]: MONITORING.md
-[DynamoDB TTL]: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/TTL.html
+[api specification]: ./api/README.md
+[cost overview guide]: COST_OVERVIEW.md
+[limits]: LIMITS.md
+[monitoring guide]: MONITORING.md
+[dynamodb ttl]: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/TTL.html
