@@ -85,7 +85,7 @@ aws ec2 describe-security-groups \
 
 The Fargate tasks used by this solution to perform deletions require a specific
 IAM role to exist in each account that owns a bucket that you will use with the
-solution. The role must have the exact name **S3F2DeletionRole** (no path). A
+solution. The role must have the exact name **S3F2DataAccessRole** (no path). A
 CloudFormation template is available as part of this solution which can be
 deployed separately to the main stack in each account. A way to deploy this role
 to many accounts, for example across your organization, is to use [AWS
