@@ -20,11 +20,11 @@
     "react-scripts": "^3.4.1"
   },
   "scripts": {
-    "build": "REACT_APP_REPO_URL=$npm_package_repository_url react-scripts build",
+    "build": "REACT_APP_REPO_URL=$npm_package_repository_url SKIP_PREFLIGHT_CHECK=true react-scripts build",
     "eject": "react-scripts eject",
     "package": "cd build && zip -r ../../frontend.zip . -x *settings.js",
-    "start": "export HTTPS=true && REACT_APP_REPO_URL=$npm_package_repository_url react-scripts start",
-    "test": "export CI=true && react-scripts test"
+    "start": "HTTPS=true SKIP_PREFLIGHT_CHECK=true REACT_APP_REPO_URL=$npm_package_repository_url react-scripts start",
+    "test": "CI=true SKIP_PREFLIGHT_CHECK=true react-scripts test"
   },
   "eslintConfig": {
     "extends": "react-app"

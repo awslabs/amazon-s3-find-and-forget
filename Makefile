@@ -43,6 +43,10 @@ deploy-artefacts:
 	make package-artefacts
 	aws s3 cp build.zip s3://$(TEMP_BUCKET)/amazon-s3-find-and-forget/$(VERSION)/build.zip
 
+.PHONY: format-docs
+format-docs:
+	npx prettier-eslint ./*.md ./docs/*.md --write --prose-wrap always
+
 generate-api-docs:
 	npx openapi-generator generate -i ./templates/api.definition.yml -g markdown -t ./docs/templates/ -o docs/api
 	git add docs/api
