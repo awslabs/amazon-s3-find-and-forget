@@ -1,10 +1,10 @@
 # Troubleshooting
 
-This section outlines steps to assist you with resolving issues
-deploying, configuring and using the Amazon S3 Find and Forget solution.
+This section outlines steps to assist you with resolving issues deploying,
+configuring and using the Amazon S3 Find and Forget solution.
 
-If you're unable to resolve an issue using this information you can [report the
-issue on GitHub](../CONTRIBUTING.md#reporting-bugsfeature-requests).
+If you're unable to resolve an issue using this information you can
+[report the issue on GitHub](../CONTRIBUTING.md#reporting-bugsfeature-requests).
 
 ### Expected Results Not Found
 
@@ -26,16 +26,19 @@ there may be an issue relating to:
   access from the subnets/security groups in which Forget Fargate tasks are
   launched will unblock the job without requiring manual intervention. For more
   information see [VPC Configuration] in the [User Guide].
-- Errors in job table stream processor. [Check the logs](https://docs.aws.amazon.com/lambda/latest/dg/monitoring-functions-logs.html)
+- Errors in job table stream processor.
+  [Check the logs](https://docs.aws.amazon.com/lambda/latest/dg/monitoring-functions-logs.html)
   of the stream processor Lambda function for errors.
 - Unhandled state machine execution errors. If there are no errors in the job
   event history which indicate an issue, check the state machine execution
   history of the execution with the same name as the blocked job ID.
-- The containers have exausted memory or vCPUs capacity while processing large (+GB size) files. See also [Service Level Monitoring](MONITORING.md#service-level-monitoring).
+- The containers have exausted memory or vCPUs capacity while processing large
+  (+GB size) files. See also
+  [Service Level Monitoring](MONITORING.md#service-level-monitoring).
 
-If the state machine is still executing but in a non-recoverable state, you
-can stop the state machine execution manually which will trigger an Exception
-job event — the job will enter a `FAILED` status.
+If the state machine is still executing but in a non-recoverable state, you can
+stop the state machine execution manually which will trigger an Exception job
+event — the job will enter a `FAILED` status.
 
 If this doesn't resolve the issue or the execution isn't running, you can
 manually update the job status to FAILED or remove the job and any associated
@@ -46,8 +49,8 @@ a fatal error from which the system cannot recover.
 
 ### Job status: COMPLETED_CLEANUP_FAILED
 
-A `COMPLETED_CLEANUP_FAILED` status indicates that the job has completed, but
-an error occurred when removing the processed matches from the deletion queue.
+A `COMPLETED_CLEANUP_FAILED` status indicates that the job has completed, but an
+error occurred when removing the processed matches from the deletion queue.
 
 Some possible causes for this are:
 
@@ -86,8 +89,8 @@ configuration as described in [Performance Configuration].
 
 ### Job status: FIND_FAILED
 
-A `FIND_FAILED` status indicates that the job has terminated because one or
-more data mapper queries failed to execute.
+A `FIND_FAILED` status indicates that the job has terminated because one or more
+data mapper queries failed to execute.
 
 If you are using Athena and Glue as data mappers, you should first verify the
 following:
@@ -102,8 +105,8 @@ following:
   Configuration] in the [User Guide].
 - Your data is compatible within the [solution limits].
 
-If you made any changes whilst verifying the prior points, you should attempt
-to run a new deletion job.
+If you made any changes whilst verifying the prior points, you should attempt to
+run a new deletion job.
 
 To find further details of the cause of the failure you should inspect the
 deletion job log and inspect the event data for any **QueryFailed** events.
@@ -120,12 +123,12 @@ and match this to the query in the [Athena Query History]. You can use the
 ### Job status: FORGET_FAILED
 
 A `FORGET_FAILED` status indicates that the job has terminated because a fatal
-error occurred during the _forget_ phase of the job. S3 objects _may_ have
-been modified.
+error occurred during the _forget_ phase of the job. S3 objects _may_ have been
+modified.
 
 Check the job log for a **ForgetPhaseFailed** event. Examining the event data
-for this event will provide you with more information about the underlying
-cause of the failure.
+for this event will provide you with more information about the underlying cause
+of the failure.
 
 ### Job status: FORGET_PARTIALLY_FAILED
 
@@ -139,24 +142,29 @@ information.
 
 Verify the following:
 
-- You have granted permissions to the Fargate task IAM role for access to the
-  S3 buckets referenced by your data mappers **and** any AWS KMS keys used to
+- You have granted permissions to the Fargate task IAM role for access to the S3
+  buckets referenced by your data mappers **and** any AWS KMS keys used to
   encrypt the data. For more information see [Permissions Configuration] in the
   [User Guide].
-- You have configured the VPC used for the Fargate tasks according to the
-  [VPC Configuration] section.
+- You have configured the VPC used for the Fargate tasks according to the [VPC
+  Configuration] section.
 - Your data is compatible within the [solution limits].
 - Your data is not corrupted.
 
-To reprocess the objects, populate the deletion queue with the same matches
-and run a new deletion job.
+To reprocess the objects, populate the deletion queue with the same matches and
+run a new deletion job.
 
 [user guide]: USER_GUIDE.md
-[vpc configuration]: USER_GUIDE.md#pre-requisite-configuring-a-vpc-for-the-solution
+[vpc configuration]:
+  USER_GUIDE.md#pre-requisite-configuring-a-vpc-for-the-solution
 [permissions configuration]: USER_GUIDE.md#granting-access-to-data
 [performance configuration]: USER_GUIDE.md#adjusting-performance-configuration
-[athena service quotas]: https://docs.aws.amazon.com/athena/latest/ug/service-limits.html
-[athena query history]: https://docs.aws.amazon.com/athena/latest/ug/querying.html#queries-viewing-history
-[athena troubleshooting]: https://docs.aws.amazon.com/athena/latest/ug/troubleshooting.html
+[athena service quotas]:
+  https://docs.aws.amazon.com/athena/latest/ug/service-limits.html
+[athena query history]:
+  https://docs.aws.amazon.com/athena/latest/ug/querying.html#queries-viewing-history
+[athena troubleshooting]:
+  https://docs.aws.amazon.com/athena/latest/ug/troubleshooting.html
 [solution limits]: LIMITS.md
-[cloudwatch container insights]: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContainerInsights.html
+[cloudwatch container insights]:
+  https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContainerInsights.html
