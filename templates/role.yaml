@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Amazon S3 Find and Forget Data Access IAM Role
+Description: Amazon S3 Find and Forget Data Access IAM Role (uksb-1qjminsba)
 
 Parameters:
   SourceAccountId:
