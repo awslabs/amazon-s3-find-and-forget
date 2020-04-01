@@ -99,8 +99,8 @@ To deploy this template manually, use the IAM Role Template
 then follow steps 5-9. The **Outputs** tab will contain the Role ARN which
 you will need when adding data mappers.
 
-You will need to grant this role read and write access to your data. The
-recommended approach to this is to use a bucket policy. For more information,
+You will need to grant this role read and write access to your data. We
+recommend you do this using a bucket policy. For more information,
 see [Granting Access to Data](#granting-access-to-data).
 
 ## Deploying the Solution
