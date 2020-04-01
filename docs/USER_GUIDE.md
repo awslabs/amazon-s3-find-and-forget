@@ -303,7 +303,7 @@ Fargate, follow these steps:
 
 Where the data you are connecting to the solution is encrypted with an Customer
 Managed CMK rather than an AWS Managed CMK, you must also grant the Athena
-and the Data Access IAM roles access to use the key so that the data can be
+and Data Access IAM roles access to use the key so that the data can be
 decrypted when reading, re-encrypted when writing.
 
 Once you have updated the bucket policy as described in
