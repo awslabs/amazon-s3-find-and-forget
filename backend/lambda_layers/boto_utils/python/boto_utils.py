@@ -191,7 +191,3 @@ def get_session(assume_role_arn=None, role_session_name="s3f2"):
                                      aws_secret_access_key=response['Credentials']['SecretAccessKey'],
                                      aws_session_token=response['Credentials']['SessionToken'])
     return boto3.session.Session()
-
-
-def get_region_from_env():
-    return
