@@ -224,7 +224,7 @@ def get_emitter_id():
 def get_bucket_versioning(client, bucket):
     resp = client.get_bucket_versioning(Bucket=bucket)
 
-    return resp['Status'] == "Enabled"
+    return resp.get('Status') == "Enabled"
 
 
 def emit_deletion_event(message_body, stats):

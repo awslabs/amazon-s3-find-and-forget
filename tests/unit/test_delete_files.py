@@ -408,10 +408,17 @@ def test_it_returns_bucket_versioning_enabled():
     assert get_bucket_versioning(client, "bucket")
 
 
-def test_it_returns_bucket_versioning_disabled():
+def test_it_returns_bucket_versioning_suspended():
     get_bucket_versioning.cache_clear()
     client = MagicMock()
     client.get_bucket_versioning.return_value = {"Status": "Suspended"}
+    assert not get_bucket_versioning(client, "bucket")
+
+
+def test_it_returns_bucket_versioning_disabled():
+    get_bucket_versioning.cache_clear()
+    client = MagicMock()
+    client.get_bucket_versioning.return_value = {}
     assert not get_bucket_versioning(client, "bucket")
 
 
