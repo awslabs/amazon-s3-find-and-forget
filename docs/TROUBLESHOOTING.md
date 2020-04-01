@@ -141,8 +141,8 @@ ascertain the root cause of an issue.
 
 Verify the following:
 
-- No processes are writing new version of existing objects while a job is running.
-  When the system writes a new version of a object, an integrity check is performed
+- No other processes created a new version of existing objects while the job was running.
+  When the system creates a new version of a object, an integrity check is performed
   to verify that during processing, no new versions of an object were created and that a
   delete marker for the object was not created. If either case is detected, an
   **ObjectUpdateFailed** event will be present in the job event history..
