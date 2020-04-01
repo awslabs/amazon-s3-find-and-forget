@@ -276,7 +276,7 @@ export default ({ gateway, goToDataMappers }) => {
                     {...validationAttributes(isColumnsValid)}
                   />
                 ))}
-                {columnsForSelectedTable.length === 0 && (
+                {isEmpty(columnsForSelectedTable) && (
                   <Form.Text className="text-muted">
                     No table selected
                   </Form.Text>
