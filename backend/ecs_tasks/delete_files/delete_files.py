@@ -235,7 +235,7 @@ def validate_bucket_versioning(client, bucket):
     return True
 
 
-def delete_previous_versions(client, input_bucket, input_key, new_version):
+def delete_old_versions(client, input_bucket, input_key, new_version):
     try:
         resp = client.list_object_versions(Bucket=input_bucket, Prefix=input_key)
         versions = resp.get('Versions', [])
@@ -244,15 +244,31 @@ def delete_previous_versions(client, input_bucket, input_key, new_version):
         sorted_versions = sorted(versions, key=lambda x: x["LastModified"])
         version_ids = [v["VersionId"] for v in sorted_versions]
         idx = version_ids.index(new_version)
-        for version_id in version_ids[:idx]:
-            client.delete_object(Bucket=input_bucket, Key=input_key, VersionId=version_id)
-    except (ClientError, IndexError, KeyError) as e:
-        logger.error("Unable to cleanup old versions")
-        raise CleanupError(str(e))
+        resp = client.delete_objects(
+            Bucket=input_bucket,
+            Delete={
+                'Objects': [
+                    {
+                        'Key': input_key,
+                        'VersionId':  version_id
+                    } for version_id in version_ids[:idx]
+                ],
+                'Quiet': True
+            }
+        )
+        if len(resp.get("Errors", [])) > 0:
+            raise DeleteOldVersionsError(errors=[
+                "Delete object {} version {} failed: {}".format(e["Key"], e["VersionId"], e["Message"])
+                for e in resp.get("Errors", 0)
+            ])
+    except ClientError as e:
+        raise DeleteOldVersionsError(errors=[str(e)])
 
 
-class CleanupError(RuntimeError):
-    pass
+class DeleteOldVersionsError(Exception):
+    def __init__(self, errors):
+        super().__init__("\n".join(errors))
+        self.errors = errors
 
 
 def emit_deletion_event(message_body, stats):
@@ -363,7 +379,8 @@ def execute(message_body, receipt_handle):
                 logger.info("New object version: %s", new_version)
                 verify_object_versions_integrity(client, input_bucket, input_key, source_version, new_version)
             if body.get("DeleteOldVersions"):
-                delete_previous_versions(client, input_bucket, input_key, new_version)
+                logger.info("Deleting object {} versions older than version {}".format(input_key, new_version))
+                delete_old_versions(client, input_bucket, input_key, new_version)
         else:
             logger.warning("The object %s was processed successfully but no rows required deletion", object_path)
         msg.delete()
@@ -389,6 +406,9 @@ def execute(message_body, receipt_handle):
         handle_error(msg, message_body, err_message)
     except IntegrityCheckFailedError as e:
         err_message = "Object version integrity check failed: {}".format(str(e))
+        handle_error(msg, message_body, err_message)
+    except DeleteOldVersionsError as e:
+        err_message = "Unable to delete previous versions: {}".format(str(e))
         handle_error(msg, message_body, err_message)
     except Exception as e:
         err_message = "Unknown error during message processing: {}".format(str(e))
@@ -416,9 +436,9 @@ def retry_wrapper(fn, retry_wait_seconds = 2, retry_factor = 2, max_retries = 5)
         while retry_current <= max_retries:
             try:
                 return fn(*args, **kwargs)
-            except(ClientError) as e:
+            except ClientError as e:
                 nonlocal retry_wait_seconds
-                if(retry_current == max_retries):
+                if retry_current == max_retries:
                     break
                 last_error = e
                 retry_current += 1
@@ -429,8 +449,10 @@ def retry_wrapper(fn, retry_wait_seconds = 2, retry_factor = 2, max_retries = 5)
 
     return wrapper
 
+
 class IntegrityCheckFailedError(Exception):
     pass
+
 
 def verify_object_versions_integrity(client, bucket, key, from_version_id, to_version_id):
 

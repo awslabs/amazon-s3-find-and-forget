@@ -42,12 +42,12 @@ def create_data_mapper_handler(event, context):
     item = {
         "DataMapperId": path_params["data_mapper_id"],
         "Columns": body["Columns"],
-        "Format": body.get("Format", "parquet"),
         "QueryExecutor": body["QueryExecutor"],
         "QueryExecutorParameters": body["QueryExecutorParameters"],
         "CreatedBy": get_user_info(event),
         "RoleArn": body["RoleArn"],
-        "DeleteOldVersions": body["DeleteOldVersions"],
+        "Format": body.get("Format", "parquet"),
+        "DeleteOldVersions": body.get("DeleteOldVersions", False),
     }
     table.put_item(Item=item)
 
