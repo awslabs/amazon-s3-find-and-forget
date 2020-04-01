@@ -153,10 +153,11 @@ def test_it_handles_old_version_delete_failures(mock_handle, mock_delete, mock_s
     mock_save.return_value = "new_version123"
     mock_load.return_value = parquet_file
     mock_delete.return_value = pa.BufferOutputStream(), {"DeletedRows": 1}
-    mock_delete_versions.side_effect = DeleteOldVersionsError(errors=["some error"])
+    mock_delete_versions.side_effect = DeleteOldVersionsError(errors=["access denied"])
     execute(message_stub(RoleArn="arn:aws:iam:account_id:role/rolename",
                          DeleteOldVersions=True,
                          Object="s3://bucket/path/basic.parquet"), "receipt_handle")
+    mock_handle.assert_called_with(ANY, ANY, "Unable to delete previous versions: access denied")
 
 
 @patch.dict(os.environ, {'JobTable': 'test'})
