@@ -42,17 +42,14 @@ supported:
   account that the Amazon S3 Find and Forget Solution is deployed in, a CMK must
   be used for encryption
 - After a deletion occurs, the S3 object owner will always be the account that
-  <<<<<<< HEAD the Amazon S3 Find and Forget solution is deployed in. The
-  previous owner will also be granted `FULL_ACCESS` ======= the Amazon S3 Find
-  and Forget solution is deployed in. The previous owner will also be granted
-  `FULL_ACCESS`
+  the Amazon S3 Find and Forget solution is deployed in. The previous owner will
+  also be granted `FULL_ACCESS`
 - To avoid race conditions when objects are processed by the solution,
   manipulating existing data lake objects must not occur while a Job is running.
   The solution will attempt to verify object integrity between read and write
   operations and attempt to rollback any changes if an inconsistency is
   detected. If the rollback fails, you will need to manually reconcile the
   object versions to avoid data inconsistency or loss.
-  > > > > > > > f38362539822e985cb266afe1a5fa58850b063fb
 
 #### Service Quotas
 
