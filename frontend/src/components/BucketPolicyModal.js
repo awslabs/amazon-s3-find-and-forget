@@ -92,23 +92,20 @@ const BucketPolicy = ({ bucket, accountId, location, roleArn }) => {
           ]
         },
         Action: [
-          "s3:GetBucketLocation",
-          "s3:GetBucketVersioning",
+          "s3:GetBucket*",
           "s3:GetObject*",
-          "s3:ListBucket*"
+          "s3:ListBucket*",
+          "s3:ListMultipartUploadParts"
         ],
         Resource: [`arn:aws:s3:::${bucket}`, `arn:aws:s3:::${location}*`]
       },
       {
         Sid: "AllowS3F2Write",
         Effect: "Allow",
-        Principal: {
-          AWS: [roleArn]
-        },
+        Principal: { AWS: [roleArn] },
         Action: [
           "s3:AbortMultipartUpload",
-          "s3:GetBucketRequestPayment",
-          "s3:ListMultipartUploadParts",
+          "s3:DeleteObjectVersion",
           "s3:PutObject*"
         ],
         Resource: [`arn:aws:s3:::${bucket}`, `arn:aws:s3:::${location}*`]
@@ -116,30 +113,28 @@ const BucketPolicy = ({ bucket, accountId, location, roleArn }) => {
     ]
   };
   return (
-    <>
-      <ol>
-        <li>
-          <p>
-            Open the{" "}
-            <a
-              href={`https://s3.console.aws.amazon.com/s3/buckets/${bucket}/?region=${region}&tab=permissions`}
-              target="_new"
-            >
-              Bucket Permissions configuration in the S3 AWS Web Console
-            </a>{" "}
-            and then choose <strong>Bucket Policy</strong>.
-          </p>
-        </li>
-        <li>
-          <p>
-            Edit the Policy to grant the Athena Query Executor and Data Access
-            IAM roles read/write access to the S3 Bucket and then choose{" "}
-            <strong>Save</strong>. The following is an example bucket policy:
-          </p>
-          <PolicyJson policy={bucketPolicy} />
-        </li>
-      </ol>
-    </>
+    <ol>
+      <li>
+        <p>
+          Open the{" "}
+          <a
+            href={`https://s3.console.aws.amazon.com/s3/buckets/${bucket}/?region=${region}&tab=permissions`}
+            target="_new"
+          >
+            Bucket Permissions configuration in the S3 AWS Web Console
+          </a>{" "}
+          and then choose <strong>Bucket Policy</strong>.
+        </p>
+      </li>
+      <li>
+        <p>
+          Edit the Policy to grant the Athena Query Executor and Data Access IAM
+          roles read/write access to the S3 Bucket and then choose{" "}
+          <strong>Save</strong>. The following is an example bucket policy:
+        </p>
+        <PolicyJson policy={bucketPolicy} />
+      </li>
+    </ol>
   );
 };
 
