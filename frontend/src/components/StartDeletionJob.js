@@ -16,7 +16,7 @@ export default ({ className, gateway, goToJobDetails }) => {
     setFormState("wait");
     setStarting(true);
     try {
-      const [{Settings}, {MatchIds}, {DataMappers}] = await Promise.all([
+      const [{ Settings }, { MatchIds }, { DataMappers }] = await Promise.all([
         gateway.getSettings(),
         gateway.getQueue(),
         gateway.getDataMappers()
@@ -29,12 +29,9 @@ export default ({ className, gateway, goToJobDetails }) => {
         "Athena Concurrency Limit": Settings.AthenaConcurrencyLimit,
         "Query Execution Wait Duration (Seconds)":
           Settings.QueryExecutionWaitSeconds,
-        "Query Queue Wait Duration (Seconds)":
-          Settings.QueryQueueWaitSeconds,
-        "Deletion Tasks Max Number":
-          Settings.DeletionTasksMaxNumber,
-        "Forget Queue Wait Duration (Seconds)":
-          Settings.ForgetQueueWaitSeconds
+        "Query Queue Wait Duration (Seconds)": Settings.QueryQueueWaitSeconds,
+        "Deletion Tasks Max Number": Settings.DeletionTasksMaxNumber,
+        "Forget Queue Wait Duration (Seconds)": Settings.ForgetQueueWaitSeconds
       });
 
       setFormState("confirm");
