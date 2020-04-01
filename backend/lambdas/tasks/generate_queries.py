@@ -49,7 +49,8 @@ def handler(event, context):
             "Database": db,
             "Table": table_name,
             "Columns": columns,
-            "PartitionKeys": []
+            "PartitionKeys": [],
+            "DeleteOldVersions": data_mapper.get("DeleteOldVersions", False),
         }
         if data_mapper.get("RoleArn", None):
             msg["RoleArn"] = data_mapper["RoleArn"]

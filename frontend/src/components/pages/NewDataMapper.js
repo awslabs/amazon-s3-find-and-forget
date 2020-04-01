@@ -23,6 +23,7 @@ export default ({ gateway, goToDataMappers }) => {
   const [glueDatabase, setGlueDatabase] = useState(undefined);
   const [glueTable, setGlueTable] = useState(undefined);
   const [roleArn, setRoleArn] = useState(undefined);
+  const [deletePreviousVersions, setDeletePreviousVersions] = useState(false);
   const [submitClicked, setSubmitClicked] = useState(false);
 
   const addColumn = c => {
@@ -71,7 +72,8 @@ export default ({ gateway, goToDataMappers }) => {
           glueDatabase,
           glueTable,
           columns,
-          roleArn
+          roleArn,
+          deletePreviousVersions
         );
         setFormState("saved");
       } catch (e) {
@@ -292,6 +294,15 @@ export default ({ gateway, goToDataMappers }) => {
                   type="text"
                   onChange={e => setRoleArn(e.target.value)}
                   {...validationAttributes(isRoleValid)}
+                />
+              </Form.Group>
+              <Form.Group>
+                <Form.Check
+                  type="checkbox"
+                  id="delete-old-versions"
+                  name="column"
+                  label="Delete previous object versions after update"
+                  onChange={e => setDeletePreviousVersions(!deletePreviousVersions)}
                 />
               </Form.Group>
             </div>

@@ -236,15 +236,23 @@ def validate_bucket_versioning(client, bucket):
 
 
 def delete_previous_versions(client, input_bucket, input_key, new_version):
-    resp = client.list_object_versions(Bucket=input_bucket, Prefix=input_key)
-    versions = resp.get('Versions', [])
-    delete_markers = resp.get('DeleteMarkers', [])
-    versions.extend(delete_markers)
-    sorted_versions = sorted(versions, key=lambda x: x["LastModified"])
-    version_ids = [v["VersionId"] for v in sorted_versions]
-    idx = version_ids.index(new_version)
-    for version_id in version_ids[:idx]:
-        client.delete_object(Bucket=input_bucket, Key=input_key, VersionId=version_id)
+    try:
+        resp = client.list_object_versions(Bucket=input_bucket, Prefix=input_key)
+        versions = resp.get('Versions', [])
+        delete_markers = resp.get('DeleteMarkers', [])
+        versions.extend(delete_markers)
+        sorted_versions = sorted(versions, key=lambda x: x["LastModified"])
+        version_ids = [v["VersionId"] for v in sorted_versions]
+        idx = version_ids.index(new_version)
+        for version_id in version_ids[:idx]:
+            client.delete_object(Bucket=input_bucket, Key=input_key, VersionId=version_id)
+    except (ClientError, IndexError, KeyError) as e:
+        logger.error("Unable to cleanup old versions")
+        raise CleanupError(str(e))
+
+
+class CleanupError(RuntimeError):
+    pass
 
 
 def emit_deletion_event(message_body, stats):
