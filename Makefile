@@ -47,6 +47,10 @@ deploy-artefacts:
 format-docs:
 	npx prettier-eslint ./*.md ./docs/*.md --write --prose-wrap always
 
+.PHONY: format-js
+format-js:
+	npx prettier-eslint $(PWD)/frontend/src/**/*.js --write --prose-wrap always
+
 generate-api-docs:
 	npx openapi-generator generate -i ./templates/api.definition.yml -g markdown -t ./docs/templates/ -o docs/api
 	git add docs/api
