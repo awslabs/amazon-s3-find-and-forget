@@ -135,13 +135,20 @@ of the failure.
 A `FORGET_PARTIALLY_FAILED` status indicates that the job has completed, but
 that the _forget_ phase was unable to process one or more objects.
 
-Each object that was not processed will result in a message on the objects dead
-letter queue ("DLQ"; see `DLQUrl` in the CloudFormation stack outputs) and an
-**ObjectUpdateFailed** event in the job event history containing error
-information.
+Each object that was not correctly processed will result in a message sent to
+the object dead letter queue ("DLQ"; see `DLQUrl` in the CloudFormation stack
+outputs) and an **ObjectUpdateFailed** event in the job event history containing
+error information. Check the content of any **ObjectUpdateFailed** events to
+ascertain the root cause of an issue.
 
 Verify the following:
 
+- No other processes created a new version of existing objects while the job was
+  running. When the system creates a new version of a object, an integrity check
+  is performed to verify that during processing, no new versions of an object
+  were created and that a delete marker for the object was not created. If
+  either case is detected, an **ObjectUpdateFailed** event will be present in
+  the job event history..
 - You have granted permissions to the Fargate task IAM role for access to the S3
   buckets referenced by your data mappers **and** any AWS KMS keys used to
   encrypt the data. For more information see [Permissions Configuration] in the

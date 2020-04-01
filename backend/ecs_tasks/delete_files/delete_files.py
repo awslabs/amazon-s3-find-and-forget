@@ -334,6 +334,7 @@ def execute(message_body, receipt_handle):
             with pa.BufferReader(out_sink.getvalue()) as output_buf:
                 new_version = save(s3, client, output_buf, input_bucket, input_key, source_version)
                 logger.info("New object version: %s", new_version)
+                verify_object_versions_integrity(client, input_bucket, input_key, source_version, new_version)
         else:
             logger.warning("The object %s was processed successfully but no rows required deletion", object_path)
         msg.delete()
@@ -351,9 +352,14 @@ def execute(message_body, receipt_handle):
         err_message = "ClientError: {}".format(str(e))
         if e.operation_name == "PutObjectAcl":
             err_message += ". Redacted object uploaded successfully but unable to restore WRITE ACL"
+        if e.operation_name == "ListObjectVersions":
+            err_message += ". Could not verify redacted object version integrity"
         handle_error(msg, message_body, err_message)
     except ValueError as e:
         err_message = "Unprocessable message: {}".format(str(e))
+        handle_error(msg, message_body, err_message)
+    except IntegrityCheckFailedError as e:
+        err_message = "Object version integrity check failed: {}".format(str(e))
         handle_error(msg, message_body, err_message)
     except Exception as e:
         err_message = "Unknown error during message processing: {}".format(str(e))
@@ -394,6 +400,8 @@ def retry_wrapper(fn, retry_wait_seconds = 2, retry_factor = 2, max_retries = 5)
 
     return wrapper
 
+class IntegrityCheckFailedError(Exception):
+    pass
 
 def verify_object_versions_integrity(client, bucket, key, from_version_id, to_version_id):
     
@@ -412,14 +420,14 @@ def verify_object_versions_integrity(client, bucket, key, from_version_id, to_ve
     all_versions = versions + delete_markers
 
     if not len(all_versions):
-        raise ValueError(not_found_error_template.format(from_version_id))
+        raise IntegrityCheckFailedError(not_found_error_template.format(from_version_id))
 
     prev_version = all_versions[0]
     prev_version_id = prev_version['VersionId']
     
     if prev_version_id != from_version_id:
         conflicting_version_type = 'delete marker' if 'ETag' not in prev_version else 'version'
-        raise ValueError(conflict_error_template.format(
+        raise IntegrityCheckFailedError(conflict_error_template.format(
             conflicting_version_type,
             prev_version_id,
             from_version_id, 
