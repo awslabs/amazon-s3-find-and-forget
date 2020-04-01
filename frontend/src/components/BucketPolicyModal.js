@@ -92,26 +92,20 @@ const BucketPolicy = ({ bucket, accountId, location, roleArn }) => {
           ]
         },
         Action: [
-          "s3:GetBucketLocation",
-          "s3:GetBucketVersioning",
+          "s3:GetBucket*",
           "s3:GetObject*",
-          "s3:ListBucket*"
+          "s3:ListBucket*",
+          "s3:ListMultipartUploadParts"
         ],
         Resource: [`arn:aws:s3:::${bucket}`, `arn:aws:s3:::${location}*`]
       },
       {
         Sid: "AllowS3F2Write",
         Effect: "Allow",
-        Principal: {
-          AWS: [roleArn]
-        },
+        Principal: { AWS: [roleArn] },
         Action: [
           "s3:AbortMultipartUpload",
           "s3:DeleteObjectVersion",
-          "s3:GetBucket*",
-          "s3:GetObject*",
-          "s3:ListBucket*",
-          "s3:ListMultipartUploadParts",
           "s3:PutObject*"
         ],
         Resource: [`arn:aws:s3:::${bucket}`, `arn:aws:s3:::${location}*`]
