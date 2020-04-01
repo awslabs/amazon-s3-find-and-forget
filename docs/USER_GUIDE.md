@@ -84,15 +84,12 @@ aws ec2 describe-security-groups \
 ### Provisioning Data Access IAM Roles
 
 The Fargate tasks used by this solution to perform deletions require a specific
-role to exist in every account that owns a bucket which will be connected
-to the solution. The role must have the exact name **S3F2DataAccessRole** (no
-path).
-
-A CloudFormation template is available as part of this solution which can be
-deployed separately to the main stack in every account that owns a bucket
-which the solution will need access to. The easiest way to deploy this role
-across more than one account, for example across your organization,
-is to use [AWS CloudFormation StackSets].
+IAM role to exist in each account that owns a bucket that you will use with
+the solution. The role must have the exact name **S3F2DeletionRole** (no
+path). A CloudFormation template is available as part of this solution which can
+be deployed separately to the main stack in each account. A way to deploy this
+role to many accounts, for example across your organization, is to use
+[AWS CloudFormation StackSets].
 
 To deploy this template manually, use the IAM Role Template
 "Deploy to AWS button" in [Deploying the Solution](#deploying-the-solution)
@@ -244,23 +241,23 @@ Data Catalog in the same region and account as the S3 Find and Forget solution.
    for the stack.
 2. Choose **Data Mappers** from the menu then choose **Create Data Mapper**
 3. On the Create Data Mapper page input a **Name** to uniquely identify this
-   Data Mapper. Select a **Query Executor Type** then choose the **Database**
+   Data Mapper. 
+4. Select a **Query Executor Type** then choose the **Database**
    and **Table** in your data catalog which describes the target data in S3.
-   A list of columns will be displayed for the chosen Table. From the
-   list, choose the column(s) the solution should use to to find items in the
-   data which should be deleted. For example, if your table has three columns
-   named **customer_id**, **description** and **created_at** and you want to
-   search for items using the **customer_id**, you should choose only the
-   **customer_id** column from this list. 
-
-   Finally, input the ARN of the role which Fargate will assume to perform
+   A list of columns will be displayed for the chosen Table. 
+5. From the list, choose the column(s) the solution should use to to find items
+   in the data which should be deleted. For example, if your table has three
+   columns named **customer_id**, **description** and **created_at** and you
+   want to search for items using the **customer_id**, you should choose only
+   the **customer_id** column from this list. 
+6. Finally, input the ARN of the role which Fargate will assume to perform
    write operations on your data. This role should already exist if you have
    followed the [Provisioning Data Access IAM Roles](#provisioning-data-access-iam-roles)
    steps. Once you have input the role ARN, choose **Create Data Mapper**.
-4. A message will be displayed advising you to update the S3 Bucket Policy for
-   the S3 Bucket referenced by the newly created data mapper. See
-   [Granting Access to Data](#granting-access-to-data) for more information on
-   how to do this. Choose **Return to Data Mappers**.
+7. A message will be displayed advising you to update the S3 Bucket Policy
+   for the S3 Bucket referenced by the newly created data mapper. See
+   [Granting Access to Data](#granting-access-to-data) for more information
+   on how to do this. Choose **Return to Data Mappers**.
 
 You can also create Data Mappers directly via the API. For more information, see
 the [API Documentation].

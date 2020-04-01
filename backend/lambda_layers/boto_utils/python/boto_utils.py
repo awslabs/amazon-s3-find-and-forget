@@ -16,12 +16,13 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 batch_size = 10  # SQS Max Batch Size
 
-sts = boto3.client('sts', endpoint_url="https://sts.{}.amazonaws.com".format(os.getenv("AWS_DEFAULT_REGION")))
 ssm = boto3.client('ssm')
 ddb = boto3.resource("dynamodb")
 table = ddb.Table(os.getenv("JobTable", "S3F2_Jobs"))
 index = os.getenv("JobTableDateGSI", "Date-GSI")
 bucket_count = int(os.getenv("GSIBucketCount", 1))
+sts = boto3.client('sts', endpoint_url="https://sts.{}.amazonaws.com".format(
+    os.getenv("AWS_DEFAULT_REGION", os.getenv("AWS_REGION", None))))
 
 
 def paginate(client, method, iter_keys, **kwargs):
@@ -190,3 +191,7 @@ def get_session(assume_role_arn=None, role_session_name="s3f2"):
                                      aws_secret_access_key=response['Credentials']['SecretAccessKey'],
                                      aws_session_token=response['Credentials']['SessionToken'])
     return boto3.session.Session()
+
+
+def get_region_from_env():
+    return
