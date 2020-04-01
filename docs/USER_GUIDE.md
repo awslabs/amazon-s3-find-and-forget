@@ -6,14 +6,15 @@ Forget solution.
 ## Index
 
 - [Pre-requisite: Configuring a VPC](#pre-requisite-configuring-a-vpc-for-the-solution)
-  - [Creating a New VPC](#creating-a-new-vpc)
-  - [Using an Existing VPC](#using-an-existing-vpc)
+  - [Configuring a VPC](#configuring-a-vpc-for-the-solution)
+    - [Creating a New VPC](#creating-a-new-vpc)
+    - [Using an Existing VPC](#using-an-existing-vpc)
+  - [Provisioning Data Access IAM Roles](#provisioning-data-access-iam-roles)
 - [Deploying the Solution](#deploying-the-solution)
 - [Configuring Data Mappers](#configuring-data-mappers)
 - [Granting Access to Data](#granting-access-to-data)
   - [Updating Your Bucket Policy](#updating-your-bucket-policy)
   - [Data Encrypted with Customer Managed CMKs](#data-encrypted-with-a-customer-managed-cmk)
-  - [Cross Account Buckets and CMKs](#cross-account-buckets-and-cmks)
 - [Adding to the Deletion Queue](#adding-to-the-deletion-queue)
 - [Running a Deletion Job](#running-a-deletion-job)
   - [Deletion Job Statuses](#deletion-job-statuses)
@@ -26,7 +27,9 @@ Forget solution.
   - [Major Upgrades: Manual Rolling Deployment](#major-upgrades-manual-rolling-deployment)
 - [Deleting the Solution](#deleting-the-solution)
 
-## Pre-requisite: Configuring a VPC for the Solution
+## Pre-requisites
+
+### Configuring a VPC for the Solution
 
 The Fargate tasks used by this solution to perform deletions must be able to
 access the following AWS services, either via an Internet Gateway or via [VPC
@@ -37,8 +40,9 @@ Endpoints]:
 - Amazon CloudWatch (monitoring and logs)
 - AWS ECR
 - Amazon SQS
+- AWS STS
 
-### Creating a New VPC
+#### Creating a New VPC
 
 If you do not have an existing VPC you wish to use, a VPC template is available
 as part of this solution which can be deployed separately to the main stack.
@@ -49,7 +53,7 @@ template, use the VPC Template "Deploy to AWS button" in
 **Outputs** tab will contain the subnets and security group IDs to use as inputs
 for the main stack.
 
-### Using an Existing VPC
+#### Using an Existing VPC
 
 If you wish to use an existing VPC in your account with the Amazon S3 Find and
 Forget solution, you must ensure that when deploying the solution you select
@@ -77,6 +81,25 @@ aws ec2 describe-security-groups \
   --query 'SecurityGroups[*].{ID:GroupId,Name:GroupName}'
 ```
 
+### Provisioning Data Access IAM Roles
+
+The Fargate tasks used by this solution to perform deletions require a specific
+IAM role to exist in each account that owns a bucket that you will use with the
+solution. The role must have the exact name **S3F2DataAccessRole** (no path). A
+CloudFormation template is available as part of this solution which can be
+deployed separately to the main stack in each account. A way to deploy this role
+to many accounts, for example across your organization, is to use [AWS
+CloudFormation StackSets].
+
+To deploy this template manually, use the IAM Role Template "Deploy to AWS
+button" in [Deploying the Solution](#deploying-the-solution) then follow steps
+5-9. The **Outputs** tab will contain the Role ARN which you will need when
+adding data mappers.
+
+You will need to grant this role read and write access to your data. We
+recommend you do this using a bucket policy. For more information, see
+[Granting Access to Data](#granting-access-to-data).
+
 ## Deploying the Solution
 
 The solution is deployed as an
@@ -95,15 +118,15 @@ resources.
    wish to [deploy using the AWS CLI] instead, you can refer to the "_Template
    Link_" to download the template files.
 
-| Region                                     | Launch Template                                                                                                                                                                                                                                                                                                                          | Template Link                                                                                                                   | Launch VPC Template                                                                                                                                                                                                                                                                                                                     | VPC Template Link                                                                                                          |
-| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| **US East (N. Virginia)** (us-east-1)      | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=S3F2&templateURL=https://solution-builders-us-east-1.s3.us-east-1.amazonaws.com/amazon-s3-find-and-forget/latest/template.yaml)                | [Link](https://solution-builders-us-east-1.s3.us-east-1.amazonaws.com/amazon-s3-find-and-forget/latest/template.yaml)           | [![Launch the Amazon S3 Find and Forget VPC Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=S3F2-VPC&templateURL=https://solution-builders-us-east-1.s3.us-east-1.amazonaws.com/amazon-s3-find-and-forget/latest/vpc.yaml)            | [Link](https://solution-builders-us-east-1.s3.us-east-1.amazonaws.com/amazon-s3-find-and-forget/latest/vpc.yaml)           |
-| **US East (Ohio)** (us-east-2)             | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-2#/stacks/new?stackName=S3F2&templateURL=https://solution-builders-us-east-2.s3.us-east-2.amazonaws.com/amazon-s3-find-and-forget/latest/template.yaml)                | [Link](https://solution-builders-us-east-2.s3.us-east-2.amazonaws.com/amazon-s3-find-and-forget/latest/template.yaml)           | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-2#/stacks/new?stackName=S3F2-VPC&templateURL=https://solution-builders-us-east-2.s3.us-east-2.amazonaws.com/amazon-s3-find-and-forget/latest/vpc.yaml)                | [Link](https://solution-builders-us-east-2.s3.us-east-2.amazonaws.com/amazon-s3-find-and-forget/latest/vpc.yaml)           |
-| **US West (Oregon)** (us-west-2)           | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=S3F2&templateURL=https://solution-builders-us-west-2.s3.us-west-2.amazonaws.com/amazon-s3-find-and-forget/latest/template.yaml)                | [Link](https://solution-builders-us-west-2.s3.us-west-2.amazonaws.com/amazon-s3-find-and-forget/latest/template.yaml)           | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=S3F2-VPC&templateURL=https://solution-builders-us-west-2.s3.us-west-2.amazonaws.com/amazon-s3-find-and-forget/latest/vpc.yaml)                | [Link](https://solution-builders-us-west-2.s3.us-west-2.amazonaws.com/amazon-s3-find-and-forget/latest/vpc.yaml)           |
-| **Asia Pacific (Seoul)** (ap-northeast-2)  | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-northeast-2#/stacks/new?stackName=S3F2&templateURL=https://solution-builders-ap-northeast-2.s3.ap-northeast-2.amazonaws.com/amazon-s3-find-and-forget/latest/template.yaml) | [Link](https://solution-builders-ap-northeast-2.s3.ap-northeast-2.amazonaws.com/amazon-s3-find-and-forget/latest/template.yaml) | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-northeast-2#/stacks/new?stackName=S3F2-VPC&templateURL=https://solution-builders-ap-northeast-2.s3.ap-northeast-2.amazonaws.com/amazon-s3-find-and-forget/latest/vpc.yaml) | [Link](https://solution-builders-ap-northeast-2.s3.ap-northeast-2.amazonaws.com/amazon-s3-find-and-forget/latest/vpc.yaml) |
-| **Asia Pacific (Sydney)** (ap-southeast-2) | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-2#/stacks/new?stackName=S3F2&templateURL=https://solution-builders-ap-southeast-2.s3.ap-southeast-2.amazonaws.com/amazon-s3-find-and-forget/latest/template.yaml) | [Link](https://solution-builders-ap-southeast-2.s3.ap-southeast-2.amazonaws.com/amazon-s3-find-and-forget/latest/template.yaml) | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-2#/stacks/new?stackName=S3F2-VPC&templateURL=https://solution-builders-ap-southeast-2.s3.ap-southeast-2.amazonaws.com/amazon-s3-find-and-forget/latest/vpc.yaml) | [Link](https://solution-builders-ap-southeast-2.s3.ap-southeast-2.amazonaws.com/amazon-s3-find-and-forget/latest/vpc.yaml) |
-| **Asia Pacific (Tokyo)** (ap-northeast-1)  | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-northeast-1#/stacks/new?stackName=S3F2&templateURL=https://solution-builders-ap-northeast-1.s3.ap-northeast-1.amazonaws.com/amazon-s3-find-and-forget/latest/template.yaml) | [Link](https://solution-builders-ap-northeast-1.s3.ap-northeast-1.amazonaws.com/amazon-s3-find-and-forget/latest/template.yaml) | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-northeast-1#/stacks/new?stackName=S3F2-VPC&templateURL=https://solution-builders-ap-northeast-1.s3.ap-northeast-1.amazonaws.com/amazon-s3-find-and-forget/latest/vpc.yaml) | [Link](https://solution-builders-ap-northeast-1.s3.ap-northeast-1.amazonaws.com/amazon-s3-find-and-forget/latest/vpc.yaml) |
-| **EU (Ireland)** (eu-west-1)               | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-west-1#/stacks/new?stackName=S3F2&templateURL=https://solution-builders-eu-west-1.s3.eu-west-1.amazonaws.com/amazon-s3-find-and-forget/latest/template.yaml)                | [Link](https://solution-builders-eu-west-1.s3.eu-west-1.amazonaws.com/amazon-s3-find-and-forget/latest/template.yaml)           | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-west-1#/stacks/new?stackName=S3F2-VPC&templateURL=https://solution-builders-eu-west-1.s3.eu-west-1.amazonaws.com/amazon-s3-find-and-forget/latest/vpc.yaml)                | [Link](https://solution-builders-eu-west-1.s3.eu-west-1.amazonaws.com/amazon-s3-find-and-forget/latest/vpc.yaml)           |
+| Region                                     | Launch Template                                                                                                                                                                                                                                                                                                                          | Template Link                                                                                                                   | Launch VPC Template                                                                                                                                                                                                                                                                                                                     | VPC Template Link                                                                                                          | Launch IAM Role Template                                                                                                                                                                                                                                                                                                                       | IAM Role Template Link                                                                                                      |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| **US East (N. Virginia)** (us-east-1)      | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=S3F2&templateURL=https://solution-builders-us-east-1.s3.us-east-1.amazonaws.com/amazon-s3-find-and-forget/latest/template.yaml)                | [Link](https://solution-builders-us-east-1.s3.us-east-1.amazonaws.com/amazon-s3-find-and-forget/latest/template.yaml)           | [![Launch the Amazon S3 Find and Forget VPC Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=S3F2-VPC&templateURL=https://solution-builders-us-east-1.s3.us-east-1.amazonaws.com/amazon-s3-find-and-forget/latest/vpc.yaml)            | [Link](https://solution-builders-us-east-1.s3.us-east-1.amazonaws.com/amazon-s3-find-and-forget/latest/role.yaml)          | [![Launch the Amazon S3 Find and Forget Role Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=S3F2-Role&templateURL=https://solution-builders-us-east-1.s3.us-east-1.amazonaws.com/amazon-s3-find-and-forget/latest/role.yaml)                | [Link](https://solution-builders-us-east-1.s3.us-east-1.amazonaws.com/amazon-s3-find-and-forget/latest/role.yaml)           |
+| **US East (Ohio)** (us-east-2)             | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-2#/stacks/new?stackName=S3F2&templateURL=https://solution-builders-us-east-2.s3.us-east-2.amazonaws.com/amazon-s3-find-and-forget/latest/template.yaml)                | [Link](https://solution-builders-us-east-2.s3.us-east-2.amazonaws.com/amazon-s3-find-and-forget/latest/template.yaml)           | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-2#/stacks/new?stackName=S3F2-VPC&templateURL=https://solution-builders-us-east-2.s3.us-east-2.amazonaws.com/amazon-s3-find-and-forget/latest/vpc.yaml)                | [Link](https://solution-builders-us-east-2.s3.us-east-2.amazonaws.com/amazon-s3-find-and-forget/latest/vpc.yaml)           | [![Launch the Amazon S3 Find and Forget Role Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-2#/stacks/new?stackName=S3F2-Role&templateURL=https://solution-builders-us-east-2.s3.us-east-2.amazonaws.com/amazon-s3-find-and-forget/latest/role.yaml)                | [Link](https://solution-builders-us-east-2.s3.us-east-2.amazonaws.com/amazon-s3-find-and-forget/latest/role.yaml)           |
+| **US West (Oregon)** (us-west-2)           | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=S3F2&templateURL=https://solution-builders-us-west-2.s3.us-west-2.amazonaws.com/amazon-s3-find-and-forget/latest/template.yaml)                | [Link](https://solution-builders-us-west-2.s3.us-west-2.amazonaws.com/amazon-s3-find-and-forget/latest/template.yaml)           | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=S3F2-VPC&templateURL=https://solution-builders-us-west-2.s3.us-west-2.amazonaws.com/amazon-s3-find-and-forget/latest/vpc.yaml)                | [Link](https://solution-builders-us-west-2.s3.us-west-2.amazonaws.com/amazon-s3-find-and-forget/latest/vpc.yaml)           | [![Launch the Amazon S3 Find and Forget Role Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=S3F2-Role&templateURL=https://solution-builders-us-west-2.s3.us-west-2.amazonaws.com/amazon-s3-find-and-forget/latest/role.yaml)                | [Link](https://solution-builders-us-west-2.s3.us-west-2.amazonaws.com/amazon-s3-find-and-forget/latest/role.yaml)           |
+| **Asia Pacific (Seoul)** (ap-northeast-2)  | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-northeast-2#/stacks/new?stackName=S3F2&templateURL=https://solution-builders-ap-northeast-2.s3.ap-northeast-2.amazonaws.com/amazon-s3-find-and-forget/latest/template.yaml) | [Link](https://solution-builders-ap-northeast-2.s3.ap-northeast-2.amazonaws.com/amazon-s3-find-and-forget/latest/template.yaml) | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-northeast-2#/stacks/new?stackName=S3F2-VPC&templateURL=https://solution-builders-ap-northeast-2.s3.ap-northeast-2.amazonaws.com/amazon-s3-find-and-forget/latest/vpc.yaml) | [Link](https://solution-builders-ap-northeast-2.s3.ap-northeast-2.amazonaws.com/amazon-s3-find-and-forget/latest/vpc.yaml) | [![Launch the Amazon S3 Find and Forget Role Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-northeast-2#/stacks/new?stackName=S3F2-Role&templateURL=https://solution-builders-ap-northeast-2.s3.ap-northeast-2.amazonaws.com/amazon-s3-find-and-forget/latest/role.yaml) | [Link](https://solution-builders-ap-northeast-2.s3.ap-northeast-2.amazonaws.com/amazon-s3-find-and-forget/latest/role.yaml) |
+| **Asia Pacific (Sydney)** (ap-southeast-2) | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-2#/stacks/new?stackName=S3F2&templateURL=https://solution-builders-ap-southeast-2.s3.ap-southeast-2.amazonaws.com/amazon-s3-find-and-forget/latest/template.yaml) | [Link](https://solution-builders-ap-southeast-2.s3.ap-southeast-2.amazonaws.com/amazon-s3-find-and-forget/latest/template.yaml) | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-2#/stacks/new?stackName=S3F2-VPC&templateURL=https://solution-builders-ap-southeast-2.s3.ap-southeast-2.amazonaws.com/amazon-s3-find-and-forget/latest/vpc.yaml) | [Link](https://solution-builders-ap-southeast-2.s3.ap-southeast-2.amazonaws.com/amazon-s3-find-and-forget/latest/vpc.yaml) | [![Launch the Amazon S3 Find and Forget Role Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-2#/stacks/new?stackName=S3F2-Role&templateURL=https://solution-builders-ap-southeast-2.s3.ap-southeast-2.amazonaws.com/amazon-s3-find-and-forget/latest/role.yaml) | [Link](https://solution-builders-ap-southeast-2.s3.ap-southeast-2.amazonaws.com/amazon-s3-find-and-forget/latest/role.yaml) |
+| **Asia Pacific (Tokyo)** (ap-northeast-1)  | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-northeast-1#/stacks/new?stackName=S3F2&templateURL=https://solution-builders-ap-northeast-1.s3.ap-northeast-1.amazonaws.com/amazon-s3-find-and-forget/latest/template.yaml) | [Link](https://solution-builders-ap-northeast-1.s3.ap-northeast-1.amazonaws.com/amazon-s3-find-and-forget/latest/template.yaml) | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-northeast-1#/stacks/new?stackName=S3F2-VPC&templateURL=https://solution-builders-ap-northeast-1.s3.ap-northeast-1.amazonaws.com/amazon-s3-find-and-forget/latest/vpc.yaml) | [Link](https://solution-builders-ap-northeast-1.s3.ap-northeast-1.amazonaws.com/amazon-s3-find-and-forget/latest/vpc.yaml) | [![Launch the Amazon S3 Find and Forget Role Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-northeast-1#/stacks/new?stackName=S3F2-Role&templateURL=https://solution-builders-ap-northeast-1.s3.ap-northeast-1.amazonaws.com/amazon-s3-find-and-forget/latest/role.yaml) | [Link](https://solution-builders-ap-northeast-1.s3.ap-northeast-1.amazonaws.com/amazon-s3-find-and-forget/latest/role.yaml) |
+| **EU (Ireland)** (eu-west-1)               | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-west-1#/stacks/new?stackName=S3F2&templateURL=https://solution-builders-eu-west-1.s3.eu-west-1.amazonaws.com/amazon-s3-find-and-forget/latest/template.yaml)                | [Link](https://solution-builders-eu-west-1.s3.eu-west-1.amazonaws.com/amazon-s3-find-and-forget/latest/template.yaml)           | [![Launch the Amazon S3 Find and Forget Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-west-1#/stacks/new?stackName=S3F2-VPC&templateURL=https://solution-builders-eu-west-1.s3.eu-west-1.amazonaws.com/amazon-s3-find-and-forget/latest/vpc.yaml)                | [Link](https://solution-builders-eu-west-1.s3.eu-west-1.amazonaws.com/amazon-s3-find-and-forget/latest/vpc.yaml)           | [![Launch the Amazon S3 Find and Forget Role Stack with CloudFormation](./images/deploy-to-aws.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-west-1#/stacks/new?stackName=S3F2-Role&templateURL=https://solution-builders-eu-west-1.s3.eu-west-1.amazonaws.com/amazon-s3-find-and-forget/latest/role.yaml)                | [Link](https://solution-builders-eu-west-1.s3.eu-west-1.amazonaws.com/amazon-s3-find-and-forget/latest/role.yaml)           |
 
 2. If prompted, login using your AWS account credentials.
 3. You should see a screen titled "_Create Stack_" at the "_Specify template_"
@@ -218,16 +241,20 @@ Data Catalog in the same region and account as the S3 Find and Forget solution.
    for the stack.
 2. Choose **Data Mappers** from the menu then choose **Create Data Mapper**
 3. On the Create Data Mapper page input a **Name** to uniquely identify this
-   Data Mapper. Select a **Query Executor Type** then choose the **Database**
-   and **Table** in your data catalog which describes the target data in S3. A
-   list of columns will be displayed for the chosen Table. From the list, choose
-   the column(s) the solution should use to to find items in the data which
-   should be deleted. For example, if your table has three columns named
-   **customer_id**, **description** and **created_at** and you want to search
-   for items using the **customer_id**, you should choose only the
-   **customer_id** column from this list. Once you have chosen the column(s),
-   choose **Create Data Mapper**.
-4. A message will be displayed advising you to update the S3 Bucket Policy for
+   Data Mapper.
+4. Select a **Query Executor Type** then choose the **Database** and **Table**
+   in your data catalog which describes the target data in S3. A list of columns
+   will be displayed for the chosen Table.
+5. From the list, choose the column(s) the solution should use to to find items
+   in the data which should be deleted. For example, if your table has three
+   columns named **customer_id**, **description** and **created_at** and you
+   want to search for items using the **customer_id**, you should choose only
+   the **customer_id** column from this list.
+6. Finally, input the ARN of the role which Fargate will assume to perform write
+   operations on your data. This role should already exist if you have followed
+   the [Provisioning Data Access IAM Roles](#provisioning-data-access-iam-roles)
+   steps. Once you have input the role ARN, choose **Create Data Mapper**.
+7. A message will be displayed advising you to update the S3 Bucket Policy for
    the S3 Bucket referenced by the newly created data mapper. See
    [Granting Access to Data](#granting-access-to-data) for more information on
    how to do this. Choose **Return to Data Mappers**.
@@ -253,8 +280,8 @@ Policies].
 ### Updating your Bucket Policy
 
 To update the S3 bucket policy to grant **read** access to the IAM role used by
-Amazon Athena, and **write** access to the IAM role used by AWS Fargate, follow
-these steps:
+Amazon Athena, and **write** access to the Data Access IAM role used by AWS
+Fargate, follow these steps:
 
 1. Access the application UI via the **WebUIUrl** displayed in the _Outputs_ tab
    for the stack.
@@ -266,18 +293,16 @@ these steps:
    policy rather than replacing it completely. If your data is encrypted with an
    **Customer Managed CMK** rather than an **AWS Managed CMK**, see
    [Data Encrypted with Customer Managed CMK](#data-encrypted-with-a-customer-managed-cmk)
-   to grant the solution access to the Customer Managed CMK. If the bucket
-   and/or Customer Managed CMK reside in a different account, see
-   [Cross Account Buckets/CMKs](#cross-account-buckets-and-cmks) **after** you
-   have granted any required Customer Managed CMK access. For more information
-   on using Server-Side Encryption (SSE) with S3, see [Using SSE with CMKs].
+   to grant the solution access to the Customer Managed CMK. For more
+   information on using Server-Side Encryption (SSE) with S3, see [Using SSE
+   with CMKs].
 
 ### Data Encrypted with a Customer Managed CMK
 
 Where the data you are connecting to the solution is encrypted with an Customer
 Managed CMK rather than an AWS Managed CMK, you must also grant the Athena and
-Fargate IAM roles access to use the key so that the data can be decrypted when
-reading, re-encrypted when writing.
+Data Access IAM roles access to use the key so that the data can be decrypted
+when reading, re-encrypted when writing.
 
 Once you have updated the bucket policy as described in
 [Updating the Bucket Policy](#updating-the-bucket-policy), choose the **KMS
@@ -288,21 +313,6 @@ console or making updates to the key policy via the CLI, CloudFormation or the
 API. If you wish, to use the **default view** in th AWS console, add the
 **Principals** in the provided statements as **key users**. For more
 information, see [How to Change a Key Policy].
-
-### Cross Account Buckets and CMKs
-
-Where the bucket referenced by a data mapper is in a different account to the
-deployed S3 Find and Forget solution, and/or the Customer Managed CMK use to
-encrypt data via SSE is in a different account, you also need to update the
-Athena/Fargate roles to grant them access to bucket/keys.
-
-Once you have updated the bucket policy and any key policies as described in
-[Updating the Bucket Policy](#updating-the-bucket-policy) and
-[Data Encrypted with a Customer Managed CMK](#data-encrypted-with-a-customer-managed-cmk),
-choose the **KMS Access** tab from the **Generate Access Policies** modal window
-and follow the instructions to add the provided inline policies to the Athena
-and Fargate IAM roles with the provided statements. For more information, see
-[Cross Account S3 Access] and [Cross Account CMK Access].
 
 ## Adding to the Deletion Queue
 
@@ -656,3 +666,5 @@ To delete a stack via the AWS CLI
 [s3 access logging permissions]:
   https://docs.aws.amazon.com/AmazonS3/latest/dev/enable-logging-programming.html#grant-log-delivery-permissions-general
 [limits]: LIMITS.md
+[aws cloudformation stacksets]:
+  https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/what-is-cfnstacksets.html

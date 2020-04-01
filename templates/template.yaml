@@ -237,7 +237,6 @@ Resources:
             - !GetAtt LayersStack.Outputs.BotoUtils
             - !GetAtt LayersStack.Outputs.CustomResourceHelper
             - !GetAtt LayersStack.Outputs.Decorators
-        DeleteTaskRole: !GetAtt DelStack.Outputs.DeleteTaskRole
         ECRRepository: !GetAtt DelStack.Outputs.ECRRepository
         PreBuiltArtefactsBucket: !If [DefaultPreBuiltArtefactsBucket, !Sub "solution-builders-${AWS::Region}", !Ref PreBuiltArtefactsBucketOverride]
         ResourcePrefix: !Ref ResourcePrefix

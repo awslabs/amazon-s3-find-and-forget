@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Amazon S3 Find and Forget VPC
+Description: Amazon S3 Find and Forget VPC (uksb-1qjminsd5)
 
 Parameters:
   PrivateSubnetIpBlocks:
@@ -254,6 +254,19 @@ Resources:
         - !Ref PrivateRouteTable2
         - !If [HasThreeAZs, !Ref PrivateRouteTable3, !Ref 'AWS::NoValue']
       ServiceName: !Sub 'com.amazonaws.${AWS::Region}.dynamodb'
+      VpcId: !Ref VPC
+
+  STSEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      PrivateDnsEnabled: true
+      SecurityGroupIds: [!Ref SecurityGroup]
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.sts'
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+        - !If [HasThreeAZs, !Ref PrivateSubnet3, !Ref 'AWS::NoValue']
+      VpcEndpointType: Interface
       VpcId: !Ref VPC
 
 Outputs:

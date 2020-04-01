@@ -28,8 +28,6 @@ Parameters:
     Type: String
   CommonLayers:
     Type: CommaDelimitedList
-  DeleteTaskRole:
-    Type: String
   ECRRepository:
     Type: String
   LogLevel:
@@ -215,7 +213,6 @@ Resources:
                 cognitoIdentityPool: "${CognitoIdentityPoolId}",
                 cognitoUserPoolId: "${CognitoUserPoolId}",
                 cognitoUserPoolClientId: "${CognitoUserPoolClientId}",
-                deleteTaskRole: "${DeleteTaskRole}",
                 region: "${AWS::Region}",
                 version: "${Version}"
               };

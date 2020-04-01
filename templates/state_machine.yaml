@@ -795,6 +795,26 @@ Resources:
           - "athena:StartQueryExecution"
           Effect: "Allow"
           Resource: !Sub "arn:${AWS::Partition}:athena:${AWS::Region}:${AWS::AccountId}:workgroup/${AthenaWorkGroup}"
+        - Action:
+          - "s3:GetObject*"
+          Effect: "Allow"
+          Resource: "*"
+          Condition:
+            ForAnyValue:StringEquals:
+              aws:CalledVia:
+                - athena.amazonaws.com
+        - Action:
+          - "kms:Encrypt"
+          - "kms:Decrypt"
+          - "kms:ReEncrypt*"
+          - "kms:GenerateDataKey*"
+          - "kms:DescribeKey"
+          Effect: "Allow"
+          NotResource: !Sub "arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/*"
+          Condition:
+            ForAnyValue:StringEquals:
+              aws:CalledVia:
+                - athena.amazonaws.com
 
   CheckQueryStatus:
     Type: AWS::Serverless::Function

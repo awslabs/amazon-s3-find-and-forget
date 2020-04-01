@@ -4,6 +4,7 @@ import {
   formatFileSize,
   isEmpty,
   isIdValid,
+  isRoleArnValid,
   isUndefined,
   last,
   sortBy,
@@ -44,6 +45,18 @@ test("isIdValid", () => {
 
   scenarios.forEach(scenario =>
     expect(isIdValid(scenario.test)).toEqual(scenario.expected)
+  );
+});
+
+test("isRoleArnValid", () => {
+  const scenarios = [
+    { test: "abc_ABC-123", expected: false },
+    { test: "arn:aws:iam::123456789012:role/OtherRole", expected: false },
+    { test: "arn:aws:iam::123456789012:role/S3F2DataAccessRole", expected: true },
+  ];
+
+  scenarios.forEach(scenario =>
+    expect(isRoleArnValid(scenario.test)).toEqual(scenario.expected)
   );
 });
 

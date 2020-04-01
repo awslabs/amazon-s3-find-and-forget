@@ -156,6 +156,7 @@ export default ({ gateway, onPageChange }) => {
             bucket={getBucket(selectedRow).bucket}
             close={() => showBucketPolicy(false)}
             location={getBucket(selectedRow).location}
+            roleArn={dataMappers[selectedRow].RoleArn}
             show={showingBucketPolicy}
           />
         </>

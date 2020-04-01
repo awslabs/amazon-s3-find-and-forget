@@ -33,12 +33,18 @@ export default () => (
       columns in which to search for matches. The columns for your data are
       defined in the data catalog table.
     </p>
-    <p className="separator-bottom">
+    <p>
       After creating a data mapper, you must update the S3 Bucket
       Policy for the S3 Bucket referenced by the data mapper to grant read
       permission to the IAM role assumed by the query executor (e.g. Amazon
       Athena), and read/write permission to the IAM role used by AWS Fargate
       to perform any required deletions.
+    </p>
+    <p className="separator-bottom">
+      The deletion task requires you to have provisioned the <strong>S3F2DataAccessRole</strong>{" "}
+      in the account which owns the bucket referenced by the data mapper.
+      For more information on how to provision this role, check the{" "}
+      <a href={docsUrl("USER_GUIDE.md#provisioning-data-access-iam-roles")} target="_blank" rel="noopener noreferrer" className="learnMoreLink">user guide</a>.
     </p>
     <h3>
       Learn more <Icon type="new-window" />

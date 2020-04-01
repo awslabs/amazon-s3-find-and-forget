@@ -3,7 +3,9 @@ import { Button, Form, Spinner } from "react-bootstrap";
 
 import Alert from "../Alert";
 
-import { formatErrorMessage, isEmpty, isIdValid } from "../../utils";
+import {
+  formatErrorMessage, isEmpty, isIdValid, isRoleArnValid
+} from "../../utils";
 import { glueSerializer } from "../../utils/glueSerializer";
 
 const region = window.s3f2Settings.region;
@@ -16,6 +18,7 @@ export default ({ gateway, goToDataMappers }) => {
   const [glueData, setGlueData] = useState(undefined);
   const [glueDatabase, setGlueDatabase] = useState(undefined);
   const [glueTable, setGlueTable] = useState(undefined);
+  const [roleArn, setRoleArn] = useState(undefined);
   const [submitClicked, setSubmitClicked] = useState(false);
 
   const addColumn = c => {
@@ -33,12 +36,14 @@ export default ({ gateway, goToDataMappers }) => {
   const isGlueDatabaseValid = !isEmpty(glueDatabase) && glueDatabase !== "-1";
   const isGlueTableValid = !isEmpty(glueTable) && glueTable !== "-1";
   const isColumnsValid = !isEmpty(columns);
+  const isRoleValid = !isEmpty(roleArn) && isRoleArnValid(roleArn);
 
   const isFormValid =
     isDataMapperIdValid &&
     isGlueDatabaseValid &&
     isGlueTableValid &&
-    isColumnsValid;
+    isColumnsValid &&
+    isRoleValid;
 
   const resetGlueTable = () => {
     setGlueTable("-1");
@@ -61,7 +66,8 @@ export default ({ gateway, goToDataMappers }) => {
           dataMapperId,
           glueDatabase,
           glueTable,
-          columns
+          columns,
+          roleArn
         );
         setFormState("saved");
       } catch (e) {
@@ -266,6 +272,25 @@ export default ({ gateway, goToDataMappers }) => {
                     {...validationAttributes(isColumnsValid)}
                   />
                 ))}
+                {
+                  columnsForSelectedTable.length === 0 && (
+                    <Form.Text className="text-muted">
+                     No table selected
+                    </Form.Text>
+                  )
+                }
+              </Form.Group>
+              <Form.Group controlId="glueTable">
+                <Form.Label>AWS IAM Role ARN</Form.Label>
+                <Form.Text className="text-muted">
+                  The ARN of the AWS IAM Role that Fargate should assume to
+                  perform deletions
+                </Form.Text>
+                <Form.Control
+                  type="text"
+                  onChange={e => setRoleArn(e.target.value)}
+                  {...validationAttributes(isRoleValid)}
+                />
               </Form.Group>
             </div>
           </div>
