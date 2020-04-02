@@ -254,10 +254,10 @@ Data Catalog in the same region and account as the S3 Find and Forget solution.
    objects in S3 buckets. This role should already exist if you have followed
    the [Provisioning Data Access IAM Roles](#provisioning-data-access-iam-roles)
    steps. Once you have input the role ARN, choose **Create Data Mapper**.
-7. By default, the solution does **not** delete previous of versions after
-   writing a new version. If you wish for the solution to delete all versions
-   except the newly written object version, select _Delete previous object
-   versions after update_.
+7. If you want the solution to delete all older versions except the latest
+   created object version, select _Delete previous object versions after update_.
+   By default the solution does **not** delete previous of versions after
+   creating a new version.
 8. A message will be displayed advising you to update the S3 Bucket Policy for
    the S3 Bucket referenced by the newly created data mapper. See
    [Granting Access to Data](#granting-access-to-data) for more information on
