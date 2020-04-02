@@ -276,13 +276,14 @@ def handle_error(sqs_msg, message_body, err_message, error_type="deletion"):
     except ClientError as e:
         logger.error("Unable to emit failure event: %s", str(e))
 
-    try:
-        sqs_msg.change_visibility(VisibilityTimeout=0)
-    except (
-        sqs.meta.client.exceptions.MessageNotInflight,
-        sqs.meta.client.exceptions.ReceiptHandleIsInvalid,
-    ) as e:
-        logger.error("Unable to change message visibility: %s", str(e))
+    if error_type == "deletion":
+        try:
+            sqs_msg.change_visibility(VisibilityTimeout=0)
+        except (
+            sqs.meta.client.exceptions.MessageNotInflight,
+            sqs.meta.client.exceptions.ReceiptHandleIsInvalid,
+        ) as e:
+            logger.error("Unable to change message visibility: %s", str(e))
 
 
 def handle_success(msg, body, stats):

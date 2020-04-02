@@ -255,6 +255,19 @@ def test_it_gracefully_handles_client_errors(mock_emit, mock_sanitize):
     sqs_message.change_visibility.assert_called()
 
 
+@patch("backend.ecs_tasks.delete_files.delete_files.sanitize_message")
+@patch("backend.ecs_tasks.delete_files.delete_files.emit_failure_event")
+def test_it_doesnt_change_message_visibility_when_rollback_fails(mock_emit, mock_sanitize):
+    sqs_message = MagicMock()
+    mock_emit.side_effect = ClientError({}, "DeleteObjectVersion")
+    handle_error(sqs_message, "{}", "Some error", "rollback")
+    # Verify it attempts to emit the failure
+    mock_sanitize.assert_called()
+    mock_emit.assert_called()
+    # Verify that the visibility doesn't change for a rollback event
+    sqs_message.change_visibility.assert_not_called()
+
+
 @patch("backend.ecs_tasks.delete_files.delete_files.emit_failure_event")
 def test_it_gracefully_handles_change_message_visibility_failure(mock_emit):
     sqs_message = MagicMock()
@@ -792,9 +805,9 @@ def test_it_provides_logs_for_get_latest_version_fail(mock_error_handler, mock_d
 @patch("backend.ecs_tasks.delete_files.delete_files.validate_bucket_versioning", MagicMock(return_value=True))
 @patch("backend.ecs_tasks.delete_files.delete_files.save", MagicMock(return_value="new_version"))
 @patch("backend.ecs_tasks.delete_files.delete_files.validate_message", MagicMock())
-@patch("backend.ecs_tasks.delete_files.delete_files.queue", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.s3fs", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.get_session", MagicMock())
+@patch("backend.ecs_tasks.delete_files.delete_files.queue", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.rollback_object_version")
 @patch("backend.ecs_tasks.delete_files.delete_files.verify_object_versions_integrity")
 @patch("backend.ecs_tasks.delete_files.delete_files.load_parquet")
