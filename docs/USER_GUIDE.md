@@ -250,8 +250,8 @@ Data Catalog in the same region and account as the S3 Find and Forget solution.
    columns named **customer_id**, **description** and **created_at** and you
    want to search for items using the **customer_id**, you should choose only
    the **customer_id** column from this list.
-6. Input the ARN of the role which Fargate will assume to perform write
-   operations on your data. This role should already exist if you have followed
+6. Enter the ARN of the role for Fargate to assume when modifying
+   objects in S3 buckets. This role should already exist if you have followed
    the [Provisioning Data Access IAM Roles](#provisioning-data-access-iam-roles)
    steps. Once you have input the role ARN, choose **Create Data Mapper**.
 7. By default, the solution does **not** delete previous of versions after
