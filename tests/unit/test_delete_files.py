@@ -20,8 +20,8 @@ with patch.dict(os.environ, {
     emit_deletion_event, emit_failed_deletion_event, save, get_grantees, \
     get_object_info, get_object_tags, get_object_acl, get_requester_payment, get_row_count, \
     delete_from_dataframe, delete_matches_from_file, load_parquet, kill_handler, handle_error, \
-    get_bucket_versioning, sanitize_message, verify_object_versions_integrity, retry_wrapper, \
-    IntegrityCheckFailedError
+    validate_bucket_versioning, sanitize_message, verify_object_versions_integrity, \
+    retry_wrapper, IntegrityCheckFailedError
 
 pytestmark = [pytest.mark.unit]
 
@@ -45,7 +45,7 @@ def get_list_object_versions_error():
 
 
 @patch.dict(os.environ, {'JobTable': 'test'})
-@patch("backend.ecs_tasks.delete_files.delete_files.get_bucket_versioning", MagicMock(return_value=True))
+@patch("backend.ecs_tasks.delete_files.delete_files.validate_bucket_versioning", MagicMock(return_value=True))
 @patch("backend.ecs_tasks.delete_files.delete_files.validate_message", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.queue", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.verify_object_versions_integrity")
@@ -78,7 +78,7 @@ def test_happy_path_when_queue_not_empty(mock_save, mock_emit, mock_delete, mock
 
 
 @patch.dict(os.environ, {'JobTable': 'test'})
-@patch("backend.ecs_tasks.delete_files.delete_files.get_bucket_versioning", MagicMock(return_value=True))
+@patch("backend.ecs_tasks.delete_files.delete_files.validate_bucket_versioning", MagicMock(return_value=True))
 @patch("backend.ecs_tasks.delete_files.delete_files.verify_object_versions_integrity", MagicMock(return_value=True))
 @patch("backend.ecs_tasks.delete_files.delete_files.validate_message", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.queue", MagicMock())
@@ -102,7 +102,7 @@ def test_it_assumes_role(mock_delete, mock_s3, mock_load, mock_session):
 
 
 @patch.dict(os.environ, {'JobTable': 'test'})
-@patch("backend.ecs_tasks.delete_files.delete_files.get_bucket_versioning", MagicMock(return_value=True))
+@patch("backend.ecs_tasks.delete_files.delete_files.validate_bucket_versioning", MagicMock(return_value=True))
 @patch("backend.ecs_tasks.delete_files.delete_files.validate_message", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.queue", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.get_session", MagicMock())
@@ -271,7 +271,7 @@ def test_it_provides_default_id():
 
 
 @patch.dict(os.environ, {'JobTable': 'test'})
-@patch("backend.ecs_tasks.delete_files.delete_files.get_bucket_versioning", MagicMock(return_value=True))
+@patch("backend.ecs_tasks.delete_files.delete_files.validate_bucket_versioning", MagicMock(return_value=True))
 @patch("backend.ecs_tasks.delete_files.delete_files.validate_message", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.s3fs", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.get_session", MagicMock())
@@ -291,7 +291,7 @@ def test_it_handles_missing_col_exceptions(mock_handler, mock_delete, mock_load)
 
 
 @patch.dict(os.environ, {'JobTable': 'test'})
-@patch("backend.ecs_tasks.delete_files.delete_files.get_bucket_versioning", MagicMock(return_value=True))
+@patch("backend.ecs_tasks.delete_files.delete_files.validate_bucket_versioning", MagicMock(return_value=True))
 @patch("backend.ecs_tasks.delete_files.delete_files.validate_message", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.s3fs", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.get_session", MagicMock())
@@ -311,7 +311,7 @@ def test_it_handles_arrow_exceptions(mock_handler, mock_delete, mock_load):
 
 
 @patch.dict(os.environ, {'JobTable': 'test'})
-@patch("backend.ecs_tasks.delete_files.delete_files.get_bucket_versioning", MagicMock(return_value=True))
+@patch("backend.ecs_tasks.delete_files.delete_files.validate_bucket_versioning", MagicMock(return_value=True))
 @patch("backend.ecs_tasks.delete_files.delete_files.handle_error")
 def test_it_validates_messages_with_missing_keys(mock_handler):
     # Act
@@ -321,7 +321,7 @@ def test_it_validates_messages_with_missing_keys(mock_handler):
 
 
 @patch.dict(os.environ, {'JobTable': 'test'})
-@patch("backend.ecs_tasks.delete_files.delete_files.get_bucket_versioning", MagicMock(return_value=True))
+@patch("backend.ecs_tasks.delete_files.delete_files.validate_bucket_versioning", MagicMock(return_value=True))
 @patch("backend.ecs_tasks.delete_files.delete_files.handle_error")
 def test_it_validates_messages_with_invalid_body(mock_handler):
     # Act
@@ -330,7 +330,7 @@ def test_it_validates_messages_with_invalid_body(mock_handler):
 
 
 @patch.dict(os.environ, {'JobTable': 'test'})
-@patch("backend.ecs_tasks.delete_files.delete_files.get_bucket_versioning", MagicMock(return_value=True))
+@patch("backend.ecs_tasks.delete_files.delete_files.validate_bucket_versioning", MagicMock(return_value=True))
 @patch("backend.ecs_tasks.delete_files.delete_files.get_session", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.s3fs")
 @patch("backend.ecs_tasks.delete_files.delete_files.handle_error")
@@ -345,7 +345,7 @@ def test_it_handles_s3_permission_issues(mock_handler, mock_s3):
 
 
 @patch.dict(os.environ, {'JobTable': 'test'})
-@patch("backend.ecs_tasks.delete_files.delete_files.get_bucket_versioning", MagicMock(return_value=True))
+@patch("backend.ecs_tasks.delete_files.delete_files.validate_bucket_versioning", MagicMock(return_value=True))
 @patch("backend.ecs_tasks.delete_files.delete_files.get_session", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.s3fs")
 @patch("backend.ecs_tasks.delete_files.delete_files.handle_error")
@@ -360,7 +360,7 @@ def test_it_handles_io_errors(mock_handler, mock_s3):
 
 
 @patch.dict(os.environ, {'JobTable': 'test'})
-@patch("backend.ecs_tasks.delete_files.delete_files.get_bucket_versioning", MagicMock(return_value=True))
+@patch("backend.ecs_tasks.delete_files.delete_files.validate_bucket_versioning", MagicMock(return_value=True))
 @patch("backend.ecs_tasks.delete_files.delete_files.get_session", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.s3fs")
 @patch("backend.ecs_tasks.delete_files.delete_files.handle_error")
@@ -375,7 +375,7 @@ def test_it_handles_file_too_big(mock_handler, mock_s3):
 
 
 @patch.dict(os.environ, {'JobTable': 'test'})
-@patch("backend.ecs_tasks.delete_files.delete_files.get_bucket_versioning", MagicMock(return_value=True))
+@patch("backend.ecs_tasks.delete_files.delete_files.validate_bucket_versioning", MagicMock(return_value=True))
 @patch("backend.ecs_tasks.delete_files.delete_files.get_session", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.s3fs")
 @patch("backend.ecs_tasks.delete_files.delete_files.handle_error")
@@ -389,37 +389,58 @@ def test_it_handles_generic_error(mock_handler, mock_s3):
     mock_handler.assert_called_with(ANY, ANY, "Unknown error during message processing: Some Error")
 
 
-@patch("backend.ecs_tasks.delete_files.delete_files.get_bucket_versioning", MagicMock(return_value=False))
+@patch("backend.ecs_tasks.delete_files.delete_files.validate_bucket_versioning")
 @patch("backend.ecs_tasks.delete_files.delete_files.s3fs")
 @patch("backend.ecs_tasks.delete_files.delete_files.handle_error")
-def test_it_handles_unversioned_buckets(mock_handler, mock_s3):
+def test_it_handles_unversioned_buckets(mock_handler, mock_s3, mock_versioning):
     # Arrange
     mock_s3.S3FileSystem.return_value = mock_s3
+    mock_versioning.side_effect = ValueError("Versioning validation Error")
     # Act
     execute(message_stub(), "receipt_handle")
     # Assert
-    mock_handler.assert_called_with(ANY, ANY, "Unprocessable message: Bucket bucket does not have versioning enabled")
+    mock_handler.assert_called_with(ANY, ANY, "Unprocessable message: Versioning validation Error")
+    mock_versioning.assert_called_with(ANY, 'bucket')
 
 
-def test_it_returns_bucket_versioning_enabled():
-    get_bucket_versioning.cache_clear()
+def test_it_validates_bucket_versioning():
+    validate_bucket_versioning.cache_clear()
     client = MagicMock()
     client.get_bucket_versioning.return_value = {"Status": "Enabled"}
-    assert get_bucket_versioning(client, "bucket")
+    assert validate_bucket_versioning(client, "bucket")
 
 
-def test_it_returns_bucket_versioning_suspended():
-    get_bucket_versioning.cache_clear()
-    client = MagicMock()
-    client.get_bucket_versioning.return_value = {"Status": "Suspended"}
-    assert not get_bucket_versioning(client, "bucket")
-
-
-def test_it_returns_bucket_versioning_disabled():
-    get_bucket_versioning.cache_clear()
+def test_it_throws_when_versioning_disabled():
+    validate_bucket_versioning.cache_clear()
     client = MagicMock()
     client.get_bucket_versioning.return_value = {}
-    assert not get_bucket_versioning(client, "bucket")
+    
+    with pytest.raises(ValueError) as e:
+        validate_bucket_versioning(client, "bucket")
+    
+    assert e.value.args[0] == 'Bucket bucket does not have versioning enabled'
+
+
+def test_it_throws_when_versioning_suspended():
+    validate_bucket_versioning.cache_clear()
+    client = MagicMock()
+    client.get_bucket_versioning.return_value = {"Status": "Suspended"}
+    
+    with pytest.raises(ValueError) as e:
+        validate_bucket_versioning(client, "bucket")
+    
+    assert e.value.args[0] == 'Bucket bucket does not have versioning enabled'
+
+
+def test_it_throws_when_mfa_delete_enabled():
+    validate_bucket_versioning.cache_clear()
+    client = MagicMock()
+    client.get_bucket_versioning.return_value = {"Status": "Enabled", "MFADelete": "Enabled"}
+    
+    with pytest.raises(ValueError) as e:
+        validate_bucket_versioning(client, "bucket")
+    
+    assert e.value.args[0] == 'Bucket bucket has MFA Delete enabled'
 
 
 def test_it_returns_requester_pays():
@@ -685,7 +706,7 @@ def test_it_restores_write_permissions(mock_grantees, mock_acl, mock_tagging, mo
 
 
 @patch.dict(os.environ, {'JobTable': 'test'})
-@patch("backend.ecs_tasks.delete_files.delete_files.get_bucket_versioning", MagicMock(return_value=True))
+@patch("backend.ecs_tasks.delete_files.delete_files.validate_bucket_versioning", MagicMock(return_value=True))
 @patch("backend.ecs_tasks.delete_files.delete_files.validate_message", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.queue", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.s3fs", MagicMock())
@@ -708,7 +729,7 @@ def test_it_provides_logs_for_acl_fail(mock_save, mock_handler, mock_delete, moc
 
 
 @patch.dict(os.environ, {'JobTable': 'test'})
-@patch("backend.ecs_tasks.delete_files.delete_files.get_bucket_versioning", MagicMock(return_value=True))
+@patch("backend.ecs_tasks.delete_files.delete_files.validate_bucket_versioning", MagicMock(return_value=True))
 @patch("backend.ecs_tasks.delete_files.delete_files.save", MagicMock(return_value="new_version"))
 @patch("backend.ecs_tasks.delete_files.delete_files.validate_message", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.queue", MagicMock())
@@ -730,7 +751,7 @@ def test_it_provides_logs_for_failed_version_integrity_check(mock_handler, mock_
 
 
 @patch.dict(os.environ, {'JobTable': 'test'})
-@patch("backend.ecs_tasks.delete_files.delete_files.get_bucket_versioning", MagicMock(return_value=True))
+@patch("backend.ecs_tasks.delete_files.delete_files.validate_bucket_versioning", MagicMock(return_value=True))
 @patch("backend.ecs_tasks.delete_files.delete_files.save", MagicMock(return_value="new_version"))
 @patch("backend.ecs_tasks.delete_files.delete_files.validate_message", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.queue", MagicMock())
