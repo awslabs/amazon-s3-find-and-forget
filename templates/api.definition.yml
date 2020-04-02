@@ -417,7 +417,7 @@ components:
           pattern: '^arn:(aws[a-zA-Z-]*)?:iam::\d{12}:role\/S3F2DataAccessRole$'
         DeleteOldVersions:
           type: "boolean"
-          description: "Whether to delete old versions of objects after writing the newly redacted version"
+          description: "Toggles deleting all non-latest versions of an object after a new redacted version is created"
           default: "false"
     DeletionQueueItem:
       description: "A Deletion Queue Item object"
