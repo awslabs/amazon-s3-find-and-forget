@@ -104,7 +104,7 @@ def test_it_assumes_role(mock_delete, mock_s3, mock_load, mock_session):
 
 
 @patch.dict(os.environ, {'JobTable': 'test'})
-@patch("backend.ecs_tasks.delete_files.delete_files.get_bucket_versioning", MagicMock(return_value=True))
+@patch("backend.ecs_tasks.delete_files.delete_files.validate_bucket_versioning", MagicMock(return_value=True))
 @patch("backend.ecs_tasks.delete_files.delete_files.verify_object_versions_integrity", MagicMock(return_value=True))
 @patch("backend.ecs_tasks.delete_files.delete_files.validate_message", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.queue", MagicMock())
@@ -131,7 +131,7 @@ def test_it_removes_old_versions(mock_delete, mock_s3, mock_load, mock_delete_ve
 
 
 @patch.dict(os.environ, {'JobTable': 'test'})
-@patch("backend.ecs_tasks.delete_files.delete_files.get_bucket_versioning", MagicMock(return_value=True))
+@patch("backend.ecs_tasks.delete_files.delete_files.validate_bucket_versioning", MagicMock(return_value=True))
 @patch("backend.ecs_tasks.delete_files.delete_files.verify_object_versions_integrity", MagicMock(return_value=True))
 @patch("backend.ecs_tasks.delete_files.delete_files.validate_message", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.queue", MagicMock())
@@ -1031,7 +1031,8 @@ def test_it_deletes_old_versions(paginate_mock):
         ["Versions", "DeleteMarkers"],
         Bucket="bucket",
         Prefix='key',
-        VersionIdMarker='v4'
+        VersionIdMarker='v4',
+        KeyMarker='key'
     )
     s3_mock.delete_objects.assert_called_with(
         Bucket="bucket",
