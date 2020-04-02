@@ -1016,7 +1016,6 @@ def test_it_deletes_old_versions():
         "Versions": [
             {"VersionId": "v1", "LastModified": datetime.datetime.now() - datetime.timedelta(minutes=4)},
             {"VersionId": "v3", "LastModified": datetime.datetime.now() - datetime.timedelta(minutes=2)},
-            {"VersionId": "v4", "LastModified": datetime.datetime.now() - datetime.timedelta(minutes=1)},
         ],
         "DeleteMarkers": [
             {"VersionId": "v2", "LastModified": datetime.datetime.now() - datetime.timedelta(minutes=3)}
@@ -1037,39 +1036,12 @@ def test_it_deletes_old_versions():
     )
 
 
-def test_it_does_not_delete_new_version_after_write():
-    s3_mock = MagicMock()
-    s3_mock.list_object_versions.return_value = {
-        "Versions": [
-            {"VersionId": "v1", "LastModified": datetime.datetime.now() - datetime.timedelta(minutes=4)},
-            {"VersionId": "v3", "LastModified": datetime.datetime.now() - datetime.timedelta(minutes=2)},
-            {"VersionId": "v4", "LastModified": datetime.datetime.now() - datetime.timedelta(minutes=1)},
-        ],
-        "DeleteMarkers": [
-            {"VersionId": "v2", "LastModified": datetime.datetime.now() - datetime.timedelta(minutes=3)}
-        ]
-    }
-
-    delete_old_versions(s3_mock, "bucket", "key", "v3")
-    s3_mock.delete_objects.assert_called_with(
-        Bucket="bucket",
-        Delete={
-            'Objects': [
-                {'Key': "key", 'VersionId': "v1"},
-                {'Key': "key", 'VersionId': "v2"},
-            ],
-            'Quiet': True
-        }
-    )
-
-
 def test_it_raises_for_deletion_errors():
     s3_mock = MagicMock()
     s3_mock.list_object_versions.return_value = {
         "Versions": [
             {"VersionId": "v1", "LastModified": datetime.datetime.now() - datetime.timedelta(minutes=4)},
             {"VersionId": "v3", "LastModified": datetime.datetime.now() - datetime.timedelta(minutes=2)},
-            {"VersionId": "v4", "LastModified": datetime.datetime.now() - datetime.timedelta(minutes=1)},
         ],
         "DeleteMarkers": [
             {"VersionId": "v2", "LastModified": datetime.datetime.now() - datetime.timedelta(minutes=3)}
@@ -1081,7 +1053,7 @@ def test_it_raises_for_deletion_errors():
         ]
     }
     with pytest.raises(DeleteOldVersionsError):
-        delete_old_versions(s3_mock, "bucket", "key", "v3")
+        delete_old_versions(s3_mock, "bucket", "key", "v4")
 
 
 def test_it_handles_client_errors_as_deletion_errors():

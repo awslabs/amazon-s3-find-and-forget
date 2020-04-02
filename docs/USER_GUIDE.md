@@ -250,16 +250,17 @@ Data Catalog in the same region and account as the S3 Find and Forget solution.
    columns named **customer_id**, **description** and **created_at** and you
    want to search for items using the **customer_id**, you should choose only
    the **customer_id** column from this list.
-6. Enter the ARN of the role for Fargate to assume when modifying
-   objects in S3 buckets. This role should already exist if you have followed
-   the [Provisioning Data Access IAM Roles](#provisioning-data-access-iam-roles)
-   steps. Once you have input the role ARN, choose **Create Data Mapper**.
-7. If you want the solution to delete all older versions except the latest
-   created object version, select _Delete previous object versions after update_.
-   By default the solution does **not** delete previous of versions after
-   creating a new version.
-8. A message will be displayed advising you to update the S3 Bucket Policy for
-   the S3 Bucket referenced by the newly created data mapper. See
+6. Enter the ARN of the role for Fargate to assume when modifying objects in S3
+   buckets. This role should already exist if you have followed the
+   [Provisioning Data Access IAM Roles](#provisioning-data-access-iam-roles)
+   steps.
+7. If you do not want the solution to delete all older versions except the
+   latest created object version, deselect _Delete previous object versions
+   after update_. By default the solution will delete all previous of versions
+   after creating a new version.
+8. Choose **Create Data Mapper**.
+9. A message is displayed advising you to update the S3 Bucket Policy for the S3
+   Bucket referenced by the newly created data mapper. See
    [Granting Access to Data](#granting-access-to-data) for more information on
    how to do this. Choose **Return to Data Mappers**.
 

@@ -237,13 +237,14 @@ def validate_bucket_versioning(client, bucket):
 
 def delete_old_versions(client, input_bucket, input_key, new_version):
     try:
-        resp = client.list_object_versions(Bucket=input_bucket, Prefix=input_key)
+        resp = client.list_object_versions(
+            Bucket=input_bucket, Prefix=input_key, VersionIdMarker=new_version
+        )
         versions = resp.get('Versions', [])
         delete_markers = resp.get('DeleteMarkers', [])
         versions.extend(delete_markers)
         sorted_versions = sorted(versions, key=lambda x: x["LastModified"])
         version_ids = [v["VersionId"] for v in sorted_versions]
-        idx = version_ids.index(new_version)
         resp = client.delete_objects(
             Bucket=input_bucket,
             Delete={
@@ -251,7 +252,7 @@ def delete_old_versions(client, input_bucket, input_key, new_version):
                     {
                         'Key': input_key,
                         'VersionId':  version_id
-                    } for version_id in version_ids[:idx]
+                    } for version_id in version_ids
                 ],
                 'Quiet': True
             }

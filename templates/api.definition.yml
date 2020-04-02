@@ -418,7 +418,7 @@ components:
         DeleteOldVersions:
           type: "boolean"
           description: "Toggles deleting all non-latest versions of an object after a new redacted version is created"
-          default: "false"
+          default: "true"
     DeletionQueueItem:
       description: "A Deletion Queue Item object"
       type: "object"

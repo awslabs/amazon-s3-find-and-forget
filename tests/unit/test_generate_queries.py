@@ -45,7 +45,7 @@ def test_it_handles_single_columns(batch_sqs_msgs_mock, get_partitions_mock, get
         "Table": "test_table",
         "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
         "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
-        "DeleteOldVersions": False
+        "DeleteOldVersions": True
     }])
 
 
@@ -86,7 +86,7 @@ def test_it_handles_multiple_columns(batch_sqs_msgs_mock, get_partitions_mock, g
                 {"Column": "customer_id", "MatchIds": ["hi"]},
                 {"Column": "alt_customer_id", "MatchIds": ["hi"]}],
             "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
-            "DeleteOldVersions": False
+            "DeleteOldVersions": True
         }
     ])
 
@@ -129,7 +129,7 @@ def test_it_handles_multiple_partition_keys(batch_sqs_msgs_mock, get_partitions_
                 {"Key": "year", "Value": "2019"},
                 {"Key": "month", "Value": "01"}
             ],
-            "DeleteOldVersions": False
+            "DeleteOldVersions": True
         }
     ])
 
@@ -172,7 +172,7 @@ def test_it_handles_multiple_partition_values(batch_sqs_msgs_mock, get_partition
                 {"Key": "year", "Value": "2018"},
                 {"Key": "month", "Value": "12"}
             ],
-            "DeleteOldVersions": False
+            "DeleteOldVersions": True
         },
         {
             "DataMapperId": "a",
@@ -183,7 +183,7 @@ def test_it_handles_multiple_partition_values(batch_sqs_msgs_mock, get_partition
                 {"Key": "year", "Value": "2019"},
                 {"Key": "month", "Value": "01"}
             ],
-            "DeleteOldVersions": False
+            "DeleteOldVersions": True
         },
         {
             "DataMapperId": "a",
@@ -194,7 +194,7 @@ def test_it_handles_multiple_partition_values(batch_sqs_msgs_mock, get_partition
                 {"Key": "year", "Value": "2019"},
                 {"Key": "month", "Value": "02"}
             ],
-            "DeleteOldVersions": False
+            "DeleteOldVersions": True
         }
     ])
 
@@ -309,7 +309,7 @@ def test_it_filters_users_from_non_applicable_tables(batch_sqs_msgs_mock, get_pa
             "Table": "A",
             "Columns": [{"Column": "customer_id", "MatchIds": ["123", "456"]}],
             "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
-            "DeleteOldVersions": False
+            "DeleteOldVersions": True
         }
     ]),
     batch_sqs_msgs_mock.assert_any_call(mock.ANY, [
@@ -319,7 +319,7 @@ def test_it_filters_users_from_non_applicable_tables(batch_sqs_msgs_mock, get_pa
             "Table": "B",
             "Columns": [{"Column": "customer_id", "MatchIds": ["456"]}],
             "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
-            "DeleteOldVersions": False
+            "DeleteOldVersions": True
         }
     ])
 
@@ -355,7 +355,7 @@ def test_it_handles_unpartitioned_data(batch_sqs_msgs_mock, get_partitions_mock,
             "Table": "test_table",
             "Columns": [{"Column": "customer_id", "MatchIds": ["123"]}],
             "PartitionKeys": [],
-            "DeleteOldVersions": False,
+            "DeleteOldVersions": True,
         },
     ])
 
@@ -393,7 +393,7 @@ def test_it_propagates_role_arn_for_unpartitioned_data(batch_sqs_msgs_mock, get_
             "Columns": [{"Column": "customer_id", "MatchIds": ["123"]}],
             "PartitionKeys": [],
             "RoleArn": "arn:aws:iam::accountid:role/rolename",
-            "DeleteOldVersions": False,
+            "DeleteOldVersions": True,
         },
     ])
 

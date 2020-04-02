@@ -23,7 +23,7 @@ export default ({ gateway, goToDataMappers }) => {
   const [glueDatabase, setGlueDatabase] = useState(undefined);
   const [glueTable, setGlueTable] = useState(undefined);
   const [roleArn, setRoleArn] = useState(undefined);
-  const [deletePreviousVersions, setDeletePreviousVersions] = useState(false);
+  const [deletePreviousVersions, setDeletePreviousVersions] = useState(true);
   const [submitClicked, setSubmitClicked] = useState(false);
 
   const addColumn = c => {
@@ -301,6 +301,7 @@ export default ({ gateway, goToDataMappers }) => {
                   type="checkbox"
                   id="delete-old-versions"
                   name="column"
+                  checked={deletePreviousVersions}
                   label="Delete previous object versions after update"
                   onChange={e => setDeletePreviousVersions(!deletePreviousVersions)}
                 />

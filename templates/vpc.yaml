@@ -43,7 +43,6 @@ Conditions:
   HasThreeAZs: !Equals [!FindInMap [Regions, !Ref "AWS::Region", HasThreeAZs], true]
 
 Resources:
-
   VPC:
     Type: AWS::EC2::VPC
     Properties:

@@ -50,7 +50,7 @@ def handler(event, context):
             "Table": table_name,
             "Columns": columns,
             "PartitionKeys": [],
-            "DeleteOldVersions": data_mapper.get("DeleteOldVersions", False),
+            "DeleteOldVersions": data_mapper.get("DeleteOldVersions", True),
         }
         if data_mapper.get("RoleArn", None):
             msg["RoleArn"] = data_mapper["RoleArn"]

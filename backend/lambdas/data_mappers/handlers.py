@@ -47,7 +47,7 @@ def create_data_mapper_handler(event, context):
         "CreatedBy": get_user_info(event),
         "RoleArn": body["RoleArn"],
         "Format": body.get("Format", "parquet"),
-        "DeleteOldVersions": body.get("DeleteOldVersions", False),
+        "DeleteOldVersions": body.get("DeleteOldVersions", True),
     }
     table.put_item(Item=item)
 
