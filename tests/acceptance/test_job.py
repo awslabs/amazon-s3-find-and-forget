@@ -171,8 +171,6 @@ def test_it_executes_successfully_for_empty_queue(job_factory, job_finished_wait
 
 def test_it_supports_data_access_roles(del_queue_factory, job_factory, dummy_lake, glue_data_mapper_factory,
                                        data_loader, job_complete_waiter, job_table, data_access_role):
-    if not data_access_role:
-        pytest.skip('Skipped due to missing data access role')
     # Generate a parquet file and add it to the lake
     glue_data_mapper_factory("test", partition_keys=["year", "month", "day"], partitions=[["2019", "08", "20"]],
                              delete_old_versions=False, role_arn=data_access_role["Arn"])
@@ -192,8 +190,6 @@ def test_it_supports_data_access_roles(del_queue_factory, job_factory, dummy_lak
 
 def test_it_deletes_old_versions(del_queue_factory, job_factory, dummy_lake, glue_data_mapper_factory, data_loader,
                                  job_complete_waiter, job_table, data_access_role):
-    if not data_access_role:
-        pytest.skip('Skipped due to missing data access role')
     # Generate a parquet file and add it to the lake
     glue_data_mapper_factory("test", partition_keys=["year", "month", "day"], partitions=[["2019", "08", "20"]],
                              delete_old_versions=True, role_arn=data_access_role["Arn"])
