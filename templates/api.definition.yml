@@ -523,6 +523,10 @@ components:
           type: "integer"
           description: "Total number of objects which could not be successfully updated"
           default: 0
+        TotalObjectRollbackFailedCount:
+          type: "integer"
+          description: "Total number of objects which could not be successfully rolledback after detecting an integrity conflict"
+          default: 0
         TotalQueryCount:
           type: "integer"
           description: "Total number of queries executed during the find phase"

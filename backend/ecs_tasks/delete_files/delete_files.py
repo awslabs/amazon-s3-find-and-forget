@@ -244,7 +244,8 @@ def emit_deletion_event(message_body, stats):
     emit_event(job_id, "ObjectUpdated", event_data, get_emitter_id())
 
 
-def emit_failed_deletion_event(message_body, err_message):
+def emit_failure_event(message_body, err_message, err_type):
+    event_name = "ObjectRollbackFailed" if err_type == "rollback" else "ObjectUpdateFailed"
     json_body = json.loads(message_body)
     job_id = json_body.get("JobId")
     if not job_id:
@@ -253,7 +254,7 @@ def emit_failed_deletion_event(message_body, err_message):
         "Error": err_message,
         'Message': json_body,
     }
-    emit_event(job_id, "ObjectUpdateFailed", event_data, get_emitter_id())
+    emit_event(job_id, event_name, event_data, get_emitter_id())
 
 
 def validate_message(message):
@@ -264,10 +265,10 @@ def validate_message(message):
             raise ValueError("Malformed message. Missing key: %s", k)
 
 
-def handle_error(sqs_msg, message_body, err_message):
+def handle_error(sqs_msg, message_body, err_message, error_type="deletion"):
     logger.error(sanitize_message(err_message, message_body))
     try:
-        emit_failed_deletion_event(message_body, err_message)
+        emit_failure_event(message_body, err_message, error_type)
     except KeyError:
         logger.error("Unable to emit failure event due to invalid Job ID")
     except (json.decoder.JSONDecodeError, ValueError):
@@ -282,6 +283,11 @@ def handle_error(sqs_msg, message_body, err_message):
         sqs.meta.client.exceptions.ReceiptHandleIsInvalid,
     ) as e:
         logger.error("Unable to change message visibility: %s", str(e))
+
+
+def handle_success(msg, body, stats):
+    msg.delete()
+    emit_deletion_event(body, stats)
 
 
 def sanitize_message(err_message, message_body):
@@ -341,11 +347,16 @@ def execute(message_body, receipt_handle):
             with pa.BufferReader(out_sink.getvalue()) as output_buf:
                 new_version = save(s3, client, output_buf, input_bucket, input_key, source_version)
                 logger.info("New object version: %s", new_version)
-                verify_object_versions_integrity(client, input_bucket, input_key, source_version, new_version)
+                try:
+                    verify_object_versions_integrity(client, input_bucket, input_key, source_version, new_version)
+                    handle_success(msg, body, stats)
+                except IntegrityCheckFailedError as e:
+                    err_message = "Object version integrity check failed: {}".format(str(e))
+                    handle_error(msg, message_body, err_message)
+                    rollback_object_version(client, input_bucket, input_key, new_version)                    
         else:
             logger.warning("The object %s was processed successfully but no rows required deletion", object_path)
-        msg.delete()
-        emit_deletion_event(body, stats)
+            handle_success(msg, body, stats)
     except (KeyError, ArrowException) as e:
         err_message = "Parquet processing error: {}".format(str(e))
         handle_error(msg, message_body, err_message)
@@ -365,9 +376,9 @@ def execute(message_body, receipt_handle):
     except ValueError as e:
         err_message = "Unprocessable message: {}".format(str(e))
         handle_error(msg, message_body, err_message)
-    except IntegrityCheckFailedError as e:
-        err_message = "Object version integrity check failed: {}".format(str(e))
-        handle_error(msg, message_body, err_message)
+    except RollbackFailedError as e:
+        err_message = "ClientError: {}. Version rollback caused by version integrity conflict failed".format(str(e))
+        handle_error(msg, message_body, err_message, "rollback")
     except Exception as e:
         err_message = "Unknown error during message processing: {}".format(str(e))
         handle_error(msg, message_body, err_message)
@@ -410,6 +421,9 @@ def retry_wrapper(fn, retry_wait_seconds = 2, retry_factor = 2, max_retries = 5)
 class IntegrityCheckFailedError(Exception):
     pass
 
+class RollbackFailedError(Exception):
+    pass
+
 def verify_object_versions_integrity(client, bucket, key, from_version_id, to_version_id):
     
     conflict_error_template = "A {} ({}) was detected for the given object between read and write operations ({} and {})."
@@ -441,6 +455,14 @@ def verify_object_versions_integrity(client, bucket, key, from_version_id, to_ve
             to_version_id))
 
     return True
+
+
+def rollback_object_version(client, bucket, key, version):
+    """ Delete newly created object version as soon as integrity conflict is detected """
+    try:
+        return client.delete_object(Bucket=bucket, Key=key, VersionId=version)
+    except ClientError as e:
+        raise RollbackFailedError(e)
 
 
 if __name__ == '__main__':

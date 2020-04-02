@@ -204,6 +204,22 @@ export default ({ gateway, jobId }) => {
               )}
               <span>{withDefault(job.TotalObjectUpdateFailedCount)}</span>
             </DetailsBox>
+            <DetailsBox
+              label="Total Object Rollback Failed Count"
+              className={`status-label ${errorCountClass(
+                job.TotalObjectRollbackFailedCount
+              )}`}
+              noSeparator
+            >
+              {!isUndefined(job.TotalObjectRollbackFailedCount) && (
+                <Icon
+                  type={`alert-${errorCountClass(
+                    job.TotalObjectRollbackFailedCount
+                  )}`}
+                />
+              )}
+              <span>{withDefault(job.TotalObjectRollbackFailedCount)}</span>
+            </DetailsBox>
           </div>
         )}
       </div>
