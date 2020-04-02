@@ -533,7 +533,7 @@ def queue_reader(sf_client):
 @pytest.fixture(scope="session")
 def data_access_role(iam_client):
     try:
-        return iam_client.get_role(RoleName="S3F2DasstaAccessRole")["Role"]
+        return iam_client.get_role(RoleName="S3F2DataAccessRole")["Role"]
     except ClientError as e:
         logger.warning(str(e))
         pytest.exit("Abandoning test run due to missing data access role", 1)

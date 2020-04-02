@@ -4,7 +4,7 @@ import logging
 import json
 import os
 import uuid
-from functools import lru_cache
+from functools import lru_cache, reduce
 
 import boto3
 from boto3.dynamodb.conditions import Key
@@ -26,15 +26,40 @@ sts = boto3.client('sts', endpoint_url="https://sts.{}.amazonaws.com".format(
 
 
 def paginate(client, method, iter_keys, **kwargs):
+    """
+    Auto paginates Boto3 client requests
+    :param client: client to use for the request
+    :param method: method on the client to call
+    :param iter_keys: keys in the response dict to return. If a single iter_key is supplied
+    each next call to the returned iterator will return the next available value If multiple iter_keys are supplied
+    a tuple with an element per iter key
+    Use dot notation for nested keys
+    :param kwargs: kwargs to pass to method call
+    :return: generator
+    Example:
+        paginate(s3, s3.list_object_versions, ["Versions"], Bucket="...", Prefix="...")
+        paginate(s3, s3.list_object_versions, ["Versions", "DeleteMarkers"], Bucket="...", Prefix="...")
+        paginate(athena, athena.get_query_results, ["ResultSet.Rows", "ResultSet.ResultSetMetadata.ColumnInfo"],
+                 QueryExecutionId="...", MaxResults=10)
+    """
     paginator = client.get_paginator(method.__name__)
     page_iterator = paginator.paginate(**kwargs)
     if isinstance(iter_keys, str):
         iter_keys = [iter_keys]
     for page in page_iterator:
-        for key in iter_keys:
-            page = page[key]
-        for result in page:
-            yield result
+        # Support dot notation nested keys
+        results = [reduce(lambda d, x: d.get(x, []), k.split("."), page) for k in iter_keys]
+        longest = len(max(results, key=len))
+        for i in range(0, longest):
+            # If only one iter key supplied, return the next result for that key
+            if len(iter_keys) == 1:
+                yield results[0][i]
+            # If multiple iter keys supplied, return a tuple of the next result for each iter key,
+            # defaulting an element in the tuple to None if the corresponding iter key has no more results
+            else:
+                yield tuple([
+                    iter_page[i] if len(iter_page) > i else None for iter_page in results
+                ])
 
 
 def read_queue(queue, number_to_read=10):

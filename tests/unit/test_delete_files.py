@@ -1010,19 +1010,29 @@ def test_it_retries_and_gives_up_fn(sleep_mock):
     assert sleep_mock.call_args_list == [call(2), call(4), call(8)]
 
 
-def test_it_deletes_old_versions():
+@patch("backend.ecs_tasks.delete_files.delete_files.paginate")
+def test_it_deletes_old_versions(paginate_mock):
     s3_mock = MagicMock()
-    s3_mock.list_object_versions.return_value = {
-        "Versions": [
+    paginate_mock.return_value = iter([
+        (
             {"VersionId": "v1", "LastModified": datetime.datetime.now() - datetime.timedelta(minutes=4)},
-            {"VersionId": "v3", "LastModified": datetime.datetime.now() - datetime.timedelta(minutes=2)},
-        ],
-        "DeleteMarkers": [
             {"VersionId": "v2", "LastModified": datetime.datetime.now() - datetime.timedelta(minutes=3)}
-        ]
-    }
+        ),
+        (
+            {"VersionId": "v3", "LastModified": datetime.datetime.now() - datetime.timedelta(minutes=2)},
+            None
+        )
+    ])
 
     delete_old_versions(s3_mock, "bucket", "key", "v4")
+    paginate_mock.assert_called_with(
+        s3_mock,
+        s3_mock.list_object_versions,
+        ["Versions", "DeleteMarkers"],
+        Bucket="bucket",
+        Prefix='key',
+        VersionIdMarker='v4'
+    )
     s3_mock.delete_objects.assert_called_with(
         Bucket="bucket",
         Delete={
@@ -1036,17 +1046,19 @@ def test_it_deletes_old_versions():
     )
 
 
-def test_it_raises_for_deletion_errors():
+@patch("backend.ecs_tasks.delete_files.delete_files.paginate")
+def test_it_raises_for_deletion_errors(paginate_mock):
     s3_mock = MagicMock()
-    s3_mock.list_object_versions.return_value = {
-        "Versions": [
+    paginate_mock.return_value = iter([
+        (
             {"VersionId": "v1", "LastModified": datetime.datetime.now() - datetime.timedelta(minutes=4)},
-            {"VersionId": "v3", "LastModified": datetime.datetime.now() - datetime.timedelta(minutes=2)},
-        ],
-        "DeleteMarkers": [
             {"VersionId": "v2", "LastModified": datetime.datetime.now() - datetime.timedelta(minutes=3)}
-        ]
-    }
+        ),
+        (
+            {"VersionId": "v3", "LastModified": datetime.datetime.now() - datetime.timedelta(minutes=2)},
+            None
+        )
+    ])
     s3_mock.delete_objects.return_value = {
         "Errors": [
             {"VersionId": "v1", "Key": "key", "Message": "Version not found"}
@@ -1056,8 +1068,9 @@ def test_it_raises_for_deletion_errors():
         delete_old_versions(s3_mock, "bucket", "key", "v4")
 
 
-def test_it_handles_client_errors_as_deletion_errors():
+@patch("backend.ecs_tasks.delete_files.delete_files.paginate")
+def test_it_handles_client_errors_as_deletion_errors(paginate_mock):
     s3_mock = MagicMock()
-    s3_mock.list_object_versions.side_effect = get_list_object_versions_error()
+    paginate_mock.side_effect = get_list_object_versions_error()
     with pytest.raises(DeleteOldVersionsError):
         delete_old_versions(s3_mock, "bucket", "key", "v3")

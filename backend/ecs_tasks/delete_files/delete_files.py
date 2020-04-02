@@ -19,7 +19,7 @@ import s3fs
 from botocore.exceptions import ClientError
 from pyarrow.lib import ArrowException
 
-from boto_utils import emit_event, parse_s3_url, get_session
+from boto_utils import emit_event, parse_s3_url, get_session, paginate
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -237,11 +237,10 @@ def validate_bucket_versioning(client, bucket):
 
 def delete_old_versions(client, input_bucket, input_key, new_version):
     try:
-        resp = client.list_object_versions(
-            Bucket=input_bucket, Prefix=input_key, VersionIdMarker=new_version
-        )
-        versions = resp.get('Versions', [])
-        delete_markers = resp.get('DeleteMarkers', [])
+        resp = list(paginate(client, client.list_object_versions, ["Versions", "DeleteMarkers"],
+                             Bucket=input_bucket, Prefix=input_key, VersionIdMarker=new_version, KeyMarker=input_key))
+        versions = [el[0] for el in resp if el[0] is not None]
+        delete_markers = [el[1] for el in resp if el[1] is not None]
         versions.extend(delete_markers)
         sorted_versions = sorted(versions, key=lambda x: x["LastModified"])
         version_ids = [v["VersionId"] for v in sorted_versions]

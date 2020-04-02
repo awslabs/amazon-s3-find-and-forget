@@ -96,10 +96,9 @@ def get_table(db, table_name):
 
 
 def get_partitions(db, table_name):
-    return list(paginate(glue_client, glue_client.get_partitions, ["Partitions"], **{
-        "DatabaseName": db,
-        "TableName": table_name
-    }))
+    return list(
+        paginate(glue_client, glue_client.get_partitions, ["Partitions"], DatabaseName=db, TableName=table_name)
+    )
 
 
 def convert_to_col_type(val, col, table):
