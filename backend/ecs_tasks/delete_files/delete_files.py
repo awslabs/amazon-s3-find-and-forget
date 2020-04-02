@@ -221,10 +221,18 @@ def get_emitter_id():
 
 
 @lru_cache()
-def get_bucket_versioning(client, bucket):
+def validate_bucket_versioning(client, bucket):
     resp = client.get_bucket_versioning(Bucket=bucket)
+    versioning_enabled = resp.get('Status') == "Enabled"
+    mfa_delete_enabled = resp.get('MFADelete') == "Enabled"
 
-    return resp.get('Status') == "Enabled"
+    if not versioning_enabled:
+        raise ValueError("Bucket {} does not have versioning enabled".format(bucket))
+
+    if mfa_delete_enabled:
+        raise ValueError("Bucket {} has MFA Delete enabled".format(bucket))
+
+    return True
 
 
 def emit_deletion_event(message_body, stats):
@@ -309,8 +317,7 @@ def execute(message_body, receipt_handle):
         client = session.client("s3")
         cols, object_path, job_id = itemgetter('Columns', 'Object', 'JobId')(body)
         input_bucket, input_key = parse_s3_url(object_path)
-        if not get_bucket_versioning(client, input_bucket):
-            raise ValueError("Bucket {} does not have versioning enabled".format(input_bucket))
+        validate_bucket_versioning(client, input_bucket)
         creds = session.get_credentials().get_frozen_credentials()
         s3 = s3fs.S3FileSystem(
             key=creds.access_key,

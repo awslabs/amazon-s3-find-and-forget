@@ -49,7 +49,8 @@ supported:
   The solution will attempt to verify object integrity between read and write
   operations and attempt to rollback any changes if an inconsistency is
   detected. If the rollback fails, you will need to manually reconcile the
-  object versions to avoid data inconsistency or loss.
+  object versions to avoid data inconsistency or loss
+- Buckets with MFA Delete enabled are not supported
 
 #### Service Quotas
 
