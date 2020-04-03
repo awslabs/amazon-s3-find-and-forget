@@ -1016,7 +1016,7 @@ def test_it_deletes_old_versions(paginate_mock):
     paginate_mock.return_value = iter([
         (
             {"VersionId": "v1", "LastModified": datetime.datetime.now() - datetime.timedelta(minutes=4)},
-            {"VersionId": "v2", "LastModified": datetime.datetime.now() - datetime.timedelta(minutes=3)}
+            {"VersionId": "d2", "LastModified": datetime.datetime.now() - datetime.timedelta(minutes=3)}
         ),
         (
             {"VersionId": "v3", "LastModified": datetime.datetime.now() - datetime.timedelta(minutes=2)},
@@ -1039,12 +1039,53 @@ def test_it_deletes_old_versions(paginate_mock):
         Delete={
             'Objects': [
                 {'Key': "key", 'VersionId': "v1"},
-                {'Key': "key", 'VersionId': "v2"},
+                {'Key': "key", 'VersionId': "d2"},
                 {'Key': "key", 'VersionId': "v3"},
             ],
             'Quiet': True
         }
     )
+
+
+@patch("backend.ecs_tasks.delete_files.delete_files.paginate")
+def test_it_handles_high_old_version_count(paginate_mock):
+    s3_mock = MagicMock()
+    paginate_mock.return_value = iter([
+        (
+            {"VersionId": "v{}".format(i), "LastModified": datetime.datetime.now() + datetime.timedelta(minutes=i)},
+            None
+        ) for i in range(1, 1501)
+    ])
+
+    delete_old_versions(s3_mock, "bucket", "key", "v0")
+    paginate_mock.assert_called_with(
+        s3_mock,
+        s3_mock.list_object_versions,
+        ["Versions", "DeleteMarkers"],
+        Bucket="bucket",
+        Prefix='key',
+        VersionIdMarker='v0',
+        KeyMarker='key'
+    )
+    assert 2 == s3_mock.delete_objects.call_count
+    assert {
+        "Bucket": "bucket",
+        "Delete": {
+            'Objects': [
+                {'Key': "key", 'VersionId': "v{}".format(i)} for i in range(1, 1001)
+            ],
+            'Quiet': True
+        }
+    } == s3_mock.delete_objects.call_args_list[0][1]
+    assert {
+        "Bucket": "bucket",
+        "Delete": {
+            'Objects': [
+                {'Key': "key", 'VersionId': "v{}".format(i)} for i in range(1001, 1501)
+            ],
+            'Quiet': True
+        }
+    } == s3_mock.delete_objects.call_args_list[1][1]
 
 
 @patch("backend.ecs_tasks.delete_files.delete_files.paginate")

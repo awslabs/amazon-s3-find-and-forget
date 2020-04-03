@@ -244,22 +244,26 @@ def delete_old_versions(client, input_bucket, input_key, new_version):
         versions.extend(delete_markers)
         sorted_versions = sorted(versions, key=lambda x: x["LastModified"])
         version_ids = [v["VersionId"] for v in sorted_versions]
-        resp = client.delete_objects(
-            Bucket=input_bucket,
-            Delete={
-                'Objects': [
-                    {
-                        'Key': input_key,
-                        'VersionId':  version_id
-                    } for version_id in version_ids
-                ],
-                'Quiet': True
-            }
-        )
-        if len(resp.get("Errors", [])) > 0:
+        errors = []
+        max_deletions = 1000
+        for i in range(0, len(version_ids), max_deletions):
+            resp = client.delete_objects(
+                Bucket=input_bucket,
+                Delete={
+                    'Objects': [
+                        {
+                            'Key': input_key,
+                            'VersionId':  version_id
+                        } for version_id in version_ids[i:i+max_deletions]
+                    ],
+                    'Quiet': True
+                }
+            )
+            errors.extend(resp.get("Errors", []))
+        if len(errors) > 0:
             raise DeleteOldVersionsError(errors=[
                 "Delete object {} version {} failed: {}".format(e["Key"], e["VersionId"], e["Message"])
-                for e in resp.get("Errors", 0)
+                for e in errors
             ])
     except ClientError as e:
         raise DeleteOldVersionsError(errors=[str(e)])
