@@ -244,8 +244,7 @@ def emit_deletion_event(message_body, stats):
     emit_event(job_id, "ObjectUpdated", event_data, get_emitter_id())
 
 
-def emit_failure_event(message_body, err_message, err_type):
-    event_name = "ObjectRollbackFailed" if err_type == "rollback" else "ObjectUpdateFailed"
+def emit_failure_event(message_body, err_message, event_name):
     json_body = json.loads(message_body)
     job_id = json_body.get("JobId")
     if not job_id:
@@ -265,10 +264,10 @@ def validate_message(message):
             raise ValueError("Malformed message. Missing key: %s", k)
 
 
-def handle_error(sqs_msg, message_body, err_message, error_type="deletion"):
+def handle_error(sqs_msg, message_body, err_message, event_name = "ObjectUpdateFailed", change_msg_visibility = True):
     logger.error(sanitize_message(err_message, message_body))
     try:
-        emit_failure_event(message_body, err_message, error_type)
+        emit_failure_event(message_body, err_message, event_name)
     except KeyError:
         logger.error("Unable to emit failure event due to invalid Job ID")
     except (json.decoder.JSONDecodeError, ValueError):
@@ -276,7 +275,7 @@ def handle_error(sqs_msg, message_body, err_message, error_type="deletion"):
     except ClientError as e:
         logger.error("Unable to emit failure event: %s", str(e))
 
-    if error_type == "deletion":
+    if change_msg_visibility:
         try:
             sqs_msg.change_visibility(VisibilityTimeout=0)
         except (
@@ -379,7 +378,7 @@ def execute(message_body, receipt_handle):
         handle_error(msg, message_body, err_message)
     except RollbackFailedError as e:
         err_message = "ClientError: {}. Version rollback caused by version integrity conflict failed".format(str(e))
-        handle_error(msg, message_body, err_message, "rollback")
+        handle_error(msg, message_body, err_message, "ObjectRollbackFailed", False)
     except Exception as e:
         err_message = "Unknown error during message processing: {}".format(str(e))
         handle_error(msg, message_body, err_message)

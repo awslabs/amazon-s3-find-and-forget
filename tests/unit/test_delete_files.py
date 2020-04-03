@@ -192,7 +192,7 @@ def test_it_emits_deletions(mock_get_id, mock_emit):
 def test_it_emits_failed_deletions(mock_get_id, mock_emit):
     mock_get_id.return_value = "ECSTask_4567"
     msg = message_stub()
-    emit_failure_event(msg, "Some error", "deletion")
+    emit_failure_event(msg, "Some error", "ObjectUpdateFailed")
     mock_emit.assert_called_with("1234", "ObjectUpdateFailed", {
         "Error": "Some error",
         "Message": json.loads(msg)
@@ -204,7 +204,7 @@ def test_it_emits_failed_deletions(mock_get_id, mock_emit):
 def test_it_emits_failed_rollback(mock_get_id, mock_emit):
     mock_get_id.return_value = "ECSTask_4567"
     msg = message_stub()
-    emit_failure_event(msg, "Some error", "rollback")
+    emit_failure_event(msg, "Some error", "ObjectRollbackFailed")
     mock_emit.assert_called_with("1234", "ObjectRollbackFailed", {
         "Error": "Some error",
         "Message": json.loads(msg)
@@ -260,7 +260,7 @@ def test_it_gracefully_handles_client_errors(mock_emit, mock_sanitize):
 def test_it_doesnt_change_message_visibility_when_rollback_fails(mock_emit, mock_sanitize):
     sqs_message = MagicMock()
     mock_emit.side_effect = ClientError({}, "DeleteObjectVersion")
-    handle_error(sqs_message, "{}", "Some error", "rollback")
+    handle_error(sqs_message, "{}", "Some error", "ObjectRollbackFailed", False)
     # Verify it attempts to emit the failure
     mock_sanitize.assert_called()
     mock_emit.assert_called()
@@ -825,7 +825,7 @@ def test_it_provides_logs_for_failed_rollback(mock_error_handler, mock_delete, m
     assert mock_error_handler.call_args_list == [
         call(ANY, ANY, "Object version integrity check failed: Some error"),
         call(ANY, ANY, "ClientError: Rollback error description. Version rollback caused "
-                       "by version integrity conflict failed", "rollback")]
+                       "by version integrity conflict failed", "ObjectRollbackFailed", False)]
 
 
 def test_it_loads_parquet_files():
@@ -841,7 +841,7 @@ def test_it_loads_parquet_files():
 def test_error_handler(mock_emit):
     msg = MagicMock()
     handle_error(msg, "{}", "Test Error")
-    mock_emit.assert_called_with("{}", "Test Error", "deletion")
+    mock_emit.assert_called_with("{}", "Test Error", "ObjectUpdateFailed")
     msg.change_visibility.assert_called_with(VisibilityTimeout=0)
 
 
