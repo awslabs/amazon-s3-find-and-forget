@@ -285,11 +285,6 @@ def handle_error(sqs_msg, message_body, err_message, event_name = "ObjectUpdateF
             logger.error("Unable to change message visibility: %s", str(e))
 
 
-def handle_success(msg, body, stats):
-    msg.delete()
-    emit_deletion_event(body, stats)
-
-
 def sanitize_message(err_message, message_body):
     """
     Obtain all the known match IDs from the original message and ensure
@@ -347,16 +342,11 @@ def execute(message_body, receipt_handle):
             with pa.BufferReader(out_sink.getvalue()) as output_buf:
                 new_version = save(s3, client, output_buf, input_bucket, input_key, source_version)
                 logger.info("New object version: %s", new_version)
-                try:
-                    verify_object_versions_integrity(client, input_bucket, input_key, source_version, new_version)
-                    handle_success(msg, body, stats)
-                except IntegrityCheckFailedError as e:
-                    err_message = "Object version integrity check failed: {}".format(str(e))
-                    handle_error(msg, message_body, err_message)
-                    rollback_object_version(client, input_bucket, input_key, new_version)                    
+                verify_object_versions_integrity(client, input_bucket, input_key, source_version, new_version)
         else:
             logger.warning("The object %s was processed successfully but no rows required deletion", object_path)
-            handle_success(msg, body, stats)
+        msg.delete()
+        emit_deletion_event(body, stats)
     except (KeyError, ArrowException) as e:
         err_message = "Parquet processing error: {}".format(str(e))
         handle_error(msg, message_body, err_message)
@@ -376,9 +366,11 @@ def execute(message_body, receipt_handle):
     except ValueError as e:
         err_message = "Unprocessable message: {}".format(str(e))
         handle_error(msg, message_body, err_message)
-    except RollbackFailedError as e:
-        err_message = "ClientError: {}. Version rollback caused by version integrity conflict failed".format(str(e))
-        handle_error(msg, message_body, err_message, "ObjectRollbackFailed", False)
+    except IntegrityCheckFailedError as e:
+        err_description, client, bucket, key, version_id = e.args
+        err_message = "Object version integrity check failed: {}".format(err_description)
+        handle_error(msg, message_body, err_message)
+        rollback_object_version(client, bucket, key, version_id)
     except Exception as e:
         err_message = "Unknown error during message processing: {}".format(str(e))
         handle_error(msg, message_body, err_message)
@@ -418,14 +410,21 @@ def retry_wrapper(fn, retry_wait_seconds = 2, retry_factor = 2, max_retries = 5)
 
     return wrapper
 
-class IntegrityCheckFailedError(Exception):
-    pass
 
-class RollbackFailedError(Exception):
-    pass
+class IntegrityCheckFailedError(Exception):
+    def __init__(self, message, client, bucket, key, version_id):
+        self.message = message
+        self.client = client
+        self.bucket = bucket
+        self.key = key
+        self.version_id = version_id
+
 
 def verify_object_versions_integrity(client, bucket, key, from_version_id, to_version_id):
     
+    def raise_exception(msg):
+        raise IntegrityCheckFailedError(msg, client, bucket, key, to_version_id)
+
     conflict_error_template = "A {} ({}) was detected for the given object between read and write operations ({} and {})."
     not_found_error_template = "Previous version ({}) has been deleted."
 
@@ -441,14 +440,14 @@ def verify_object_versions_integrity(client, bucket, key, from_version_id, to_ve
     all_versions = versions + delete_markers
 
     if not len(all_versions):
-        raise IntegrityCheckFailedError(not_found_error_template.format(from_version_id))
+        return raise_exception(not_found_error_template.format(from_version_id))
 
     prev_version = all_versions[0]
     prev_version_id = prev_version['VersionId']
     
     if prev_version_id != from_version_id:
         conflicting_version_type = 'delete marker' if 'ETag' not in prev_version else 'version'
-        raise IntegrityCheckFailedError(conflict_error_template.format(
+        return raise_exception(conflict_error_template.format(
             conflicting_version_type,
             prev_version_id,
             from_version_id, 
@@ -462,7 +461,11 @@ def rollback_object_version(client, bucket, key, version):
     try:
         return client.delete_object(Bucket=bucket, Key=key, VersionId=version)
     except ClientError as e:
-        raise RollbackFailedError(e)
+        err_message = "ClientError: {}. Version rollback caused by version integrity conflict failed".format(str(e))
+        handle_error(None, "{}", err_message, "ObjectRollbackFailed", False)
+    except Exception as e:
+        err_message = "Unknown error: {}. Version rollback caused by version integrity conflict failed".format(str(e))
+        handle_error(None, "{}", err_message, "ObjectRollbackFailed", False)
 
 
 if __name__ == '__main__':

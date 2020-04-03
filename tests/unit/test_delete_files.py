@@ -21,7 +21,7 @@ with patch.dict(os.environ, {
     get_object_info, get_object_tags, get_object_acl, get_requester_payment, get_row_count, \
     delete_from_dataframe, delete_matches_from_file, load_parquet, kill_handler, handle_error, \
     validate_bucket_versioning, sanitize_message, verify_object_versions_integrity, \
-    retry_wrapper, IntegrityCheckFailedError, RollbackFailedError, rollback_object_version
+    retry_wrapper, IntegrityCheckFailedError, rollback_object_version
 
 pytestmark = [pytest.mark.unit]
 
@@ -769,7 +769,13 @@ def test_it_provides_logs_for_failed_version_integrity_check_and_performs_rollba
     parquet_file = MagicMock()
     parquet_file.num_row_groups = 1
     mock_load.return_value = parquet_file
-    mock_verify_integrity.side_effect = IntegrityCheckFailedError("Some error")
+    mock_verify_integrity.side_effect = IntegrityCheckFailedError(
+        "Some error",
+        MagicMock(),
+        'bucket',
+        'path/basic.parquet',
+        'new_version')
+
     mock_delete.return_value = pa.BufferOutputStream(), {"DeletedRows": 1}
     execute(message_stub(), "receipt_handle")
     mock_verify_integrity.assert_called()
@@ -808,24 +814,61 @@ def test_it_provides_logs_for_get_latest_version_fail(mock_error_handler, mock_d
 @patch("backend.ecs_tasks.delete_files.delete_files.s3fs", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.get_session", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.queue", MagicMock())
-@patch("backend.ecs_tasks.delete_files.delete_files.rollback_object_version")
 @patch("backend.ecs_tasks.delete_files.delete_files.verify_object_versions_integrity")
 @patch("backend.ecs_tasks.delete_files.delete_files.load_parquet")
 @patch("backend.ecs_tasks.delete_files.delete_files.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.delete_files.handle_error")
-def test_it_provides_logs_for_failed_rollback(mock_error_handler, mock_delete, mock_load, mock_verify_integrity, rollback_mock):
+def test_it_provides_logs_for_failed_rollback_client_error(mock_error_handler, mock_delete, mock_load, mock_verify_integrity):
     parquet_file = MagicMock()
     parquet_file.num_row_groups = 1
     mock_load.return_value = parquet_file
-    mock_verify_integrity.side_effect = IntegrityCheckFailedError("Some error")
+    mock_s3 = MagicMock()
+    mock_s3.delete_object.side_effect = ClientError({}, "DeleteObject")
+    mock_verify_integrity.side_effect = IntegrityCheckFailedError(
+        "Some error",
+        mock_s3,
+        'bucket',
+        'test/basic.parquet',
+        'new_version')
     mock_delete.return_value = pa.BufferOutputStream(), {"DeletedRows": 1}
-    rollback_mock.side_effect = RollbackFailedError("Rollback error description")
     execute(message_stub(), "receipt_handle")
     mock_verify_integrity.assert_called()
     assert mock_error_handler.call_args_list == [
         call(ANY, ANY, "Object version integrity check failed: Some error"),
-        call(ANY, ANY, "ClientError: Rollback error description. Version rollback caused "
-                       "by version integrity conflict failed", "ObjectRollbackFailed", False)]
+        call(ANY, ANY, "ClientError: An error occurred (Unknown) when calling the DeleteObject operation: Unknown. "
+                       "Version rollback caused by version integrity conflict failed", "ObjectRollbackFailed", False)]
+
+
+@patch.dict(os.environ, {'JobTable': 'test'})
+@patch("backend.ecs_tasks.delete_files.delete_files.validate_bucket_versioning", MagicMock(return_value=True))
+@patch("backend.ecs_tasks.delete_files.delete_files.save", MagicMock(return_value="new_version"))
+@patch("backend.ecs_tasks.delete_files.delete_files.validate_message", MagicMock())
+@patch("backend.ecs_tasks.delete_files.delete_files.s3fs", MagicMock())
+@patch("backend.ecs_tasks.delete_files.delete_files.get_session", MagicMock())
+@patch("backend.ecs_tasks.delete_files.delete_files.queue", MagicMock())
+@patch("backend.ecs_tasks.delete_files.delete_files.verify_object_versions_integrity")
+@patch("backend.ecs_tasks.delete_files.delete_files.load_parquet")
+@patch("backend.ecs_tasks.delete_files.delete_files.delete_matches_from_file")
+@patch("backend.ecs_tasks.delete_files.delete_files.handle_error")
+def test_it_provides_logs_for_failed_rollback_generic_error(mock_error_handler, mock_delete, mock_load, mock_verify_integrity):
+    parquet_file = MagicMock()
+    parquet_file.num_row_groups = 1
+    mock_load.return_value = parquet_file
+    mock_s3 = MagicMock()
+    mock_s3.delete_object.side_effect = Exception("error!!")
+    mock_verify_integrity.side_effect = IntegrityCheckFailedError(
+        "Some error",
+        mock_s3,
+        'bucket',
+        'test/basic.parquet',
+        'new_version')
+    mock_delete.return_value = pa.BufferOutputStream(), {"DeletedRows": 1}
+    execute(message_stub(), "receipt_handle")
+    mock_verify_integrity.assert_called()
+    assert mock_error_handler.call_args_list == [
+        call(ANY, ANY, "Object version integrity check failed: Some error"),
+        call(ANY, ANY, "Unknown error: error!!. Version rollback caused by version integrity conflict failed",
+                       "ObjectRollbackFailed", False)]
 
 
 def test_it_loads_parquet_files():
@@ -915,7 +958,12 @@ def test_it_fails_integrity_when_delete_marker_between():
     
     with pytest.raises(IntegrityCheckFailedError) as e:
         result = verify_object_versions_integrity(s3_mock, 'bucket', 'requirements.txt', 'v5', 'v7')
-    assert e.value.args[0] == 'A delete marker (v6) was detected for the given object between read and write operations (v5 and v7).'
+    assert e.value.args == (
+        'A delete marker (v6) was detected for the given object between read and write operations (v5 and v7).',
+        s3_mock,
+        'bucket',
+        'requirements.txt',
+        'v7')
 
 
 def test_it_fails_integrity_when_other_version_between():
@@ -928,7 +976,12 @@ def test_it_fails_integrity_when_other_version_between():
     with pytest.raises(IntegrityCheckFailedError) as e:
         result = verify_object_versions_integrity(s3_mock, 'bucket', 'requirements.txt', 'v5', 'v7')
 
-    assert e.value.args[0] == 'A version (v6) was detected for the given object between read and write operations (v5 and v7).'
+    assert e.value.args == (
+        'A version (v6) was detected for the given object between read and write operations (v5 and v7).',
+        s3_mock,
+        'bucket',
+        'requirements.txt',
+        'v7')
 
 
 def test_it_fails_integrity_when_no_other_version_before():
@@ -941,8 +994,12 @@ def test_it_fails_integrity_when_no_other_version_before():
     with pytest.raises(IntegrityCheckFailedError) as e:
         result = verify_object_versions_integrity(s3_mock, 'bucket', 'requirements.txt', 'v5', 'v7')
 
-    assert e.value.args[0] == 'Previous version (v5) has been deleted.'
-
+    assert e.value.args == (
+        'Previous version (v5) has been deleted.',
+        s3_mock,
+        'bucket',
+        'requirements.txt',
+        'v7')
 
 @patch("time.sleep")
 def test_it_errors_when_version_to_not_found_after_retries(sleep_mock):
@@ -1009,20 +1066,22 @@ def test_it_deletes_new_version_during_rollback():
     s3_mock = MagicMock()
     s3_mock.delete_object.return_value = "result"
     result = rollback_object_version(s3_mock, 'bucket', 'requirements.txt', "version23")
-
     assert result == "result"
-
     s3_mock.delete_object.assert_called_with(
         Bucket='bucket',
         Key='requirements.txt',
         VersionId='version23')
 
 
-def test_it_raises_rollback_exception_for_client_error():
+@patch("backend.ecs_tasks.delete_files.delete_files.handle_error")
+def test_it_handles_error_for_client_error(mock_error_handler):
     s3_mock = MagicMock()
     s3_mock.delete_object.side_effect = ClientError({}, "DeleteObject")
-
-    with pytest.raises(RollbackFailedError) as e:
-        result = rollback_object_version(s3_mock, 'bucket', 'requirements.txt', "version23")
-
-    assert str(e.value.args[0]) == 'An error occurred (Unknown) when calling the DeleteObject operation: Unknown'
+    result = rollback_object_version(s3_mock, 'bucket', 'requirements.txt', "version23")
+    mock_error_handler.assert_called_with(
+        ANY,
+        ANY,
+        "ClientError: An error occurred (Unknown) when calling the DeleteObject operation: Unknown. "
+        "Version rollback caused by version integrity conflict failed",
+        "ObjectRollbackFailed",
+        False)
