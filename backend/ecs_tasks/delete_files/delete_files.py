@@ -19,7 +19,7 @@ import s3fs
 from botocore.exceptions import ClientError
 from pyarrow.lib import ArrowException
 
-from boto_utils import emit_event, parse_s3_url, get_session
+from boto_utils import emit_event, parse_s3_url, get_session, paginate
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -235,6 +235,46 @@ def validate_bucket_versioning(client, bucket):
     return True
 
 
+def delete_old_versions(client, input_bucket, input_key, new_version):
+    try:
+        resp = list(paginate(client, client.list_object_versions, ["Versions", "DeleteMarkers"],
+                             Bucket=input_bucket, Prefix=input_key, VersionIdMarker=new_version, KeyMarker=input_key))
+        versions = [el[0] for el in resp if el[0] is not None]
+        delete_markers = [el[1] for el in resp if el[1] is not None]
+        versions.extend(delete_markers)
+        sorted_versions = sorted(versions, key=lambda x: x["LastModified"])
+        version_ids = [v["VersionId"] for v in sorted_versions]
+        errors = []
+        max_deletions = 1000
+        for i in range(0, len(version_ids), max_deletions):
+            resp = client.delete_objects(
+                Bucket=input_bucket,
+                Delete={
+                    'Objects': [
+                        {
+                            'Key': input_key,
+                            'VersionId':  version_id
+                        } for version_id in version_ids[i:i+max_deletions]
+                    ],
+                    'Quiet': True
+                }
+            )
+            errors.extend(resp.get("Errors", []))
+        if len(errors) > 0:
+            raise DeleteOldVersionsError(errors=[
+                "Delete object {} version {} failed: {}".format(e["Key"], e["VersionId"], e["Message"])
+                for e in errors
+            ])
+    except ClientError as e:
+        raise DeleteOldVersionsError(errors=[str(e)])
+
+
+class DeleteOldVersionsError(Exception):
+    def __init__(self, errors):
+        super().__init__("\n".join(errors))
+        self.errors = errors
+
+
 def emit_deletion_event(message_body, stats):
     job_id = message_body["JobId"]
     event_data = {
@@ -342,6 +382,9 @@ def execute(message_body, receipt_handle):
                 new_version = save(s3, client, output_buf, input_bucket, input_key, source_version)
                 logger.info("New object version: %s", new_version)
                 verify_object_versions_integrity(client, input_bucket, input_key, source_version, new_version)
+            if body.get("DeleteOldVersions"):
+                logger.info("Deleting object {} versions older than version {}".format(input_key, new_version))
+                delete_old_versions(client, input_bucket, input_key, new_version)
         else:
             logger.warning("The object %s was processed successfully but no rows required deletion", object_path)
         msg.delete()
@@ -367,6 +410,9 @@ def execute(message_body, receipt_handle):
         handle_error(msg, message_body, err_message)
     except IntegrityCheckFailedError as e:
         err_message = "Object version integrity check failed: {}".format(str(e))
+        handle_error(msg, message_body, err_message)
+    except DeleteOldVersionsError as e:
+        err_message = "Unable to delete previous versions: {}".format(str(e))
         handle_error(msg, message_body, err_message)
     except Exception as e:
         err_message = "Unknown error during message processing: {}".format(str(e))
@@ -394,9 +440,9 @@ def retry_wrapper(fn, retry_wait_seconds = 2, retry_factor = 2, max_retries = 5)
         while retry_current <= max_retries:
             try:
                 return fn(*args, **kwargs)
-            except(ClientError) as e:
+            except ClientError as e:
                 nonlocal retry_wait_seconds
-                if(retry_current == max_retries):
+                if retry_current == max_retries:
                     break
                 last_error = e
                 retry_current += 1
@@ -407,11 +453,13 @@ def retry_wrapper(fn, retry_wait_seconds = 2, retry_factor = 2, max_retries = 5)
 
     return wrapper
 
+
 class IntegrityCheckFailedError(Exception):
     pass
 
+
 def verify_object_versions_integrity(client, bucket, key, from_version_id, to_version_id):
-    
+
     conflict_error_template = "A {} ({}) was detected for the given object between read and write operations ({} and {})."
     not_found_error_template = "Previous version ({}) has been deleted."
 
@@ -431,13 +479,13 @@ def verify_object_versions_integrity(client, bucket, key, from_version_id, to_ve
 
     prev_version = all_versions[0]
     prev_version_id = prev_version['VersionId']
-    
+
     if prev_version_id != from_version_id:
         conflicting_version_type = 'delete marker' if 'ETag' not in prev_version else 'version'
         raise IntegrityCheckFailedError(conflict_error_template.format(
             conflicting_version_type,
             prev_version_id,
-            from_version_id, 
+            from_version_id,
             to_version_id))
 
     return True

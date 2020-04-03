@@ -100,6 +100,7 @@ def test_it_runs_for_happy_path(del_queue_factory, job_factory, dummy_lake, glue
     bucket.download_fileobj(object_key, tmp)
     assert "COMPLETED" == job_table.get_item(Key={"Id": job_id, "Sk": job_id})["Item"]["JobStatus"]
     assert 0 == len(query_parquet_file(tmp, "customer_id", "12345"))
+    assert 2 == len(list(bucket.object_versions.filter(Prefix=object_key)))
 
 
 def test_it_runs_for_unpartitioned_data(del_queue_factory, job_factory, dummy_lake, glue_data_mapper_factory,
@@ -167,3 +168,44 @@ def test_it_executes_successfully_for_empty_queue(job_factory, job_finished_wait
     # Assert
     assert "COMPLETED" == job_table.get_item(Key={"Id": job_id, "Sk": job_id})["Item"]["JobStatus"]
 
+
+def test_it_supports_data_access_roles(del_queue_factory, job_factory, dummy_lake, glue_data_mapper_factory,
+                                       data_loader, job_complete_waiter, job_table, data_access_role):
+    # Generate a parquet file and add it to the lake
+    glue_data_mapper_factory("test", partition_keys=["year", "month", "day"], partitions=[["2019", "08", "20"]],
+                             delete_old_versions=False, role_arn=data_access_role["Arn"])
+    item = del_queue_factory("12345")
+    object_key = "test/2019/08/20/test.parquet"
+    data_loader("basic.parquet", object_key)
+    bucket = dummy_lake["bucket"]
+    job_id = job_factory(del_queue_items=[item])["Id"]
+    # Act
+    job_complete_waiter.wait(TableName=job_table.name, Key={"Id": {"S": job_id}, "Sk": {"S": job_id}})
+    # Assert
+    tmp = tempfile.NamedTemporaryFile()
+    bucket.download_fileobj(object_key, tmp)
+    assert "COMPLETED" == job_table.get_item(Key={"Id": job_id, "Sk": job_id})["Item"]["JobStatus"]
+    assert 0 == len(query_parquet_file(tmp, "customer_id", "12345"))
+
+
+def test_it_deletes_old_versions(del_queue_factory, job_factory, dummy_lake, glue_data_mapper_factory, data_loader,
+                                 job_complete_waiter, job_table, data_access_role):
+    # Generate a parquet file and add it to the lake
+    glue_data_mapper_factory("test", partition_keys=["year", "month", "day"], partitions=[["2019", "08", "20"]],
+                             delete_old_versions=True, role_arn=data_access_role["Arn"])
+    item = del_queue_factory("12345")
+    object_key = "test/2019/08/20/test.parquet"
+    bucket = dummy_lake["bucket"]
+    # Create the object, add a deletion marker, then recreate it
+    data_loader("basic.parquet", object_key)
+    bucket.Object("basic.parquet").delete()
+    data_loader("basic.parquet", object_key)
+    job_id = job_factory(del_queue_items=[item])["Id"]
+    # Act
+    job_complete_waiter.wait(TableName=job_table.name, Key={"Id": {"S": job_id}, "Sk": {"S": job_id}})
+    # Assert
+    tmp = tempfile.NamedTemporaryFile()
+    bucket.download_fileobj(object_key, tmp)
+    assert "COMPLETED" == job_table.get_item(Key={"Id": job_id, "Sk": job_id})["Item"]["JobStatus"]
+    assert 0 == len(query_parquet_file(tmp, "customer_id", "12345"))
+    assert 1 == len(list(bucket.object_versions.filter(Prefix=object_key)))

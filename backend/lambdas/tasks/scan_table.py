@@ -13,9 +13,7 @@ deserializer = TypeDeserializer()
 
 @with_logging
 def handler(event, context):
-    results = paginate(ddb_client, ddb_client.scan, "Items", **{
-        "TableName": event["TableName"]
-    })
+    results = paginate(ddb_client, ddb_client.scan, "Items", TableName=event["TableName"])
 
     items = [deserialize_item(result) for result in results]
 

@@ -415,6 +415,10 @@ components:
           type: "string"
           description: "Role ARN to assume when performing operations in S3 for this data mapper. The role must have the exact name 'S3F2DataAccessRole'."
           pattern: '^arn:(aws[a-zA-Z-]*)?:iam::\d{12}:role\/S3F2DataAccessRole$'
+        DeleteOldVersions:
+          type: "boolean"
+          description: "Toggles deleting all non-latest versions of an object after a new redacted version is created"
+          default: "true"
     DeletionQueueItem:
       description: "A Deletion Queue Item object"
       type: "object"

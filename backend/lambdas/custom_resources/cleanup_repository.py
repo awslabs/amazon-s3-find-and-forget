@@ -22,9 +22,7 @@ def create(event, context):
 def delete(event, context):
     props = event['ResourceProperties']
     repository = props["Repository"]
-    images = list(paginate(ecr_client, ecr_client.list_images, ["imageIds"], **{
-        "repositoryName": repository
-    }))
+    images = list(paginate(ecr_client, ecr_client.list_images, ["imageIds"], repositoryName=repository))
 
     if images:
         ecr_client.batch_delete_image(

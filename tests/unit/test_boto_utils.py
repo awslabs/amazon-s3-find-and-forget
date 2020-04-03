@@ -25,7 +25,7 @@ def test_it_paginates():
             "val"
         ]
     }])
-    result = paginate(client, client.some_method, ["Test"])
+    result = paginate(client, client.some_method, ["Test"], an="arg")
     assert isinstance(result, types.GeneratorType)
     assert ["val"] == list(result)
 
@@ -42,6 +42,63 @@ def test_it_supports_single_iter_key():
     result = paginate(client, client.some_method, "Test")
     assert isinstance(result, types.GeneratorType)
     assert ["val"] == list(result)
+
+
+def test_it_supports_multiple_iter_keys():
+    client = MagicMock()
+    client.get_paginator.return_value = client
+    client.some_method.__name__ = "some_method"
+    client.paginate.return_value = iter([{
+        "A": [
+            "valA1",
+            "valA2",
+        ],
+        "B": [
+            "valB1",
+            "valB2",
+        ]
+    }])
+    result = paginate(client, client.some_method, ["A", "B"])
+    assert isinstance(result, types.GeneratorType)
+    assert [("valA1", "valB1"), ("valA2", "valB2")] == list(result)
+
+
+def test_it_supports_multiple_iter_keys_of_varying_lengths():
+    client = MagicMock()
+    client.get_paginator.return_value = client
+    client.some_method.__name__ = "some_method"
+    client.paginate.return_value = iter([{
+        "A": [
+            "valA1",
+            "valA2",
+        ],
+        "B": [
+            "valB1",
+        ]
+    }])
+    result = paginate(client, client.some_method, ["A", "B"])
+    assert isinstance(result, types.GeneratorType)
+    assert [("valA1", "valB1"), ("valA2", None)] == list(result)
+
+
+def test_it_supports_nested_iter_keys():
+    client = MagicMock()
+    client.get_paginator.return_value = client
+    client.some_method.__name__ = "some_method"
+    client.paginate.return_value = iter([{
+        "A": {
+            "B": [
+                "valAB1",
+                "valAB2",
+            ],
+        },
+        "C": [
+            "valC1",
+        ]
+    }])
+    result = paginate(client, client.some_method, ["A.B", "C"])
+    assert isinstance(result, types.GeneratorType)
+    assert [("valAB1", "valC1"), ("valAB2", None)] == list(result)
 
 
 def test_it_batches_msgs():
