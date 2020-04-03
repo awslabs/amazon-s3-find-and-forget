@@ -148,7 +148,9 @@ Verify the following:
   is performed to verify that during processing, no new versions of an object
   were created and that a delete marker for the object was not created. If
   either case is detected, an **ObjectUpdateFailed** event will be present in
-  the job event history..
+  the job event history and a rollback will be attempted. If the rollback will
+  fail, an **ObjectRollbackFailed** event will be present in the job event
+  history containing error information.
 - You have granted permissions to the Fargate task IAM role for access to the S3
   buckets referenced by your data mappers **and** any AWS KMS keys used to
   encrypt the data. For more information see [Permissions Configuration] in the

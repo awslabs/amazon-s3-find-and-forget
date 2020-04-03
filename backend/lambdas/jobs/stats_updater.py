@@ -37,10 +37,11 @@ def _aggregate_stats(events):
                 "TotalQueryScannedInBytes": event_data.get("Statistics", {}).get("DataScannedInBytes", 0),
                 "TotalQueryTimeInMillis": event_data.get("Statistics", {}).get("EngineExecutionTimeInMillis", 0),
             })
-        if event_name in ["ObjectUpdated", "ObjectUpdateFailed"]:
+        if event_name in ["ObjectUpdated", "ObjectUpdateFailed", "ObjectRollbackFailed"]:
             stats += Counter({
                 "TotalObjectUpdatedCount": 1 if event_name == "ObjectUpdated" else 0,
                 "TotalObjectUpdateFailedCount": 1 if event_name == "ObjectUpdateFailed" else 0,
+                "TotalObjectRollbackFailedCount": 1 if event_name == "ObjectRollbackFailed" else 0,
             })
 
     return stats
@@ -60,7 +61,8 @@ def _update_job(job_id, stats):
                              "#qb = if_not_exists(#qb, :z) + :qb, "
                              "#qm = if_not_exists(#qm, :z) + :qm, "
                              "#ou = if_not_exists(#ou, :z) + :ou, "
-                             "#of = if_not_exists(#of, :z) + :of",
+                             "#of = if_not_exists(#of, :z) + :of, "
+                             "#or = if_not_exists(#or, :z) + :or",
             ExpressionAttributeNames={
                 "#Id": "Id",
                 "#Sk": "Sk",
@@ -71,6 +73,7 @@ def _update_job(job_id, stats):
                 '#qm': 'TotalQueryTimeInMillis',
                 '#ou': 'TotalObjectUpdatedCount',
                 '#of': 'TotalObjectUpdateFailedCount',
+                '#or': 'TotalObjectRollbackFailedCount',
             },
             ExpressionAttributeValues={
                 ":Id": job_id,
@@ -82,6 +85,7 @@ def _update_job(job_id, stats):
                 ':qm': stats.get("TotalQueryTimeInMillis", 0),
                 ':ou': stats.get("TotalObjectUpdatedCount", 0),
                 ':of': stats.get("TotalObjectUpdateFailedCount", 0),
+                ':or': stats.get("TotalObjectRollbackFailedCount", 0),
                 ':z': 0,
             },
             ReturnValues="ALL_NEW"

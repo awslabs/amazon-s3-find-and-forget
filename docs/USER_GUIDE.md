@@ -471,7 +471,9 @@ The list of events is as follows:
 - `ObjectUpdated`: Emitted whenever an updated object is written to S3 and any
   associated deletions are complete.
 - `ObjectUpdateFailed`: Emitted whenever an object cannot be updated, an object
-  version integrity check fails or an associated deletion fails.
+  version integrity conflict is detected or an associated deletion fails.
+- `ObjectRollbackFailed`: Emitted whenever a rollback (triggered by a detected
+  version integrity conflict) fails.
 - `Exception`: Emitted whenever a generic error occurs during the job execution.
   Causes the status to transition to `FAILED`.
 

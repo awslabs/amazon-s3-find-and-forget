@@ -21,10 +21,9 @@ repos:
     rev: 5e28df337746db4f070c84f7069d365bfd0d72a8
     hooks:
     -   id: git-secrets
--   repo: https://github.com/aws-cloudformation/cfn-python-lint
-    rev: v0.28.2
+-   repo: local
     hooks:
-    -   id: cfn-python-lint
-        args: [--ignore-templates=templates/api.definition.yml]
-        files: >-
-            templates/.*\.(json|yml|yaml|template)$
+    -   id: cfn-lint
+        name: Lint CloudFormation templates
+        entry: make lint-cfn
+        language: system
