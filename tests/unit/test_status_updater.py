@@ -170,53 +170,7 @@ def test_it_handles_cleanup_success(table):
     assert 1 == table.update_item.call_count
 
 
-@patch("backend.lambdas.jobs.status_updater.determine_status", Mock(return_value="COMPLETED"))
-@patch("backend.lambdas.jobs.status_updater.table")
-def test_it_handles_emits_cleanup_failed_events(table):
-    table.update_item.return_value = {
-        "Attributes": {
-            "Id": "job123",
-            "Sk": "123456",
-            "JobStatus": "FORGET_COMPLETED_CLEANUP_IN_PROGRESS"
-        }
-    }
-    update_status("job123", [{
-        "Id": "job123",
-        "Sk": "123456",
-        "Type": "JobEvent",
-        "CreatedAt": 123,
-        "EventName": "CleanupSucceeded",
-        "EventData": {}
-    }])
-    table.update_item.assert_called_with(
-        Key={
-            'Id': "job123",
-            'Sk': "job123",
-        },
-        UpdateExpression="set #JobStatus = :JobStatus, #JobFinishTime = :JobFinishTime",
-        ConditionExpression="#Id = :Id AND #Sk = :Sk AND (#JobStatus = :RUNNING OR #JobStatus = :QUEUED OR #JobStatus = :FORGET_COMPLETED_CLEANUP_IN_PROGRESS)",
-        ExpressionAttributeNames={
-            "#Id": "Id",
-            "#Sk": "Sk",
-            '#JobStatus': 'JobStatus',
-            '#JobFinishTime': 'JobFinishTime',
-        },
-        ExpressionAttributeValues={
-            ":Id": "job123",
-            ":Sk": "job123",
-            ':RUNNING': 'RUNNING',
-            ':QUEUED': 'QUEUED',
-            ':FORGET_COMPLETED_CLEANUP_IN_PROGRESS': 'FORGET_COMPLETED_CLEANUP_IN_PROGRESS',
-            ':JobStatus': "COMPLETED",
-            ':JobFinishTime': 123.0,
-        },
-        ReturnValues="ALL_NEW"
-    )
-    assert 1 == table.update_item.call_count
-    # mock_emit.assert_called_with(ANY, "CleanupFailed", ANY, ANY)
-
-
-@patch("backend.lambdas.jobs.status_updater.determine_status", Mock(return_value="COMPLETED_WITHOUT_CLEANUP"))
+@patch("backend.lambdas.jobs.status_updater.determine_status", Mock(return_value="COMPLETED_CLEANUP_FAILED"))
 @patch("backend.lambdas.jobs.status_updater.table")
 def test_it_handles_cleanup_failed(table):
     update_status("job123", [{
@@ -246,7 +200,7 @@ def test_it_handles_cleanup_failed(table):
             ':RUNNING': 'RUNNING',
             ':QUEUED': 'QUEUED',
             ':FORGET_COMPLETED_CLEANUP_IN_PROGRESS': 'FORGET_COMPLETED_CLEANUP_IN_PROGRESS',
-            ':JobStatus': "COMPLETED_WITHOUT_CLEANUP",
+            ':JobStatus': "COMPLETED_CLEANUP_FAILED",
             ':JobFinishTime': 123.0,
         },
         ReturnValues="ALL_NEW"

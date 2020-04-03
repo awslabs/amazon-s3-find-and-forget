@@ -26,15 +26,18 @@ status_map = {
 }
 
 unlocked_states = ["RUNNING", "QUEUED", "FORGET_COMPLETED_CLEANUP_IN_PROGRESS"]
-skip_cleanup_states = ["FIND_FAILED", "FORGET_FAILED", "FAILED"]
+skip_cleanup_states = ["FIND_FAILED", "FORGET_FAILED", "FAILED", "FORGET_PARTIALLY_FAILED"]
 
-time_events = {
-    "JobStarted": "JobStartTime",
-    "CleanupFailed": "JobFinishTime",
-    "CleanupSucceeded": "JobFinishTime",
-    "Exception": "JobFinishTime",
-    "FindPhaseFailed": "JobFinishTime",
-    "ForgetPhaseFailed": "JobFinishTime",
+time_statuses = {
+    "JobStartTime": ["RUNNING"],
+    "JobFinishTime": [
+        "COMPLETED_CLEANUP_FAILED",
+        "COMPLETED",
+        "FAILED",
+        "FIND_FAILED",
+        "FORGET_FAILED",
+        "FORGET_PARTIALLY_FAILED"
+    ]
 }
 
 
@@ -51,9 +54,10 @@ def update_status(job_id, events):
         if not attr_updates.get("JobStatus") or attr_updates.get("JobStatus") in unlocked_states:
             attr_updates["JobStatus"] = new_status
 
-        # Update any job time events
-        if event_name in time_events and not attr_updates.get(time_events[event_name]):
-            attr_updates[time_events[event_name]] = event["CreatedAt"]
+        # Update any job attributes
+        for attr, statuses in time_statuses.items():
+            if new_status in statuses and not attr_updates.get(attr):
+                attr_updates[attr] = event["CreatedAt"]
 
     if len(attr_updates) > 0:
         job = _update_item(job_id, attr_updates)
