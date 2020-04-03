@@ -16,9 +16,7 @@ queue = sqs.Queue(os.getenv("QueueUrl"))
 @with_logging
 def handler(event, context):
     query_id = event["QueryId"]
-    results = paginate(athena, athena.get_query_results, ["ResultSet", "Rows"], **{
-        "QueryExecutionId": query_id
-    })
+    results = paginate(athena, athena.get_query_results, ["ResultSet.Rows"], QueryExecutionId=query_id)
     rows = [result for result in results]
     header_row = rows.pop(0)
     path_field_index = next((index for (index, d) in enumerate(header_row["Data"]) if d["VarCharValue"] == "$path"),
@@ -32,6 +30,7 @@ def handler(event, context):
             "Object": p,
             "Columns": event["Columns"],
             "RoleArn": event.get("RoleArn", None),
+            "DeleteOldVersions": event.get("DeleteOldVersions", True),
         }
         messages.append({k: v for k, v in msg.items() if v is not None})
 

@@ -1,3 +1,4 @@
+import datetime
 import os
 from io import BytesIO
 
@@ -21,7 +22,8 @@ with patch.dict(os.environ, {
     get_object_info, get_object_tags, get_object_acl, get_requester_payment, get_row_count, \
     delete_from_dataframe, delete_matches_from_file, load_parquet, kill_handler, handle_error, \
     validate_bucket_versioning, sanitize_message, verify_object_versions_integrity, \
-    retry_wrapper, IntegrityCheckFailedError, rollback_object_version
+    retry_wrapper, IntegrityCheckFailedError, rollback_object_version, delete_old_versions, \
+    DeleteOldVersionsError
 
 pytestmark = [pytest.mark.unit]
 
@@ -31,6 +33,7 @@ def message_stub(**kwargs):
         "JobId": "1234",
         "Object": "s3://bucket/path/basic.parquet",
         "Columns": [{"Column": "customer_id", "MatchIds": ["12345", "23456"]}],
+        "DeleteOldVersions": False,
         **kwargs
     })
 
@@ -84,7 +87,7 @@ def test_happy_path_when_queue_not_empty(mock_save, mock_emit, mock_delete, mock
 @patch("backend.ecs_tasks.delete_files.delete_files.queue", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.emit_deletion_event", MagicMock())
 @patch("backend.ecs_tasks.delete_files.delete_files.save", MagicMock())
-@patch("backend.ecs_tasks.delete_files.delete_files.get_session", )
+@patch("backend.ecs_tasks.delete_files.delete_files.get_session")
 @patch("backend.ecs_tasks.delete_files.delete_files.load_parquet")
 @patch("backend.ecs_tasks.delete_files.delete_files.s3fs")
 @patch("backend.ecs_tasks.delete_files.delete_files.delete_matches_from_file")
@@ -99,6 +102,63 @@ def test_it_assumes_role(mock_delete, mock_s3, mock_load, mock_session):
     execute(message_stub(RoleArn="arn:aws:iam:account_id:role/rolename",
                          Object="s3://bucket/path/basic.parquet"), "receipt_handle")
     mock_session.assert_called_with("arn:aws:iam:account_id:role/rolename")
+
+
+@patch.dict(os.environ, {'JobTable': 'test'})
+@patch("backend.ecs_tasks.delete_files.delete_files.validate_bucket_versioning", MagicMock(return_value=True))
+@patch("backend.ecs_tasks.delete_files.delete_files.verify_object_versions_integrity", MagicMock(return_value=True))
+@patch("backend.ecs_tasks.delete_files.delete_files.validate_message", MagicMock())
+@patch("backend.ecs_tasks.delete_files.delete_files.queue", MagicMock())
+@patch("backend.ecs_tasks.delete_files.delete_files.emit_deletion_event", MagicMock())
+@patch("backend.ecs_tasks.delete_files.delete_files.get_session", MagicMock())
+@patch("backend.ecs_tasks.delete_files.delete_files.save")
+@patch("backend.ecs_tasks.delete_files.delete_files.delete_old_versions")
+@patch("backend.ecs_tasks.delete_files.delete_files.load_parquet")
+@patch("backend.ecs_tasks.delete_files.delete_files.s3fs")
+@patch("backend.ecs_tasks.delete_files.delete_files.delete_matches_from_file")
+def test_it_removes_old_versions(mock_delete, mock_s3, mock_load, mock_delete_versions, mock_save):
+    mock_s3.S3FileSystem.return_value = mock_s3
+    parquet_file = MagicMock()
+    parquet_file.num_row_groups = 1
+    mock_s3.open.return_value = mock_s3
+    mock_s3.__enter__.return_value = MagicMock(version_id="abc123")
+    mock_save.return_value = "new_version123"
+    mock_load.return_value = parquet_file
+    mock_delete.return_value = pa.BufferOutputStream(), {"DeletedRows": 1}
+    execute(message_stub(RoleArn="arn:aws:iam:account_id:role/rolename",
+                         DeleteOldVersions=True,
+                         Object="s3://bucket/path/basic.parquet"), "receipt_handle")
+    mock_delete_versions.assert_called_with(ANY, ANY, ANY, "new_version123")
+
+
+@patch.dict(os.environ, {'JobTable': 'test'})
+@patch("backend.ecs_tasks.delete_files.delete_files.validate_bucket_versioning", MagicMock(return_value=True))
+@patch("backend.ecs_tasks.delete_files.delete_files.verify_object_versions_integrity", MagicMock(return_value=True))
+@patch("backend.ecs_tasks.delete_files.delete_files.validate_message", MagicMock())
+@patch("backend.ecs_tasks.delete_files.delete_files.queue", MagicMock())
+@patch("backend.ecs_tasks.delete_files.delete_files.emit_deletion_event", MagicMock())
+@patch("backend.ecs_tasks.delete_files.delete_files.get_session", MagicMock())
+@patch("backend.ecs_tasks.delete_files.delete_files.save")
+@patch("backend.ecs_tasks.delete_files.delete_files.delete_old_versions")
+@patch("backend.ecs_tasks.delete_files.delete_files.load_parquet")
+@patch("backend.ecs_tasks.delete_files.delete_files.s3fs")
+@patch("backend.ecs_tasks.delete_files.delete_files.delete_matches_from_file")
+@patch("backend.ecs_tasks.delete_files.delete_files.handle_error")
+def test_it_handles_old_version_delete_failures(mock_handle, mock_delete, mock_s3, mock_load, mock_delete_versions,
+                                                mock_save):
+    mock_s3.S3FileSystem.return_value = mock_s3
+    parquet_file = MagicMock()
+    parquet_file.num_row_groups = 1
+    mock_s3.open.return_value = mock_s3
+    mock_s3.__enter__.return_value = MagicMock(version_id="abc123")
+    mock_save.return_value = "new_version123"
+    mock_load.return_value = parquet_file
+    mock_delete.return_value = pa.BufferOutputStream(), {"DeletedRows": 1}
+    mock_delete_versions.side_effect = DeleteOldVersionsError(errors=["access denied"])
+    execute(message_stub(RoleArn="arn:aws:iam:account_id:role/rolename",
+                         DeleteOldVersions=True,
+                         Object="s3://bucket/path/basic.parquet"), "receipt_handle")
+    mock_handle.assert_called_with(ANY, ANY, "Unable to delete previous versions: access denied")
 
 
 @patch.dict(os.environ, {'JobTable': 'test'})
@@ -439,10 +499,10 @@ def test_it_throws_when_versioning_disabled():
     validate_bucket_versioning.cache_clear()
     client = MagicMock()
     client.get_bucket_versioning.return_value = {}
-    
+
     with pytest.raises(ValueError) as e:
         validate_bucket_versioning(client, "bucket")
-    
+
     assert e.value.args[0] == 'Bucket bucket does not have versioning enabled'
 
 
@@ -450,10 +510,10 @@ def test_it_throws_when_versioning_suspended():
     validate_bucket_versioning.cache_clear()
     client = MagicMock()
     client.get_bucket_versioning.return_value = {"Status": "Suspended"}
-    
+
     with pytest.raises(ValueError) as e:
         validate_bucket_versioning(client, "bucket")
-    
+
     assert e.value.args[0] == 'Bucket bucket does not have versioning enabled'
 
 
@@ -461,10 +521,10 @@ def test_it_throws_when_mfa_delete_enabled():
     validate_bucket_versioning.cache_clear()
     client = MagicMock()
     client.get_bucket_versioning.return_value = {"Status": "Enabled", "MFADelete": "Enabled"}
-    
+
     with pytest.raises(ValueError) as e:
         validate_bucket_versioning(client, "bucket")
-    
+
     assert e.value.args[0] == 'Bucket bucket has MFA Delete enabled'
 
 
@@ -955,7 +1015,7 @@ def test_it_fails_integrity_when_delete_marker_between():
         "Versions": [],
         "DeleteMarkers": [{ "VersionId": "v6" }]
     }
-    
+
     with pytest.raises(IntegrityCheckFailedError) as e:
         result = verify_object_versions_integrity(s3_mock, 'bucket', 'requirements.txt', 'v5', 'v7')
     assert e.value.args == (
@@ -1008,7 +1068,7 @@ def test_it_errors_when_version_to_not_found_after_retries(sleep_mock):
 
     with pytest.raises(ClientError) as e:
         result = verify_object_versions_integrity(s3_mock, 'bucket', 'requirements.txt', 'v7', 'v8')
-    
+
     assert sleep_mock.call_args_list == [call(2), call(4), call(8), call(16), call(32)]
     assert e.value.args[0] == 'An error occurred (InvalidArgument) when calling the ListObjectVersions operation: Invalid version id specified'
 
@@ -1085,3 +1145,111 @@ def test_it_handles_error_for_client_error(mock_error_handler):
         "Version rollback caused by version integrity conflict failed",
         "ObjectRollbackFailed",
         False)
+
+
+@patch("backend.ecs_tasks.delete_files.delete_files.paginate")
+def test_it_deletes_old_versions(paginate_mock):
+    s3_mock = MagicMock()
+    paginate_mock.return_value = iter([
+        (
+            {"VersionId": "v1", "LastModified": datetime.datetime.now() - datetime.timedelta(minutes=4)},
+            {"VersionId": "d2", "LastModified": datetime.datetime.now() - datetime.timedelta(minutes=3)}
+        ),
+        (
+            {"VersionId": "v3", "LastModified": datetime.datetime.now() - datetime.timedelta(minutes=2)},
+            None
+        )
+    ])
+
+    delete_old_versions(s3_mock, "bucket", "key", "v4")
+    paginate_mock.assert_called_with(
+        s3_mock,
+        s3_mock.list_object_versions,
+        ["Versions", "DeleteMarkers"],
+        Bucket="bucket",
+        Prefix='key',
+        VersionIdMarker='v4',
+        KeyMarker='key'
+    )
+    s3_mock.delete_objects.assert_called_with(
+        Bucket="bucket",
+        Delete={
+            'Objects': [
+                {'Key': "key", 'VersionId': "v1"},
+                {'Key': "key", 'VersionId': "d2"},
+                {'Key': "key", 'VersionId': "v3"},
+            ],
+            'Quiet': True
+        }
+    )
+
+
+@patch("backend.ecs_tasks.delete_files.delete_files.paginate")
+def test_it_handles_high_old_version_count(paginate_mock):
+    s3_mock = MagicMock()
+    paginate_mock.return_value = iter([
+        (
+            {"VersionId": "v{}".format(i), "LastModified": datetime.datetime.now() + datetime.timedelta(minutes=i)},
+            None
+        ) for i in range(1, 1501)
+    ])
+
+    delete_old_versions(s3_mock, "bucket", "key", "v0")
+    paginate_mock.assert_called_with(
+        s3_mock,
+        s3_mock.list_object_versions,
+        ["Versions", "DeleteMarkers"],
+        Bucket="bucket",
+        Prefix='key',
+        VersionIdMarker='v0',
+        KeyMarker='key'
+    )
+    assert 2 == s3_mock.delete_objects.call_count
+    assert {
+        "Bucket": "bucket",
+        "Delete": {
+            'Objects': [
+                {'Key': "key", 'VersionId': "v{}".format(i)} for i in range(1, 1001)
+            ],
+            'Quiet': True
+        }
+    } == s3_mock.delete_objects.call_args_list[0][1]
+    assert {
+        "Bucket": "bucket",
+        "Delete": {
+            'Objects': [
+                {'Key': "key", 'VersionId': "v{}".format(i)} for i in range(1001, 1501)
+            ],
+            'Quiet': True
+        }
+    } == s3_mock.delete_objects.call_args_list[1][1]
+
+
+@patch("backend.ecs_tasks.delete_files.delete_files.paginate")
+def test_it_raises_for_deletion_errors(paginate_mock):
+    s3_mock = MagicMock()
+    paginate_mock.return_value = iter([
+        (
+            {"VersionId": "v1", "LastModified": datetime.datetime.now() - datetime.timedelta(minutes=4)},
+            {"VersionId": "v2", "LastModified": datetime.datetime.now() - datetime.timedelta(minutes=3)}
+        ),
+        (
+            {"VersionId": "v3", "LastModified": datetime.datetime.now() - datetime.timedelta(minutes=2)},
+            None
+        )
+    ])
+    s3_mock.delete_objects.return_value = {
+        "Errors": [
+            {"VersionId": "v1", "Key": "key", "Message": "Version not found"}
+        ]
+    }
+    with pytest.raises(DeleteOldVersionsError):
+        delete_old_versions(s3_mock, "bucket", "key", "v4")
+
+
+@patch("backend.ecs_tasks.delete_files.delete_files.paginate")
+def test_it_handles_client_errors_as_deletion_errors(paginate_mock):
+    s3_mock = MagicMock()
+    paginate_mock.side_effect = get_list_object_versions_error()
+    with pytest.raises(DeleteOldVersionsError):
+        delete_old_versions(s3_mock, "bucket", "key", "v3")

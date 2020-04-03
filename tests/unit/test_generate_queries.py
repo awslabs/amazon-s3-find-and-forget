@@ -32,7 +32,7 @@ def test_it_handles_single_columns(batch_sqs_msgs_mock, get_partitions_mock, get
                 "DataCatalogProvider": "glue",
                 "Database": "test_db",
                 "Table": "test_table"
-            }
+            },
         }],
         "DeletionQueue": [{
             "MatchId": "hi",
@@ -41,10 +41,11 @@ def test_it_handles_single_columns(batch_sqs_msgs_mock, get_partitions_mock, get
 
     batch_sqs_msgs_mock.assert_called_with(mock.ANY, [{
         "DataMapperId": "a",
-        'Database': 'test_db',
-        'Table': 'test_table',
-        'Columns': [{'Column': 'customer_id', 'MatchIds': ['hi']}],
-        'PartitionKeys': [{'Key': 'product_category', 'Value': 'Books'}]
+        "Database": "test_db",
+        "Table": "test_table",
+        "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
+        "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
+        "DeleteOldVersions": True
     }])
 
 
@@ -79,12 +80,13 @@ def test_it_handles_multiple_columns(batch_sqs_msgs_mock, get_partitions_mock, g
     batch_sqs_msgs_mock.assert_called_with(mock.ANY, [
         {
             "DataMapperId": "a",
-            'Database': 'test_db',
-            'Table': 'test_table',
-            'Columns': [
-                {'Column': 'customer_id', 'MatchIds': ['hi']},
-                {'Column': 'alt_customer_id', 'MatchIds': ['hi']}],
-            'PartitionKeys': [{'Key': 'product_category', 'Value': 'Books'}]
+            "Database": "test_db",
+            "Table": "test_table",
+            "Columns": [
+                {"Column": "customer_id", "MatchIds": ["hi"]},
+                {"Column": "alt_customer_id", "MatchIds": ["hi"]}],
+            "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
+            "DeleteOldVersions": True
         }
     ])
 
@@ -120,13 +122,14 @@ def test_it_handles_multiple_partition_keys(batch_sqs_msgs_mock, get_partitions_
     batch_sqs_msgs_mock.assert_called_with(mock.ANY, [
         {
             "DataMapperId": "a",
-            'Database': 'test_db',
-            'Table': 'test_table',
-            'Columns': [{'Column': 'customer_id', 'MatchIds': ['hi']}],
-            'PartitionKeys': [
-                {'Key': 'year', 'Value': '2019'},
-                {'Key': 'month', 'Value': '01'}
-            ]
+            "Database": "test_db",
+            "Table": "test_table",
+            "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
+            "PartitionKeys": [
+                {"Key": "year", "Value": "2019"},
+                {"Key": "month", "Value": "01"}
+            ],
+            "DeleteOldVersions": True
         }
     ])
 
@@ -156,39 +159,42 @@ def test_it_handles_multiple_partition_values(batch_sqs_msgs_mock, get_partition
         }],
         "DeletionQueue": [{
             "MatchId": "hi",
-        }]
+        }],
     }, SimpleNamespace())
 
     batch_sqs_msgs_mock.assert_called_with(mock.ANY, [
         {
             "DataMapperId": "a",
-            'Database': 'test_db',
-            'Table': 'test_table',
-            'Columns': [{'Column': 'customer_id', 'MatchIds': ['hi']}],
-            'PartitionKeys': [
-                {'Key': 'year', 'Value': '2018'},
-                {'Key': 'month', 'Value': '12'}
-            ]
+            "Database": "test_db",
+            "Table": "test_table",
+            "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
+            "PartitionKeys": [
+                {"Key": "year", "Value": "2018"},
+                {"Key": "month", "Value": "12"}
+            ],
+            "DeleteOldVersions": True
         },
         {
             "DataMapperId": "a",
-            'Database': 'test_db',
-            'Table': 'test_table',
-            'Columns': [{'Column': 'customer_id', 'MatchIds': ['hi']}],
-            'PartitionKeys': [
-                {'Key': 'year', 'Value': '2019'},
-                {'Key': 'month', 'Value': '01'}
-            ]
+            "Database": "test_db",
+            "Table": "test_table",
+            "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
+            "PartitionKeys": [
+                {"Key": "year", "Value": "2019"},
+                {"Key": "month", "Value": "01"}
+            ],
+            "DeleteOldVersions": True
         },
         {
             "DataMapperId": "a",
-            'Database': 'test_db',
-            'Table': 'test_table',
-            'Columns': [{'Column': 'customer_id', 'MatchIds': ['hi']}],
-            'PartitionKeys': [
-                {'Key': 'year', 'Value': '2019'},
-                {'Key': 'month', 'Value': '02'}
-            ]
+            "Database": "test_db",
+            "Table": "test_table",
+            "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
+            "PartitionKeys": [
+                {"Key": "year", "Value": "2019"},
+                {"Key": "month", "Value": "02"}
+            ],
+            "DeleteOldVersions": True
         }
     ])
 
@@ -196,7 +202,7 @@ def test_it_handles_multiple_partition_values(batch_sqs_msgs_mock, get_partition
 @patch("backend.lambdas.tasks.generate_queries.get_table")
 @patch("backend.lambdas.tasks.generate_queries.get_partitions")
 @patch("backend.lambdas.tasks.generate_queries.batch_sqs_msgs")
-def test_it_propagates_role_for_partitioned_data(batch_sqs_msgs_mock, get_partitions_mock, get_table_mock):
+def test_it_propagates_optional_properties(batch_sqs_msgs_mock, get_partitions_mock, get_table_mock):
     columns = ["customer_id"]
     partition_keys = ["year", "month"]
     partitions = [["2018", "12"], ["2019", "01"]]
@@ -216,6 +222,7 @@ def test_it_propagates_role_for_partitioned_data(batch_sqs_msgs_mock, get_partit
                 "Table": "test_table"
             },
             "RoleArn": "arn:aws:iam::accountid:role/rolename",
+            "DeleteOldVersions": True
         }],
         "DeletionQueue": [{
             "MatchId": "hi",
@@ -225,25 +232,27 @@ def test_it_propagates_role_for_partitioned_data(batch_sqs_msgs_mock, get_partit
     batch_sqs_msgs_mock.assert_called_with(mock.ANY, [
         {
             "DataMapperId": "a",
-            'Database': 'test_db',
-            'Table': 'test_table',
-            'Columns': [{'Column': 'customer_id', 'MatchIds': ['hi']}],
-            'PartitionKeys': [
-                {'Key': 'year', 'Value': '2018'},
-                {'Key': 'month', 'Value': '12'}
+            "Database": "test_db",
+            "Table": "test_table",
+            "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
+            "PartitionKeys": [
+                {"Key": "year", "Value": "2018"},
+                {"Key": "month", "Value": "12"}
             ],
             "RoleArn": "arn:aws:iam::accountid:role/rolename",
+            "DeleteOldVersions": True
         },
         {
             "DataMapperId": "a",
-            'Database': 'test_db',
-            'Table': 'test_table',
-            'Columns': [{'Column': 'customer_id', 'MatchIds': ['hi']}],
-            'PartitionKeys': [
-                {'Key': 'year', 'Value': '2019'},
-                {'Key': 'month', 'Value': '01'}
+            "Database": "test_db",
+            "Table": "test_table",
+            "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
+            "PartitionKeys": [
+                {"Key": "year", "Value": "2019"},
+                {"Key": "month", "Value": "01"}
             ],
             "RoleArn": "arn:aws:iam::accountid:role/rolename",
+            "DeleteOldVersions": True
         }
     ])
 
@@ -296,19 +305,21 @@ def test_it_filters_users_from_non_applicable_tables(batch_sqs_msgs_mock, get_pa
     batch_sqs_msgs_mock.assert_any_call(mock.ANY, [
         {
             "DataMapperId": "A",
-            'Database': 'test_db',
-            'Table': 'A',
-            'Columns': [{'Column': 'customer_id', 'MatchIds': ['123', '456']}],
-            'PartitionKeys': [{'Key': 'product_category', 'Value': 'Books'}]
+            "Database": "test_db",
+            "Table": "A",
+            "Columns": [{"Column": "customer_id", "MatchIds": ["123", "456"]}],
+            "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
+            "DeleteOldVersions": True
         }
     ]),
     batch_sqs_msgs_mock.assert_any_call(mock.ANY, [
         {
             "DataMapperId": "B",
-            'Database': 'test_db',
-            'Table': 'B',
-            'Columns': [{'Column': 'customer_id', 'MatchIds': ['456']}],
-            'PartitionKeys': [{'Key': 'product_category', 'Value': 'Books'}]
+            "Database": "test_db",
+            "Table": "B",
+            "Columns": [{"Column": "customer_id", "MatchIds": ["456"]}],
+            "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
+            "DeleteOldVersions": True
         }
     ])
 
@@ -340,10 +351,11 @@ def test_it_handles_unpartitioned_data(batch_sqs_msgs_mock, get_partitions_mock,
     batch_sqs_msgs_mock.assert_called_with(mock.ANY, [
         {
             "DataMapperId": "a",
-            'Database': 'test_db',
-            'Table': 'test_table',
-            'Columns': [{'Column': 'customer_id', 'MatchIds': ['123']}],
-            'PartitionKeys': [],
+            "Database": "test_db",
+            "Table": "test_table",
+            "Columns": [{"Column": "customer_id", "MatchIds": ["123"]}],
+            "PartitionKeys": [],
+            "DeleteOldVersions": True,
         },
     ])
 
@@ -376,11 +388,12 @@ def test_it_propagates_role_arn_for_unpartitioned_data(batch_sqs_msgs_mock, get_
     batch_sqs_msgs_mock.assert_called_with(mock.ANY, [
         {
             "DataMapperId": "a",
-            'Database': 'test_db',
-            'Table': 'test_table',
-            'Columns': [{'Column': 'customer_id', 'MatchIds': ['123']}],
-            'PartitionKeys': [],
+            "Database": "test_db",
+            "Table": "test_table",
+            "Columns": [{"Column": "customer_id", "MatchIds": ["123"]}],
+            "PartitionKeys": [],
             "RoleArn": "arn:aws:iam::accountid:role/rolename",
+            "DeleteOldVersions": True,
         },
     ])
 

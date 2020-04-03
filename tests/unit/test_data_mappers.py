@@ -48,6 +48,7 @@ def test_it_creates_data_mapper(validate_mapper, table):
             },
             "Format": "parquet",
             "RoleArn": "arn:aws:iam::accountid:role/S3F2DataAccessRole",
+            "DeleteOldVersions": False,
         }),
         "requestContext": autorization_mock
     }, SimpleNamespace())
@@ -68,6 +69,7 @@ def test_it_creates_data_mapper(validate_mapper, table):
                    "Sub": "cognitoSub"
                },
                "RoleArn": "arn:aws:iam::accountid:role/S3F2DataAccessRole",
+               "DeleteOldVersions": False
            } == json.loads(response["body"])
 
 
@@ -102,6 +104,7 @@ def test_it_supports_optionals(validate_mapper, table):
             "Table": "test"
         },
         "Format": "parquet",
+        "DeleteOldVersions": True,
         "RoleArn": "arn:aws:iam::accountid:role/S3F2DataAccessRole",
         "CreatedBy": {
             "Username": "cognitoUsername",
