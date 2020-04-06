@@ -11,6 +11,7 @@ Forget solution.
     - [Using an Existing VPC](#using-an-existing-vpc)
   - [Provisioning Data Access IAM Roles](#provisioning-data-access-iam-roles)
 - [Deploying the Solution](#deploying-the-solution)
+- [Accessing the application](#accessing-the-application)
 - [Configuring Data Mappers](#configuring-data-mappers)
 - [Granting Access to Data](#granting-access-to-data)
   - [Updating Your Bucket Policy](#updating-your-bucket-policy)
@@ -224,6 +225,35 @@ resources.
    - You can monitor the stack creation progress in the "Events" tab.
 10. Note the _WebUIUrl_ displayed in the _Outputs_ tab for the stack. This is
     used to access the application.
+
+## Accessing the application
+
+The solution provides a web user interface and a REST API to allow you to
+integrate it in your own applications.
+
+1. Note the _WebUIUrl_ displayed in the _Outputs_ tab for the stack. This is
+   used to access the application.
+2. When accessing the web user interface for the first time, you will be
+   prompted to insert a username and a password. In the username field, enter
+   the admin e-mail specified during stack creation. In the password field,
+   enter the temporary password sent by the system to the admin e-mail. Then
+   select "Sign In".
+3. Next, you will need to reset the password. Enter a new password and then
+   select "Submit".
+4. Now you should be able to access all the functionalities.
+
+To add more users to the application:
+
+1. Access the [Cognito Console] and choose "Manage User Pools".
+2. Select the solution's User Pool (its name is displayed as
+   _CognitoUserPoolName_ in the _Outputs_ tab for the CloudFormation stack).
+3. Select "Users and Groups" from the menu on the right.
+4. Use this page to create or manage users. For more information, consult the
+   [Managing Users in User Pools Guide].
+
+In order to use the API, you will need to authenticate the requests using the
+User Pool. For more information, consult the [Cognito REST API integration
+guide].
 
 ## Configuring Data Mappers
 
@@ -675,3 +705,8 @@ To delete a stack via the AWS CLI
 [limits]: LIMITS.md
 [aws cloudformation stacksets]:
   https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/what-is-cfnstacksets.html
+[cognito console]: https://console.aws.amazon.com/cognito
+[managing users in user pools guide]:
+  https://docs.aws.amazon.com/cognito/latest/developerguide/managing-users.html
+[cognito rest api integration guide]:
+  https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-invoke-api-integrated-with-cognito-user-pool.html
