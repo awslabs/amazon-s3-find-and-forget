@@ -30,7 +30,7 @@ Resources:
   CognitoUserPool:
     Type: AWS::Cognito::UserPool
     Properties:
-      UserPoolName: !Sub ${ResourcePrefix}UserPoolName
+      UserPoolName: !Sub ${ResourcePrefix}UserPool
       AdminCreateUserConfig:
         AllowAdminCreateUserOnly: true
         InviteMessageTemplate:
@@ -119,6 +119,9 @@ Outputs:
   CognitoUserPoolId:
     Description: Cognito User Pool Id
     Value: !Ref CognitoUserPool
+  CognitoUserPoolName:
+    Description: Cognito User Pool Name
+    Value: !Sub ${ResourcePrefix}UserPool
   CognitoUserPoolClientId:
     Description: Cognito User Pool Client Id
     Value: !Ref CognitoUserPoolClient

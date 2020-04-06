@@ -306,6 +306,8 @@ Outputs:
     Value: !GetAtt AuthStack.Outputs.CognitoUserPoolClientId
   CognitoUserPoolId:
     Value: !GetAtt AuthStack.Outputs.CognitoUserPoolId
+  CognitoUserPoolName:
+    Value: !GetAtt AuthStack.Outputs.CognitoUserPoolName
   DataMapperTable:
     Value: !GetAtt DDBStack.Outputs.DataMapperTable
   DDBStack:
