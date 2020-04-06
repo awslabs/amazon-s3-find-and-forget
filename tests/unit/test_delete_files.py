@@ -12,6 +12,7 @@ import pyarrow.parquet as pq
 import pytest
 import pandas as pd
 from pyarrow.lib import ArrowException
+from urllib.error import URLError
 
 with patch.dict(os.environ, {
     "DELETE_OBJECTS_QUEUE": "https://url/q.fifo",
@@ -339,13 +340,26 @@ def test_it_gracefully_handles_change_message_visibility_failure(mock_emit):
     sqs_message.change_visibility.assert_called()  # Implicit graceful handling
 
 
-@patch("os.getenv", MagicMock(return_value="/some/path"))
-@patch("os.path.isfile", MagicMock(return_value=True))
-def test_it_loads_task_id_from_metadata():
+@patch("os.getenv", MagicMock(return_value="http://metadatauri/path"))
+@patch("urllib.request.urlopen")
+def test_it_fetches_task_id_from_metadata_uri(url_open_mock):
     get_emitter_id.cache_clear()
-    with patch("builtins.open", mock_open(read_data="{\"TaskARN\": \"arn:aws:ecs:us-west-2:012345678910:task/default/2b88376d-aba3-4950-9ddf-bcb0f388a40c\"}")):
-        resp = get_emitter_id()
-        assert "ECSTask_2b88376d-aba3-4950-9ddf-bcb0f388a40c" == resp
+    res = MagicMock()
+    url_open_mock.return_value = res
+    res.read.return_value = b'{"Labels": {"com.amazonaws.ecs.task-arn": "arn/task-id"}}\n'
+    resp = get_emitter_id()
+    assert "ECSTask_task-id" == resp
+
+
+@patch("os.getenv", MagicMock(return_value="http://metadatauri/path"))
+@patch("urllib.request.urlopen")
+def test_it_deafaults_task_id_if_http_issue(url_open_mock):
+    get_emitter_id.cache_clear()
+    res = MagicMock()
+    url_open_mock.return_value = res
+    res.read.side_effect = URLError("foo")
+    resp = get_emitter_id()
+    assert "ECSTask" == resp
 
 
 @patch("os.getenv", MagicMock(return_value=None))
