@@ -171,11 +171,10 @@ def test_it_handles_old_version_delete_failures(mock_handle, mock_delete, mock_s
 @patch("backend.ecs_tasks.delete_files.delete_files.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.delete_files.emit_deletion_event")
 @patch("backend.ecs_tasks.delete_files.delete_files.save")
-@patch("backend.ecs_tasks.delete_files.delete_files.logger")
-def test_warning_logged_for_no_deletions(mock_logger, mock_save, mock_emit, mock_delete, mock_s3, mock_load):
+@patch("backend.ecs_tasks.delete_files.delete_files.handle_error")
+def test_it_handles_no_deletions(mock_handle, mock_save, mock_emit, mock_delete, mock_s3, mock_load):
     mock_s3.S3FileSystem.return_value = mock_s3
-    column = {"Column": "customer_id",
-              "MatchIds": ["12345", "23456"]}
+    column = {"Column": "customer_id", "MatchIds": ["12345", "23456"]}
     parquet_file = MagicMock()
     parquet_file.num_row_groups = 1
     mock_load.return_value = parquet_file
@@ -184,8 +183,9 @@ def test_warning_logged_for_no_deletions(mock_logger, mock_save, mock_emit, mock
     mock_s3.open.assert_called_with("s3://bucket/path/basic.parquet", "rb")
     mock_delete.assert_called_with(parquet_file, [column])
     mock_save.assert_not_called()
-    mock_logger.warning.assert_called()
-    mock_emit.assert_called()
+    mock_emit.assert_not_called()
+    mock_handle.assert_called_with(ANY, ANY, "Unprocessable message: The object s3://bucket/path/basic.parquet "
+                                             "was processed successfully but no rows required deletion")
 
 
 @patch("backend.ecs_tasks.delete_files.delete_files.delete_from_dataframe")
