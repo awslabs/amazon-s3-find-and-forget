@@ -378,16 +378,15 @@ def execute(message_body, receipt_handle):
             # Write new file in-memory
             logger.info("Generating new parquet file without matches")
             out_sink, stats = delete_matches_from_file(infile, cols)
-        if stats["DeletedRows"] > 0:
-            with pa.BufferReader(out_sink.getvalue()) as output_buf:
-                new_version = save(s3, client, output_buf, input_bucket, input_key, source_version)
-                logger.info("New object version: %s", new_version)
-                verify_object_versions_integrity(client, input_bucket, input_key, source_version, new_version)
-            if body.get("DeleteOldVersions"):
-                logger.info("Deleting object {} versions older than version {}".format(input_key, new_version))
-                delete_old_versions(client, input_bucket, input_key, new_version)
-        else:
-            logger.warning("The object %s was processed successfully but no rows required deletion", object_path)
+        if stats["DeletedRows"] == 0:
+            raise ValueError("The object {} was processed successfully but no rows required deletion".format(object_path))
+        with pa.BufferReader(out_sink.getvalue()) as output_buf:
+            new_version = save(s3, client, output_buf, input_bucket, input_key, source_version)
+            logger.info("New object version: %s", new_version)
+            verify_object_versions_integrity(client, input_bucket, input_key, source_version, new_version)
+        if body.get("DeleteOldVersions"):
+            logger.info("Deleting object {} versions older than version {}".format(input_key, new_version))
+            delete_old_versions(client, input_bucket, input_key, new_version)
         msg.delete()
         emit_deletion_event(body, stats)
     except (KeyError, ArrowException) as e:
@@ -464,7 +463,6 @@ class IntegrityCheckFailedError(Exception):
         self.bucket = bucket
         self.key = key
         self.version_id = version_id
-
 
 
 def verify_object_versions_integrity(client, bucket, key, from_version_id, to_version_id):
