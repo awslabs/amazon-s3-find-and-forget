@@ -128,6 +128,8 @@ Resources:
               Value: !Ref DelObjQ
             - Name: ECS_ENABLE_CONTAINER_METADATA
               Value: 'true'
+            - Name: LOG_LEVEL
+              Value: !Ref LogLevel
             - Name: JobTable
               Value: !Ref JobTableName
 

@@ -22,7 +22,7 @@ from pyarrow.lib import ArrowException
 from boto_utils import emit_event, parse_s3_url, get_session, paginate
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(os.getenv("LOG_LEVEL", logging.INFO))
 formatter = logging.Formatter('[%(levelname)s] %(message)s')
 handler = logging.StreamHandler(stream=sys.stdout)
 handler.setFormatter(formatter)
