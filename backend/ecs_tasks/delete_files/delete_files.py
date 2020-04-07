@@ -3,6 +3,7 @@ from collections import Counter
 from collections.abc import Iterable
 import signal
 from functools import lru_cache
+import urllib.request
 from urllib.parse import urlencode, quote_plus
 from operator import itemgetter
 
@@ -211,13 +212,21 @@ def get_grantees(acl, grant_type):
 
 @lru_cache()
 def get_emitter_id():
-    metadata_file = os.getenv("ECS_CONTAINER_METADATA_FILE")
-    if metadata_file and os.path.isfile(metadata_file):
-        with open(metadata_file) as f:
-            metadata = json.load(f)
-        return "ECSTask_{}".format(metadata.get("TaskARN").rsplit("/", 1)[1])
-    else:
-        return "ECSTask"
+    metadata_endpoint = os.getenv("ECS_CONTAINER_METADATA_URI")
+    if metadata_endpoint:
+        res = ""
+        try:
+            res = urllib.request.urlopen(metadata_endpoint, timeout=1).read()
+            metadata = json.loads(res)
+            return "ECSTask_{}".format(metadata["Labels"]["com.amazonaws.ecs.task-arn"].rsplit("/", 1)[1])
+        except urllib.error.URLError as e:
+            logger.warning("Error when accessing the metadata service: {}".format(e.reason))
+        except (AttributeError, KeyError, IndexError) as e:
+            logger.warning("Malformed response from the metadata service: {}".format(res))
+        except Exception as e:
+            logger.warning("Error when getting emitter id from metadata service: {}".format(str(e)))
+    
+    return "ECSTask"
 
 
 @lru_cache()
