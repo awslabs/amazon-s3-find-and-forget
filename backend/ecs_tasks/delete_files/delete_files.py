@@ -212,13 +212,21 @@ def get_grantees(acl, grant_type):
 
 @lru_cache()
 def get_emitter_id():
-    try:
-        metadata_endpoint = os.getenv("ECS_CONTAINER_METADATA_URI")
-        res = urllib.request.urlopen(metadata_endpoint).read()
-        metadata = json.loads(res)
-        return "ECSTask_{}".format(metadata.get("Labels").get("com.amazonaws.ecs.task-arn").rsplit("/", 1)[1])
-    except Exception as e:
-        return "ECSTask"
+    metadata_endpoint = os.getenv("ECS_CONTAINER_METADATA_URI")
+    if metadata_endpoint:
+        res = ""
+        try:
+            res = urllib.request.urlopen(metadata_endpoint, timeout=1).read()
+            metadata = json.loads(res)
+            return "ECSTask_{}".format(metadata["Labels"]["com.amazonaws.ecs.task-arn"].rsplit("/", 1)[1])
+        except urllib.error.URLError as e:
+            logger.warning("Error when accessing the metadata service: {}".format(e.reason))
+        except (AttributeError, KeyError, IndexError) as e:
+            logger.warning("Malformed response from the metadata service: {}".format(res))
+        except Exception as e:
+            logger.warning("Error when getting emitter id from metadata service: {}".format(str(e)))
+    
+    return "ECSTask"
 
 
 @lru_cache()
