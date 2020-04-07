@@ -28,7 +28,7 @@ AWS_SECRET_ACCESS_KEY=$(echo "${SESSION_DATA}" | jq -r ".SecretAccessKey")
 AWS_SESSION_TOKEN=$(echo "${SESSION_DATA}" | jq -r ".SessionToken")
 # Run the container with local changes mounted
 docker run \
-	-v "$(pwd)"/backend/ecs_tasks/delete_files/delete_files.py:/app/delete_files.py:ro \
+	-v "$(pwd)"/backend/ecs_tasks/delete_files/:/app/:ro \
 	-e DELETE_OBJECTS_QUEUE="${QUEUE_URL}" \
 	-e DLQ="${DLQ_URL}" \
 	-e JobTable="${JOB_TABLE}" \
