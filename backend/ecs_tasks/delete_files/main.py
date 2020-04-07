@@ -129,7 +129,7 @@ def execute(queue_url, message_body, receipt_handle):
         err_message = "Object version integrity check failed: {}".format(err_description)
         handle_error(msg, message_body, err_message)
         rollback_object_version(client, bucket, key, version_id,
-                                on_error=lambda e: handle_error(None, "{}", e, "ObjectRollbackFailed", False))
+                                on_error=lambda err: handle_error(None, "{}", err, "ObjectRollbackFailed", False))
     except Exception as e:
         err_message = "Unknown error during message processing: {}".format(str(e))
         handle_error(msg, message_body, err_message)
