@@ -1,4 +1,6 @@
-from mock import patch, MagicMock, mock_open
+from urllib.error import URLError
+
+from mock import patch, MagicMock
 
 import json
 import pytest
@@ -51,20 +53,66 @@ def test_it_raises_for_missing_job_id():
         emit_failure_event("{}", "Some error", "deletion")
 
 
-@patch("os.getenv", MagicMock(return_value="/some/path"))
-@patch("os.path.isfile", MagicMock(return_value=True))
-def test_it_loads_task_id_from_metadata():
+@patch("os.getenv", MagicMock(return_value="http://metadatauri/path"))
+@patch("urllib.request.urlopen")
+def test_it_fetches_task_id_from_metadata_uri(url_open_mock):
     get_emitter_id.cache_clear()
-    with patch("builtins.open", mock_open(read_data="{\"TaskARN\": \"arn:aws:ecs:us-west-2:012345678910:task/default/2b88376d-aba3-4950-9ddf-bcb0f388a40c\"}")):
-        resp = get_emitter_id()
-        assert "ECSTask_2b88376d-aba3-4950-9ddf-bcb0f388a40c" == resp
+    res = MagicMock()
+    url_open_mock.return_value = res
+    res.read.return_value = b'{"Labels": {"com.amazonaws.ecs.task-arn": "arn/task-id"}}\n'
+    resp = get_emitter_id()
+    assert "ECSTask_task-id" == resp
+    url_open_mock.assert_called_with("http://metadatauri/path", timeout=1)
+
+
+@patch("os.getenv", MagicMock(return_value="http://metadatauri/path"))
+@patch("urllib.request.urlopen")
+@patch("backend.ecs_tasks.delete_files.events.logger")
+def test_it_defaults_task_id_if_urlerror(logger_mock, url_open_mock):
+    get_emitter_id.cache_clear()
+    res = MagicMock()
+    url_open_mock.return_value = res
+    res.read.side_effect = URLError("foo")
+    resp = get_emitter_id()
+    assert "ECSTask" == resp
+    logger_mock.warning.assert_called_with("Error when accessing the metadata service: foo")
+
+
+@patch("os.getenv", MagicMock(return_value="http://metadatauri/path"))
+@patch("urllib.request.urlopen")
+@patch("backend.ecs_tasks.delete_files.events.logger")
+def test_it_defaults_task_id_if_malformed_response(logger_mock, url_open_mock):
+    get_emitter_id.cache_clear()
+    res = MagicMock()
+    url_open_mock.return_value = res
+    res.read.return_value = b'{}\n'
+    resp = get_emitter_id()
+    assert "ECSTask" == resp
+    logger_mock.warning.assert_called_with("Malformed response from the metadata service: b'{}\\n'")
+
+
+@patch("os.getenv", MagicMock(return_value="http://metadatauri/path"))
+@patch("urllib.request.urlopen")
+@patch("backend.ecs_tasks.delete_files.events.logger")
+def test_it_defaults_task_id_if_generic_error(logger_mock, url_open_mock):
+    get_emitter_id.cache_clear()
+    res = MagicMock()
+    url_open_mock.return_value = res
+    res.read.side_effect = NameError("error")
+    resp = get_emitter_id()
+    assert "ECSTask" == resp
+    logger_mock.warning.assert_called_with("Error when getting emitter id from metadata service: error")
 
 
 @patch("os.getenv", MagicMock(return_value=None))
-def test_it_provides_default_id():
+@patch("urllib.request.urlopen")
+@patch("backend.ecs_tasks.delete_files.events.logger")
+def test_it_defaults_task_id_if_env_variable_not_set(logger_mock, url_open_mock):
     get_emitter_id.cache_clear()
     resp = get_emitter_id()
     assert "ECSTask" == resp
+    logger_mock.warning.assert_not_called()
+    url_open_mock.assert_not_called()
 
 
 def test_it_sanitises_matches(message_stub):
