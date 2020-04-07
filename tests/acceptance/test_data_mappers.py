@@ -29,7 +29,8 @@ def test_it_creates_data_mapper(api_client, data_mapper_base_endpoint, data_mapp
             "Table": table["Table"]
         },
         "Format": "parquet",
-        "RoleArn": "arn:aws:iam::123456789012:role/S3F2DataAccessRole"
+        "RoleArn": "arn:aws:iam::123456789012:role/S3F2DataAccessRole",
+        "DeleteOldVersions": False
     }
     # Act
     response = api_client.put("{}/{}".format(data_mapper_base_endpoint, key), json=data_mapper)
@@ -40,6 +41,7 @@ def test_it_creates_data_mapper(api_client, data_mapper_base_endpoint, data_mapp
         "Username": "aws-uk-sa-builders@amazon.com",
         "Sub": mock.ANY
     }
+    expected["DeleteOldVersions"] = False
     # Check the response is ok
     assert 201 == response.status_code
     assert expected == response_body
@@ -76,6 +78,7 @@ def test_it_creates_without_optionals(api_client, data_mapper_base_endpoint, dat
         "Username": "aws-uk-sa-builders@amazon.com",
         "Sub": mock.ANY
     }
+    expected["DeleteOldVersions"] = True
     # Check the response is ok
     assert 201 == response.status_code
     assert expected == response_body
