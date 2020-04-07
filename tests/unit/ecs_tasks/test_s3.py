@@ -538,3 +538,12 @@ def test_it_handles_error_for_client_error():
     mock_callback.assert_called_with("ClientError: An error occurred (Unknown) when calling the DeleteObject "
                                      "operation: Unknown. Version rollback caused by version integrity conflict "
                                      "failed")
+
+
+def test_it_handles_error_for_generic_errors():
+    s3_mock = MagicMock()
+    s3_mock.delete_object.side_effect = RuntimeError("Some issue")
+    mock_callback = MagicMock()
+    result = rollback_object_version(s3_mock, 'bucket', 'requirements.txt', "version23", on_error=mock_callback)
+    mock_callback.assert_called_with("Unknown error: Some issue. Version rollback caused by version integrity "
+                                     "conflict failed")
