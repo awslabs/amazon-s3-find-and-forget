@@ -20,16 +20,6 @@ with patch.dict(os.environ, {
 pytestmark = [pytest.mark.unit, pytest.mark.ecs_tasks]
 
 
-def message_stub(**kwargs):
-    return json.dumps({
-        "JobId": "1234",
-        "Object": "s3://bucket/path/basic.parquet",
-        "Columns": [{"Column": "customer_id", "MatchIds": ["12345", "23456"]}],
-        "DeleteOldVersions": False,
-        **kwargs
-    })
-
-
 def get_list_object_versions_error():
     return ClientError({
         'Error': {
@@ -50,7 +40,8 @@ def get_list_object_versions_error():
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.emit_deletion_event")
 @patch("backend.ecs_tasks.delete_files.main.save")
-def test_happy_path_when_queue_not_empty(mock_save, mock_emit, mock_delete, mock_s3, mock_load, mock_session, mock_verify_integrity):
+def test_happy_path_when_queue_not_empty(mock_save, mock_emit, mock_delete, mock_s3, mock_load, mock_session,
+                                         mock_verify_integrity, message_stub):
     mock_s3.S3FileSystem.return_value = mock_s3
     column = {"Column": "customer_id", "MatchIds": ["12345", "23456"]}
     parquet_file = MagicMock()
@@ -83,7 +74,7 @@ def test_happy_path_when_queue_not_empty(mock_save, mock_emit, mock_delete, mock
 @patch("backend.ecs_tasks.delete_files.main.load_parquet")
 @patch("backend.ecs_tasks.delete_files.main.s3fs")
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
-def test_it_assumes_role(mock_delete, mock_s3, mock_load, mock_session):
+def test_it_assumes_role(mock_delete, mock_s3, mock_load, mock_session, message_stub):
     mock_s3.S3FileSystem.return_value = mock_s3
     parquet_file = MagicMock()
     parquet_file.num_row_groups = 1
@@ -108,7 +99,7 @@ def test_it_assumes_role(mock_delete, mock_s3, mock_load, mock_session):
 @patch("backend.ecs_tasks.delete_files.main.load_parquet")
 @patch("backend.ecs_tasks.delete_files.main.s3fs")
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
-def test_it_removes_old_versions(mock_delete, mock_s3, mock_load, mock_delete_versions, mock_save):
+def test_it_removes_old_versions(mock_delete, mock_s3, mock_load, mock_delete_versions, mock_save, message_stub):
     mock_s3.S3FileSystem.return_value = mock_s3
     parquet_file = MagicMock()
     parquet_file.num_row_groups = 1
@@ -137,7 +128,7 @@ def test_it_removes_old_versions(mock_delete, mock_s3, mock_load, mock_delete_ve
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
 def test_it_handles_old_version_delete_failures(mock_handle, mock_delete, mock_s3, mock_load, mock_delete_versions,
-                                                mock_save):
+                                                mock_save, message_stub):
     mock_s3.S3FileSystem.return_value = mock_s3
     parquet_file = MagicMock()
     parquet_file.num_row_groups = 1
@@ -164,7 +155,7 @@ def test_it_handles_old_version_delete_failures(mock_handle, mock_delete, mock_s
 @patch("backend.ecs_tasks.delete_files.main.emit_deletion_event")
 @patch("backend.ecs_tasks.delete_files.main.save")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
-def test_it_handles_no_deletions(mock_handle, mock_save, mock_emit, mock_delete, mock_s3, mock_load):
+def test_it_handles_no_deletions(mock_handle, mock_save, mock_emit, mock_delete, mock_s3, mock_load, message_stub):
     mock_s3.S3FileSystem.return_value = mock_s3
     column = {"Column": "customer_id", "MatchIds": ["12345", "23456"]}
     parquet_file = MagicMock()
@@ -251,7 +242,7 @@ def test_it_gracefully_handles_change_message_visibility_failure(mock_emit):
 @patch("backend.ecs_tasks.delete_files.main.load_parquet")
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
-def test_it_handles_missing_col_exceptions(mock_error_handler, mock_delete, mock_load):
+def test_it_handles_missing_col_exceptions(mock_error_handler, mock_delete, mock_load, message_stub):
     # Arrange
     parquet_file = MagicMock()
     parquet_file.num_row_groups = 1
@@ -271,7 +262,7 @@ def test_it_handles_missing_col_exceptions(mock_error_handler, mock_delete, mock
 @patch("backend.ecs_tasks.delete_files.main.load_parquet")
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
-def test_it_handles_arrow_exceptions(mock_error_handler, mock_delete, mock_load):
+def test_it_handles_arrow_exceptions(mock_error_handler, mock_delete, mock_load, message_stub):
     # Arrange
     parquet_file = MagicMock()
     parquet_file.num_row_groups = 1
@@ -307,7 +298,7 @@ def test_it_validates_messages_with_invalid_body(mock_error_handler):
 @patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.s3fs")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
-def test_it_handles_s3_permission_issues(mock_error_handler, mock_s3):
+def test_it_handles_s3_permission_issues(mock_error_handler, mock_s3, message_stub):
     mock_s3.S3FileSystem.return_value = mock_s3
     mock_s3.open.side_effect = ClientError({}, "GetObject")
     # Act
@@ -322,7 +313,7 @@ def test_it_handles_s3_permission_issues(mock_error_handler, mock_s3):
 @patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.s3fs")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
-def test_it_handles_io_errors(mock_error_handler, mock_s3):
+def test_it_handles_io_errors(mock_error_handler, mock_s3, message_stub):
     # Arrange
     mock_s3.S3FileSystem.return_value = mock_s3
     mock_s3.open.side_effect = IOError("an error")
@@ -337,7 +328,7 @@ def test_it_handles_io_errors(mock_error_handler, mock_s3):
 @patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.s3fs")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
-def test_it_handles_file_too_big(mock_error_handler, mock_s3):
+def test_it_handles_file_too_big(mock_error_handler, mock_s3, message_stub):
     # Arrange
     mock_s3.S3FileSystem.return_value = mock_s3
     mock_s3.open.side_effect = MemoryError("Too big")
@@ -352,7 +343,7 @@ def test_it_handles_file_too_big(mock_error_handler, mock_s3):
 @patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.s3fs")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
-def test_it_handles_generic_error(mock_error_handler, mock_s3):
+def test_it_handles_generic_error(mock_error_handler, mock_s3, message_stub):
     # Arrange
     mock_s3.S3FileSystem.return_value = mock_s3
     mock_s3.open.side_effect = RuntimeError("Some Error")
@@ -365,7 +356,7 @@ def test_it_handles_generic_error(mock_error_handler, mock_s3):
 @patch("backend.ecs_tasks.delete_files.main.validate_bucket_versioning")
 @patch("backend.ecs_tasks.delete_files.main.s3fs")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
-def test_it_handles_unversioned_buckets(mock_error_handler, mock_s3, mock_versioning):
+def test_it_handles_unversioned_buckets(mock_error_handler, mock_s3, mock_versioning, message_stub):
     # Arrange
     mock_s3.S3FileSystem.return_value = mock_s3
     mock_versioning.side_effect = ValueError("Versioning validation Error")
@@ -386,7 +377,7 @@ def test_it_handles_unversioned_buckets(mock_error_handler, mock_s3, mock_versio
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
 @patch("backend.ecs_tasks.delete_files.main.save")
-def test_it_provides_logs_for_acl_fail(mock_save, mock_error_handler, mock_delete, mock_load):
+def test_it_provides_logs_for_acl_fail(mock_save, mock_error_handler, mock_delete, mock_load, message_stub):
     parquet_file = MagicMock()
     parquet_file.num_row_groups = 1
     mock_load.return_value = parquet_file
@@ -411,7 +402,9 @@ def test_it_provides_logs_for_acl_fail(mock_save, mock_error_handler, mock_delet
 @patch("backend.ecs_tasks.delete_files.main.load_parquet")
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
-def test_it_provides_logs_for_failed_version_integrity_check_and_performs_rollback(mock_error_handler, mock_delete, mock_load, mock_verify_integrity, rollback_mock):
+def test_it_provides_logs_for_failed_version_integrity_check_and_performs_rollback(mock_error_handler, mock_delete,
+                                                                                   mock_load, mock_verify_integrity,
+                                                                                   rollback_mock, message_stub):
     parquet_file = MagicMock()
     parquet_file.num_row_groups = 1
     mock_load.return_value = parquet_file
@@ -440,7 +433,8 @@ def test_it_provides_logs_for_failed_version_integrity_check_and_performs_rollba
 @patch("backend.ecs_tasks.delete_files.main.load_parquet")
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
-def test_it_provides_logs_for_get_latest_version_fail(mock_error_handler, mock_delete, mock_load, mock_verify_integrity):
+def test_it_provides_logs_for_get_latest_version_fail(mock_error_handler, mock_delete, mock_load,
+                                                      mock_verify_integrity, message_stub):
     parquet_file = MagicMock()
     parquet_file.num_row_groups = 1
     mock_load.return_value = parquet_file
@@ -464,7 +458,8 @@ def test_it_provides_logs_for_get_latest_version_fail(mock_error_handler, mock_d
 @patch("backend.ecs_tasks.delete_files.main.load_parquet")
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
-def test_it_provides_logs_for_failed_rollback_client_error(mock_error_handler, mock_delete, mock_load, mock_verify_integrity):
+def test_it_provides_logs_for_failed_rollback_client_error(mock_error_handler, mock_delete, mock_load,
+                                                           mock_verify_integrity, message_stub):
     parquet_file = MagicMock()
     parquet_file.num_row_groups = 1
     mock_load.return_value = parquet_file
@@ -496,7 +491,8 @@ def test_it_provides_logs_for_failed_rollback_client_error(mock_error_handler, m
 @patch("backend.ecs_tasks.delete_files.main.load_parquet")
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
-def test_it_provides_logs_for_failed_rollback_generic_error(mock_error_handler, mock_delete, mock_load, mock_verify_integrity):
+def test_it_provides_logs_for_failed_rollback_generic_error(mock_error_handler, mock_delete, mock_load,
+                                                            mock_verify_integrity, message_stub):
     parquet_file = MagicMock()
     parquet_file.num_row_groups = 1
     mock_load.return_value = parquet_file

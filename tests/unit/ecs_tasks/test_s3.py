@@ -15,16 +15,6 @@ from backend.ecs_tasks.delete_files.s3 import get_requester_payment, get_grantee
 pytestmark = [pytest.mark.unit, pytest.mark.ecs_tasks]
 
 
-def message_stub(**kwargs):
-    return json.dumps({
-        "JobId": "1234",
-        "Object": "s3://bucket/path/basic.parquet",
-        "Columns": [{"Column": "customer_id", "MatchIds": ["12345", "23456"]}],
-        "DeleteOldVersions": False,
-        **kwargs
-    })
-
-
 def get_list_object_versions_error():
     return ClientError({
         'Error': {
