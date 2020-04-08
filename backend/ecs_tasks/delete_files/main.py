@@ -1,3 +1,4 @@
+import argparse
 import json
 import os
 import sys
@@ -26,9 +27,6 @@ handler = logging.StreamHandler(stream=sys.stdout)
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
-sqs = boto3.resource('sqs', endpoint_url="https://sqs.{}.amazonaws.com".format(os.getenv("AWS_DEFAULT_REGION")))
-queue = sqs.Queue(os.getenv("DELETE_OBJECTS_QUEUE"))
-
 
 def handle_error(sqs_msg, message_body, err_message, event_name="ObjectUpdateFailed", change_msg_visibility=True):
     logger.error(sanitize_message(err_message, message_body))
@@ -42,11 +40,12 @@ def handle_error(sqs_msg, message_body, err_message, event_name="ObjectUpdateFai
         logger.error("Unable to emit failure event: %s", str(e))
 
     if change_msg_visibility:
+        print(sqs_msg.meta.client.exceptions.MessageNotInflight)
         try:
             sqs_msg.change_visibility(VisibilityTimeout=0)
         except (
-                sqs.meta.client.exceptions.MessageNotInflight,
-                sqs.meta.client.exceptions.ReceiptHandleIsInvalid,
+                sqs_msg.meta.client.exceptions.MessageNotInflight,
+                sqs_msg.meta.client.exceptions.ReceiptHandleIsInvalid,
         ) as e:
             logger.error("Unable to change message visibility: %s", str(e))
 
@@ -59,8 +58,9 @@ def validate_message(message):
             raise ValueError("Malformed message. Missing key: %s", k)
 
 
-def execute(message_body, receipt_handle):
+def execute(queue_url, message_body, receipt_handle):
     logger.info("Message received")
+    queue = get_queue(queue_url)
     msg = queue.Message(receipt_handle)
     try:
         # Parse and validate incoming message
@@ -129,7 +129,7 @@ def execute(message_body, receipt_handle):
         err_message = "Object version integrity check failed: {}".format(err_description)
         handle_error(msg, message_body, err_message)
         rollback_object_version(client, bucket, key, version_id,
-                                on_error=lambda e: handle_error(None, "{}", e, "ObjectRollbackFailed", False))
+                                on_error=lambda err: handle_error(None, "{}", err, "ObjectRollbackFailed", False))
     except Exception as e:
         err_message = "Unknown error during message processing: {}".format(str(e))
         handle_error(msg, message_body, err_message)
@@ -146,19 +146,42 @@ def kill_handler(msgs, process_pool):
     sys.exit(1 if len(msgs) > 0 else 0)
 
 
-if __name__ == '__main__':
+def get_queue(queue_url, **resource_kwargs):
+    if not resource_kwargs.get("endpoint_url") and os.getenv("AWS_DEFAULT_REGION"):
+        resource_kwargs["endpoint_url"] = "https://sqs.{}.amazonaws.com".format(os.getenv("AWS_DEFAULT_REGION"))
+    sqs = boto3.resource('sqs', **resource_kwargs)
+    return sqs.Queue(queue_url)
+
+
+def main(queue_url, max_messages, wait_time, sleep_time):
     logger.info("CPU count for system: %s", cpu_count())
     messages = []
+    queue = get_queue(queue_url)
     with Pool(maxtasksperchild=1) as pool:
         signal.signal(signal.SIGINT, lambda *_: kill_handler(messages, pool))
         signal.signal(signal.SIGTERM, lambda *_: kill_handler(messages, pool))
         while 1:
             logger.info("Fetching messages...")
-            messages = queue.receive_messages(WaitTimeSeconds=5, MaxNumberOfMessages=1)
+            messages = queue.receive_messages(WaitTimeSeconds=wait_time, MaxNumberOfMessages=max_messages)
             if len(messages) == 0:
                 logger.info("No messages. Sleeping")
-                time.sleep(30)
+                time.sleep(sleep_time)
             else:
-                processes = [(m.body, m.receipt_handle) for m in messages]
+                processes = [(queue_url, m.body, m.receipt_handle) for m in messages]
                 pool.starmap(execute, processes)
                 messages = []
+
+
+def parse_args(args):
+    parser = argparse.ArgumentParser(description="Read and process new deletion tasks from a deletion queue")
+    parser.add_argument("--wait_time", type=int, default=5)
+    parser.add_argument("--max_messages", type=int, default=1)
+    parser.add_argument("--sleep_time", type=int, default=30)
+    parser.add_argument("--queue_url", type=str, default=os.getenv("DELETE_OBJECTS_QUEUE"))
+    return parser.parse_args(args)
+
+
+if __name__ == "__main__":
+    opts = parse_args(sys.argv[1:])
+    main(opts.queue_url, opts.max_messages, opts.wait_time, opts.sleep_time)
+
