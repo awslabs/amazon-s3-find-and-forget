@@ -64,6 +64,9 @@ generate-api-docs:
 	npx openapi-generator generate -i ./templates/api.definition.yml -g markdown -t ./docs/templates/ -o docs/api
 	git add docs/api
 
+.PHONY: generate-pip-requirements
+generate-pip-requirements: $(patsubst %.in,%.txt,$(shell find . -type f -name requirements.in))
+
 .PHONY: lint-cfn
 lint-cfn:
 	cfn-lint templates/* --ignore-templates=templates/api.definition.yml
@@ -148,3 +151,9 @@ test:
 
 version:
 	@echo $(shell cfn-flip templates/template.yaml | python -c 'import sys, json; print(json.load(sys.stdin)["Mappings"]["Solution"]["Constants"]["Version"])')
+
+requirements.txt: requirements.in
+	pip-compile -q -o $@ $<
+
+%/requirements.txt: %/requirements.in
+	pip-compile -q -o $@ $<
