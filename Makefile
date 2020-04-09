@@ -152,7 +152,7 @@ test:
 version:
 	@echo $(shell cfn-flip templates/template.yaml | python -c 'import sys, json; print(json.load(sys.stdin)["Mappings"]["Solution"]["Constants"]["Version"])')
 
-requirements.txt: requirements.in
+requirements.txt: requirements.in $(shell awk '/^-r / { print $$2 }' requirements.in)
 	pip-compile -q -o $@ $<
 
 %/requirements.txt: %/requirements.in
