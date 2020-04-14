@@ -50,6 +50,7 @@ format-cfn:
 	cat templates/template.yaml | python -c 'exec("""import fileinput\nfound=False\nfor line in fileinput.input():\n    if not found and "Description:" in line:\n        found=True\n        line=$(DESCRIPTION).rstrip()\n    print(line.rstrip())""")' > templates/template_temp.yaml
 	rm templates/template.yaml
 	mv templates/template_temp.yaml templates/template.yaml
+	git add templates/*
 
 .PHONY: format-docs
 format-docs:
