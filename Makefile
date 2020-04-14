@@ -43,6 +43,14 @@ deploy-artefacts:
 	make package-artefacts
 	aws s3 cp build.zip s3://$(TEMP_BUCKET)/amazon-s3-find-and-forget/$(VERSION)/build.zip
 
+.PHONY: format-cfn
+format-cfn:
+	$(eval VERSION := $(shell $(MAKE) -s version))
+	$(eval DESCRIPTION := "Description: Amazon S3 Find and Forget (uksb-1q2j8beb0) (version:$(VERSION))")
+	cat templates/template.yaml | python -c 'exec("""import fileinput\nfound=False\nfor line in fileinput.input():\n    if not found and "Description:" in line:\n        found=True\n        line=$(DESCRIPTION).rstrip()\n    print(line.rstrip())""")' > templates/template_temp.yaml
+	rm templates/template.yaml
+	mv templates/template_temp.yaml templates/template.yaml
+
 .PHONY: format-docs
 format-docs:
 	npx prettier-eslint ./*.md ./docs/*.md --write --prose-wrap always
