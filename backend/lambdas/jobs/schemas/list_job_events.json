@@ -3,6 +3,26 @@
     "title": "List Job Events Handler",
     "type": "object",
     "properties": {
+        "multiValueQueryStringParameters": {
+            "type": [ "object", "null" ],
+            "properties": {
+                "filter": {
+                    "oneOf": [
+                        {
+                            "type": "string",
+                            "pattern": "^(EventName)([=><])([a-zA-Z0-9]+)$"
+                        },
+                        {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "pattern": "^(EventName)([=])([a-zA-Z0-9]+)$"
+                            }
+                        }
+                    ]
+                }
+            }
+        },
         "queryStringParameters": {
             "description": "Query string parameters for the request",
             "type": [ "object", "null" ],
@@ -14,8 +34,11 @@
                 },
                 "page_size": {
                     "description": "Maximum page size",
+                    "type": "string"
+                },
+                "filter": {
                     "type": "string",
-                    "pattern": "^[0-9]+$"
+                    "pattern": "^(EventName)([=><])([a-zA-Z0-9]+)$"
                 }
             }
         }

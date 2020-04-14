@@ -5,6 +5,7 @@ from types import SimpleNamespace
 
 import mock
 import pytest
+from boto3.dynamodb.conditions import And, Attr
 from botocore.exceptions import ClientError
 from mock import patch, ANY
 
@@ -144,7 +145,7 @@ def test_it_respects_jobs_events_page_size(table):
     table.query.assert_called_with(
         KeyConditionExpression=mock.ANY,
         ScanIndexForward=True,
-        Limit=4,
+        Limit=ANY,
         FilterExpression=mock.ANY,
         ExclusiveStartKey=mock.ANY,
     )
@@ -186,16 +187,16 @@ def test_it_accepts_starting_watermark(table):
     resp_body = json.loads(response["body"])
     assert 200 == response["statusCode"]
     assert "NextStart" in resp_body
-    table.query.assert_called_with(
-        KeyConditionExpression=mock.ANY,
-        ScanIndexForward=mock.ANY,
-        Limit=mock.ANY,
-        FilterExpression=mock.ANY,
-        ExclusiveStartKey={
+    assert {
+        "KeyConditionExpression": mock.ANY,
+        "ScanIndexForward": mock.ANY,
+        "Limit": mock.ANY,
+        "FilterExpression" : mock.ANY,
+        "ExclusiveStartKey": {
             "Id": "test",
             "Sk": "0"
-        },
-    )
+        }
+    } == table.query.call_args_list[0][1]
 
 
 @patch("backend.lambdas.jobs.handlers.table")
@@ -262,6 +263,59 @@ def test_it_does_not_return_watermark_if_last_page_reached(table):
         resp_body = json.loads(response["body"])
         assert 200 == response["statusCode"]
         assert "NextStart" not in resp_body
+
+
+@patch("backend.lambdas.jobs.handlers.table")
+def test_it_continues_retrieving_results_till_no_more_exist(table):
+    stub = job_event_stub()
+    table.get_item.return_value = job_stub()
+    table.query.side_effect = [
+        {"Items": [stub], "LastEvaluatedKey": {"Id": "test", "Sk": "12345#test"}},
+        {"Items": [stub], "LastEvaluatedKey": {"Id": "test", "Sk": "23456#test"}},
+        {"Items": [stub]},
+    ]
+    response = handlers.list_job_events_handler({
+        "pathParameters": {"job_id": "test"},
+        "queryStringParameters": {"start_at": "0"},
+    }, SimpleNamespace())
+    resp_body = json.loads(response["body"])
+    assert 200 == response["statusCode"]
+    assert "NextStart" in resp_body
+    assert 3 == table.query.call_count
+    assert 3 == len(resp_body["JobEvents"])
+
+
+@patch("backend.lambdas.jobs.handlers.table")
+def test_it_applies_filters(table):
+    stub = job_event_stub()
+    table.get_item.return_value = job_stub()
+    table.query.return_value = {"Items": [stub]}
+    response = handlers.list_job_events_handler({
+        "pathParameters": {"job_id": "test"},
+        "queryStringParameters": {"start_at": "0"},
+        "multiValueQueryStringParameters": {"filter": ["EventName=QuerySucceeded"]}
+    }, SimpleNamespace())
+    resp_body = json.loads(response["body"])
+    assert 200 == response["statusCode"]
+    assert "NextStart" in resp_body
+    assert 1 == table.query.call_count
+    assert 1 == len(resp_body["JobEvents"])
+    # Filter expression should be an And condition with 2 components
+    # get_expression()["values"] returns the filters being applied as part of the And condition
+    filter_expression = table.query.call_args_list[0][1]["FilterExpression"]
+    assert isinstance(table.query.call_args_list[0][1]["FilterExpression"], And)
+    assert Attr("Type").eq("JobEvent") in filter_expression.get_expression()["values"]
+    assert Attr("EventName").begins_with("QuerySucceeded") in filter_expression.get_expression()["values"]
+    assert 2 == len(filter_expression.get_expression()["values"])
+
+
+def test_it_rejects_invalid_filters():
+    response = handlers.list_job_events_handler({
+        "pathParameters": {"job_id": "test"},
+        "queryStringParameters": {"start_at": "0"},
+        "multiValueQueryStringParameters": {"filter": ["Invalid=Filter"]}
+    }, SimpleNamespace())
+    assert 422 == response["statusCode"]
 
 
 @patch("backend.lambdas.jobs.handlers.table")

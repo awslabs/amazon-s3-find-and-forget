@@ -45,6 +45,7 @@ Name | Type | Description  | Notes
  **JobId** | **String**| Job ID path parameter | [default to null]
  **StartAt** | **String**| Start at watermark query string parameter | [optional] [default to 0]
  **PageSize** | **Integer**| Page size query string parameter | [optional] [default to null]
+ **Filter** | [**oneOf&lt;string,array&gt;**](../Models/.md)| Page size query string parameter | [optional] [default to null]
 
 ### Return type
 

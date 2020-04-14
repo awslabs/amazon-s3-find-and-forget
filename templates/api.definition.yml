@@ -212,6 +212,18 @@ paths:
       parameters:
         - '$ref': '#/components/parameters/StartAtQS'
         - '$ref': '#/components/parameters/PageSizeQS'
+        - in: "query"
+          name: "filter"
+          required: "false"
+          schema:
+            oneOf:
+              - type: "string"
+              - type: "array"
+                items:
+                  type: "string"
+                  pattern: "^(EventName)([=><])([a-zA-Z0-9]+)$"
+            pattern: "^(EventName)([=><])([a-zA-Z0-9]+)$"
+          description: "Page size query string parameter"
       responses:
         '200':
           description: "OK"

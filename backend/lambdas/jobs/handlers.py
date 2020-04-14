@@ -84,7 +84,14 @@ def list_jobs_handler(event, context):
 @request_validator(load_schema("list_job_events"))
 @catch_errors
 def list_job_events_handler(event, context):
+    # Input parsing
     job_id = event["pathParameters"]["job_id"]
+    mvqs = event.get("multiValueQueryStringParameters", {})
+    qs = event.get("queryStringParameters")
+    if not qs:
+        qs = {}
+    page_size = int(qs.get("page_size", 20))
+    start_at = qs.get("start_at", "0")
     # Check the job exists
     job = table.get_item(
         Key={
@@ -95,31 +102,38 @@ def list_job_events_handler(event, context):
 
     watermark_boundary_mu = job.get("JobFinishTime", utc_timestamp()) * 1000
 
-    qs = event.get("queryStringParameters")
-    if not qs:
-        qs = {}
-    page_size = int(qs.get("page_size", 20))
-    start_at = qs.get("start_at", "0")
-
     # Check the watermark is not "future"
     if int(start_at.split("#")[0]) > watermark_boundary_mu:
         raise ValueError("Watermark {} is out of bounds for this job".format(start_at))
 
-    # Because result may contain both JobEvent and Job items, we request page_size+1 items then apply the type
+    # Apply filters
+    filter_expression = Attr('Type').eq("JobEvent")
+    for f in mvqs.get("filter", []):
+        k, v = f.split("=")
+        filter_expression = filter_expression & Attr(k).begins_with(v)
+
+    # Because result may contain both JobEvent and Job items, we request max page_size+1 items then apply the type
     # filter as FilterExpression. We then limit the list size to the requested page size in case the number of
     # items after filtering is still page_size+1 i.e. the Job item wasn't on the page.
-    results = table.query(
-        KeyConditionExpression=Key('Id').eq(job_id),
-        ScanIndexForward=True,
-        Limit=page_size + 1,
-        FilterExpression=Attr('Type').eq("JobEvent"),
-        ExclusiveStartKey={
-            "Id": job_id,
-            "Sk": str(start_at)
-        }
-    )
+    items = []
+    query_start_key = str(start_at)
+    while len(items) < page_size:
+        resp = table.query(
+            KeyConditionExpression=Key('Id').eq(job_id),
+            ScanIndexForward=True,
+            FilterExpression=filter_expression,
+            Limit=100,
+            ExclusiveStartKey={
+                "Id": job_id,
+                "Sk": query_start_key
+            }
+        )
+        results = resp.get("Items", [])
+        items.extend(results[:page_size])
+        if not resp.get("LastEvaluatedKey"):
+            break
 
-    items = results.get("Items", [])[:page_size]
+        query_start_key = resp["LastEvaluatedKey"]["Sk"]
 
     resp = {
         "JobEvents": items
@@ -127,7 +141,7 @@ def list_job_events_handler(event, context):
     if len(items) > 0:
         if not any([i["EventName"] in end_events for i in items]):
             resp["NextStart"] = items[len(items) - 1]["Sk"]
-    else:
+    if len(items) == 0:
         resp["NextStart"] = start_at
 
     return {
