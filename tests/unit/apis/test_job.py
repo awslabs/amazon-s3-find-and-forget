@@ -145,7 +145,7 @@ def test_it_respects_jobs_events_page_size(table):
     table.query.assert_called_with(
         KeyConditionExpression=mock.ANY,
         ScanIndexForward=True,
-        Limit=ANY,
+        Limit=4,
         FilterExpression=mock.ANY,
         ExclusiveStartKey=mock.ANY,
     )

@@ -108,7 +108,8 @@ def list_job_events_handler(event, context):
 
     # Apply filters
     filter_expression = Attr('Type').eq("JobEvent")
-    for f in mvqs.get("filter", []):
+    user_filters = mvqs.get("filter", [])
+    for f in user_filters:
         k, v = f.split("=")
         filter_expression = filter_expression & Attr(k).begins_with(v)
 
@@ -122,7 +123,7 @@ def list_job_events_handler(event, context):
             KeyConditionExpression=Key('Id').eq(job_id),
             ScanIndexForward=True,
             FilterExpression=filter_expression,
-            Limit=100,
+            Limit=100 if len(user_filters) > 0 else page_size + 1,
             ExclusiveStartKey={
                 "Id": job_id,
                 "Sk": query_start_key
