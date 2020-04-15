@@ -46,11 +46,8 @@ deploy-artefacts:
 .PHONY: format-cfn
 format-cfn:
 	$(eval VERSION := $(shell $(MAKE) -s version))
-	$(eval DESCRIPTION := "Description: Amazon S3 Find and Forget (uksb-1q2j8beb0) (version:$(VERSION))")
-	cat templates/template.yaml | python -c 'exec("""import fileinput\nfound=False\nfor line in fileinput.input():\n    if not found and "Description:" in line:\n        found=True\n        line=$(DESCRIPTION).rstrip()\n    print(line.rstrip())""")' > templates/template_temp.yaml
-	rm templates/template.yaml
-	mv templates/template_temp.yaml templates/template.yaml
-	git add templates/*
+	sed -i '' -e '3s/.*/Description: Amazon S3 Find and Forget \(uksb-1q2j8beb0\) \(version:$(VERSION)\)/' templates/template.yaml
+	git add templates/template.yaml
 
 .PHONY: format-docs
 format-docs:
