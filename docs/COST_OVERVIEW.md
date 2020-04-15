@@ -209,7 +209,7 @@ This example shows how the charges would be calculated for a deletion job where:
 | Service        | Spending | Notes                                                     |
 | -------------- | -------- | --------------------------------------------------------- |
 | Amazon Athena  | \$0.03   | 6.8GB of data scanned                                     |
-| AWS Fargate    | \$0.89   | 3 tasks x 4 vCPUs x 30GB x 1 hour                         |
+| AWS Fargate    | \$0.89   | 3 tasks x 4 vCPUs, 30GB memory x 1 hour                   |
 | Amazon S3      | \$0.01   | $0.01 of requests and data retrieval. $0 of data transfer |
 | Other services | \$0.05   | n/a                                                       |
 | Total          | \$0.98   | n/a                                                       |
@@ -230,7 +230,7 @@ This example shows how the charges would be calculated for a deletion job where:
 | Service        | Spending | Notes                                                     |
 | -------------- | -------- | --------------------------------------------------------- |
 | Amazon Athena  | \$0.05   | 10GB of data scanned                                      |
-| AWS Fargate    | \$11.07  | 50 tasks x 4 vCPUs x 30GB x 0.75 hours                    |
+| AWS Fargate    | \$11.07  | 50 tasks x 4 vCPUs, 30GB memory x 0.75 hours              |
 | Amazon S3      | \$0.01   | $0.01 of requests and data retrieval. $0 of data transfer |
 | Other services | \$0.01   | n/a                                                       |
 | Total          | \$11.14  | n/a                                                       |
@@ -251,7 +251,7 @@ This example shows how the charges would be calculated for a deletion job where:
 | Service        | Spending | Notes                                                     |
 | -------------- | -------- | --------------------------------------------------------- |
 | Amazon Athena  | \$0.76   | 156GB of data scanned                                     |
-| AWS Fargate    | \$73.82  | 100 tasks x 4 vCPUs x 30GB x 2.5 hours                    |
+| AWS Fargate    | \$73.82  | 100 tasks x 4 vCPUs, 30GB memory x 2.5 hours              |
 | Amazon S3      | \$0.11   | 0.11 of requests and data retrieval. \$0 of data transfer |
 | Other services | \$1      | n/a                                                       |
 | Total          | \$75.69  | n/a                                                       |
