@@ -32,6 +32,7 @@ the solution.
 - [Solution Cost Estimate](#solution-cost-estimate)
   - [Scenario 1](#scenario-1)
   - [Scenario 2](#scenario-2)
+  - [Scenario 2](#scenario-3)
 
 ## Overview
 
