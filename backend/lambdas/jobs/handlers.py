@@ -91,10 +91,11 @@ def list_jobs_handler(event, context):
 def list_job_events_handler(event, context):
     # Input parsing
     job_id = event["pathParameters"]["job_id"]
-    mvqs = event.get("multiValueQueryStringParameters", {})
     qs = event.get("queryStringParameters")
+    mvqs = event.get("multiValueQueryStringParameters")
     if not qs:
         qs = {}
+        mvqs = {}
     page_size = int(qs.get("page_size", 20))
     start_at = qs.get("start_at", "0")
     # Check the job exists

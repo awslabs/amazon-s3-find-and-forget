@@ -81,9 +81,10 @@ def test_it_lists_job_events_by_date(api_client, jobs_endpoint, job_factory, sta
     # Act
     response = api_client.get("{}/{}/events".format(jobs_endpoint, job_id))
     response_body = response.json()
-    job_events = response_body["JobEvents"]
+    print(response_body)
     # Assert
     assert response.status_code == 200
+    job_events = response_body["JobEvents"]
     assert len(job_events) > 0
     assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
     assert all(job_events[i]["CreatedAt"] <= job_events[i+1]["CreatedAt"] for i in range(len(job_events)-1))
@@ -97,13 +98,13 @@ def test_it_filters_job_events_by_event_name(api_client, jobs_endpoint, job_fact
     job_id = job_factory(job_id=job_id, created_at=1576861489)["Id"]
     job_finished_waiter.wait(TableName=job_table.name, Key={"Id": {"S": job_id}, "Sk": {"S": job_id}})
     # Act
-    response = api_client.get("{}/{}/events?filter=EventName%3DQuerySucceeded".format(jobs_endpoint, job_id))
+    response = api_client.get("{}/{}/events?filter=EventName%3DFindPhaseStarted".format(jobs_endpoint, job_id))
     response_body = response.json()
     job_events = response_body["JobEvents"]
     # Assert
     assert response.status_code == 200
-    assert len(job_events) > 1
-    assert "QuerySucceeded" == job_events[0]["EventName"]
+    assert len(job_events) == 1
+    assert "FindPhaseStarted" == job_events[0]["EventName"]
     assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
 
 

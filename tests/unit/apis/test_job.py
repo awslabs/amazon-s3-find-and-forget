@@ -110,9 +110,11 @@ class TestListJobEvents:
         stub = job_event_stub()
         table.get_item.return_value = {"Item": job_stub()}
         table.query.return_value = {"Items": [stub]}
-        response = handlers.list_job_events_handler(
-            {"queryStringParameters": None, "pathParameters": {"job_id": "test"}},
-            SimpleNamespace())
+        response = handlers.list_job_events_handler({
+            "queryStringParameters": None,
+            "pathParameters": {"job_id": "test"},
+            "multiValueQueryStringParameters": None,
+        }, SimpleNamespace())
         resp_body = json.loads(response["body"])
         assert 200 == response["statusCode"]
         assert 1 == len(resp_body["JobEvents"])
@@ -124,6 +126,7 @@ class TestListJobEvents:
         response = handlers.list_job_events_handler({
             "pathParameters": {"job_id": "test"},
             "queryStringParameters": {"start_at": "12345#test"},
+            "multiValueQueryStringParameters": None,
         }, SimpleNamespace())
         assert 404 == response["statusCode"]
 
@@ -139,6 +142,7 @@ class TestListJobEvents:
         response = handlers.list_job_events_handler({
             "pathParameters": {"job_id": "test"},
             "queryStringParameters": {"page_size": "3"},
+            "multiValueQueryStringParameters": None,
         }, SimpleNamespace())
         resp_body = json.loads(response["body"])
         table.query.assert_called_with(
@@ -158,9 +162,11 @@ class TestListJobEvents:
         stub = job_event_stub()
         table.get_item.return_value = {"Item": job_stub()}
         table.query.return_value = {"Items": [stub]}
-        response = handlers.list_job_events_handler(
-            {"queryStringParameters": None, "pathParameters": {"job_id": "test"}},
-            SimpleNamespace())
+        response = handlers.list_job_events_handler({
+            "queryStringParameters": None,
+            "pathParameters": {"job_id": "test"},
+            "multiValueQueryStringParameters": None,
+        }, SimpleNamespace())
         assert 200 == response["statusCode"]
         table.query.assert_called_with(
             KeyConditionExpression=mock.ANY,
@@ -181,6 +187,7 @@ class TestListJobEvents:
         response = handlers.list_job_events_handler({
             "pathParameters": {"job_id": "test"},
             "queryStringParameters": {"start_at": "0"},
+            "multiValueQueryStringParameters": None,
         }, SimpleNamespace())
         resp_body = json.loads(response["body"])
         assert 200 == response["statusCode"]
@@ -204,6 +211,7 @@ class TestListJobEvents:
         response = handlers.list_job_events_handler({
             "pathParameters": {"job_id": "test"},
             "queryStringParameters": {"start_at": "12345#test"},
+            "multiValueQueryStringParameters": None,
         }, SimpleNamespace())
         resp_body = json.loads(response["body"])
         assert 200 == response["statusCode"]
@@ -231,6 +239,7 @@ class TestListJobEvents:
         response = handlers.list_job_events_handler({
             "queryStringParameters": None,
             "pathParameters": {"job_id": "test"},
+            "multiValueQueryStringParameters": None,
         }, SimpleNamespace())
         resp_body = json.loads(response["body"])
         assert 2 == table.query.call_count
@@ -259,6 +268,7 @@ class TestListJobEvents:
         response = handlers.list_job_events_handler({
             "pathParameters": {"job_id": "test"},
             "queryStringParameters": {"page_size": "1"},
+            "multiValueQueryStringParameters": None,
         }, SimpleNamespace())
         resp_body = json.loads(response["body"])
         assert 200 == response["statusCode"]
@@ -271,6 +281,7 @@ class TestListJobEvents:
         response = handlers.list_job_events_handler({
             "pathParameters": {"job_id": "test"},
             "queryStringParameters": {"start_at": "111111#trgwtrwgergewrgwgrw"},
+            "multiValueQueryStringParameters": None,
         }, SimpleNamespace())
         resp_body = json.loads(response["body"])
         assert 200 == response["statusCode"]
@@ -286,6 +297,7 @@ class TestListJobEvents:
         response = handlers.list_job_events_handler({
             "queryStringParameters": None,
             "pathParameters": {"job_id": "test"},
+            "multiValueQueryStringParameters": None,
         }, SimpleNamespace())
         resp_body = json.loads(response["body"])
         assert 200 == response["statusCode"]
@@ -307,7 +319,8 @@ class TestListJobEvents:
             table.query.return_value = {"Items": [event_stub]}
             response = handlers.list_job_events_handler({
                 "pathParameters": {"job_id": "test"},
-                "queryStringParameters": None
+                "queryStringParameters": None,
+                "multiValueQueryStringParameters": None,
             }, SimpleNamespace())
             resp_body = json.loads(response["body"])
             assert 200 == response["statusCode"]
@@ -320,6 +333,7 @@ class TestListJobEvents:
         response = handlers.list_job_events_handler({
             "pathParameters": {"job_id": "test"},
             "queryStringParameters": {"start_at": "999999999999999#test"},
+            "multiValueQueryStringParameters": None,
         }, SimpleNamespace())
         assert 400 == response["statusCode"]
 
@@ -329,6 +343,7 @@ class TestListJobEvents:
         response = handlers.list_job_events_handler({
             "pathParameters": {"job_id": "test"},
             "queryStringParameters": {"start_at": "999999999999999#test"},
+            "multiValueQueryStringParameters": None,
         }, SimpleNamespace())
         assert 400 == response["statusCode"]
 
