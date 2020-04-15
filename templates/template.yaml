@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
-Description: Amazon S3 Find and Forget (uksb-1q2j8beb0)
+Description: Amazon S3 Find and Forget (uksb-1q2j8beb0) (version:v0.1)
 
 Parameters:
   AccessControlAllowOriginOverride:
@@ -167,9 +167,9 @@ Resources:
         }
       Description: SSM Parameter for S3F2 configuration.
 
-  APIStack: 
+  APIStack:
     Type: AWS::CloudFormation::Stack
-    Properties: 
+    Properties:
       TemplateURL: ./api.yaml
       Parameters:
         AccessControlAllowOriginOverride: !Ref AccessControlAllowOriginOverride
@@ -244,7 +244,7 @@ Resources:
         WebUIBucket: !GetAtt WebUIStack.Outputs.WebUIBucket
   LayersStack:
     Type: AWS::CloudFormation::Stack
-    Properties: 
+    Properties:
       TemplateURL: ./layers.yaml
   StateMachineStack:
     Type: AWS::CloudFormation::Stack
@@ -265,9 +265,9 @@ Resources:
         JobTableName: !GetAtt DDBStack.Outputs.JobTable
         ResultBucket: !Ref TempBucket
         StateMachinePrefix: !Ref ResourcePrefix
-  StreamProcessorStack: 
+  StreamProcessorStack:
     Type: AWS::CloudFormation::Stack
-    Properties: 
+    Properties:
       TemplateURL: ./stream_processor.yaml
       Parameters:
         CommonLayers: !Join

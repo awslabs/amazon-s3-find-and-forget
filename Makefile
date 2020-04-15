@@ -43,6 +43,12 @@ deploy-artefacts:
 	make package-artefacts
 	aws s3 cp build.zip s3://$(TEMP_BUCKET)/amazon-s3-find-and-forget/$(VERSION)/build.zip
 
+.PHONY: format-cfn
+format-cfn:
+	$(eval VERSION := $(shell $(MAKE) -s version))
+	sed -i '' -e '3s/.*/Description: Amazon S3 Find and Forget \(uksb-1q2j8beb0\) \(version:$(VERSION)\)/' templates/template.yaml
+	git add templates/template.yaml
+
 .PHONY: format-docs
 format-docs:
 	npx prettier-eslint ./*.md ./docs/*.md --write --prose-wrap always
