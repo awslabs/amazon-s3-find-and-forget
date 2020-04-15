@@ -239,7 +239,7 @@ This example shows how the charges would be calculated for a deletion job where:
 
 This example shows how the charges would be calculated for a deletion job where:
 
-- Your dataset is 10TB of Snappy compressed Parquet objects are distributed
+- Your dataset is 10TB of Snappy compressed Parquet objects that are distributed
   across 2000 Partitions
 - The S3 bucket containing the objects is in the same region as the S3 Find and
   Forget Solution
