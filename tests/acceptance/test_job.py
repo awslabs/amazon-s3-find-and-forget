@@ -81,7 +81,6 @@ def test_it_lists_job_events_by_date(api_client, jobs_endpoint, job_factory, sta
     # Act
     response = api_client.get("{}/{}/events".format(jobs_endpoint, job_id))
     response_body = response.json()
-    print(response_body)
     # Assert
     assert response.status_code == 200
     job_events = response_body["JobEvents"]
