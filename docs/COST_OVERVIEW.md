@@ -232,7 +232,7 @@ This example shows how the charges would be calculated for a deletion job where:
 | AWS Fargate    | \$11.07  | 50 tasks x 4 vCPUs x 30GB x 0.75 hours                    |
 | Amazon S3      | \$0.01   | $0.01 of requests and data retrieval. $0 of data transfer |
 | Other services | \$0.01   | n/a                                                       |
-| Total          | \$18.13  | n/a                                                       |
+| Total          | \$11.14  | n/a                                                       |
 
 ### Scenario 3
 
