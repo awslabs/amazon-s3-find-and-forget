@@ -197,14 +197,14 @@ include VPC costs.
 
 This example shows how the charges would be calculated for a deletion job where:
 
-- Your dataset is 100GB of Snappy compressed Parquet objects are distributed
-  across 2 Partitions
+- Your dataset is 100GB of Snappy compressed Parquet objects that are
+  distributed across 2 Partitions
 - The S3 bucket containing the objects is in the same region as the S3 Find and
   Forget Solution
 - The total size of the data held in the column queried by Athena is 6.8GB
 - The Find phase returns 15 objects which need to be modified
-- The Forget phase uses 3 Fargate tasks with 4 vCPUs and 30GB each, running
-  concurrently for 60 minutes
+- The Forget phase uses 3 Fargate tasks with 4 vCPUs and 30GB of memory each,
+  running concurrently for 60 minutes
 
 | Service        | Spending | Notes                                                     |
 | -------------- | -------- | --------------------------------------------------------- |
@@ -218,14 +218,14 @@ This example shows how the charges would be calculated for a deletion job where:
 
 This example shows how the charges would be calculated for a deletion job where:
 
-- Your dataset is 750GB of Snappy compressed Parquet objects are distributed
-  across 1000 Partitions
+- Your dataset is 750GB of Snappy compressed Parquet objects that are
+  distributed across 1000 Partitions
 - The S3 bucket containing the objects is in the same region as the S3 Find and
   Forget Solution
 - The total size of the data held in the column queried by Athena is 10GB
 - The Find phase returns 1000 objects which need to be modified
-- The Forget phase uses 50 Fargate tasks with 4 vCPUs and 30GB each, running
-  concurrently for 45 minutes
+- The Forget phase uses 50 Fargate tasks with 4 vCPUs and 30GB of memory each,
+  running concurrently for 45 minutes
 
 | Service        | Spending | Notes                                                     |
 | -------------- | -------- | --------------------------------------------------------- |
@@ -245,8 +245,8 @@ This example shows how the charges would be calculated for a deletion job where:
   Forget Solution
 - The total size of the data held in the column queried by Athena is 156GB
 - The Find phase returns 11000 objects which need to be modified
-- The Forget phase uses 100 Fargate tasks with 4 vCPUs and 30GB each, running
-  concurrently for 150 minutes
+- The Forget phase uses 100 Fargate tasks with 4 vCPUs and 30GB of memory each,
+  running concurrently for 150 minutes
 
 | Service        | Spending | Notes                                                     |
 | -------------- | -------- | --------------------------------------------------------- |
