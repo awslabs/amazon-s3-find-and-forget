@@ -202,16 +202,16 @@ This example shows how the charges would be calculated for a deletion job where:
   Forget Solution
 - The total size of the data held in the column queried by Athena is 6.8GB
 - The Find phase returns 15 objects which need to be modified
-- The Forget phase uses 3 Fargate tasks with 4 vCPUs each, running concurrently
-  for 60 minutes
+- The Forget phase uses 3 Fargate tasks with 4 vCPUs and 30GB each, running
+  concurrently for 60 minutes
 
-| Service        | Spending | Notes                                                    |
-| -------------- | -------- | -------------------------------------------------------- |
-| Amazon Athena  | \$0.03   | 6.8GB of data scanned                                    |
-| AWS Fargate    | \$0.89   | 3 tasks x 4 vCPUs x 1 hour                               |
-| Amazon S3      | \$0.1    | $0.1 of requests and data retrieval. $0 of data transfer |
-| Other services | \$0.05   | n/a                                                      |
-| Total          | \$0.98   | n/a                                                      |
+| Service        | Spending | Notes                                                     |
+| -------------- | -------- | --------------------------------------------------------- |
+| Amazon Athena  | \$0.03   | 6.8GB of data scanned                                     |
+| AWS Fargate    | \$0.89   | 3 tasks x 4 vCPUs x 30GB x 1 hour                         |
+| Amazon S3      | \$0.01   | $0.01 of requests and data retrieval. $0 of data transfer |
+| Other services | \$0.05   | n/a                                                       |
+| Total          | \$0.98   | n/a                                                       |
 
 ### Scenario 2
 
@@ -223,16 +223,37 @@ This example shows how the charges would be calculated for a deletion job where:
   Forget Solution
 - The total size of the data held in the column queried by Athena is 10GB
 - The Find phase returns 1000 objects which need to be modified
-- The Forget phase uses 50 Fargate tasks with 4 vCPUs each, running concurrently
-  for 45 minutes
+- The Forget phase uses 50 Fargate tasks with 4 vCPUs and 30GB each, running
+  concurrently for 45 minutes
 
-| Service        | Spending | Notes                                                  |
-| -------------- | -------- | ------------------------------------------------------ |
-| Amazon Athena  | \$0.05   | 10GB of data scanned                                   |
-| AWS Fargate    | \$6      | 50 tasks x 4 vCPUs x 0.75 hours                        |
-| Amazon S3      | \$7      | $7 of requests and data retrieval. $0 of data transfer |
-| Other services | \$0.01   | n/a                                                    |
-| Total          | \$13.06  | n/a                                                    |
+| Service        | Spending | Notes                                                     |
+| -------------- | -------- | --------------------------------------------------------- |
+| Amazon Athena  | \$0.05   | 10GB of data scanned                                      |
+| AWS Fargate    | \$11.07  | 50 tasks x 4 vCPUs x 30GB x 0.75 hours                    |
+| Amazon S3      | \$0.01   | $0.01 of requests and data retrieval. $0 of data transfer |
+| Other services | \$0.01   | n/a                                                       |
+| Total          | \$18.13  | n/a                                                       |
+
+### Scenario 3
+
+This example shows how the charges would be calculated for a deletion job where:
+
+- Your dataset is 10TB of Snappy compressed Parquet objects are distributed
+  across 2000 Partitions
+- The S3 bucket containing the objects is in the same region as the S3 Find and
+  Forget Solution
+- The total size of the data held in the column queried by Athena is 156GB
+- The Find phase returns 11000 objects which need to be modified
+- The Forget phase uses 100 Fargate tasks with 4 vCPUs and 30GB each, running
+  concurrently for 150 minutes
+
+| Service        | Spending | Notes                                                     |
+| -------------- | -------- | --------------------------------------------------------- |
+| Amazon Athena  | \$0.76   | 156GB of data scanned                                     |
+| AWS Fargate    | \$73.82  | 100 tasks x 4 vCPUs x 30GB x 2.5 hours                    |
+| Amazon S3      | \$0.11   | 0.11 of requests and data retrieval. \$0 of data transfer |
+| Other services | \$1      | n/a                                                       |
+| Total          | \$75.69  | n/a                                                       |
 
 [aws cloudformation]: https://aws.amazon.com/cloudformation/
 [aws codebuild]: https://aws.amazon.com/codebuild/pricing/
