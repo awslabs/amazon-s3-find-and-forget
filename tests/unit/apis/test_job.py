@@ -142,7 +142,7 @@ class TestListJobEvents:
         response = handlers.list_job_events_handler({
             "pathParameters": {"job_id": "test"},
             "queryStringParameters": {"page_size": "3"},
-            "multiValueQueryStringParameters": None,
+            "multiValueQueryStringParameters": {"page_size": ["3"]},
         }, SimpleNamespace())
         resp_body = json.loads(response["body"])
         table.query.assert_called_with(
@@ -187,7 +187,7 @@ class TestListJobEvents:
         response = handlers.list_job_events_handler({
             "pathParameters": {"job_id": "test"},
             "queryStringParameters": {"start_at": "0"},
-            "multiValueQueryStringParameters": None,
+            "multiValueQueryStringParameters": {"start_at": ["0"]},
         }, SimpleNamespace())
         resp_body = json.loads(response["body"])
         assert 200 == response["statusCode"]
@@ -211,7 +211,7 @@ class TestListJobEvents:
         response = handlers.list_job_events_handler({
             "pathParameters": {"job_id": "test"},
             "queryStringParameters": {"start_at": "12345#test"},
-            "multiValueQueryStringParameters": None,
+            "multiValueQueryStringParameters": {"start_at": ["12345#test"]},
         }, SimpleNamespace())
         resp_body = json.loads(response["body"])
         assert 200 == response["statusCode"]
@@ -268,7 +268,7 @@ class TestListJobEvents:
         response = handlers.list_job_events_handler({
             "pathParameters": {"job_id": "test"},
             "queryStringParameters": {"page_size": "1"},
-            "multiValueQueryStringParameters": None,
+            "multiValueQueryStringParameters": {"page_size": ["1"]},
         }, SimpleNamespace())
         resp_body = json.loads(response["body"])
         assert 200 == response["statusCode"]
@@ -281,7 +281,7 @@ class TestListJobEvents:
         response = handlers.list_job_events_handler({
             "pathParameters": {"job_id": "test"},
             "queryStringParameters": {"start_at": "111111#trgwtrwgergewrgwgrw"},
-            "multiValueQueryStringParameters": None,
+            "multiValueQueryStringParameters": {"start_at": ["111111#trgwtrwgergewrgwgrw"]},
         }, SimpleNamespace())
         resp_body = json.loads(response["body"])
         assert 200 == response["statusCode"]
