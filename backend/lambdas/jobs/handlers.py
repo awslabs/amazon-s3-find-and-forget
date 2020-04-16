@@ -165,13 +165,12 @@ def list_job_events_handler(event, context):
 def _get_watermark(items, initial_start_key, page_size, job_status, last_evaluated_ddb_key, last_query_size):
     """
     Work out the watermark to return to the user using the following logic:
-    1. If the job is in progress. In this scenario we always return a watermark but the source of the watermark
+    1. If the job is in progress, we always return a watermark but the source of the watermark
        is determined as follows:
-       a. We've cycled through multiple DDB pages and reached the last available items in DDB but filtering has left us
-       with less than the desired page so return the last evaluated DDB key
-       b. We've either cycled through all the DDB pages and fulfilled the page size OR we're on the first DDB page still
-       so return the latest item SK as the watermark
-       c. There's no new events yet so just return whatever the user sent
+       a. We've reached the last available items in DDB but filtering has left us with less than the desired page
+       size but we have a LastEvaluatedKey that allows the client to skip the filtered items next time
+       b. There is at least 1 event and there are (or will be) more items available
+       c. There's no events after the supplied watermark so just return whatever the user sent
     2. If the job is finished, return a watermark if the last query executed indicates there *might* be more
        results
     """
@@ -184,7 +183,7 @@ def _get_watermark(items, initial_start_key, page_size, job_status, last_evaluat
             next_start = items[len(items) - 1]["Sk"]
         else:
             next_start = str(initial_start_key)
-    # If the job is finished but there are potentially more results
+    # Job is finished but there are potentially more results
     elif last_query_size >= page_size:
         next_start = items[len(items) - 1]["Sk"]
 

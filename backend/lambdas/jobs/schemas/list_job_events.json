@@ -10,7 +10,7 @@
                     "oneOf": [
                         {
                             "type": "string",
-                            "pattern": "^(EventName)([=><])([a-zA-Z0-9]+)$"
+                            "pattern": "^(EventName)([=])([a-zA-Z0-9]+)$"
                         },
                         {
                             "type": "array",
@@ -38,7 +38,7 @@
                 },
                 "filter": {
                     "type": "string",
-                    "pattern": "^(EventName)([=><])([a-zA-Z0-9]+)$"
+                    "pattern": "^(EventName)([=])([a-zA-Z0-9]+)$"
                 }
             }
         }
