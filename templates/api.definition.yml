@@ -223,7 +223,10 @@ paths:
                   type: "string"
                   pattern: "^(EventName)([=><])([a-zA-Z0-9]+)$"
             pattern: "^(EventName)([=><])([a-zA-Z0-9]+)$"
-          description: "Page size query string parameter"
+          description: >
+            Filters to apply in the format `[key][operator][value]`. If multiple
+            filters are supplied, they will applied on an **AND** basis.
+            Supported keys: `EventName`. Supported Operators: `=`
       responses:
         '200':
           description: "OK"
