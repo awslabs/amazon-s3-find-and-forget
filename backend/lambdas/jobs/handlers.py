@@ -129,6 +129,7 @@ def list_job_events_handler(event, context):
     items = []
     query_start_key = str(start_at)
     last_evaluated = None
+    last_query_size = 0
     while len(items) < page_size:
         resp = table.query(
             KeyConditionExpression=Key('Id').eq(job_id),
@@ -141,13 +142,14 @@ def list_job_events_handler(event, context):
             }
         )
         results = resp.get("Items", [])
+        last_query_size = len(results)
         items.extend(results[:page_size - len(items)])
         query_start_key = resp.get("LastEvaluatedKey", {}).get("Sk")
         if not query_start_key:
             break
         last_evaluated = query_start_key
 
-    next_start = _get_watermark(items, start_at, page_size, job["JobStatus"], query_start_key, last_evaluated)
+    next_start = _get_watermark(items, start_at, page_size, job["JobStatus"], last_evaluated, last_query_size)
 
     resp = {k: v for k, v in {
         "JobEvents": items,
@@ -160,16 +162,18 @@ def list_job_events_handler(event, context):
     }
 
 
-def _get_watermark(items, initial_start_key, page_size, job_status, last_query_start_key, last_evaluated_ddb_key):
+def _get_watermark(items, initial_start_key, page_size, job_status, last_evaluated_ddb_key, last_query_size):
     """
     Work out the watermark to return to the user using the following logic:
     1. If the job is in progress. In this scenario we always return a watermark but the source of the watermark
        is determined as follows:
-       a. We've cycled through multiple DDB pages the last available items in DDB but filtering has left us with less
-          than the desired page so return the last evaluated DDB key
+       a. We've cycled through multiple DDB pages and reached the last available items in DDB but filtering has left us
+       with less than the desired page so return the last evaluated DDB key
        b. We've either cycled through all the DDB pages and fulfilled the page size OR we're on the first DDB page still
+       so return the latest item SK as the watermark
        c. There's no new events yet so just return whatever the user sent
-    2. If the job is finished, return a watermark if the last page hasn't been reached
+    2. If the job is finished, return a watermark if the last query executed indicates there *might* be more
+       results
     """
     next_start = None
     if job_status not in end_statuses:
@@ -181,7 +185,7 @@ def _get_watermark(items, initial_start_key, page_size, job_status, last_query_s
         else:
             next_start = str(initial_start_key)
     # If the job is finished but there are potentially more results
-    elif len(items) == page_size and last_query_start_key:
+    elif last_query_size >= page_size:
         next_start = items[len(items) - 1]["Sk"]
 
     return next_start
