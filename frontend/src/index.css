@@ -217,6 +217,19 @@ li {
   border-bottom: 1px solid #eaeded;
 }
 
+.page-table .input-filter {
+  max-width: 728px;
+}
+
+.input-filter {
+  padding: 0rem 1rem 0 1rem;
+  margin-right: 1rem;
+}
+
+.input-filter .form-control {
+  margin-right: 1rem;
+}
+
 .centered {
   text-align: center;
 }
