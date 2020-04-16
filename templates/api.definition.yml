@@ -221,8 +221,8 @@ paths:
               - type: "array"
                 items:
                   type: "string"
-                  pattern: "^(EventName)([=><])([a-zA-Z0-9]+)$"
-            pattern: "^(EventName)([=><])([a-zA-Z0-9]+)$"
+                  pattern: "^(EventName)([=])([a-zA-Z0-9]+)$"
+            pattern: "^(EventName)([=])([a-zA-Z0-9]+)$"
           description: >
             Filters to apply in the format [key][operator][value]. If multiple
             filters are supplied, they will applied on an **AND** basis.
