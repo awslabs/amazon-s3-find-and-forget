@@ -15,8 +15,13 @@ table = ddb.Table(os.getenv("JobTable", "S3F2_Jobs"))
 index = os.getenv("JobTableDateGSI", "Date-GSI")
 bucket_count = int(os.getenv("GSIBucketCount", 1))
 
-end_events = [
-    "CleanupSucceeded", "CleanupFailed", "CleanupSkipped"
+end_statuses = [
+    "COMPLETED_CLEANUP_FAILED",
+    "COMPLETED",
+    "FAILED",
+    "FIND_FAILED",
+    "FORGET_FAILED",
+    "FORGET_PARTIALLY_FAILED"
 ]
 
 
@@ -84,53 +89,102 @@ def list_jobs_handler(event, context):
 @request_validator(load_schema("list_job_events"))
 @catch_errors
 def list_job_events_handler(event, context):
+    # Input parsing
     job_id = event["pathParameters"]["job_id"]
+    qs = event.get("queryStringParameters")
+    mvqs = event.get("multiValueQueryStringParameters")
+    if not qs:
+        qs = {}
+        mvqs = {}
+    page_size = int(qs.get("page_size", 20))
+    start_at = qs.get("start_at", "0")
     # Check the job exists
     job = table.get_item(
         Key={
             'Id': job_id,
             'Sk': job_id,
         }
-    )
+    ).get("Item")
+    if not job:
+        return {
+            "statusCode": 404
+        }
 
     watermark_boundary_mu = job.get("JobFinishTime", utc_timestamp()) * 1000
-
-    qs = event.get("queryStringParameters")
-    if not qs:
-        qs = {}
-    page_size = int(qs.get("page_size", 20))
-    start_at = qs.get("start_at", "0")
 
     # Check the watermark is not "future"
     if int(start_at.split("#")[0]) > watermark_boundary_mu:
         raise ValueError("Watermark {} is out of bounds for this job".format(start_at))
 
-    # Because result may contain both JobEvent and Job items, we request page_size+1 items then apply the type
+    # Apply filters
+    filter_expression = Attr('Type').eq("JobEvent")
+    user_filters = mvqs.get("filter", [])
+    for f in user_filters:
+        k, v = f.split("=")
+        filter_expression = filter_expression & Attr(k).begins_with(v)
+
+    # Because result may contain both JobEvent and Job items, we request max page_size+1 items then apply the type
     # filter as FilterExpression. We then limit the list size to the requested page size in case the number of
     # items after filtering is still page_size+1 i.e. the Job item wasn't on the page.
-    results = table.query(
-        KeyConditionExpression=Key('Id').eq(job_id),
-        ScanIndexForward=True,
-        Limit=page_size + 1,
-        FilterExpression=Attr('Type').eq("JobEvent"),
-        ExclusiveStartKey={
-            "Id": job_id,
-            "Sk": str(start_at)
-        }
-    )
+    items = []
+    query_start_key = str(start_at)
+    last_evaluated = None
+    last_query_size = 0
+    while len(items) < page_size:
+        resp = table.query(
+            KeyConditionExpression=Key('Id').eq(job_id),
+            ScanIndexForward=True,
+            FilterExpression=filter_expression,
+            Limit=100 if len(user_filters) else page_size + 1,
+            ExclusiveStartKey={
+                "Id": job_id,
+                "Sk": query_start_key
+            }
+        )
+        results = resp.get("Items", [])
+        last_query_size = len(results)
+        items.extend(results[:page_size - len(items)])
+        query_start_key = resp.get("LastEvaluatedKey", {}).get("Sk")
+        if not query_start_key:
+            break
+        last_evaluated = query_start_key
 
-    items = results.get("Items", [])[:page_size]
+    next_start = _get_watermark(items, start_at, page_size, job["JobStatus"], last_evaluated, last_query_size)
 
-    resp = {
-        "JobEvents": items
-    }
-    if len(items) > 0:
-        if not any([i["EventName"] in end_events for i in items]):
-            resp["NextStart"] = items[len(items) - 1]["Sk"]
-    else:
-        resp["NextStart"] = start_at
+    resp = {k: v for k, v in {
+        "JobEvents": items,
+        "NextStart": next_start
+    }.items() if v is not None}
 
     return {
         "statusCode": 200,
         "body": json.dumps(resp, cls=DecimalEncoder)
     }
+
+
+def _get_watermark(items, initial_start_key, page_size, job_status, last_evaluated_ddb_key, last_query_size):
+    """
+    Work out the watermark to return to the user using the following logic:
+    1. If the job is in progress, we always return a watermark but the source of the watermark
+       is determined as follows:
+       a. We've reached the last available items in DDB but filtering has left us with less than the desired page
+       size but we have a LastEvaluatedKey that allows the client to skip the filtered items next time
+       b. There is at least 1 event and there are (or will be) more items available
+       c. There's no events after the supplied watermark so just return whatever the user sent
+    2. If the job is finished, return a watermark if the last query executed indicates there *might* be more
+       results
+    """
+    next_start = None
+    if job_status not in end_statuses:
+        # Job is in progress
+        if len(items) < page_size and last_evaluated_ddb_key:
+            next_start = last_evaluated_ddb_key
+        elif 0 < len(items) <= page_size:
+            next_start = items[len(items) - 1]["Sk"]
+        else:
+            next_start = str(initial_start_key)
+    # Job is finished but there are potentially more results
+    elif last_query_size >= page_size:
+        next_start = items[len(items) - 1]["Sk"]
+
+    return next_start
