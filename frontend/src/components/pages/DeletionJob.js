@@ -296,22 +296,22 @@ export default ({ gateway, jobId }) => {
               e.preventDefault(); applyFilters()
             }}>
               <Form.Group>
-              <InputGroup className="input-filter">
-                <Form.Control
-                  type="text"
-                  id="event-name"
-                  placeholder="Filter by event name"
-                  onChange={e => setEventNameFilter(e.target.value)}
-                />
-                <Button
-                  disabled={eventsState === "loading"}
-                  type="button"
-                  className="aws-button"
-                  onClick={applyFilters}
-                >
-                  Filter
-                </Button>
-              </InputGroup>
+                <InputGroup className="input-filter">
+                  <Form.Control
+                    type="text"
+                    id="event-name"
+                    placeholder="Filter by event name"
+                    onChange={e => setEventNameFilter(e.target.value)}
+                  />
+                  <Button
+                    disabled={eventsState === "loading"}
+                    type="button"
+                    className="aws-button"
+                    onClick={applyFilters}
+                  >
+                    Filter
+                  </Button>
+                </InputGroup>
               </Form.Group>
               <Table>
                 <thead>
