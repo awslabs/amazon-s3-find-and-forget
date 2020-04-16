@@ -40,7 +40,7 @@ jobs:
         uses: actions/create-release@latest
         if: env.THIS_VERSION > env.LATEST
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         with:
           tag_name: v${{ env.THIS_VERSION }}
           release_name: Release v${{ env.THIS_VERSION }}
