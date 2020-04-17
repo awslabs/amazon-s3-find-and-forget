@@ -44,7 +44,7 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **JobId** | **String**| Job ID path parameter | [default to null]
  **StartAt** | **String**| Start at watermark query string parameter | [optional] [default to 0]
- **PageSize** | **Integer**| Page size query string parameter | [optional] [default to null]
+ **PageSize** | **Integer**| Page size query string parameter. Min: 1. Max: 1000 | [optional] [default to null]
  **Filter** | [**oneOf&lt;string,array&gt;**](../Models/.md)| Filters to apply in the format [key][operator][value]. If multiple filters are supplied, they will applied on an **AND** basis. Supported keys: EventName. Supported Operators: &#x3D;  | [optional] [default to null]
 
 ### Return type
@@ -70,7 +70,7 @@ Lists all jobs
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **StartAt** | **String**| Start at watermark query string parameter | [optional] [default to 0]
- **PageSize** | **Integer**| Page size query string parameter | [optional] [default to null]
+ **PageSize** | **Integer**| Page size query string parameter. Min: 1. Max: 1000 | [optional] [default to null]
 
 ### Return type
 

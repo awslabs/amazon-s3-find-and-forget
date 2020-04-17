@@ -25,6 +25,7 @@ export default ({ gateway, jobId }) => {
   const [eventsErrorDetails, setEventsErrorDetails] = useState(undefined);
   const [eventsState, setEventsState] = useState("initial");
   const [formState, setFormState] = useState("initial");
+  const [exportState, setExportState] = useState("initial");
   const [job, setJob] = useState(undefined);
   const [jobEvents, setJobEvents] = useState([]);
   const [nextStart, setNextStart] = useState(false);
@@ -113,6 +114,23 @@ export default ({ gateway, jobId }) => {
     setEventFilters(filters.filter(f => f.value !== ""))
   }
 
+  const exportJob = async () => {
+    setExportState("loading");
+    const exportData = {
+      ...job,
+      JobEvents: await gateway.getAllJobEvents(jobId)
+    }
+    const el = document.getElementById("export-job-link");
+    if (el) {
+      el.setAttribute("href", `data:text/json;charset=utf-8,${encodeURIComponent(
+        JSON.stringify(exportData)
+      )}`);
+      el.click();
+      el.setAttribute("href", "#")
+    }
+    setExportState("initial")
+  }
+
   return (
     <>
       <div className="page-table">
@@ -121,6 +139,29 @@ export default ({ gateway, jobId }) => {
             <h2>Job Overview</h2>
           </Col>
           <Col className="buttons-right" md="auto">
+            { !withCountDown && (
+              <>
+                <Button
+                  disabled={exportState === "loading"}
+                  className="aws-button action-button"
+                  onClick={exportJob}
+                >
+                  {
+                    exportState !== "loading"
+                      ? "Export to JSON"
+                      : "Exporting..."
+                  }
+                </Button>
+                <a
+                  href="#"
+                  id="export-job-link"
+                  className="hide"
+                  download={`${jobId}.json`}
+                >
+                  Export link
+                </a>
+              </>
+            )}
             {withCountDown && (
               <Button className="aws-button action-button" onClick={refreshJob}>
                 <Icon type="refresh" />
