@@ -111,6 +111,18 @@ export default {
     return await apiGateway(`jobs/${jobId}/events${qs}`);
   },
 
+  async getAllJobEvents(jobId) {
+    let watermark = "0";
+    let data = [];
+    while (watermark) {
+      let jobEventsList = await this.getJobEvents(jobId, watermark, 1000);
+      data = data.concat(jobEventsList.JobEvents);
+      watermark = jobEventsList.NextStart;
+    }
+
+    return data;
+  },
+
   getQueue() {
     return apiGateway("queue");
   },
