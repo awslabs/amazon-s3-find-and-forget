@@ -371,7 +371,7 @@ components:
         type: "integer"
         minimum: 1
         maximum: 1000
-      description: "Page size query string parameter."
+      description: "Page size query string parameter. Min: 1. Max: 1000"
     StartAtQS:
       in: "query"
       name: "start_at"
