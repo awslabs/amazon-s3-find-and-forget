@@ -284,7 +284,7 @@ export default ({ gateway, goToDataMappers }) => {
                   </Form.Text>
                 )}
               </Form.Group>
-              <Form.Group controlId="glueTable">
+              <Form.Group controlId="roleArn">
                 <Form.Label>AWS IAM Role ARN</Form.Label>
                 <Form.Text className="text-muted">
                   The ARN of the AWS IAM Role that Fargate should assume to

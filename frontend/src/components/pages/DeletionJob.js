@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Button, Col, Form, Row, Spinner, Table } from "react-bootstrap";
+import { Button, Col, Form, Row, Spinner, Table, InputGroup } from "react-bootstrap";
 
 import Alert from "../Alert";
 import DetailsBox from "../DetailsBox";
@@ -30,6 +30,8 @@ export default ({ gateway, jobId }) => {
   const [nextStart, setNextStart] = useState(false);
   const [renderTableCount, setRenderTableCount] = useState(0);
   const [selectedEvent, setSelectedEvent] = useState(undefined);
+  const [eventNameFilter, setEventNameFilter] = useState('');
+  const [eventFilters, setEventFilters] = useState([]);
 
   const refreshJob = useCallback(() => {
     setCountDownLeft(COUNTDOWN_INTERVAL);
@@ -41,7 +43,7 @@ export default ({ gateway, jobId }) => {
       const fetchJobEvents = async () => {
         setEventsState("loading");
         try {
-          const jobEventsList = await gateway.getJobEvents(jobId, watermark);
+          const jobEventsList = await gateway.getJobEvents(jobId, watermark, 20, eventFilters);
           setJobEvents(j => j.concat(jobEventsList.JobEvents));
           setNextStart(jobEventsList.NextStart);
           setEventsState("loaded");
@@ -53,7 +55,7 @@ export default ({ gateway, jobId }) => {
 
       fetchJobEvents();
     },
-    [gateway, jobId, setJobEvents, setNextStart]
+    [gateway, jobId, setJobEvents, setNextStart, eventFilters]
   );
 
   const withCountDown =
@@ -97,6 +99,19 @@ export default ({ gateway, jobId }) => {
   useEffect(() => {
     loadMoreEvents();
   }, [gateway, jobId, loadMoreEvents]);
+
+  const resetEvents = () => {
+    setJobEvents([])
+    setNextStart("0")
+  }
+
+  const applyFilters = () => {
+    const filters = [
+      {key: "EventName", value: eventNameFilter, operator: "="}
+    ]
+    resetEvents()
+    setEventFilters(filters.filter(f => f.value !== ""))
+  }
 
   return (
     <>
@@ -277,7 +292,27 @@ export default ({ gateway, jobId }) => {
                 <h2>Job Events ({jobEvents.length})</h2>
               </Col>
             </Row>
-            <Form>
+            <Form onSubmit={e => {
+              e.preventDefault(); applyFilters()
+            }}>
+              <Form.Group>
+                <InputGroup className="input-filter">
+                  <Form.Control
+                    type="text"
+                    id="event-name"
+                    placeholder="Filter by event name"
+                    onChange={e => setEventNameFilter(e.target.value)}
+                  />
+                  <Button
+                    disabled={eventsState === "loading"}
+                    type="button"
+                    className="aws-button"
+                    onClick={applyFilters}
+                  >
+                    Filter
+                  </Button>
+                </InputGroup>
+              </Form.Group>
               <Table>
                 <thead>
                   <tr>
@@ -299,6 +334,7 @@ export default ({ gateway, jobId }) => {
                         <td>
                           <Button
                             variant="link"
+                            type="button"
                             style={{ padding: 0 }}
                             onClick={() => setSelectedEvent(e)}
                           >
@@ -324,6 +360,7 @@ export default ({ gateway, jobId }) => {
         ) : nextStart ? (
           <Button
             disabled={eventsState === "loading"}
+            type="button"
             className="aws-button action-button"
             onClick={() => loadMoreEvents(nextStart)}
           >

@@ -89,10 +89,24 @@ export default {
     return { Jobs: allJobs };
   },
 
-  async getJobEvents(jobId, watermark = undefined, page_size = 20) {
+  async getJobEvents(
+    jobId,
+    watermark = undefined,
+    page_size = 20,
+    filters = []
+  ) {
     let qs = `?page_size=${page_size}`;
     if (watermark) {
       qs += `&start_at=${encodeURIComponent(watermark)}`;
+    }
+    if (filters.length > 0) {
+      qs +=
+        "&" +
+        filters
+          .map(
+            f => `filter=${encodeURIComponent(f.key + f.operator + f.value)}`
+          )
+          .join("&");
     }
     return await apiGateway(`jobs/${jobId}/events${qs}`);
   },
