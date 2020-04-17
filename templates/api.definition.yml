@@ -369,7 +369,9 @@ components:
       required: "false"
       schema:
         type: "integer"
-      description: "Page size query string parameter"
+        minimum: 1
+        maximum: 1000
+      description: "Page size query string parameter."
     StartAtQS:
       in: "query"
       name: "start_at"

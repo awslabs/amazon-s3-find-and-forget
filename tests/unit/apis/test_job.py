@@ -1,5 +1,4 @@
 import datetime
-import decimal
 import json
 from types import SimpleNamespace
 
@@ -90,6 +89,10 @@ class TestListJobs:
 
     def test_it_rejects_invalid_page_size_for_list_jobs(self):
         response = handlers.list_jobs_handler({"queryStringParameters": {"page_size": "NaN"}}, SimpleNamespace())
+        assert 422 == response["statusCode"]
+        response = handlers.list_jobs_handler({"queryStringParameters": {"page_size": "0"}}, SimpleNamespace())
+        assert 422 == response["statusCode"]
+        response = handlers.list_jobs_handler({"queryStringParameters": {"page_size": "1001"}}, SimpleNamespace())
         assert 422 == response["statusCode"]
 
     def test_it_rejects_invalid_start_at_for_list_jobs(self):
@@ -346,6 +349,14 @@ class TestListJobEvents:
             "multiValueQueryStringParameters": None,
         }, SimpleNamespace())
         assert 400 == response["statusCode"]
+
+    def test_it_rejects_invalid_page_size_for_list_job_events(self):
+        response = handlers.list_job_events_handler({"queryStringParameters": {"page_size": "NaN"}}, SimpleNamespace())
+        assert 422 == response["statusCode"]
+        response = handlers.list_job_events_handler({"queryStringParameters": {"page_size": "0"}}, SimpleNamespace())
+        assert 422 == response["statusCode"]
+        response = handlers.list_job_events_handler({"queryStringParameters": {"page_size": "1001"}}, SimpleNamespace())
+        assert 422 == response["statusCode"]
 
 
 class TestListJobEventFilters:
