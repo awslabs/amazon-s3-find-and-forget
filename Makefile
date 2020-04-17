@@ -2,6 +2,9 @@ SHELL := /bin/bash
 
 .PHONY : deploy deploy-containers pre-deploy setup test test-cov test-acceptance test-acceptance-cov test-no-state-machine test-no-state-machine-cov test-unit test-unit-cov
 
+# The name of the virtualenv directory to use
+VENV ?= venv
+
 pre-deploy:
 ifndef TEMP_BUCKET
 	$(error TEMP_BUCKET is undefined)
@@ -101,17 +104,34 @@ run-local-container:
 	make pre-run
 	./docker_run_with_creds.sh
 
-setup:
-	virtualenv venv
-	source venv/bin/activate
-	pip install -r backend/lambda_layers/aws_sdk/requirements.txt -t backend/lambda_layers/aws_sdk/python
-	pip install -r backend/lambda_layers/cr_helper/requirements.txt -t backend/lambda_layers/cr_helper/python
-	pip install -r backend/lambda_layers/decorators/requirements.txt -t backend/lambda_layers/decorators/python
-	pip install -r requirements.txt
-	(! [[ -d .git ]] || pre-commit install)
+setup: | $(VENV) lambda-layer-deps
+	(! [[ -d .git ]] || $(VENV)/bin/pre-commit install)
 	npm i
 	cd frontend && npm i
 	gem install cfn-nag
+
+# virtualenv setup
+$(VENV): requirements.txt
+	$(VENV)/bin/pip-sync $<
+	touch $(VENV)
+
+$(VENV)/bin/activate:
+	test -d $(VENV) || virtualenv $(VENV)
+
+$(VENV)/bin/pip-compile $(VENV)/bin/pip-sync: $(VENV)/bin/activate
+	$(VENV)/bin/pip install pip-tools
+
+# Lambda layers
+.PHONY: lambda-layer-deps
+lambda-layer-deps: \
+	backend/lambda_layers/aws_sdk/python \
+	backend/lambda_layers/cr_helper/python \
+	backend/lambda_layers/decorators/python \
+	;
+
+backend/lambda_layers/%/python: backend/lambda_layers/%/requirements.txt | $(VENV)
+	# pip-sync only works with virtualenv, so we can't use it here.
+	$(VENV)/bin/pip install -r $< -t $@
 
 setup-frontend-local-dev:
 	$(eval WEBUI_BUCKET := $(shell aws cloudformation describe-stacks --stack-name S3F2 --query 'Stacks[0].Outputs[?OutputKey==`WebUIBucket`].OutputValue' --output text))
@@ -135,25 +155,25 @@ test-cfn:
 test-frontend:
 	cd frontend && npm t
 
-test-unit:
-	pytest -m unit --log-cli-level info --cov=backend.lambdas --cov=decorators --cov=boto_utils --cov=backend.ecs_tasks --cov-report term-missing
+test-unit: | $(VENV)
+	$(VENV)/bin/pytest -m unit --log-cli-level info --cov=backend.lambdas --cov=decorators --cov=boto_utils --cov=backend.ecs_tasks --cov-report term-missing
 
-test-acceptance:
-	pytest -m acceptance --log-cli-level info
+test-acceptance: | $(VENV)
+	$(VENV)/bin/pytest -m acceptance --log-cli-level info
 
-test-no-state-machine:
-	pytest -m "not state_machine" --log-cli-level info  --cov=backend.lambdas --cov=boto_utils --cov=decorators --cov=backend.ecs_tasks
+test-no-state-machine: | $(VENV)
+	$(VENV)/bin/pytest -m "not state_machine" --log-cli-level info  --cov=backend.lambdas --cov=boto_utils --cov=decorators --cov=backend.ecs_tasks
 
-test:
+test: | $(VENV)
 	make test-cfn
-	pytest --log-cli-level info --cov=backend.lambdas --cov=decorators --cov=boto_utils --cov=backend.ecs_tasks
+	$(VENV)/bin/pytest --log-cli-level info --cov=backend.lambdas --cov=decorators --cov=boto_utils --cov=backend.ecs_tasks
 	make test-frontend
 
 version:
 	@echo $(shell cfn-flip templates/template.yaml | python -c 'import sys, json; print(json.load(sys.stdin)["Mappings"]["Solution"]["Constants"]["Version"])')
 
-requirements.txt: requirements.in $(shell awk '/^-r / { print $$2 }' requirements.in)
-	pip-compile -q -o $@ $<
+%/requirements.txt: %/requirements.in | $(VENV)/bin/pip-compile
+	$(VENV)/bin/pip-compile -q -o $@ $<
 
-%/requirements.txt: %/requirements.in
-	pip-compile -q -o $@ $<
+requirements.txt: requirements.in $(shell awk '/^-r / { print $$2 }' requirements.in) | $(VENV)/bin/pip-compile
+	$(VENV)/bin/pip-compile -q -o $@ $<
