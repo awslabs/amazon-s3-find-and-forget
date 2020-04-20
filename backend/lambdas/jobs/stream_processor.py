@@ -64,6 +64,10 @@ def process_job(job):
         )
     except client.exceptions.ExecutionAlreadyExists:
         logger.warning("Execution %s already exists", job_id)
+    except Exception as e:
+        emit_event(job_id, "Exception", {
+            "Error": "Unable to start StepFunction execution: {}".format(str(e))
+        }, "StreamProcessor")
 
 
 def clear_deletion_queue(job):
