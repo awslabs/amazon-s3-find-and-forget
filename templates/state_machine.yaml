@@ -862,7 +862,7 @@ Resources:
         Variables:
           QueryQueue: !Ref QueryQueue
       Policies:
-      - DynamoDBCrudPolicy:
+      - DynamoDBReadPolicy:
           TableName: !Ref JobTableName
       - Statement:
         - Action:
