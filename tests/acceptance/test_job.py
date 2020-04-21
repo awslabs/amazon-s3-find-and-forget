@@ -1,3 +1,4 @@
+import json
 import tempfile
 import uuid
 
@@ -109,7 +110,7 @@ def test_it_filters_job_events_by_event_name(api_client, jobs_endpoint, job_fact
 
 def test_it_runs_for_happy_path(del_queue_factory, job_factory, dummy_lake, glue_data_mapper_factory, data_loader,
                                 job_complete_waiter, job_table):
-    # Generate a parquet file and add it to the lake
+    # Arrange
     glue_data_mapper_factory("test", partition_keys=["year", "month", "day"], partitions=[["2019", "08", "20"]])
     item = del_queue_factory("12345")
     object_key = "test/2019/08/20/test.parquet"
@@ -128,7 +129,7 @@ def test_it_runs_for_happy_path(del_queue_factory, job_factory, dummy_lake, glue
 
 def test_it_runs_for_unpartitioned_data(del_queue_factory, job_factory, dummy_lake, glue_data_mapper_factory,
                                         data_loader, job_complete_waiter, job_table):
-    # Generate a parquet file and add it to the lake
+    # Arrange
     glue_data_mapper_factory("test")
     item = del_queue_factory("12345")
     object_key = "test/test.parquet"
@@ -148,8 +149,8 @@ def test_it_does_not_permit_unversioned_buckets(
         del_queue_factory, job_factory, dummy_lake, glue_data_mapper_factory,
         data_loader, job_finished_waiter, job_table, s3_resource):
     try:
+        # Arrange
         s3_resource.BucketVersioning(dummy_lake["bucket_name"]).suspend()
-        # Generate a parquet file and add it to the lake
         glue_data_mapper_factory("test", partition_keys=["year", "month", "day"], partitions=[["2019", "08", "20"]])
         item = del_queue_factory("12345")
         object_key = "test/2019/08/20/test.parquet"
@@ -169,7 +170,7 @@ def test_it_does_not_permit_unversioned_buckets(
 
 def test_it_retains_settings(del_queue_factory, job_factory, dummy_lake, glue_data_mapper_factory, data_loader,
                              job_finished_waiter, job_table):
-    # Generate a parquet file and add it to the lake
+    # Arrange
     glue_data_mapper_factory("test", partition_keys=["year", "month", "day"], partitions=[["2019", "08", "20"]])
     item = del_queue_factory("12345")
     object_key = "test/2019/08/20/test.parquet"
@@ -194,7 +195,7 @@ def test_it_executes_successfully_for_empty_queue(job_factory, job_finished_wait
 
 def test_it_supports_data_access_roles(del_queue_factory, job_factory, dummy_lake, glue_data_mapper_factory,
                                        data_loader, job_complete_waiter, job_table, data_access_role):
-    # Generate a parquet file and add it to the lake
+    # Arrange
     glue_data_mapper_factory("test", partition_keys=["year", "month", "day"], partitions=[["2019", "08", "20"]],
                              delete_old_versions=False, role_arn=data_access_role["Arn"])
     item = del_queue_factory("12345")
@@ -213,7 +214,7 @@ def test_it_supports_data_access_roles(del_queue_factory, job_factory, dummy_lak
 
 def test_it_deletes_old_versions(del_queue_factory, job_factory, dummy_lake, glue_data_mapper_factory, data_loader,
                                  job_complete_waiter, job_table, data_access_role):
-    # Generate a parquet file and add it to the lake
+    # Arrange
     glue_data_mapper_factory("test", partition_keys=["year", "month", "day"], partitions=[["2019", "08", "20"]],
                              delete_old_versions=True, role_arn=data_access_role["Arn"])
     item = del_queue_factory("12345")
@@ -231,4 +232,56 @@ def test_it_deletes_old_versions(del_queue_factory, job_factory, dummy_lake, glu
     bucket.download_fileobj(object_key, tmp)
     assert "COMPLETED" == job_table.get_item(Key={"Id": job_id, "Sk": job_id})["Item"]["JobStatus"]
     assert 0 == len(query_parquet_file(tmp, "customer_id", "12345"))
+    assert 1 == len(list(bucket.object_versions.filter(Prefix=object_key)))
+
+
+def test_it_handles_find_failed(del_queue_factory, job_factory, dummy_lake, glue_data_mapper_factory, data_loader,
+                                job_finished_waiter, job_table, policy_changer, stack):
+    # Arrange
+    glue_data_mapper_factory("test", partition_keys=["year", "month", "day"], partitions=[["2019", "08", "20"]])
+    item = del_queue_factory("12345")
+    object_key = "test/2019/08/20/test.parquet"
+    data_loader("basic.parquet", object_key)
+    bucket = dummy_lake["bucket"]
+    bucket_name = dummy_lake["bucket_name"]
+    policy_changer({
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Deny",
+                "Principal": {
+                    "AWS": [stack["AthenaExecutionRoleArn"]]
+                },
+                "Action": "s3:*",
+                "Resource": [
+                    "arn:aws:s3:::{}".format(bucket_name),
+                    "arn:aws:s3:::{}/*".format(bucket_name),
+                ]
+            }
+        ]
+    })
+    job_id = job_factory(del_queue_items=[item])["Id"]
+    # Act
+    job_finished_waiter.wait(TableName=job_table.name, Key={"Id": {"S": job_id}, "Sk": {"S": job_id}})
+    # Assert
+    assert "FIND_FAILED" == job_table.get_item(Key={"Id": job_id, "Sk": job_id})["Item"]["JobStatus"]
+    assert 1 == len(list(bucket.object_versions.filter(Prefix=object_key)))
+
+
+def test_it_handles_find_invalid_role(del_queue_factory, job_factory, dummy_lake, glue_data_mapper_factory, data_loader,
+                                      job_finished_waiter, job_table):
+    # Arrange
+    glue_data_mapper_factory("test", partition_keys=["year", "month", "day"], partitions=[["2019", "08", "20"]],
+                             role_arn="arn:aws:iam::invalid:role/DoesntExist")
+    item = del_queue_factory("12345")
+    object_key = "test/2019/08/20/test.parquet"
+    data_loader("basic.parquet", object_key)
+    bucket = dummy_lake["bucket"]
+    job_id = job_factory(del_queue_items=[item])["Id"]
+    # Act
+    job_finished_waiter.wait(TableName=job_table.name, Key={"Id": {"S": job_id}, "Sk": {"S": job_id}})
+    # Assert
+    tmp = tempfile.NamedTemporaryFile()
+    bucket.download_fileobj(object_key, tmp)
+    assert "FORGET_PARTIALLY_FAILED" == job_table.get_item(Key={"Id": job_id, "Sk": job_id})["Item"]["JobStatus"]
     assert 1 == len(list(bucket.object_versions.filter(Prefix=object_key)))

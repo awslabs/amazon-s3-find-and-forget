@@ -478,6 +478,20 @@ def dummy_lake(s3_resource, stack, data_access_role):
 
 
 @pytest.fixture
+def policy_changer(dummy_lake):
+    bucket = dummy_lake["bucket"]
+    policy = bucket.Policy()
+    original = policy.policy
+
+    def update_policy(temp_policy):
+        policy.put(Policy=json.dumps(temp_policy))
+
+    yield update_policy
+    # reset policy back
+    policy.put(Policy=original)
+
+
+@pytest.fixture
 def data_loader(dummy_lake):
     loaded_data = []
     bucket = dummy_lake["bucket"]
