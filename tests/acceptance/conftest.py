@@ -469,6 +469,7 @@ def dummy_lake(s3_resource, stack, data_access_role):
     yield {
         "bucket_name": bucket_name,
         "bucket": bucket,
+        "policy": policy
     }
 
     # Cleanup
