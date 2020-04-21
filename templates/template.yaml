@@ -167,6 +167,28 @@ Resources:
         }
       Description: SSM Parameter for S3F2 configuration.
 
+  CognitoUserPoolUser:
+    Type: AWS::Cognito::UserPoolUser
+    DependsOn:
+      - APIStack
+      - DDBStack
+      - DelStack
+      - DeployStack
+      - LayersStack
+      - StateMachineStack
+      - StreamProcessorStack
+      - WebUIStack
+    Properties:
+      Username: !Ref AdminEmail
+      UserPoolId: !GetAtt AuthStack.Outputs.CognitoUserPoolId
+      DesiredDeliveryMediums:
+        - EMAIL
+      UserAttributes:
+        - Name: email
+          Value: !Ref AdminEmail
+        - Name: email_verified
+          Value: "true"
+
   APIStack:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -191,7 +213,6 @@ Resources:
     Properties:
       TemplateURL: ./auth.yaml
       Parameters:
-        AdminEmail: !Ref AdminEmail
         CognitoAdvancedSecurity: !Ref CognitoAdvancedSecurity
         ResourcePrefix: !Ref ResourcePrefix
   DDBStack:

@@ -3,8 +3,6 @@ Transform: AWS::Serverless-2016-10-31
 Description: Amazon S3 Find and Forget Auth Infrastructure
 
 Parameters:
-  AdminEmail:
-    Type: String
   CognitoAdvancedSecurity:
     Type: String
   ResourcePrefix:
@@ -56,19 +54,6 @@ Resources:
       GenerateSecret: false
       RefreshTokenValidity: 30
       PreventUserExistenceErrors: ENABLED
-
-  CognitoUserPoolUser:
-    Type: AWS::Cognito::UserPoolUser
-    Properties:
-      Username: !Ref AdminEmail
-      UserPoolId: !Ref CognitoUserPool
-      DesiredDeliveryMediums:
-        - EMAIL
-      UserAttributes:
-        - Name: email
-          Value: !Ref AdminEmail
-        - Name: email_verified
-          Value: "true"
 
   ServiceInvokeRole:
     Type: AWS::IAM::Role
