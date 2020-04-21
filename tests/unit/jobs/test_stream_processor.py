@@ -193,6 +193,23 @@ def test_it_handles_already_existing_executions(mock_client, mock_is_record):
     })
 
 
+@patch("backend.lambdas.jobs.stream_processor.is_operation", Mock(return_value=True))
+@patch("backend.lambdas.jobs.stream_processor.client")
+@patch("backend.lambdas.jobs.stream_processor.emit_event")
+def test_it_handles_execution_failure(mock_emit, mock_client):
+    mock_client.start_execution.side_effect = ClientError({}, "start_execution")
+    mock_client.exceptions.ExecutionAlreadyExists = boto3.client("stepfunctions").exceptions.ExecutionAlreadyExists
+    process_job({
+        "Id": "job123",
+        "Sk": "job123",
+        "Type": "Job",
+        "CreatedAt": 123.0,
+    })
+    mock_emit.assert_called_with("job123", "Exception", {
+        "Error": "ExecutionFailure",
+        "Cause": "Unable to start StepFunction execution: An error occurred (Unknown) when calling the start_execution operation: Unknown"
+    }, "StreamProcessor")
+
 @patch("backend.lambdas.jobs.stream_processor.process_job", Mock(return_value=None))
 @patch("backend.lambdas.jobs.stream_processor.is_operation", Mock(return_value=True))
 @patch("backend.lambdas.jobs.stream_processor.update_stats", Mock())

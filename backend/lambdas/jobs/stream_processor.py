@@ -4,6 +4,7 @@ from os import getenv
 import json
 import boto3
 from boto3.dynamodb.types import TypeDeserializer
+from botocore.exceptions import ClientError
 from itertools import groupby
 from operator import itemgetter
 
@@ -64,6 +65,11 @@ def process_job(job):
         )
     except client.exceptions.ExecutionAlreadyExists:
         logger.warning("Execution %s already exists", job_id)
+    except (ClientError, ValueError) as e:
+        emit_event(job_id, "Exception", {
+            "Error": "ExecutionFailure",
+            "Cause": "Unable to start StepFunction execution: {}".format(str(e))
+        }, "StreamProcessor")
 
 
 def clear_deletion_queue(job):
