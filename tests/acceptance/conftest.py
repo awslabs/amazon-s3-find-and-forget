@@ -469,12 +469,27 @@ def dummy_lake(s3_resource, stack, data_access_role):
     yield {
         "bucket_name": bucket_name,
         "bucket": bucket,
+        "policy": policy
     }
 
     # Cleanup
     bucket.objects.delete()
     bucket.object_versions.delete()
     bucket.delete()
+
+
+@pytest.fixture
+def policy_changer(dummy_lake):
+    bucket = dummy_lake["bucket"]
+    policy = bucket.Policy()
+    original = policy.policy
+
+    def update_policy(temp_policy):
+        policy.put(Policy=json.dumps(temp_policy))
+
+    yield update_policy
+    # reset policy back
+    policy.put(Policy=original)
 
 
 @pytest.fixture
