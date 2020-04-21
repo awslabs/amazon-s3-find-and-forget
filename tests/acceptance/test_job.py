@@ -114,7 +114,7 @@ def test_it_runs_for_happy_path(del_queue_factory, job_factory, dummy_lake, glue
     glue_data_mapper_factory("test", partition_keys=["year", "month", "day"], partitions=[["2019", "08", "20"]])
     item = del_queue_factory("12345")
     object_key = "test/2019/08/20/test.parquet"
-    data_loader("basic.parquet", object_key)
+    data_loader("basic.parquet", object_key, Metadata={"foo": "bar"}, CacheControl="cache")
     bucket = dummy_lake["bucket"]
     job_id = job_factory(del_queue_items=[item])["Id"]
     # Act
@@ -125,6 +125,8 @@ def test_it_runs_for_happy_path(del_queue_factory, job_factory, dummy_lake, glue
     assert "COMPLETED" == job_table.get_item(Key={"Id": job_id, "Sk": job_id})["Item"]["JobStatus"]
     assert 0 == len(query_parquet_file(tmp, "customer_id", "12345"))
     assert 2 == len(list(bucket.object_versions.filter(Prefix=object_key)))
+    assert {"foo": "bar"} == bucket.Object(object_key).metadata
+    assert "cache" == bucket.Object(object_key).cache_control
 
 
 def test_it_runs_for_unpartitioned_data(del_queue_factory, job_factory, dummy_lake, glue_data_mapper_factory,
@@ -133,7 +135,7 @@ def test_it_runs_for_unpartitioned_data(del_queue_factory, job_factory, dummy_la
     glue_data_mapper_factory("test")
     item = del_queue_factory("12345")
     object_key = "test/test.parquet"
-    data_loader("basic.parquet", object_key)
+    data_loader("basic.parquet", object_key, Metadata={"foo": "bar"}, CacheControl="cache")
     bucket = dummy_lake["bucket"]
     job_id = job_factory(del_queue_items=[item])["Id"]
     # Act
@@ -143,6 +145,8 @@ def test_it_runs_for_unpartitioned_data(del_queue_factory, job_factory, dummy_la
     bucket.download_fileobj(object_key, tmp)
     assert "COMPLETED" == job_table.get_item(Key={"Id": job_id, "Sk": job_id})["Item"]["JobStatus"]
     assert 0 == len(query_parquet_file(tmp, "customer_id", "12345"))
+    assert {"foo": "bar"} == bucket.Object(object_key).metadata
+    assert "cache" == bucket.Object(object_key).cache_control
 
 
 def test_it_does_not_permit_unversioned_buckets(
@@ -166,22 +170,6 @@ def test_it_does_not_permit_unversioned_buckets(
         assert 1 == len(query_parquet_file(tmp, "customer_id", "12345"))
     finally:
         s3_resource.BucketVersioning(dummy_lake["bucket_name"]).enable()
-
-
-def test_it_retains_settings(del_queue_factory, job_factory, dummy_lake, glue_data_mapper_factory, data_loader,
-                             job_finished_waiter, job_table):
-    # Arrange
-    glue_data_mapper_factory("test", partition_keys=["year", "month", "day"], partitions=[["2019", "08", "20"]])
-    item = del_queue_factory("12345")
-    object_key = "test/2019/08/20/test.parquet"
-    data_loader("basic.parquet", object_key, Metadata={"foo": "bar"}, CacheControl="cache")
-    bucket = dummy_lake["bucket"]
-    job_id = job_factory(del_queue_items=[item], delete_previous_versions=False)["Id"]
-    # Act
-    job_finished_waiter.wait(TableName=job_table.name, Key={"Id": {"S": job_id}, "Sk": {"S": job_id}})
-    # Assert
-    assert {"foo": "bar"} == bucket.Object(object_key).metadata
-    assert "cache" == bucket.Object(object_key).cache_control
 
 
 def test_it_executes_successfully_for_empty_queue(job_factory, job_finished_waiter, job_table):
