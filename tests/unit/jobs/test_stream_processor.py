@@ -206,7 +206,8 @@ def test_it_handles_execution_failure(mock_emit, mock_client):
         "CreatedAt": 123.0,
     })
     mock_emit.assert_called_with("job123", "Exception", {
-        "Error": "Unable to start StepFunction execution: An error occurred (Unknown) when calling the start_execution operation: Unknown"
+        "Error": "ExecutionFailure",
+        "Cause": "Unable to start StepFunction execution: An error occurred (Unknown) when calling the start_execution operation: Unknown"
     }, "StreamProcessor")
 
 @patch("backend.lambdas.jobs.stream_processor.process_job", Mock(return_value=None))

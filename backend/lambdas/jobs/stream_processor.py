@@ -67,7 +67,8 @@ def process_job(job):
         logger.warning("Execution %s already exists", job_id)
     except (ClientError, ValueError) as e:
         emit_event(job_id, "Exception", {
-            "Error": "Unable to start StepFunction execution: {}".format(str(e))
+            "Error": "ExecutionFailure",
+            "Cause": "Unable to start StepFunction execution: {}".format(str(e))
         }, "StreamProcessor")
 
 
