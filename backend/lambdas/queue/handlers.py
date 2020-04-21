@@ -8,10 +8,11 @@ import uuid
 
 import boto3
 
-from boto_utils import DecimalEncoder, get_config, get_user_info, running_job_exists, utc_timestamp
+from boto_utils import DecimalEncoder, get_config, get_user_info, paginate, running_job_exists, utc_timestamp
 from decorators import with_logging, catch_errors, add_cors_headers, json_body_loader
 
 sfn_client = boto3.client("stepfunctions")
+ddb_client = boto3.client("dynamodb")
 dynamodb_resource = boto3.resource("dynamodb")
 deletion_queue_table = dynamodb_resource.Table(os.getenv("DeletionQueueTable", "S3F2_DeletionQueue"))
 jobs_table = dynamodb_resource.Table(os.getenv("JobTable", "S3F2_Jobs"))
@@ -83,6 +84,8 @@ def process_handler(event, context):
 
     job_id = str(uuid.uuid4())
     config = get_config()
+    deletion_queue_table = os.getenv("DeletionQueueTable", "S3F2_DeletionQueue")
+    deletion_queue = list(paginate(ddb_client, ddb_client.scan, "Items", TableName=deletion_queue_table))
     item = {
         "Id": job_id,
         "Sk": job_id,
@@ -90,7 +93,7 @@ def process_handler(event, context):
         "JobStatus": "QUEUED",
         "GSIBucket": str(random.randint(0, bucket_count - 1)),
         "CreatedAt": utc_timestamp(),
-        "DeletionQueueItems": deletion_queue_table.scan()["Items"],
+        "DeletionQueueItems": deletion_queue,
         "CreatedBy": get_user_info(event),
         **{k: v for k, v in config.items() if k not in ["JobDetailsRetentionDays"]}
     }
