@@ -540,7 +540,6 @@ Resources:
                     "Filter Athena Data Mappers": {
                       "Parameters": {
                         "DataMappers.$": "$.DataMappers.Items[?(@.QueryExecutor=='athena')]",
-                        "DeletionQueue.$": "$.DeletionQueueItems",
                         "ExecutionId.$": "$$.Execution.Id",
                         "ExecutionName.$": "$$.Execution.Name",
                         "AthenaConcurrencyLimit.$": "$.AthenaConcurrencyLimit",
@@ -863,6 +862,8 @@ Resources:
         Variables:
           QueryQueue: !Ref QueryQueue
       Policies:
+      - DynamoDBReadPolicy:
+          TableName: !Ref JobTableName
       - Statement:
         - Action:
           - "glue:BatchGetPartition"

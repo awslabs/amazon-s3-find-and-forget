@@ -57,11 +57,20 @@ def handler(event, context):
 
 def process_job(job):
     job_id = job["Id"]
+    state = { k: job[k] for k in [
+        "AthenaConcurrencyLimit",
+        "DeletionTasksMaxNumber",
+        "ForgetQueueWaitSeconds",
+        "Id",
+        "QueryExecutionWaitSeconds",
+        "QueryQueueWaitSeconds"
+    ]}
+
     try:
         client.start_execution(
             stateMachineArn=state_machine_arn,
             name=job_id,
-            input=json.dumps(job, cls=DecimalEncoder)
+            input=json.dumps(state, cls=DecimalEncoder)
         )
     except client.exceptions.ExecutionAlreadyExists:
         logger.warning("Execution %s already exists", job_id)
