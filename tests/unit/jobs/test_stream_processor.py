@@ -1,3 +1,4 @@
+import json
 import os
 from types import SimpleNamespace
 
@@ -6,7 +7,7 @@ import boto3
 from botocore.exceptions import ClientError
 from mock import patch, Mock, ANY
 
-with patch.dict(os.environ, {"JobTable": "test", "DeletionQueueTable": "test"}):
+with patch.dict(os.environ, {"JobTable": "test", "DeletionQueueTable": "test", "StateMachineArn": "sm-arn"}):
     from backend.lambdas.jobs.stream_processor import handler, is_operation, is_record_type, process_job, \
         clear_deletion_queue
 
@@ -174,7 +175,18 @@ def test_it_starts_state_machine(mock_client):
         "ForgetQueueWaitSeconds": 30
     })
 
-    mock_client.start_execution.assert_called()
+    mock_client.start_execution.assert_called_with(
+        stateMachineArn='sm-arn',
+        name='job123',
+        input=json.dumps({
+            "AthenaConcurrencyLimit": 15,
+            "DeletionTasksMaxNumber": 50,
+            "ForgetQueueWaitSeconds": 30,
+            "Id": "job123",
+            "QueryExecutionWaitSeconds": 5,
+            "QueryQueueWaitSeconds": 5
+        })
+    )
 
 
 @patch("backend.lambdas.jobs.stream_processor.is_operation", Mock(return_value=True))
@@ -190,6 +202,11 @@ def test_it_handles_already_existing_executions(mock_client, mock_is_record):
         "Sk": "job123",
         "Type": "Job",
         "CreatedAt": 123.0,
+        "AthenaConcurrencyLimit" : 15,
+        "DeletionTasksMaxNumber": 3,
+        "ForgetQueueWaitSeconds": 30,
+        "QueryExecutionWaitSeconds": 5,
+        "QueryQueueWaitSeconds": 30
     })
 
 
@@ -204,6 +221,11 @@ def test_it_handles_execution_failure(mock_emit, mock_client):
         "Sk": "job123",
         "Type": "Job",
         "CreatedAt": 123.0,
+        "AthenaConcurrencyLimit" : 15,
+        "DeletionTasksMaxNumber": 3,
+        "ForgetQueueWaitSeconds": 30,
+        "QueryExecutionWaitSeconds": 5,
+        "QueryQueueWaitSeconds": 30
     })
     mock_emit.assert_called_with("job123", "Exception", {
         "Error": "ExecutionFailure",

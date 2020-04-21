@@ -6,23 +6,26 @@ import pytest
 from mock import patch
 
 with patch.dict(os.environ, {"QueryQueue": "test"}):
-    from backend.lambdas.tasks.generate_queries import handler, get_table, get_partitions, convert_to_col_type
+    from backend.lambdas.tasks.generate_queries import handler, get_table, get_partitions, convert_to_col_type, get_deletion_queue
 
 pytestmark = [pytest.mark.unit, pytest.mark.task]
 
 
+@patch("backend.lambdas.tasks.generate_queries.get_deletion_queue")
 @patch("backend.lambdas.tasks.generate_queries.get_table")
 @patch("backend.lambdas.tasks.generate_queries.get_partitions")
 @patch("backend.lambdas.tasks.generate_queries.batch_sqs_msgs")
-def test_it_handles_single_columns(batch_sqs_msgs_mock, get_partitions_mock, get_table_mock):
+def test_it_handles_single_columns(batch_sqs_msgs_mock, get_partitions_mock, get_table_mock, get_queue_mock):
     columns = ["customer_id"]
     partition_keys = ["product_category"]
     partitions = [["Books"]]
+    get_queue_mock.return_value = [{ "MatchId": "hi" }]
     get_table_mock.return_value = table_stub(columns, partition_keys)
     get_partitions_mock.return_value = [
         partition_stub(p, columns) for p in partitions
     ]
     handler({
+        "ExecutionName": "job_id",
         "DataMappers": [{
             "DataMapperId": "a",
             "QueryExecutor": "athena",
@@ -33,9 +36,6 @@ def test_it_handles_single_columns(batch_sqs_msgs_mock, get_partitions_mock, get
                 "Database": "test_db",
                 "Table": "test_table"
             },
-        }],
-        "DeletionQueue": [{
-            "MatchId": "hi",
         }]
     }, SimpleNamespace())
 
@@ -49,18 +49,21 @@ def test_it_handles_single_columns(batch_sqs_msgs_mock, get_partitions_mock, get
     }])
 
 
+@patch("backend.lambdas.tasks.generate_queries.get_deletion_queue")
 @patch("backend.lambdas.tasks.generate_queries.get_table")
 @patch("backend.lambdas.tasks.generate_queries.get_partitions")
 @patch("backend.lambdas.tasks.generate_queries.batch_sqs_msgs")
-def test_it_handles_multiple_columns(batch_sqs_msgs_mock, get_partitions_mock, get_table_mock):
+def test_it_handles_multiple_columns(batch_sqs_msgs_mock, get_partitions_mock, get_table_mock, get_queue_mock):
     columns = ["customer_id", "alt_customer_id"]
     partition_keys = ["product_category"]
     partitions = [["Books"]]
+    get_queue_mock.return_value = [{ "MatchId": "hi" }]
     get_table_mock.return_value = table_stub(columns, partition_keys)
     get_partitions_mock.return_value = [
         partition_stub(p, columns) for p in partitions
     ]
     handler({
+        "ExecutionName": "job_id",
         "DataMappers": [{
             "DataMapperId": "a",
             "QueryExecutor": "athena",
@@ -71,9 +74,6 @@ def test_it_handles_multiple_columns(batch_sqs_msgs_mock, get_partitions_mock, g
                 "Database": "test_db",
                 "Table": "test_table"
             }
-        }],
-        "DeletionQueue": [{
-            "MatchId": "hi",
         }]
     }, SimpleNamespace())
 
@@ -91,18 +91,21 @@ def test_it_handles_multiple_columns(batch_sqs_msgs_mock, get_partitions_mock, g
     ])
 
 
+@patch("backend.lambdas.tasks.generate_queries.get_deletion_queue")
 @patch("backend.lambdas.tasks.generate_queries.get_table")
 @patch("backend.lambdas.tasks.generate_queries.get_partitions")
 @patch("backend.lambdas.tasks.generate_queries.batch_sqs_msgs")
-def test_it_handles_multiple_partition_keys(batch_sqs_msgs_mock, get_partitions_mock, get_table_mock):
+def test_it_handles_multiple_partition_keys(batch_sqs_msgs_mock, get_partitions_mock, get_table_mock, get_queue_mock):
     columns = ["customer_id"]
     partition_keys = ["year", "month"]
     partitions = [["2019", "01"]]
+    get_queue_mock.return_value = [{ "MatchId": "hi" }]
     get_table_mock.return_value = table_stub(columns, partition_keys)
     get_partitions_mock.return_value = [
         partition_stub(p, columns) for p in partitions
     ]
     handler({
+        "ExecutionName": "job_id",
         "DataMappers": [{
             "DataMapperId": "a",
             "QueryExecutor": "athena",
@@ -113,9 +116,6 @@ def test_it_handles_multiple_partition_keys(batch_sqs_msgs_mock, get_partitions_
                 "Database": "test_db",
                 "Table": "test_table"
             }
-        }],
-        "DeletionQueue": [{
-            "MatchId": "hi",
         }]
     }, SimpleNamespace())
 
@@ -134,18 +134,21 @@ def test_it_handles_multiple_partition_keys(batch_sqs_msgs_mock, get_partitions_
     ])
 
 
+@patch("backend.lambdas.tasks.generate_queries.get_deletion_queue")
 @patch("backend.lambdas.tasks.generate_queries.get_table")
 @patch("backend.lambdas.tasks.generate_queries.get_partitions")
 @patch("backend.lambdas.tasks.generate_queries.batch_sqs_msgs")
-def test_it_handles_multiple_partition_values(batch_sqs_msgs_mock, get_partitions_mock, get_table_mock):
+def test_it_handles_multiple_partition_values(batch_sqs_msgs_mock, get_partitions_mock, get_table_mock, get_queue_mock):
     columns = ["customer_id"]
     partition_keys = ["year", "month"]
     partitions = [["2018", "12"], ["2019", "01"], ["2019", "02"]]
+    get_queue_mock.return_value = [{ "MatchId": "hi" }]
     get_table_mock.return_value = table_stub(columns, partition_keys)
     get_partitions_mock.return_value = [
         partition_stub(p, columns) for p in partitions
     ]
     handler({
+        "ExecutionName": "job_id",
         "DataMappers": [{
             "DataMapperId": "a",
             "QueryExecutor": "athena",
@@ -156,10 +159,7 @@ def test_it_handles_multiple_partition_values(batch_sqs_msgs_mock, get_partition
                 "Database": "test_db",
                 "Table": "test_table"
             }
-        }],
-        "DeletionQueue": [{
-            "MatchId": "hi",
-        }],
+        }]
     }, SimpleNamespace())
 
     batch_sqs_msgs_mock.assert_called_with(mock.ANY, [
@@ -199,18 +199,21 @@ def test_it_handles_multiple_partition_values(batch_sqs_msgs_mock, get_partition
     ])
 
 
+@patch("backend.lambdas.tasks.generate_queries.get_deletion_queue")
 @patch("backend.lambdas.tasks.generate_queries.get_table")
 @patch("backend.lambdas.tasks.generate_queries.get_partitions")
 @patch("backend.lambdas.tasks.generate_queries.batch_sqs_msgs")
-def test_it_propagates_optional_properties(batch_sqs_msgs_mock, get_partitions_mock, get_table_mock):
+def test_it_propagates_optional_properties(batch_sqs_msgs_mock, get_partitions_mock, get_table_mock, get_queue_mock):
     columns = ["customer_id"]
     partition_keys = ["year", "month"]
     partitions = [["2018", "12"], ["2019", "01"]]
+    get_queue_mock.return_value = [{ "MatchId": "hi" }]
     get_table_mock.return_value = table_stub(columns, partition_keys)
     get_partitions_mock.return_value = [
         partition_stub(p, columns) for p in partitions
     ]
     handler({
+        "ExecutionName": "job_id",
         "DataMappers": [{
             "DataMapperId": "a",
             "QueryExecutor": "athena",
@@ -223,9 +226,6 @@ def test_it_propagates_optional_properties(batch_sqs_msgs_mock, get_partitions_m
             },
             "RoleArn": "arn:aws:iam::accountid:role/rolename",
             "DeleteOldVersions": True
-        }],
-        "DeletionQueue": [{
-            "MatchId": "hi",
         }]
     }, SimpleNamespace())
 
@@ -257,18 +257,23 @@ def test_it_propagates_optional_properties(batch_sqs_msgs_mock, get_partitions_m
     ])
 
 
+@patch("backend.lambdas.tasks.generate_queries.get_deletion_queue")
 @patch("backend.lambdas.tasks.generate_queries.get_table")
 @patch("backend.lambdas.tasks.generate_queries.get_partitions")
 @patch("backend.lambdas.tasks.generate_queries.batch_sqs_msgs")
-def test_it_filters_users_from_non_applicable_tables(batch_sqs_msgs_mock, get_partitions_mock, get_table_mock):
+def test_it_filters_users_from_non_applicable_tables(batch_sqs_msgs_mock, get_partitions_mock, get_table_mock, get_queue_mock):
     columns = ["customer_id"]
     partition_keys = ["product_category"]
     partitions = [["Books"]]
+    get_queue_mock.return_value = [
+        { "MatchId": "123", "DataMappers": ["A"]},
+        { "MatchId": "456", "DataMappers": []}]
     get_table_mock.return_value = table_stub(columns, partition_keys)
     get_partitions_mock.return_value = [
         partition_stub(p, columns) for p in partitions
     ]
     handler({
+        "ExecutionName": "job_id",
         "DataMappers": [{
             "DataMapperId": "A",
             "QueryExecutor": "athena",
@@ -290,15 +295,6 @@ def test_it_filters_users_from_non_applicable_tables(batch_sqs_msgs_mock, get_pa
                 "Database": "test_db",
                 "Table": "B"
             }
-        }],
-        "DeletionQueue": [{
-            "MatchId": "123",
-            "DataMappers": [
-                "A"
-            ]
-        }, {
-            "MatchId": "456",
-            "DataMappers": []
         }]
     }, SimpleNamespace())
 
@@ -324,14 +320,17 @@ def test_it_filters_users_from_non_applicable_tables(batch_sqs_msgs_mock, get_pa
     ])
 
 
+@patch("backend.lambdas.tasks.generate_queries.get_deletion_queue")
 @patch("backend.lambdas.tasks.generate_queries.get_table")
 @patch("backend.lambdas.tasks.generate_queries.get_partitions")
 @patch("backend.lambdas.tasks.generate_queries.batch_sqs_msgs")
-def test_it_handles_unpartitioned_data(batch_sqs_msgs_mock, get_partitions_mock, get_table_mock):
+def test_it_handles_unpartitioned_data(batch_sqs_msgs_mock, get_partitions_mock, get_table_mock, get_queue_mock):
     columns = ["customer_id"]
     get_table_mock.return_value = table_stub(columns, [])
     get_partitions_mock.return_value = []
+    get_queue_mock.return_value = [{ "MatchId": "123" }]
     handler({
+        "ExecutionName": "job_id",
         "DataMappers": [{
             "DataMapperId": "a",
             "QueryExecutor": "athena",
@@ -342,9 +341,6 @@ def test_it_handles_unpartitioned_data(batch_sqs_msgs_mock, get_partitions_mock,
                 "Database": "test_db",
                 "Table": "test_table"
             }
-        }],
-        "DeletionQueue": [{
-            "MatchId": "123",
         }]
     }, SimpleNamespace())
 
@@ -360,14 +356,17 @@ def test_it_handles_unpartitioned_data(batch_sqs_msgs_mock, get_partitions_mock,
     ])
 
 
+@patch("backend.lambdas.tasks.generate_queries.get_deletion_queue")
 @patch("backend.lambdas.tasks.generate_queries.get_table")
 @patch("backend.lambdas.tasks.generate_queries.get_partitions")
 @patch("backend.lambdas.tasks.generate_queries.batch_sqs_msgs")
-def test_it_propagates_role_arn_for_unpartitioned_data(batch_sqs_msgs_mock, get_partitions_mock, get_table_mock):
+def test_it_propagates_role_arn_for_unpartitioned_data(batch_sqs_msgs_mock, get_partitions_mock, get_table_mock, get_queue_mock):
     columns = ["customer_id"]
     get_table_mock.return_value = table_stub(columns, [])
     get_partitions_mock.return_value = []
+    get_queue_mock.return_value = [{ "MatchId": "123" }]
     handler({
+        "ExecutionName": "job_id",
         "DataMappers": [{
             "DataMapperId": "a",
             "QueryExecutor": "athena",
@@ -379,9 +378,6 @@ def test_it_propagates_role_arn_for_unpartitioned_data(batch_sqs_msgs_mock, get_
                 "Table": "test_table"
             },
             "RoleArn": "arn:aws:iam::accountid:role/rolename",
-        }],
-        "DeletionQueue": [{
-            "MatchId": "123",
         }]
     }, SimpleNamespace())
 
@@ -398,14 +394,17 @@ def test_it_propagates_role_arn_for_unpartitioned_data(batch_sqs_msgs_mock, get_
     ])
 
 
+@patch("backend.lambdas.tasks.generate_queries.get_deletion_queue")
 @patch("backend.lambdas.tasks.generate_queries.get_table")
 @patch("backend.lambdas.tasks.generate_queries.get_partitions")
 @patch("backend.lambdas.tasks.generate_queries.batch_sqs_msgs")
-def test_it_removes_queries_with_no_applicable_matches(batch_sqs_msgs_mock, get_partitions_mock, get_table_mock):
+def test_it_removes_queries_with_no_applicable_matches(batch_sqs_msgs_mock, get_partitions_mock, get_table_mock, get_queue_mock):
     columns = ["customer_id"]
     get_table_mock.return_value = table_stub(columns, [])
     get_partitions_mock.return_value = []
+    get_queue_mock.return_value = [{ "MatchId": "123", "DataMappers": ["B"]}]
     handler({
+        "ExecutionName": "job_id",
         "DataMappers": [{
             "DataMapperId": "A",
             "QueryExecutor": "athena",
@@ -416,29 +415,28 @@ def test_it_removes_queries_with_no_applicable_matches(batch_sqs_msgs_mock, get_
                 "Database": "test_db",
                 "Table": "test_table"
             }
-        }],
-        "DeletionQueue": [{
-            "MatchId": "123",
-            "DataMappers": ["B"]
         }]
     }, SimpleNamespace())
 
     batch_sqs_msgs_mock.assert_called_with(mock.ANY, [])
 
 
+@patch("backend.lambdas.tasks.generate_queries.get_deletion_queue")
 @patch("backend.lambdas.tasks.generate_queries.get_table")
 @patch("backend.lambdas.tasks.generate_queries.get_partitions")
 @patch("backend.lambdas.tasks.generate_queries.batch_sqs_msgs")
 def test_it_removes_queries_with_no_applicable_matches_for_partitioned_data(
-        batch_sqs_msgs_mock, get_partitions_mock, get_table_mock):
+        batch_sqs_msgs_mock, get_partitions_mock, get_table_mock, get_queue_mock):
     columns = ["customer_id"]
     partition_keys = ["product_category"]
     partitions = [["Books"], ["Beauty"]]
+    get_queue_mock.return_value = [{ "MatchId": "123", "DataMappers": ["C"]}]
     get_table_mock.return_value = table_stub(columns, partition_keys)
     get_partitions_mock.return_value = [
         partition_stub(p, columns) for p in partitions
     ]
     handler({
+        "ExecutionName": "job_id",
         "DataMappers": [{
             "DataMapperId": "A",
             "QueryExecutor": "athena",
@@ -449,10 +447,6 @@ def test_it_removes_queries_with_no_applicable_matches_for_partitioned_data(
                 "Database": "test_db",
                 "Table": "test_table"
             }
-        }],
-        "DeletionQueue": [{
-            "MatchId": "123",
-            "DataMappers": ["C"]
         }]
     }, SimpleNamespace())
 
@@ -537,6 +531,24 @@ def test_it_throws_for_unconvertable_matches():
             "Name": "test_col",
             "Type": "int"
         }]}})
+
+@patch("backend.lambdas.tasks.generate_queries.table")
+def test_it_fetches_deletion_queue_from_ddb(table_mock):
+    table_mock.get_item.return_value = {
+        "Item": {
+            "DeletionQueueItems": [{
+                "DataMappers": [],
+                "MatchId": "123"
+            }]
+        }
+    }
+
+    resp = get_deletion_queue("job123")
+    assert resp == [{
+        'DataMappers': [],
+        'MatchId': '123'
+    }]
+    table_mock.get_item.assert_called_with(Key={ 'Id': 'job123', 'Sk': 'job123'})
 
 
 def partition_stub(values, columns, table_name="test_table"):

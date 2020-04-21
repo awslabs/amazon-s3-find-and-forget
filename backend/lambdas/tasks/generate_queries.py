@@ -4,10 +4,6 @@ Task for generating Athena queries from glue catalogs
 Requires a state object as the event which looks like:
 
 {
-  "DeletionQueue": [{
-    "MatchId": "123",
-    "DataMappers": ["mapper_a"]
-  }],
   "DataMappers": [
     {
       "Database": "db"
@@ -18,21 +14,23 @@ Requires a state object as the event which looks like:
 }
 """
 import os
-
 import boto3
 
 from boto_utils import paginate, batch_sqs_msgs, deserialize_item
 from decorators import with_logging
 
+ddb = boto3.resource("dynamodb")
 glue_client = boto3.client("glue")
 sqs = boto3.resource("sqs")
+
 queue = sqs.Queue(os.getenv("QueryQueue"))
+table = ddb.Table(os.getenv("JobTable", "S3F2_Jobs"))
 
 
 @with_logging
 def handler(event, context):
     data_mappers = event["DataMappers"]
-    deletion_items = event["DeletionQueue"]
+    deletion_items = get_deletion_queue(event['ExecutionName'])
     # For every partition combo of every table, create a query
     for data_mapper in data_mappers:
         queries = []
@@ -89,6 +87,11 @@ def handler(event, context):
                 filtered.append(query)
 
         batch_sqs_msgs(queue, filtered)
+
+
+def get_deletion_queue(job_id):
+    resp = table.get_item(Key={ 'Id': job_id, 'Sk': job_id })
+    return resp.get('Item').get('DeletionQueueItems')
 
 
 def get_table(db, table_name):
