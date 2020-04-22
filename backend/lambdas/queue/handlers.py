@@ -13,9 +13,11 @@ from decorators import with_logging, catch_errors, add_cors_headers, json_body_l
 
 sfn_client = boto3.client("stepfunctions")
 ddb_client = boto3.client("dynamodb")
-dynamodb_resource = boto3.resource("dynamodb")
-deletion_queue_table = dynamodb_resource.Table(os.getenv("DeletionQueueTable", "S3F2_DeletionQueue"))
-jobs_table = dynamodb_resource.Table(os.getenv("JobTable", "S3F2_Jobs"))
+ddb_resource = boto3.resource("dynamodb")
+
+deletion_queue_table_name = os.getenv("DeletionQueueTable", "S3F2_DeletionQueue")
+deletion_queue_table = ddb_resource.Table(deletion_queue_table_name)
+jobs_table = ddb_resource.Table(os.getenv("JobTable", "S3F2_Jobs"))
 index = os.getenv("JobTableDateGSI", "Date-GSI")
 bucket_count = int(os.getenv("GSIBucketCount", 1))
 
@@ -84,8 +86,7 @@ def process_handler(event, context):
 
     job_id = str(uuid.uuid4())
     config = get_config()
-    deletion_queue_table = os.getenv("DeletionQueueTable", "S3F2_DeletionQueue")
-    deletion_queue = list(paginate(ddb_client, ddb_client.scan, "Items", TableName=deletion_queue_table))
+    deletion_queue = list(paginate(ddb_client, ddb_client.scan, "Items", TableName=deletion_queue_table_name))
     item = {
         "Id": job_id,
         "Sk": job_id,
