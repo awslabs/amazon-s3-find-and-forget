@@ -108,12 +108,12 @@ def test_it_prevents_cancelling_whilst_running_jobs(mock_running_job):
 
 
 @patch("backend.lambdas.queue.handlers.bucket_count", 1)
+@patch("backend.lambdas.queue.handlers.paginate")
 @patch("backend.lambdas.queue.handlers.uuid")
-@patch("backend.lambdas.queue.handlers.deletion_queue_table")
 @patch("backend.lambdas.queue.handlers.jobs_table")
 @patch("backend.lambdas.queue.handlers.running_job_exists")
 @patch("backend.lambdas.queue.handlers.get_config")
-def test_it_process_queue(mock_config, mock_running_job, job_table, q_table, uuid):
+def test_it_process_queue(mock_config, mock_running_job, job_table, uuid, paginate):
     mock_running_job.return_value = False
     mock_config.return_value = {
         "AthenaConcurrencyLimit": 15,
@@ -122,7 +122,7 @@ def test_it_process_queue(mock_config, mock_running_job, job_table, q_table, uui
         "QueryQueueWaitSeconds": 5,
         "ForgetQueueWaitSeconds": 30
     }
-    q_table.scan.return_value = {"Items": [{"MatchId": "123", "CreatedAt": 123}]}
+    paginate.return_value = iter([{"MatchId": "123", "CreatedAt": 123}])
     uuid.uuid4.return_value = 123
     response = handlers.process_handler({
         "body": "",
@@ -169,13 +169,13 @@ def test_it_process_queue(mock_config, mock_running_job, job_table, q_table, uui
 
 
 @patch("backend.lambdas.queue.handlers.bucket_count", 1)
+@patch("backend.lambdas.queue.handlers.paginate")
 @patch("backend.lambdas.queue.handlers.uuid")
-@patch("backend.lambdas.queue.handlers.deletion_queue_table")
 @patch("backend.lambdas.queue.handlers.jobs_table")
 @patch("backend.lambdas.queue.handlers.running_job_exists")
 @patch("backend.lambdas.queue.handlers.get_config")
 @patch("backend.lambdas.queue.handlers.utc_timestamp")
-def test_it_applies_expiry(mock_utc, mock_config, mock_running_job, job_table, q_table, uuid):
+def test_it_applies_expiry(mock_utc, mock_config, mock_running_job, job_table, uuid, paginate):
     mock_running_job.return_value = False
     mock_utc.return_value = 12346789
     mock_config.return_value = {
@@ -186,7 +186,7 @@ def test_it_applies_expiry(mock_utc, mock_config, mock_running_job, job_table, q
         "QueryQueueWaitSeconds": 5,
         "ForgetQueueWaitSeconds": 30
     }
-    q_table.scan.return_value = {"Items": [{"MatchId": "123", "CreatedAt": 123}]}
+    paginate.return_value = iter([{"MatchId": "123", "CreatedAt": 123}])
     uuid.uuid4.return_value = 123
     response = handlers.process_handler({
         "body": "",
