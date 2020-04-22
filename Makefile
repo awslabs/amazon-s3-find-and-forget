@@ -51,13 +51,13 @@ format-cfn:
 
 .PHONY: format-docs
 format-docs:
-	npx prettier-eslint ./*.md ./docs/*.md --write --prose-wrap always
+	npx prettier-eslint-cli ./*.md ./docs/*.md --write --prose-wrap always
 	git add *.md
 	git add docs/*.md
 
 .PHONY: format-js
 format-js:
-	npx prettier-eslint $(PWD)/frontend/src/**/*.js --write --prose-wrap always
+	npx prettier-eslint-cli $(PWD)/frontend/src/**/*.js --write --prose-wrap always
 	git add frontend/src/
 
 generate-api-docs:
