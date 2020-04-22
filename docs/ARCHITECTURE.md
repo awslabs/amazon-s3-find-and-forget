@@ -130,8 +130,8 @@ then proceeds to the Find phase.
 For each supported query executor, the workflow generates a list of queries it
 should run based on the data mappers associated with that query executor and the
 partitions present in the data catalog tables associated with those data
-mappers. For each query, a message is added to the specific SQS queue for the
-relevant query executor.
+mappers. For each query, a message is added to the query SQS containing the
+required information for the target query executor.
 
 When all the queries have been executed, the
 [Forget Workflow](#the-forget-workflow) is executed.

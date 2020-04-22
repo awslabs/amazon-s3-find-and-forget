@@ -45,12 +45,13 @@ def test_it_starts_machine_as_expected(sqs_mock, read_queue_mock, sf_client_mock
 
     read_queue_mock.return_value = [
         SimpleNamespace(
-            body=json.dumps({"hello": "world"}),
+            body=json.dumps({"hello": "world", "QueryExecutor": "athena"}),
             receipt_handle="1234",
         )
     ]
     expected_call = json.dumps({
         "hello": "world",
+        "QueryExecutor": "athena",
         "AWS_STEP_FUNCTIONS_STARTED_BY_EXECUTION_ID": "1234",
         "JobId": "4231",
         "WaitDuration": 5
@@ -77,12 +78,13 @@ def test_it_defaults_wait_duration(sqs_mock, read_queue_mock, sf_client_mock):
 
     read_queue_mock.return_value = [
         SimpleNamespace(
-            body=json.dumps({"hello": "world"}),
+            body=json.dumps({"hello": "world", "QueryExecutor": "athena"}),
             receipt_handle="1234",
         )
     ]
     expected_call = json.dumps({
         "hello": "world",
+        "QueryExecutor": "athena",
         "AWS_STEP_FUNCTIONS_STARTED_BY_EXECUTION_ID": "1234",
         "JobId": "4231",
         "WaitDuration": 15
@@ -104,11 +106,11 @@ def test_it_starts_state_machine_per_message(sqs_mock, read_queue_mock, sf_clien
     sf_client_mock.start_execution.return_value = execution_stub()
     read_queue_mock.return_value = [
         SimpleNamespace(
-            body=json.dumps({"hello": "world"}),
+            body=json.dumps({"hello": "world", "QueryExecutor": "athena"}),
             receipt_handle="1234",
         ),
         SimpleNamespace(
-            body=json.dumps({"other": "world"}),
+            body=json.dumps({"other": "world", "QueryExecutor": "athena"}),
             receipt_handle="4321",
         )
     ]
@@ -131,7 +133,7 @@ def test_limits_calls_to_capacity(sqs_mock, read_queue_mock, sf_client_mock):
     sf_client_mock.start_execution.return_value = execution_stub()
     read_queue_mock.return_value = [
         SimpleNamespace(
-            body=json.dumps({"hello": "world"}),
+            body=json.dumps({"hello": "world", "QueryExecutor": "athena"}),
             receipt_handle="1234",
         ),
     ]
@@ -203,6 +205,26 @@ def test_it_abandons_when_previous_loop_found_failure(mock_clear, mock_abandon, 
                 "Data": [{}],
                 "Total": 1,
             }
+        }, SimpleNamespace())
+
+
+@patch("backend.lambdas.tasks.work_query_queue.sf_client")
+@patch("backend.lambdas.tasks.work_query_queue.read_queue")
+@patch("backend.lambdas.tasks.work_query_queue.sqs")
+def test_raises_error_for_invalid_executor(sqs_mock, read_queue_mock, sf_client_mock):
+    sqs_mock.Queue.return_value = sqs_mock
+    sf_client_mock.start_execution.return_value = execution_stub()
+
+    read_queue_mock.return_value = [
+        SimpleNamespace(
+            body=json.dumps({"hello": "world", "QueryExecutor": "unknown"}),
+            receipt_handle="1234",
+        )
+    ]
+    with pytest.raises(NotImplementedError):
+        handler({
+            "ExecutionId": "1234",
+            "ExecutionName": "4231",
         }, SimpleNamespace())
 
 
