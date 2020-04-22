@@ -1,5 +1,21 @@
 import { apiGateway, glueGateway, stsGateway } from "./request";
 
+const getPaginatedList = async (endpoint, key, pageSize) => {
+  const all = [];
+  let watermark = undefined;
+
+  while (true) {
+    let qs = `?page_size=${pageSize || 10}`;
+    if (watermark) qs += `&start_at=${watermark}`;
+    const page = await apiGateway(`${endpoint}${qs}`);
+    all.push(...page[key]);
+
+    if (page.NextStart) watermark = page.NextStart;
+    else break;
+  }
+  return all;
+};
+
 export default {
   deleteDataMapper(id) {
     return apiGateway(`data_mappers/${id}`, { method: "del" });
@@ -75,18 +91,7 @@ export default {
   },
 
   async getJobs() {
-    const allJobs = [];
-    let watermark = undefined;
-
-    while (true) {
-      const qs = watermark ? `?start_at=${watermark}` : "";
-      const page = await apiGateway(`jobs${qs}`);
-      allJobs.push(...page.Jobs);
-
-      if (page.NextStart) watermark = page.NextStart;
-      else break;
-    }
-    return { Jobs: allJobs };
+    return { Jobs: await getPaginatedList("jobs", "Jobs") };
   },
 
   async getJobEvents(
@@ -123,8 +128,8 @@ export default {
     return data;
   },
 
-  getQueue() {
-    return apiGateway("queue");
+  async getQueue() {
+    return { MatchIds: await getPaginatedList("queue", "MatchIds", 100) };
   },
 
   getSettings() {

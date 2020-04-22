@@ -5,11 +5,14 @@ import random
 import json
 import os
 import uuid
+from datetime import datetime, timezone
+from decimal import Decimal
 
 import boto3
+from boto3.dynamodb.conditions import Key
 
 from boto_utils import DecimalEncoder, get_config, get_user_info, paginate, running_job_exists, utc_timestamp
-from decorators import with_logging, catch_errors, add_cors_headers, json_body_loader
+from decorators import with_logging, catch_errors, add_cors_headers, json_body_loader, load_schema, request_validator
 
 sfn_client = boto3.client("stepfunctions")
 ddb_client = boto3.client("dynamodb")
@@ -18,7 +21,7 @@ ddb_resource = boto3.resource("dynamodb")
 deletion_queue_table_name = os.getenv("DeletionQueueTable", "S3F2_DeletionQueue")
 deletion_queue_table = ddb_resource.Table(deletion_queue_table_name)
 jobs_table = ddb_resource.Table(os.getenv("JobTable", "S3F2_Jobs"))
-index = os.getenv("JobTableDateGSI", "Date-GSI")
+index = os.getenv("DeletionQueueTableDateGSI", "Date-GSI")
 bucket_count = int(os.getenv("GSIBucketCount", 1))
 
 
@@ -30,9 +33,12 @@ def enqueue_handler(event, context):
     body = event["body"]
     match_id = body["MatchId"]
     data_mappers = body.get("DataMappers", [])
+    # https://github.com/boto/boto3/issues/665
+    created_at = Decimal(str(datetime.now(timezone.utc).timestamp()))
     item = {
         "MatchId": match_id,
-        "CreatedAt": utc_timestamp(),
+        "GSIBucket": str(random.randint(0, bucket_count - 1)),
+        "CreatedAt": created_at,
         "DataMappers": data_mappers,
         "CreatedBy": get_user_info(event)
     }
@@ -46,13 +52,36 @@ def enqueue_handler(event, context):
 
 @with_logging
 @add_cors_headers
+@request_validator(load_schema("list_queue_items"))
 @catch_errors
 def get_handler(event, context):
-    items = deletion_queue_table.scan()["Items"]
+    qs = event.get("queryStringParameters")
+    if not qs:
+        qs = {}
+    page_size = int(qs.get("page_size", 10))
+    start_at = Decimal(qs.get("start_at", utc_timestamp()))
+
+    items = []
+    for gsi_bucket in range(0, bucket_count):
+        response = deletion_queue_table.query(
+            IndexName=index,
+            KeyConditionExpression=Key('GSIBucket').eq(str(gsi_bucket)) & Key('CreatedAt').lt(start_at),
+            ScanIndexForward=False,
+            Limit=page_size,
+        )
+        items += response.get("Items", [])
+    items = sorted(items, key=lambda i: i['CreatedAt'], reverse=True)[:page_size]
+    if len(items) < page_size:
+        next_start = None
+    else:
+        next_start = min([item["CreatedAt"] for item in items])
 
     return {
         "statusCode": 200,
-        "body": json.dumps({"MatchIds": items}, cls=DecimalEncoder)
+        "body": json.dumps({
+            "MatchIds": items,
+            "NextStart": next_start,
+        }, cls=DecimalEncoder)
     }
 
 

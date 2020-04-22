@@ -15,6 +15,7 @@ Globals:
           - !Ref AccessControlAllowOriginOverride
         ConfigParam: !Ref ConfigParameter
         DeletionQueueTable: !Ref DeletionQueueTableName
+        DeletionQueueTableDateGSI: !Ref DeletionTableDateGSI
         DataMapperTable: !Ref DataMapperTableName
         GSIBucketCount: "1"
         JobTable: !Ref JobTableName
@@ -36,6 +37,9 @@ Parameters:
     Type: String
   DeletionQueueTableName:
     Description: Table name for Deletion Queue Table
+    Type: String
+  DeletionTableDateGSI:
+    Description: Date ordered GSI for Deletion Queue Table
     Type: String
   EnableAccessLogging:
     Description: Whether to enable access logs

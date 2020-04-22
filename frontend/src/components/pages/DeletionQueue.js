@@ -3,12 +3,20 @@ import { Button, Col, Form, Modal, Row, Spinner, Table } from "react-bootstrap";
 
 import Alert from "../Alert";
 import Icon from "../Icon";
+import TablePagination from "../TablePagination";
 
 import {
-    formatErrorMessage, isEmpty, isUndefined, sortBy, formatDateTime
+  formatErrorMessage,
+  isEmpty,
+  isUndefined,
+  sortBy,
+  formatDateTime
 } from "../../utils";
 
+const PAGE_SIZE = 10;
+
 export default ({ gateway, onPageChange }) => {
+  const [currentPage, setCurrentPage] = useState(0);
   const [deleting, setDeleting] = useState(false);
   const [errorDetails, setErrorDetails] = useState(undefined);
   const [formState, setFormState] = useState("initial");
@@ -17,6 +25,7 @@ export default ({ gateway, onPageChange }) => {
   const [selectedRow, selectRow] = useState(undefined);
 
   const noSelected = isUndefined(selectedRow);
+  const pages = Math.ceil(queue.length / PAGE_SIZE);
 
   const refreshQueue = () => {
     selectRow(undefined);
@@ -29,10 +38,12 @@ export default ({ gateway, onPageChange }) => {
     setDeleting(false);
     setFormState("initial");
     try {
-      await gateway.deleteQueueMatches([{
-        MatchId: queue[selectedRow].MatchId,
-        CreatedAt: queue[selectedRow].CreatedAt,
-      }]);
+      await gateway.deleteQueueMatches([
+        {
+          MatchId: queue[selectedRow].MatchId,
+          CreatedAt: queue[selectedRow].CreatedAt
+        }
+      ]);
       refreshQueue();
     } catch (e) {
       setFormState("error");
@@ -53,6 +64,9 @@ export default ({ gateway, onPageChange }) => {
     };
     fetchQueue();
   }, [gateway, renderTableCount]);
+
+  const shouldShowItem = index =>
+    index >= PAGE_SIZE * currentPage && index < PAGE_SIZE * (currentPage + 1);
 
   return (
     <div className="page-table">
@@ -79,7 +93,12 @@ export default ({ gateway, onPageChange }) => {
           </Button>
         </Col>
       </Row>
-
+      <Row className="pagination">
+        <Col></Col>
+        <Col className="buttons-right" md="auto">
+          <TablePagination onPageChange={setCurrentPage} pages={pages} />
+        </Col>
+      </Row>
       {formState === "initial" && (
         <Spinner animation="border" role="status" className="spinner" />
       )}
@@ -129,7 +148,7 @@ export default ({ gateway, onPageChange }) => {
           </thead>
           <tbody>
             {queue &&
-              queue.map((queueMatch, index) => (
+              queue.map((queueMatch, index) => shouldShowItem(index) && (
                 <tr
                   key={index}
                   className={selectedRow === index ? "selected" : undefined}

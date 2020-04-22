@@ -25,13 +25,13 @@ def test_it_retrieves_all_items(table):
     response = handlers.get_handler({}, SimpleNamespace())
     assert {
         "statusCode": 200,
-        "body": json.dumps({"MatchIds": []}),
+        "body": json.dumps({"MatchIds": [], "NextStart": None}),
         "headers": ANY
     } == response
 
 
 @patch("backend.lambdas.queue.handlers.deletion_queue_table")
-def test_it_add_to_queue(table):
+def test_it_adds_to_queue(table):
     response = handlers.enqueue_handler({
         "body": json.dumps({
             "MatchId": "test",
@@ -45,6 +45,7 @@ def test_it_add_to_queue(table):
         "MatchId": "test",
         "CreatedAt": ANY,
         "DataMappers": ["a"],
+        "GSIBucket": "0",
         "CreatedBy": {
             "Username": "cognitoUsername",
             "Sub": "cognitoSub"
@@ -66,6 +67,7 @@ def test_it_provides_default_data_mappers(table):
         "MatchId": "test",
         "CreatedAt": ANY,
         "DataMappers": [],
+        "GSIBucket": "0",
         "CreatedBy": {
             "Username": "cognitoUsername",
             "Sub": "cognitoSub"

@@ -25,6 +25,9 @@ paths:
       operationId: "listDeletionQueueMatches"
       security:
         - CognitoAuthorizer: []
+      parameters:
+        - '$ref': '#/components/parameters/StartAtQS'
+        - '$ref': '#/components/parameters/PageSizeQS'
       responses:
         '200':
           description: OK
@@ -39,6 +42,11 @@ paths:
                     description: "The list of Match IDs currently in the queue"
                     items:
                       $ref: '#/components/schemas/DeletionQueueItem'
+                  NextStart:
+                    type: "number"
+                    nullable: true
+                    default: 0
+                    description: "The watermark to use when requesting the next page of results"
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetDeletionQueue.Arn}/invocations"
@@ -448,10 +456,8 @@ components:
           type: "string"
           description: "The Match ID to remove from the deletion queue"
         CreatedAt:
-          type: "array"
-          description: "The list of data mappers to apply to this Match ID"
-          items:
-            type: "string"
+          type: "number"
+          description: "Deletion queue item creation date as Epoch timestamp"
         DataMappers:
           type: "array"
           description: "The list of data mappers to apply to this Match ID"

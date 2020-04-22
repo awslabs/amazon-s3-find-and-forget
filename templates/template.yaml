@@ -203,6 +203,7 @@ Resources:
             - !GetAtt LayersStack.Outputs.Decorators
             - !GetAtt LayersStack.Outputs.BotoUtils
         DeletionQueueTableName: !GetAtt DDBStack.Outputs.DeletionQueueTable
+        DeletionTableDateGSI: !GetAtt DDBStack.Outputs.DeletionQueueTableDateGSI
         DataMapperTableName: !GetAtt DDBStack.Outputs.DataMapperTable
         EnableAccessLogging: !Ref EnableAPIAccessLogging
         JobTableDateGSI: !GetAtt DDBStack.Outputs.JobTableDateGSI

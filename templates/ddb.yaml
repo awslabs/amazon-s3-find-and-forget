@@ -35,6 +35,9 @@ Resources:
         -
           AttributeName: CreatedAt
           AttributeType: N
+        -
+          AttributeName: GSIBucket
+          AttributeType: S
       KeySchema:
         -
           AttributeName: MatchId
@@ -43,6 +46,18 @@ Resources:
           AttributeName: CreatedAt
           KeyType: RANGE
       BillingMode: PAY_PER_REQUEST
+      GlobalSecondaryIndexes:
+        -
+          IndexName: Date-GSI
+          KeySchema:
+            -
+              AttributeName: GSIBucket
+              KeyType: HASH
+            -
+              AttributeName: CreatedAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: !Ref EnableBackups
 
@@ -59,6 +74,9 @@ Resources:
         -
           AttributeName: CreatedAt
           AttributeType: N
+        -
+          AttributeName: GSIBucket
+          AttributeType: S
       KeySchema:
         -
           AttributeName: MatchId
@@ -67,6 +85,18 @@ Resources:
           AttributeName: CreatedAt
           KeyType: RANGE
       BillingMode: PAY_PER_REQUEST
+      GlobalSecondaryIndexes:
+        -
+          IndexName: Date-GSI
+          KeySchema:
+            -
+              AttributeName: GSIBucket
+              KeyType: HASH
+            -
+              AttributeName: CreatedAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: !Ref EnableBackups
 
@@ -206,6 +236,8 @@ Outputs:
       - ShouldRetainTables
       - !Ref DeletionQueueTableRetain
       - !Ref DeletionQueueTableNotRetain
+  DeletionQueueTableDateGSI:
+    Value: Date-GSI
   DataMapperTable:
     Value: !If
       - ShouldRetainTables

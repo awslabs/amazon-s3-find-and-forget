@@ -201,10 +201,10 @@ def test_it_provides_defaults(mock_table):
 
 
 def test_decimal_encoder():
-    res_a = json.dumps({"k": decimal.Decimal(1.1)}, cls=DecimalEncoder)
-    res_b = json.dumps({"k": decimal.Decimal(1.5)}, cls=DecimalEncoder)
-    assert res_a == "{\"k\": 1}"
-    assert res_b == "{\"k\": 2}"
+    res_a = json.dumps({"k": decimal.Decimal(1.134)}, cls=DecimalEncoder)
+    res_b = json.dumps({"k": decimal.Decimal(34)}, cls=DecimalEncoder)
+    assert res_a == "{\"k\": 1.134}"
+    assert res_b == "{\"k\": 34.0}"
 
 
 def test_it_converts_sfn_datetimes_to_epoch():

@@ -25,6 +25,7 @@ def test_it_adds_to_queue(api_client, queue_base_endpoint, queue_table, stack):
         "MatchId": key,
         "CreatedAt": mock.ANY,
         "DataMappers": ["a", "b"],
+        "GSIBucket": "0",
         "CreatedBy": {
             "Username": "aws-uk-sa-builders@amazon.com",
             "Sub": mock.ANY

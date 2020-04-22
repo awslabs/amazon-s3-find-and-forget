@@ -1,4 +1,3 @@
-import datetime
 import json
 import logging
 from copy import deepcopy
@@ -6,6 +5,8 @@ from os import getenv
 from pathlib import Path
 from urllib.parse import urljoin
 from uuid import uuid4
+from decimal import Decimal
+from datetime import datetime, timezone
 
 import boto3
 import pytest
@@ -186,14 +187,16 @@ def queue_table(ddb_resource, stack):
 
 @pytest.fixture
 def del_queue_factory(queue_table):
-    def factory(match_id="testId", created_at=round(datetime.datetime.now(datetime.timezone.utc).timestamp()),
+    def factory(match_id="testId", created_at=Decimal(str(datetime.now(timezone.utc).timestamp())),
                 data_mappers=[]):
         item = {
             "MatchId": match_id,
             "CreatedAt": created_at,
             "DataMappers": data_mappers,
+            "GSIBucket": "0",
         }
         queue_table.put_item(Item=item)
+        item['CreatedAt'] = float(item['CreatedAt'])
         return item
 
     yield factory
@@ -358,7 +361,7 @@ def empty_jobs(job_table):
 def job_factory(job_table, sf_client, stack):
     items = []
 
-    def factory(job_id=str(uuid4()), status="QUEUED", gsib="0", created_at=round(datetime.datetime.now().timestamp()),
+    def factory(job_id=str(uuid4()), status="QUEUED", gsib="0", created_at=round(datetime.now().timestamp()),
                 del_queue_items=[], **kwargs):
         item = {
             "Id": job_id,
