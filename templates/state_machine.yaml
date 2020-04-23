@@ -10,6 +10,7 @@ Globals:
     Layers: !Ref CommonLayers
     Environment:
       Variables:
+        DataMapperTable: !Ref DataMapperTableName
         LogLevel: !Ref LogLevel
         JobTable: !Ref JobTableName
         StateBucket: !Ref ResultBucket
@@ -24,9 +25,6 @@ Parameters:
     Description: Common layers supplied to all functions
   DataMapperTableName:
     Description: Table name for Data Mapper Table
-    Type: String
-  DeletionQueueTableName:
-    Description: Table name for Deletion Queue Table
     Type: String
   DeleteQueueUrl:
     Type: String
@@ -74,7 +72,6 @@ Resources:
           - Effect: Allow
             Action: "lambda:InvokeFunction"
             Resource:
-              - !GetAtt ScanTable.Arn
               - !GetAtt ParseStateMachineOutput.Arn
               - !GetAtt CheckQueueSize.Arn
               - !GetAtt ExecuteQuery.Arn
@@ -425,8 +422,21 @@ Resources:
       DefinitionString: !Sub |-
         {
           "Comment": "State machine for processing the S3 Find and Forget deletion queue.",
-          "StartAt": "Emit Job Started",
+          "StartAt": "Start Job",
           "States": {
+            "Start Job": {
+              "Type": "Pass",
+              "Parameters": {
+                "ExecutionId.$": "$$.Execution.Id",
+                "ExecutionName.$": "$$.Execution.Name",
+                "AthenaConcurrencyLimit.$": "$.AthenaConcurrencyLimit",
+                "DeletionTasksMaxNumber.$": "$.DeletionTasksMaxNumber",
+                "ForgetQueueWaitSeconds.$": "$.ForgetQueueWaitSeconds",
+                "QueryExecutionWaitSeconds.$": "$.QueryExecutionWaitSeconds",
+                "QueryQueueWaitSeconds.$": "$.QueryQueueWaitSeconds"
+              },
+              "Next": "Emit Job Started"
+            },
             "Emit Job Started": {
               "Type": "Task",
               "Parameters": {
@@ -447,7 +457,7 @@ Resources:
             "Purge Queues": {
               "Comment": "Purges the query and object deletion queues. Purges wait 61 seconds before retrying to avoid exceeding the max purge attempt rate for SQS.",
               "Type": "Parallel",
-              "Next": "Get Data Mappers",
+              "Next": "Start Find Phase",
               "ResultPath": null,
               "Branches": [{
                 "StartAt": "Purge Query Queue",
@@ -492,26 +502,6 @@ Resources:
                "Next": "Handle Error"
              }]
             },
-            "Get Data Mappers": {
-              "Comment": "Gets the list of data mappers",
-              "Type": "Task",
-              "Parameters": {
-                "TableName": "${DataMapperTableName}"
-              },
-              "Resource": "${ScanTable.Arn}",
-              "ResultPath": "$.DataMappers",
-              "Next": "Start Find Phase",
-              "Retry": [{
-                "ErrorEquals": [ "States.ALL" ],
-                "IntervalSeconds": 10,
-                "MaxAttempts": 1
-              }],
-              "Catch": [{
-                "ErrorEquals": ["States.ALL"],
-                "ResultPath": "$.ErrorDetails",
-                "Next": "Handle Error"
-              }]
-            },
             "Start Find Phase": {
               "Type": "Task",
               "Parameters": {
@@ -521,84 +511,60 @@ Resources:
                 "JobId.$": "$$.Execution.Name"
               },
               "Resource": "${EmitEvent.Arn}",
+              "Next": "Generate Queries",
               "ResultPath": null,
-              "Next": "Discover Files",
               "Catch": [{
                 "ErrorEquals": ["States.ALL"],
                 "ResultPath": "$.ErrorDetails",
                 "Next": "Handle Error"
               }]
             },
-            "Discover Files": {
-              "Type": "Parallel",
-              "Next": "End Find Phase",
+            "Generate Queries": {
+              "Comment": "Process each of the data mappers and populate the query queue",
+              "Type": "Task",
+              "Resource": "${GenerateQueries.Arn}",
               "ResultPath": null,
-              "Branches": [
-                {
-                  "StartAt": "Filter Athena Data Mappers",
-                  "States": {
-                    "Filter Athena Data Mappers": {
-                      "Parameters": {
-                        "DataMappers.$": "$.DataMappers.Items[?(@.QueryExecutor=='athena')]",
-                        "ExecutionId.$": "$$.Execution.Id",
-                        "ExecutionName.$": "$$.Execution.Name",
-                        "AthenaConcurrencyLimit.$": "$.AthenaConcurrencyLimit",
-                        "QueryQueueWaitSeconds.$": "$.QueryQueueWaitSeconds",
-                        "QueryExecutionWaitSeconds.$": "$.QueryExecutionWaitSeconds"
-                      },
-                      "Comment": "Process Data Mappers with Athena as the query executor",
-                      "Type": "Pass",
-                      "Next": "Generate Queries"
-                    },
-                    "Generate Queries": {
-                      "Comment": "Process each of the Athena data mappers and populate the Athena query queue",
-                      "Type": "Task",
-                      "Resource": "${GenerateQueries.Arn}",
-                      "ResultPath": null,
-                      "Next": "Work Queue"
-                    },
-                    "Work Queue": {
-                      "Comment": "Works the Object Deletion Queue by starting Athena State Machine executions",
-                      "Type": "Task",
-                      "Resource": "${WorkQueryQueue.Arn}",
-                      "ResultPath": "$.RunningExecutions",
-                      "Next": "Outstanding Queries?"
-                    },
-                    "Outstanding Queries?": {
-                      "Comment": "Checks if any queries are yet to be ran or are in progress",
-                      "Type": "Choice",
-                      "Choices": [
-                        {
-                          "Variable": "$.RunningExecutions.Total",
-                          "NumericEquals": 0,
-                          "Next": "Done"
-                        },
-                        {
-                          "Variable": "$.RunningExecutions.Total",
-                          "NumericGreaterThan": 0,
-                          "Next": "Wait for Queries"
-                        }
-                      ],
-                      "Default": "Wait for Queries"
-                    },
-                    "Wait for Queries": {
-                      "Comment": "Waits before rechecking if the Object Deletion Queue is empty",
-                      "Type": "Wait",
-                      "SecondsPath": "$.QueryQueueWaitSeconds",
-                      "Next": "Work Queue"
-                    },
-                    "Done": {
-                      "Type": "Pass",
-                      "End": true
-                    }
-                  }
-                }
-              ],
+              "Next": "Work Queue",
               "Catch": [{
                 "ErrorEquals": ["States.ALL"],
                 "ResultPath": "$.ErrorDetails",
                 "Next": "Handle Find Error"
               }]
+            },
+            "Work Queue": {
+              "Comment": "Works the Object Deletion Queue by starting Athena State Machine executions",
+              "Type": "Task",
+              "Resource": "${WorkQueryQueue.Arn}",
+              "ResultPath": "$.RunningExecutions",
+              "Next": "Outstanding Queries?",
+              "Catch": [{
+                "ErrorEquals": ["States.ALL"],
+                "ResultPath": "$.ErrorDetails",
+                "Next": "Handle Find Error"
+              }]
+            },
+            "Outstanding Queries?": {
+              "Comment": "Checks if any queries are yet to be ran or are in progress",
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.RunningExecutions.Total",
+                  "NumericEquals": 0,
+                  "Next": "End Find Phase"
+                },
+                {
+                  "Variable": "$.RunningExecutions.Total",
+                  "NumericGreaterThan": 0,
+                  "Next": "Wait for Queries"
+                }
+              ],
+              "Default": "Wait for Queries"
+            },
+            "Wait for Queries": {
+              "Comment": "Waits before rechecking if the Object Deletion Queue is empty",
+              "Type": "Wait",
+              "SecondsPath": "$.QueryQueueWaitSeconds",
+              "Next": "Work Queue"
             },
             "End Find Phase": {
               "Type": "Task",
@@ -721,17 +687,6 @@ Resources:
       VisibilityTimeout: 120
 
   # Tasks
-  ScanTable:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: scan_table.handler
-      CodeUri: ../backend/lambdas/tasks/
-      Policies:
-      - DynamoDBReadPolicy:
-          TableName: !Ref DeletionQueueTableName
-      - DynamoDBReadPolicy:
-          TableName: !Ref DataMapperTableName
-
   ParseStateMachineOutput:
     Type: AWS::Serverless::Function
     Properties:
@@ -864,6 +819,8 @@ Resources:
       Policies:
       - DynamoDBReadPolicy:
           TableName: !Ref JobTableName
+      - DynamoDBReadPolicy:
+          TableName: !Ref DataMapperTableName
       - Statement:
         - Action:
           - "glue:BatchGetPartition"

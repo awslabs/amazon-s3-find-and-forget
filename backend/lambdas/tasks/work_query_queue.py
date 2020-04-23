@@ -45,11 +45,15 @@ def handler(event, context):
             body["AWS_STEP_FUNCTIONS_STARTED_BY_EXECUTION_ID"] = execution_id
             body["JobId"] = job_id
             body["WaitDuration"] = wait_duration
-            resp = sf_client.start_execution(stateMachineArn=state_machine_arn, input=json.dumps(body))
-            started.append({
-                **resp,
-                "ReceiptHandle": msg.receipt_handle
-            })
+            query_executor = body["QueryExecutor"]
+            if query_executor == "athena":
+                resp = sf_client.start_execution(stateMachineArn=state_machine_arn, input=json.dumps(body))
+                started.append({
+                    **resp,
+                    "ReceiptHandle": msg.receipt_handle
+                })
+            else:
+                raise NotImplementedError("Unsupported query executor: '{}'".format(query_executor))
         still_running += started
 
     return {

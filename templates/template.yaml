@@ -280,7 +280,6 @@ Resources:
             - !GetAtt LayersStack.Outputs.BotoUtils
         DataMapperTableName: !GetAtt DDBStack.Outputs.DataMapperTable
         DeleteServiceName: !GetAtt DelStack.Outputs.DeleteServiceName
-        DeletionQueueTableName: !GetAtt DDBStack.Outputs.DeletionQueueTable
         DeleteQueueUrl: !GetAtt DelStack.Outputs.DeleteObjectsQueueUrl
         ECSCluster: !GetAtt DelStack.Outputs.ECSCluster
         JobTableName: !GetAtt DDBStack.Outputs.JobTable
