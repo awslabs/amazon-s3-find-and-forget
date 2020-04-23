@@ -19,7 +19,6 @@ ddb_resource = boto3.resource("dynamodb")
 deletion_queue_table_name = os.getenv("DeletionQueueTable", "S3F2_DeletionQueue")
 deletion_queue_table = ddb_resource.Table(deletion_queue_table_name)
 jobs_table = ddb_resource.Table(os.getenv("JobTable", "S3F2_Jobs"))
-index = os.getenv("JobTableDateGSI", "Date-GSI")
 bucket_count = int(os.getenv("GSIBucketCount", 1))
 
 

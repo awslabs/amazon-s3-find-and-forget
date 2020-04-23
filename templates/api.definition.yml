@@ -448,10 +448,8 @@ components:
           type: "string"
           description: "The Match ID to remove from the deletion queue"
         CreatedAt:
-          type: "array"
-          description: "The list of data mappers to apply to this Match ID"
-          items:
-            type: "string"
+          type: "integer"
+          description: "Deletion queue item creation date as Epoch timestamp"
         DataMappers:
           type: "array"
           description: "The list of data mappers to apply to this Match ID"
