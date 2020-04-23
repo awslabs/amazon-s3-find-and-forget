@@ -1,0 +1,11 @@
+pip-tools
+pytest==5.3.5
+cfn-lint==0.29.3
+cfn-flip==1.2.3
+mock==4.0.1
+pytest-cov==2.8.1
+pre-commit==2.1.1
+-r ./backend/ecs_tasks/delete_files/requirements.txt
+-r ./backend/lambda_layers/aws_sdk/requirements.txt
+-r ./backend/lambda_layers/cr_helper/requirements.txt
+-r ./backend/lambda_layers/decorators/requirements.txt
