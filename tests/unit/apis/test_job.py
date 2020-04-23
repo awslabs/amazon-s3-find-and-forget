@@ -129,7 +129,7 @@ class TestListJobEvents:
         response = handlers.list_job_events_handler({
             "pathParameters": {"job_id": "test"},
             "queryStringParameters": {"start_at": "12345#test"},
-            "multiValueQueryStringParameters": None,
+            "multiValueQueryStringParameters": {},
         }, SimpleNamespace())
         assert 404 == response["statusCode"]
 
@@ -227,6 +227,30 @@ class TestListJobEvents:
             ExclusiveStartKey={
                 "Id": "test",
                 "Sk": "12345#test"
+            },
+        )
+
+    @patch("backend.lambdas.jobs.handlers.table")
+    def test_it_handles_watermark_with_microseconds_in_same_second(self, table):
+        stub = job_event_stub()
+        table.get_item.return_value = {"Item": job_stub(JobFinishTime=12345)}
+        table.query.return_value = {"Items": [stub]}
+        response = handlers.list_job_events_handler({
+            "pathParameters": {"job_id": "test"},
+            "queryStringParameters": {"start_at": "12345001#test"},
+            "multiValueQueryStringParameters": {"start_at": ["12345001#test"]},
+        }, SimpleNamespace())
+        resp_body = json.loads(response["body"])
+        assert 200 == response["statusCode"]
+        assert "NextStart" in resp_body
+        table.query.assert_called_with(
+            KeyConditionExpression=mock.ANY,
+            ScanIndexForward=mock.ANY,
+            Limit=mock.ANY,
+            FilterExpression=mock.ANY,
+            ExclusiveStartKey={
+                "Id": "test",
+                "Sk": "12345001#test"
             },
         )
 
@@ -332,11 +356,13 @@ class TestListJobEvents:
     # Errors
     @patch("backend.lambdas.jobs.handlers.table")
     def test_it_returns_error_if_invalid_watermark_supplied_for_completed_job(self, table):
+        stub = job_event_stub()
         table.get_item.return_value = {"Item": job_stub(JobFinishTime=12345)}
+        table.query.return_value = {"Items": [stub]}
         response = handlers.list_job_events_handler({
             "pathParameters": {"job_id": "test"},
-            "queryStringParameters": {"start_at": "999999999999999#test"},
-            "multiValueQueryStringParameters": None,
+            "queryStringParameters": {"start_at": "12346001#test"},
+            "multiValueQueryStringParameters": {"start_at": ["12346001#test"]},
         }, SimpleNamespace())
         assert 400 == response["statusCode"]
 
@@ -346,7 +372,7 @@ class TestListJobEvents:
         response = handlers.list_job_events_handler({
             "pathParameters": {"job_id": "test"},
             "queryStringParameters": {"start_at": "999999999999999#test"},
-            "multiValueQueryStringParameters": None,
+            "multiValueQueryStringParameters": {},
         }, SimpleNamespace())
         assert 400 == response["statusCode"]
 
@@ -428,7 +454,7 @@ class TestListJobEventFilters:
         table.query.return_value = {"Items": [job_event_stub(Sk=str(i)) for i in range(0, 20)],
                                     "LastEvaluatedKey": {"Id": job["Id"], "Sk": "19"}}
         response = handlers.list_job_events_handler({
-            "queryStringParameters": None,
+            "queryStringParameters": {},
             "pathParameters": {"job_id": "test"},
             "multiValueQueryStringParameters": {"filter": ["EventName=QuerySucceeded"]}
         }, SimpleNamespace())

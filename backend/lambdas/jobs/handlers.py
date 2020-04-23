@@ -110,7 +110,7 @@ def list_job_events_handler(event, context):
             "statusCode": 404
         }
 
-    watermark_boundary_mu = job.get("JobFinishTime", utc_timestamp()) * 1000
+    watermark_boundary_mu = (job.get("JobFinishTime", utc_timestamp()) + 1) * 1000
 
     # Check the watermark is not "future"
     if int(start_at.split("#")[0]) > watermark_boundary_mu:
