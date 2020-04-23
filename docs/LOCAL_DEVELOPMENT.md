@@ -109,7 +109,7 @@ The following commands are available for running tests:
 - `make test-unit`: Run all backend task unit tests
 - `make test-frontend`: Run all frontend tests
 
-#### Updating Python Library Dependencies 
+#### Updating Python Library Dependencies
 
 In this project, Python library dependencies are stored in two forms:
 

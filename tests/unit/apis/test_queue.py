@@ -122,7 +122,7 @@ def test_it_process_queue(mock_config, mock_running_job, job_table, uuid, pagina
         "QueryQueueWaitSeconds": 5,
         "ForgetQueueWaitSeconds": 30
     }
-    paginate.return_value = iter([{"MatchId": "123", "CreatedAt": 123}])
+    paginate.return_value = iter([{"MatchId": {"S": "123"}, "CreatedAt": {"N": "123"}}])
     uuid.uuid4.return_value = 123
     response = handlers.process_handler({
         "body": "",
@@ -186,7 +186,7 @@ def test_it_applies_expiry(mock_utc, mock_config, mock_running_job, job_table, u
         "QueryQueueWaitSeconds": 5,
         "ForgetQueueWaitSeconds": 30
     }
-    paginate.return_value = iter([{"MatchId": "123", "CreatedAt": 123}])
+    paginate.return_value = iter([{"MatchId": {"S": "123"}, "CreatedAt": {"N": "123"}}])
     uuid.uuid4.return_value = 123
     response = handlers.process_handler({
         "body": "",
