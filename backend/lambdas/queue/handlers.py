@@ -8,7 +8,8 @@ import uuid
 
 import boto3
 
-from boto_utils import DecimalEncoder, get_config, get_user_info, paginate, running_job_exists, utc_timestamp
+from boto_utils import DecimalEncoder, get_config, get_user_info, paginate, running_job_exists, utc_timestamp, \
+    deserialize_item
 from decorators import with_logging, catch_errors, add_cors_headers, json_body_loader
 
 sfn_client = boto3.client("stepfunctions")
@@ -86,7 +87,9 @@ def process_handler(event, context):
 
     job_id = str(uuid.uuid4())
     config = get_config()
-    deletion_queue = list(paginate(ddb_client, ddb_client.scan, "Items", TableName=deletion_queue_table_name))
+    deletion_queue = [
+        deserialize_item(i) for i in paginate(ddb_client, ddb_client.scan, "Items", TableName=deletion_queue_table_name)
+    ]
     item = {
         "Id": job_id,
         "Sk": job_id,
