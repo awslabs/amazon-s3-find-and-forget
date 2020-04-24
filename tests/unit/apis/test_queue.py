@@ -19,15 +19,83 @@ autorization_mock = {
     }
 }
 
+
 @patch("backend.lambdas.queue.handlers.deletion_queue_table")
 def test_it_retrieves_all_items(table):
     table.scan.return_value = {"Items": []}
     response = handlers.get_handler({}, SimpleNamespace())
     assert {
         "statusCode": 200,
-        "body": json.dumps({"MatchIds": []}),
+        "body": json.dumps({"MatchIds": [], "NextStart": None }),
         "headers": ANY
     } == response
+    table.scan.assert_called_with(Limit=10)
+
+
+@patch("backend.lambdas.queue.handlers.deletion_queue_table")
+def test_it_retrieves_all_items_with_size_and_pagination(table):
+    table.scan.return_value = {
+        "Items": [{
+            "MatchId": "foo",
+            "DataMappers": [],
+            "CreatedAt": 123456789
+        }]
+    }
+    response = handlers.get_handler({
+        "queryStringParameters": {
+            "page_size": "1",
+            "start_at": "123456788#bar"
+        }
+    }, SimpleNamespace())
+    assert {
+        "statusCode": 200,
+        "body": json.dumps({
+            "MatchIds": [{
+                "MatchId": "foo",
+                "DataMappers": [],
+                "CreatedAt": 123456789
+            }],
+            "NextStart": "123456789#foo"
+        }),
+        "headers": ANY
+    } == response
+    table.scan.assert_called_with(Limit=1, ExclusiveStartKey={
+        "CreatedAt": 123456788,
+        "MatchId": "bar"
+    })
+
+
+@patch("backend.lambdas.queue.handlers.deletion_queue_table")
+def test_it_retrieves_items_with_start_at_containing_special_chars(table):
+    table.scan.return_value = {
+        "Items": [{
+            "MatchId": "foo",
+            "DataMappers": [],
+            "CreatedAt": 123456789
+        }]
+    }
+    response = handlers.get_handler({
+        "queryStringParameters": {
+            "page_size": "1",
+            "start_at": "123456788#bar#baz"
+        }
+    }, SimpleNamespace())
+    assert {
+        "statusCode": 200,
+        "body": json.dumps({
+            "MatchIds": [{
+                "MatchId": "foo",
+                "DataMappers": [],
+                "CreatedAt": 123456789
+            }],
+            "NextStart": "123456789#foo"
+        }),
+        "headers": ANY
+    } == response
+    table.scan.assert_called_with(Limit=1, ExclusiveStartKey={
+        "CreatedAt": 123456788,
+        "MatchId": "bar#baz"
+    })
 
 
 @patch("backend.lambdas.queue.handlers.deletion_queue_table")

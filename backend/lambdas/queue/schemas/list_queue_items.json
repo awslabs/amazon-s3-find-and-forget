@@ -1,0 +1,22 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "List Queue Items Handler",
+    "type": "object",
+    "properties": {
+        "queryStringParameters": {
+            "description": "Query string parameters for the request",
+            "type": [ "object", "null" ],
+            "properties": {
+                "start_at": {
+                    "description": "Starting watermark",
+                    "type": "string"
+                },
+                "page_size": {
+                    "description": "Maximum page size",
+                    "type": "string",
+                    "pattern": "^([1-9][0-9]{0,2}|1000)$"
+                }
+            }
+        }
+    }
+}

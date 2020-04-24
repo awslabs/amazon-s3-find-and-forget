@@ -7,10 +7,12 @@ import os
 import uuid
 
 import boto3
+from boto3.dynamodb.conditions import Key
 
-from boto_utils import DecimalEncoder, get_config, get_user_info, paginate, running_job_exists, utc_timestamp, \
-    deserialize_item
-from decorators import with_logging, catch_errors, add_cors_headers, json_body_loader
+from boto_utils import DecimalEncoder, get_config, get_user_info, paginate, running_job_exists, \
+    utc_timestamp, deserialize_item
+from decorators import with_logging, catch_errors, add_cors_headers, json_body_loader, \
+    load_schema, request_validator
 
 sfn_client = boto3.client("stepfunctions")
 ddb_client = boto3.client("dynamodb")
@@ -46,13 +48,32 @@ def enqueue_handler(event, context):
 
 @with_logging
 @add_cors_headers
+@request_validator(load_schema("list_queue_items"))
 @catch_errors
 def get_handler(event, context):
-    items = deletion_queue_table.scan()["Items"]
-
+    qs = event.get("queryStringParameters")
+    if not qs:
+        qs = {}
+    page_size = int(qs.get("page_size", 10))
+    scan_params = {'Limit': page_size}
+    start_at = qs.get("start_at")
+    if start_at:
+        start_createdat, start_matchid = start_at.split('#', 1)
+        scan_params['ExclusiveStartKey'] = {
+            'CreatedAt': int(start_createdat),
+            'MatchId': start_matchid
+        }
+    items = deletion_queue_table.scan(**scan_params).get("Items", [])
+    if len(items) < page_size:
+        next_start = None
+    else:
+        next_start = "{}#{}".format(str(items[-1]['CreatedAt']), items[-1]['MatchId'])
     return {
         "statusCode": 200,
-        "body": json.dumps({"MatchIds": items}, cls=DecimalEncoder)
+        "body": json.dumps({
+            "MatchIds": items,
+            "NextStart": next_start
+        }, cls=DecimalEncoder)
     }
 
 

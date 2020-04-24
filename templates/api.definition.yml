@@ -25,6 +25,9 @@ paths:
       operationId: "listDeletionQueueMatches"
       security:
         - CognitoAuthorizer: []
+      parameters:
+        - '$ref': '#/components/parameters/StartAtQS'
+        - '$ref': '#/components/parameters/PageSizeQS'
       responses:
         '200':
           description: OK
@@ -39,6 +42,11 @@ paths:
                     description: "The list of Match IDs currently in the queue"
                     items:
                       $ref: '#/components/schemas/DeletionQueueItem'
+                  NextStart:
+                    type: "string"
+                    nullable: true
+                    default: ""
+                    description: "The watermark to use when requesting the next page of results"
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetDeletionQueue.Arn}/invocations"
