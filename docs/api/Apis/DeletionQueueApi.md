@@ -64,7 +64,11 @@ null (empty response body)
 Lists deletion queue items
 
 ### Parameters
-This endpoint does not need any parameters.
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **StartAt** | **String**| Start at watermark query string parameter | [optional] [default to 0]
+ **PageSize** | **Integer**| Page size query string parameter. Min: 1. Max: 1000 | [optional] [default to null]
 
 ### Return type
 
