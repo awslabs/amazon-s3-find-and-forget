@@ -2,6 +2,12 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: Amazon S3 Find and Forget VPC (uksb-1qjminsd5)
 
 Parameters:
+  FlowLogsGroup:
+    Type: String
+    Default: ""
+  FlowLogsRoleArn:
+    Type: String
+    Default: ""
   PrivateSubnetIpBlocks:
     Description: Comma-delimited list of CIDR blocks for the private subnets
     Type: CommaDelimitedList
@@ -41,6 +47,7 @@ Mappings:
 
 Conditions:
   HasThreeAZs: !Equals [!FindInMap [Regions, !Ref "AWS::Region", HasThreeAZs], true]
+  EnableFlowLogs: !Not [!Equals [!Ref FlowLogsGroup, ""]]
 
 Resources:
   VPC:
@@ -52,6 +59,16 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub ${AWS::StackName} VPC
+
+  FlowLog:
+    Type: AWS::EC2::FlowLog
+    Condition: EnableFlowLogs
+    Properties:
+      DeliverLogsPermissionArn: !Ref FlowLogsRoleArn
+      LogGroupName: !Ref FlowLogsGroup
+      ResourceId: !Ref VPC
+      ResourceType: VPC
+      TrafficType: ALL
 
   PrivateNetworkAcl:
     Type: AWS::EC2::NetworkAcl
@@ -276,3 +293,18 @@ Outputs:
       - !Sub ${PrivateSubnet1},${PrivateSubnet2}
   SecurityGroup:
     Value: !Ref SecurityGroup
+
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "Network Configuration"
+        Parameters:
+          - VpcIpBlock
+          - PrivateSubnetIpBlocks
+      - Label:
+          default: "Optional Logging Configuration"
+        Parameters:
+          - FlowLogsGroup
+          - FlowLogsRoleArn
