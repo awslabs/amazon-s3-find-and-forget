@@ -41,8 +41,10 @@ export default {
     return stsGateway("/?Action=GetCallerIdentity&Version=2011-06-15");
   },
 
-  getDataMappers() {
-    return apiGateway("data_mappers");
+  async getDataMappers() {
+    return {
+      DataMappers: await getPaginatedList("data_mappers", "DataMappers", 100)
+    };
   },
 
   async getGlueDatabases() {

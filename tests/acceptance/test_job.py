@@ -286,7 +286,7 @@ def test_it_handles_forget_permission_issues(del_queue_factory, job_factory, dum
     assert 1 == len(list(bucket.object_versions.filter(Prefix=object_key)))
 
 
-def test_it_handles_find_invalid_role(del_queue_factory, job_factory, dummy_lake, glue_data_mapper_factory, data_loader,
+def test_it_handles_forget_invalid_role(del_queue_factory, job_factory, dummy_lake, glue_data_mapper_factory, data_loader,
                                       job_finished_waiter, job_table):
     # Arrange
     glue_data_mapper_factory("test", partition_keys=["year", "month", "day"], partitions=[["2019", "08", "20"]],

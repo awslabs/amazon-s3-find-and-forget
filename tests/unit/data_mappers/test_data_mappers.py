@@ -26,9 +26,38 @@ def test_it_retrieves_all_items(table):
     response = handlers.get_data_mappers_handler({}, SimpleNamespace())
     assert {
         "statusCode": 200,
-        "body": json.dumps({"DataMappers": []}),
+        "body": json.dumps({"DataMappers": [], "NextStart": None}),
         "headers": ANY
     } == response
+    table.scan.assert_called_with(Limit=10)
+
+
+@patch("backend.lambdas.data_mappers.handlers.table")
+def test_it_retrieves_all_items_with_size_and_pagination(table):
+    table.scan.return_value = {
+        "Items": [{
+            "DataMapperId": "foo"
+        }]
+    }
+    response = handlers.get_data_mappers_handler({
+        "queryStringParameters": {
+            "page_size": "1",
+            "start_at": "bar"
+        }
+    }, SimpleNamespace())
+    assert {
+        "statusCode": 200,
+        "body": json.dumps({
+            "DataMappers": [{
+                "DataMapperId": "foo"
+            }],
+            "NextStart": "foo"
+        }),
+        "headers": ANY
+    } == response
+    table.scan.assert_called_with(Limit=1, ExclusiveStartKey={
+        "DataMapperId": "bar"
+    })
 
 
 @patch("backend.lambdas.data_mappers.handlers.table")

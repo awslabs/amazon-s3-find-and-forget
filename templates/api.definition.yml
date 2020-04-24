@@ -268,6 +268,9 @@ paths:
       operationId: "listDataMappers"
       security:
         - CognitoAuthorizer: []
+      parameters:
+        - '$ref': '#/components/parameters/StartAtQS'
+        - '$ref': '#/components/parameters/PageSizeQS'
       responses:
         '200':
           description: OK
@@ -282,6 +285,11 @@ paths:
                     description: "The list of data mappers"
                     items:
                       $ref: '#/components/schemas/DataMapper'
+                  NextStart:
+                    type: "string"
+                    nullable: true
+                    default: ""
+                    description: "The watermark to use when requesting the next page of results"
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetDataMappers.Arn}/invocations"

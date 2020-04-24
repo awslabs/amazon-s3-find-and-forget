@@ -26,7 +26,7 @@ def test_it_retrieves_all_items(table):
     response = handlers.get_handler({}, SimpleNamespace())
     assert {
         "statusCode": 200,
-        "body": json.dumps({"MatchIds": [], "NextStart": None }),
+        "body": json.dumps({"MatchIds": [], "NextStart": None}),
         "headers": ANY
     } == response
     table.scan.assert_called_with(Limit=10)
