@@ -87,8 +87,8 @@ export default ({ className, gateway, goToJobDetails }) => {
             <Spinner animation="border" role="status" className="spinner" />
           )}
           {formState === "error" && (
-            <Alert type="error" title={errorDetails}>
-              Please retry later.
+            <Alert type="error" title="An error happened">
+              {errorDetails}
             </Alert>
           )}
         </Modal.Body>

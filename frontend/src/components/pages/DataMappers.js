@@ -118,8 +118,8 @@ export default ({ gateway, onPageChange }) => {
         <Spinner animation="border" role="status" className="spinner" />
       )}
       {formState === "error" && (
-        <Alert type="error" title={errorDetails}>
-          Please retry later.
+        <Alert type="error" title="An error happened">
+          {errorDetails}
         </Alert>
       )}
       {!noSelected && (
