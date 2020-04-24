@@ -6,7 +6,7 @@ import os
 
 import boto3
 
-from boto_utils import get_user_info, running_job_exists
+from boto_utils import DecimalEncoder, get_user_info, running_job_exists
 from decorators import with_logging, request_validator, catch_errors, add_cors_headers, json_body_loader, load_schema
 
 dynamodb_resource = boto3.resource("dynamodb")
@@ -20,13 +20,30 @@ SUPPORTED_SERDE_LIBS = [
 
 @with_logging
 @add_cors_headers
+@request_validator(load_schema("list_data_mappers"))
 @catch_errors
 def get_data_mappers_handler(event, context):
-    items = table.scan()["Items"]
-
+    qs = event.get("queryStringParameters")
+    if not qs:
+        qs = {}
+    page_size = int(qs.get("page_size", 10))
+    scan_params = {'Limit': page_size}
+    start_at = qs.get("start_at")
+    if start_at:
+        scan_params['ExclusiveStartKey'] = {
+            'DataMapperId': start_at
+        }
+    items = table.scan(**scan_params).get("Items", [])
+    if len(items) < page_size:
+        next_start = None
+    else:
+        next_start = items[-1]['DataMapperId']
     return {
         "statusCode": 200,
-        "body": json.dumps({"DataMappers": items})
+        "body": json.dumps({
+            "DataMappers": items,
+            "NextStart": next_start
+        }, cls=DecimalEncoder)
     }
 
 

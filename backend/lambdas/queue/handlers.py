@@ -7,7 +7,6 @@ import os
 import uuid
 
 import boto3
-from boto3.dynamodb.conditions import Key
 
 from boto_utils import DecimalEncoder, get_config, get_user_info, paginate, running_job_exists, \
     utc_timestamp, deserialize_item
