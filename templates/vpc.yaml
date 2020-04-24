@@ -47,7 +47,9 @@ Mappings:
 
 Conditions:
   HasThreeAZs: !Equals [!FindInMap [Regions, !Ref "AWS::Region", HasThreeAZs], true]
-  EnableFlowLogs: !Not [!Equals [!Ref FlowLogsGroup, ""]]
+  EnableFlowLogs: !And
+    - !Not [!Equals [!Ref FlowLogsGroup, ""]]
+    - !Not [!Equals [!Ref FlowLogsRoleArn, ""]]
 
 Resources:
   VPC:
