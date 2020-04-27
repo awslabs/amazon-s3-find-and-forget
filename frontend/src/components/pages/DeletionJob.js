@@ -1,5 +1,13 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Button, Col, Form, Row, Spinner, Table, InputGroup } from "react-bootstrap";
+import {
+  Button,
+  Col,
+  Form,
+  Row,
+  Spinner,
+  Table,
+  InputGroup
+} from "react-bootstrap";
 
 import Alert from "../Alert";
 import DetailsBox from "../DetailsBox";
@@ -31,7 +39,7 @@ export default ({ gateway, jobId }) => {
   const [nextStart, setNextStart] = useState(false);
   const [renderTableCount, setRenderTableCount] = useState(0);
   const [selectedEvent, setSelectedEvent] = useState(undefined);
-  const [eventNameFilter, setEventNameFilter] = useState('');
+  const [eventNameFilter, setEventNameFilter] = useState("");
   const [eventFilters, setEventFilters] = useState([]);
 
   const refreshJob = useCallback(() => {
@@ -44,7 +52,12 @@ export default ({ gateway, jobId }) => {
       const fetchJobEvents = async () => {
         setEventsState("loading");
         try {
-          const jobEventsList = await gateway.getJobEvents(jobId, watermark, 20, eventFilters);
+          const jobEventsList = await gateway.getJobEvents(
+            jobId,
+            watermark,
+            20,
+            eventFilters
+          );
           setJobEvents(j => j.concat(jobEventsList.JobEvents));
           setNextStart(jobEventsList.NextStart);
           setEventsState("loaded");
@@ -102,34 +115,37 @@ export default ({ gateway, jobId }) => {
   }, [gateway, jobId, loadMoreEvents]);
 
   const resetEvents = () => {
-    setJobEvents([])
-    setNextStart("0")
-  }
+    setJobEvents([]);
+    setNextStart("0");
+  };
 
   const applyFilters = () => {
     const filters = [
-      {key: "EventName", value: eventNameFilter, operator: "="}
-    ]
-    resetEvents()
-    setEventFilters(filters.filter(f => f.value !== ""))
-  }
+      { key: "EventName", value: eventNameFilter, operator: "=" }
+    ];
+    resetEvents();
+    setEventFilters(filters.filter(f => f.value !== ""));
+  };
 
   const exportJob = async () => {
     setExportState("loading");
     const exportData = {
       ...job,
       JobEvents: await gateway.getAllJobEvents(jobId)
-    }
+    };
     const el = document.getElementById("export-job-link");
     if (el) {
-      el.setAttribute("href", `data:text/json;charset=utf-8,${encodeURIComponent(
-        JSON.stringify(exportData)
-      )}`);
+      el.setAttribute(
+        "href",
+        `data:text/json;charset=utf-8,${encodeURIComponent(
+          JSON.stringify(exportData)
+        )}`
+      );
       el.click();
-      el.setAttribute("href", "#")
+      el.setAttribute("href", "#");
     }
-    setExportState("initial")
-  }
+    setExportState("initial");
+  };
 
   return (
     <>
@@ -139,18 +155,16 @@ export default ({ gateway, jobId }) => {
             <h2>Job Overview</h2>
           </Col>
           <Col className="buttons-right" md="auto">
-            { !withCountDown && (
+            {!withCountDown && (
               <>
                 <Button
                   disabled={exportState === "loading"}
                   className="aws-button action-button"
                   onClick={exportJob}
                 >
-                  {
-                    exportState !== "loading"
-                      ? "Export to JSON"
-                      : "Exporting..."
-                  }
+                  {exportState !== "loading"
+                    ? "Export to JSON"
+                    : "Exporting..."}
                 </Button>
                 <a
                   href="#"
@@ -176,8 +190,8 @@ export default ({ gateway, jobId }) => {
           <Spinner animation="border" role="status" className="spinner" />
         )}
         {formState === "error" && (
-          <Alert type="error" title={errorDetails}>
-            Please retry later.
+          <Alert type="error" title="An Error Occurred">
+            {errorDetails}
           </Alert>
         )}
         {job && (
@@ -280,8 +294,8 @@ export default ({ gateway, jobId }) => {
         )}
       </div>
       {eventsState === "error" && (
-        <Alert type="error" title={eventsErrorDetails}>
-          Unable to load Events
+        <Alert type="error" title="Unable to Load Events">
+          {eventsErrorDetails}
         </Alert>
       )}
       {job && (
@@ -320,11 +334,11 @@ export default ({ gateway, jobId }) => {
               <DetailsBox label="Forget Queue Wait Duration (Seconds)">
                 {job.ForgetQueueWaitSeconds}
               </DetailsBox>
-              {
-                job.Expires && <DetailsBox label="Job Details Expiration">
+              {job.Expires && (
+                <DetailsBox label="Job Details Expiration">
                   {formatDateTime(job.Expires)}
                 </DetailsBox>
-              }
+              )}
             </div>
           </div>
           <div className="page-table">
@@ -333,9 +347,12 @@ export default ({ gateway, jobId }) => {
                 <h2>Job Events ({jobEvents.length})</h2>
               </Col>
             </Row>
-            <Form onSubmit={e => {
-              e.preventDefault(); applyFilters()
-            }}>
+            <Form
+              onSubmit={e => {
+                e.preventDefault();
+                applyFilters();
+              }}
+            >
               <Form.Group>
                 <InputGroup className="input-filter">
                   <Form.Control
