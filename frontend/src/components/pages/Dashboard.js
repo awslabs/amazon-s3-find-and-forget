@@ -40,7 +40,7 @@ export default ({ gateway, goToJobDetails, goToPage }) => {
                 prev.CreatedAt < curr.CreatedAt ? prev : curr
               ).CreatedAt
             )
-          : "-∞";
+          : "∞";
         setMetrics([
           {
             title: "Deletion Queue size",
