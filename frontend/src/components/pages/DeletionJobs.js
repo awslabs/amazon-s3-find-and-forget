@@ -71,7 +71,7 @@ export default ({ gateway, goToJobDetails }) => {
         <Spinner animation="border" role="status" className="spinner" />
       )}
       {formState === "error" && (
-        <Alert type="error" title="An error happened">
+        <Alert type="error" title="An Error Occurred">
           {errorDetails}
         </Alert>
       )}
