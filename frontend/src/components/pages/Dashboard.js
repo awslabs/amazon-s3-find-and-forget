@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Col, Row, Spinner } from "react-bootstrap";
 
-import { repoUrl } from "../../utils";
+import { formatFileSize, repoUrl } from "../../utils";
 
 import Alert from "../Alert";
 import MetricsDashboard from "../MetricsDashboard";
@@ -19,32 +19,43 @@ export default ({ gateway, goToJobDetails, goToPage }) => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const [queue, jobs, dataMappers] = await Promise.all([
+        const [queue, jobs] = await Promise.all([
           gateway.getQueue(),
-          gateway.getLastJob(),
-          gateway.getDataMappers()
+          gateway.getLastJob()
         ]);
 
         const anyJob = jobs.Jobs.length > 0;
+        const anyQueueItem = queue.MatchIds.length > 0;
         const daysSinceLastRun = anyJob
           ? daysSinceDateTime(jobs.Jobs[0].JobFinishTime)
           : "∞";
 
+        let deletionQueueSummary = queue.MatchIds.length;
+        if (anyQueueItem)
+          deletionQueueSummary += ` (≈${formatFileSize(queue.ContentLength)})`;
+
+        const daysSinceOldestQueueItemAdded = anyQueueItem
+          ? daysSinceDateTime(
+              queue.MatchIds.reduce((prev, curr) =>
+                prev.CreatedAt < curr.CreatedAt ? prev : curr
+              ).CreatedAt
+            )
+          : "-∞";
         setMetrics([
           {
             title: "Deletion Queue size",
-            value: queue.MatchIds.length,
+            value: deletionQueueSummary,
             link: 2
+          },
+          {
+            title: "Days since oldest Queue Item added",
+            value: daysSinceOldestQueueItemAdded,
+            link: 3
           },
           {
             title: "Days since last job run",
             value: daysSinceLastRun,
             link: 3
-          },
-          {
-            title: "Data Mappers",
-            value: dataMappers.DataMappers.length,
-            link: 1
           },
           {
             title: "Solution Version",
