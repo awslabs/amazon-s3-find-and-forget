@@ -6,7 +6,6 @@ import json
 import os
 import sys
 import uuid
-import math
 
 import boto3
 
