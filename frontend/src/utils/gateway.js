@@ -3,17 +3,21 @@ import { apiGateway, glueGateway, stsGateway } from "./request";
 const getPaginatedList = async (endpoint, key, pageSize) => {
   const all = [];
   let watermark = undefined;
+  let contentLength = 0;
 
   while (true) {
     let qs = `?page_size=${pageSize || 10}`;
     if (watermark) qs += `&start_at=${watermark}`;
-    const page = await apiGateway(`${endpoint}${qs}`);
-    all.push(...page[key]);
+    const page = await apiGateway(`${endpoint}${qs}`, { response: true });
+    all.push(...page.data[key]);
+    contentLength += parseInt(page.headers["content-length"], 10);
 
-    if (page.NextStart) watermark = encodeURIComponent(page.NextStart);
+    if (page.data.NextStart)
+      watermark = encodeURIComponent(page.data.NextStart);
     else break;
   }
-  return all;
+
+  return { contentLength, response: all };
 };
 
 export default {
@@ -42,9 +46,12 @@ export default {
   },
 
   async getDataMappers() {
-    return {
-      DataMappers: await getPaginatedList("data_mappers", "DataMappers", 100)
-    };
+    const dataMappers = await getPaginatedList(
+      "data_mappers",
+      "DataMappers",
+      100
+    );
+    return { DataMappers: dataMappers.response };
   },
 
   async getGlueDatabases() {
@@ -93,7 +100,8 @@ export default {
   },
 
   async getJobs() {
-    return { Jobs: await getPaginatedList("jobs", "Jobs") };
+    const jobs = await getPaginatedList("jobs", "Jobs");
+    return { Jobs: jobs.response };
   },
 
   async getJobEvents(
@@ -131,7 +139,12 @@ export default {
   },
 
   async getQueue() {
-    return { MatchIds: await getPaginatedList("queue", "MatchIds", 500) };
+    const { response, contentLength } = await getPaginatedList(
+      "queue",
+      "MatchIds",
+      500
+    );
+    return { MatchIds: response, ContentLength: contentLength };
   },
 
   getSettings() {

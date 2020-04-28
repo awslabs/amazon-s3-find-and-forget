@@ -38,9 +38,10 @@ Amplify.configure({
 });
 
 const apiWrapper = (api, endpoint, options) => {
-  const { data, headers, method } = options;
+  const { data, headers, method, response } = options;
   const reqOptions = {
-    headers: headers || { "Content-Type": "application/json" }
+    headers: headers || { "Content-Type": "application/json" },
+    response: response || false
   };
   if (data) reqOptions.body = data;
   return retryWrapper(() => API[method || "get"](api, endpoint, reqOptions));
