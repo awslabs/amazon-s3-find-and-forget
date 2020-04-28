@@ -9,6 +9,7 @@ Name | Type | Description | Notes
 **JobStartTime** | [**Integer**](integer.md) | Job start date as Epoch timestamp | [optional] [default to null]
 **JobFinishTime** | [**Integer**](integer.md) | Job finish date as Epoch timestamp | [optional] [default to null]
 **DeletionQueueItems** | [**List**](string.md) | The deletion queue items applied to this job | [default to null]
+**DeletionQueueItemsSkipped** | [**Integer**](integer.md) | The number of items in the queue that were skipped from the job | [default to null]
 **AthenaConcurrencyLimit** | [**Integer**](integer.md) | Athena concurrency setting for this job | [default to null]
 **DeletionTasksMaxNumber** | [**Integer**](integer.md) | Max Fargate tasks setting for this job | [default to null]
 **ForgetQueueWaitSeconds** | [**Integer**](integer.md) | Forget queue wait setting for this job | [default to null]
