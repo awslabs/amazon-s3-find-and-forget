@@ -4,7 +4,6 @@ Queue handlers
 import random
 import json
 import os
-import sys
 import uuid
 
 import boto3
