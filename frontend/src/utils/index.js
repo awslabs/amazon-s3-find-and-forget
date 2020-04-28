@@ -86,3 +86,6 @@ export const repoUrl = x => {
 };
 
 export const docsUrl = x => repoUrl(`blob/master/docs/${trimLeadingSlash(x)}`);
+
+export const findMin = (arr, key) =>
+  arr.reduce((prev, curr) => (prev[key] < curr[key] ? prev : curr));

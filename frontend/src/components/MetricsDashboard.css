@@ -20,15 +20,19 @@
 
 .metric-label {
   color: #545b64 !important;
-  font-size: 14px;
+  font-size: 13px;
   margin-bottom: 0;
 }
 
 .metric-container button {
-  font-size: 40px;
+  font-size: 26px;
   font-weight: 400;
   padding-left: 0;
   margin-top: -10px;
+}
+
+.metrics-dashboard {
+  max-width: 100%;
 }
 
 .metrics-dashboard .content {

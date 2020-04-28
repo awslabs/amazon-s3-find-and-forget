@@ -80,7 +80,6 @@ Resources:
               - !GetAtt SubmitQueryResults.Arn
               - !GetAtt GenerateQueries.Arn
               - !GetAtt OrchestrateECSServiceScaling.Arn
-              - !GetAtt AggregateResults.Arn
               - !GetAtt WorkQueryQueue.Arn
               - !GetAtt DeleteQueueMessage.Arn
               - !GetAtt PurgeQueue.Arn
@@ -813,6 +812,7 @@ Resources:
     Properties:
       Handler: generate_queries.handler
       CodeUri: ../backend/lambdas/tasks/
+      MemorySize: 512
       Environment:
         Variables:
           QueryQueue: !Ref QueryQueue
@@ -851,12 +851,6 @@ Resources:
           - "ecs:UpdateService"
           Effect: "Allow"
           Resource: !Sub "arn:${AWS::Partition}:ecs:${AWS::Region}:${AWS::AccountId}:service/${ECSCluster}/${DeleteServiceName}"
-
-  AggregateResults:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: aggregate_results.handler
-      CodeUri: ../backend/lambdas/tasks/
 
   WorkQueryQueue:
     Type: AWS::Serverless::Function

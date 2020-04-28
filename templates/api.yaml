@@ -187,6 +187,7 @@ Resources:
     Properties:
       Handler: handlers.process_handler
       CodeUri: ../backend/lambdas/queue/
+      MemorySize: 512
       Events:
         Get:
           Type: Api
