@@ -1,16 +1,17 @@
 import {
-  formatErrorMessage,
+  docsUrl,
+  findMin,
   formatDateTime,
+  formatErrorMessage,
   formatFileSize,
   isEmpty,
   isIdValid,
   isRoleArnValid,
   isUndefined,
   last,
-  sortBy,
-  withDefault,
   repoUrl,
-  docsUrl
+  sortBy,
+  withDefault
 } from "../utils";
 
 test("isEmpty", () => {
@@ -162,4 +163,15 @@ describe("urls", () => {
       "https://example.com/blob/master/docs/test"
     );
   });
+});
+
+test("findMin", () => {
+  const testArray = [
+    { a: 1, b: 10 },
+    { a: 5, b: 3 },
+    { a: 10, b: 0 }
+  ];
+
+  expect(findMin(testArray, "a").a).toEqual(1);
+  expect(findMin(testArray, "b").b).toEqual(0);
 });

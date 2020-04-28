@@ -1,13 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { Col, Row, Spinner } from "react-bootstrap";
 
-import { formatFileSize, repoUrl } from "../../utils";
-
 import Alert from "../Alert";
 import MetricsDashboard from "../MetricsDashboard";
 import StartDeletionJob from "../StartDeletionJob";
 
-import { daysSinceDateTime, formatErrorMessage } from "../../utils";
+import {
+  daysSinceDateTime,
+  findMin,
+  formatErrorMessage,
+  formatFileSize,
+  repoUrl
+} from "../../utils";
 
 const { region, version } = window.s3f2Settings;
 
@@ -28,19 +32,16 @@ export default ({ gateway, goToJobDetails, goToPage }) => {
         const anyQueueItem = queue.MatchIds.length > 0;
         const daysSinceLastRun = anyJob
           ? daysSinceDateTime(jobs.Jobs[0].JobFinishTime)
-          : "∞";
+          : "n/a";
 
         let deletionQueueSummary = queue.MatchIds.length;
         if (anyQueueItem)
           deletionQueueSummary += ` (≈${formatFileSize(queue.ContentLength)})`;
 
         const daysSinceOldestQueueItemAdded = anyQueueItem
-          ? daysSinceDateTime(
-              queue.MatchIds.reduce((prev, curr) =>
-                prev.CreatedAt < curr.CreatedAt ? prev : curr
-              ).CreatedAt
-            )
-          : "∞";
+          ? daysSinceDateTime(findMin(queue.MatchIds, "CreatedAt").CreatedAt)
+          : "n/a";
+
         setMetrics([
           {
             title: "Deletion Queue size",
