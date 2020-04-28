@@ -63,7 +63,8 @@ body {
 
 /* BUTTONS */
 a:hover,
-button.btn-link:hover, button.btn-link:focus {
+button.btn-link:hover,
+button.btn-link:focus {
   color: #0073bb;
   background: transparent;
   border: 0;
@@ -80,7 +81,8 @@ button.btn-link:hover, button.btn-link:focus {
 
 .amplify-auth button,
 button,
-.aws-button, .aws-button:disabled {
+.aws-button,
+.aws-button:disabled {
   background: #ec7211;
   color: #fff;
   border-color: #ec7211;
@@ -480,12 +482,12 @@ form .form-check-label {
   left: 0;
   width: 100%;
   bottom: -1px;
-  height: .2rem;
+  height: 0.2rem;
   background: #16191f;
 }
 
 .nav-tabs .nav-item span {
-  padding: .5rem 1.3rem;
+  padding: 0.5rem 1.3rem;
 }
 
 .nav-tabs .nav-item:not(:last-child) span {
@@ -540,7 +542,8 @@ form .form-check-label {
   margin-left: 5px;
 }
 
-.status-label.error {
+.status-label.error,
+.status-label.warning {
   color: #d13212;
 }
 
@@ -582,6 +585,10 @@ form .form-check-label {
 .details-box a {
   padding-left: 0;
   padding-right: 4px;
+}
+
+.details-box .value {
+  height: 20px;
 }
 
 .json-visualiser {

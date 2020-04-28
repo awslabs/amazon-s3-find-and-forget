@@ -81,6 +81,9 @@ export default ({ gateway, jobId }) => {
   const errorCountClass = x =>
     x === 0 || isUndefined(x) ? "success" : "error";
 
+  const warningCountClass = x =>
+    x === 0 || isUndefined(x) ? "success" : "warning";
+
   useEffect(() => {
     if (withCountDown) {
       if (countDownLeft === 0) refreshJob();
@@ -166,6 +169,7 @@ export default ({ gateway, jobId }) => {
                     ? "Export to JSON"
                     : "Exporting..."}
                 </Button>
+                {/* eslint-disable-next-line */}
                 <a
                   href="#"
                   id="export-job-link"
@@ -204,7 +208,7 @@ export default ({ gateway, jobId }) => {
               <Icon type={`alert-${successJobClass(job.JobStatus)}`} />
               <span>{job.JobStatus}</span>
             </DetailsBox>
-            <DetailsBox label="Deletion Queue Size" fullWidth>
+            <DetailsBox label="Deletion Queue Size">
               {job.DeletionQueueItems.length}{" "}
               {job.DeletionQueueItems.length > 0 && (
                 <>
@@ -219,6 +223,21 @@ export default ({ gateway, jobId }) => {
                   )
                 </>
               )}
+            </DetailsBox>
+            <DetailsBox
+              label="Deletion Queue Items Skipped"
+              className={`status-label ${warningCountClass(
+                job.DeletionQueueItemsSkipped
+              )}`}
+            >
+              {!isUndefined(job.DeletionQueueItemsSkipped) && (
+                <Icon
+                  type={`alert-${warningCountClass(
+                    job.DeletionQueueItemsSkipped
+                  )}`}
+                />
+              )}
+              <span>{withDefault(job.DeletionQueueItemsSkipped)}</span>
             </DetailsBox>
             <DetailsBox label="Start Time">
               {formatDateTime(job.JobStartTime)}

@@ -4,6 +4,7 @@ Queue handlers
 import random
 import json
 import os
+import sys
 import uuid
 
 import boto3
@@ -109,6 +110,20 @@ def process_handler(event, context):
     deletion_queue = [
         deserialize_item(i) for i in paginate(ddb_client, ddb_client.scan, "Items", TableName=deletion_queue_table_name)
     ]
+
+    deletion_queue_initial_size = len(deletion_queue)
+    deletion_batch = []
+    max_size_bytes = 375000
+    deletion_batch_size_bytes = 0
+    while len(deletion_queue) > 0:
+        current_item = deletion_queue.pop(0)
+        current_size_bytes = sys.getsizeof(json.dumps(current_item, cls=DecimalEncoder))
+        if deletion_batch_size_bytes + current_size_bytes < max_size_bytes:
+            deletion_batch.append(current_item)
+            deletion_batch_size_bytes += current_size_bytes
+        else:
+            break
+
     item = {
         "Id": job_id,
         "Sk": job_id,
@@ -116,7 +131,8 @@ def process_handler(event, context):
         "JobStatus": "QUEUED",
         "GSIBucket": str(random.randint(0, bucket_count - 1)),
         "CreatedAt": utc_timestamp(),
-        "DeletionQueueItems": deletion_queue,
+        "DeletionQueueItems": deletion_batch,
+        "DeletionQueueItemsSkipped": deletion_queue_initial_size - len(deletion_batch),
         "CreatedBy": get_user_info(event),
         **{k: v for k, v in config.items() if k not in ["JobDetailsRetentionDays"]}
     }

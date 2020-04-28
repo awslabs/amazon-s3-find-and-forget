@@ -37,6 +37,25 @@ export default ({ type, size }) => {
       </SVGWrapper>
     );
 
+  if (type === "alert-warning")
+    return (
+      <SVGWrapper>
+        <path
+          className="stroke-linejoin-round"
+          d="M8 1l7 14H1L8 1z"
+          stroke="#d13212"
+          fill="none"
+          strokeWidth="2px"
+        />
+        <path
+          d="M7.99 12H8v.01h-.01zM8 6v4"
+          stroke="#d13212"
+          fill="none"
+          strokeWidth="2px"
+        />
+      </SVGWrapper>
+    );
+
   if (type === "alert-success")
     return (
       <SVGWrapper>
@@ -48,14 +67,14 @@ export default ({ type, size }) => {
           stroke="#1d8102"
           fill="none"
           strokeWidth="2px"
-        ></circle>
+        />
         <path
           className="stroke-linecap-square"
           d="M5 8l2 2 3.521-3.521"
           stroke="#1d8102"
           fill="none"
           strokeWidth="2px"
-        ></path>
+        />
       </SVGWrapper>
     );
 
