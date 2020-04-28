@@ -813,7 +813,6 @@ Resources:
       Handler: generate_queries.handler
       CodeUri: ../backend/lambdas/tasks/
       MemorySize: 512
-      Timeout: 300
       Environment:
         Variables:
           QueryQueue: !Ref QueryQueue
