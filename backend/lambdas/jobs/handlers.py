@@ -24,6 +24,12 @@ end_statuses = [
     "FORGET_PARTIALLY_FAILED"
 ]
 
+job_summary_attributes = [
+    "Id", "Sk", "CreatedAt", "JobStatus", "JobFinishTime", "JobStartTime", "TotalObjectRollbackFailedCount",
+    "TotalObjectUpdatedCount", "TotalObjectUpdateFailedCount", "TotalQueryCount", "TotalQueryScannedInBytes",
+    "TotalQuerySucceededCount", "TotalQueryTimeInMillis"
+]
+
 
 @with_logging
 @add_cors_headers
@@ -67,6 +73,7 @@ def list_jobs_handler(event, context):
             KeyConditionExpression=Key('GSIBucket').eq(str(gsi_bucket)) & Key('CreatedAt').lt(start_at),
             ScanIndexForward=False,
             Limit=page_size,
+            ProjectionExpression=", ".join(job_summary_attributes)
         )
         items += response.get("Items", [])
     items = sorted(items, key=lambda i: i['CreatedAt'], reverse=True)[:page_size]

@@ -74,6 +74,24 @@ def test_it_lists_jobs_by_date(api_client, jobs_endpoint, job_factory, stack, jo
 
 
 @pytest.mark.api
+def test_it_returns_summary_fields_in_list(api_client, jobs_endpoint, job_factory, job_table, job_finished_waiter):
+    # Arrange
+    job_id = job_factory(job_id=str(uuid.uuid4()), created_at=1576861489)["Id"]
+    job_finished_waiter.wait(TableName=job_table.name, Key={"Id": {"S": job_id}, "Sk": {"S": job_id}})
+    # Act
+    response = api_client.get(jobs_endpoint)
+    response_body = response.json()
+    # Assert
+    assert response.status_code == 200
+    for job in response_body["Jobs"]:
+        assert all([k in job for k in [
+            "Id", "Sk", "CreatedAt", "JobStatus", "JobFinishTime", "JobStartTime", "TotalObjectRollbackFailedCount",
+            "TotalObjectUpdatedCount", "TotalObjectUpdateFailedCount", "TotalQueryCount", "TotalQueryScannedInBytes",
+            "TotalQuerySucceededCount", "TotalQueryTimeInMillis"
+        ]])
+
+
+@pytest.mark.api
 def test_it_lists_job_events_by_date(api_client, jobs_endpoint, job_factory, stack, job_table, job_finished_waiter):
     # Arrange
     job_id = str(uuid.uuid4())
