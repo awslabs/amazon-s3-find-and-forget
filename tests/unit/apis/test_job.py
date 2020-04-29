@@ -77,6 +77,7 @@ class TestListJobs:
             KeyConditionExpression=ANY,
             ScanIndexForward=ANY,
             Limit=3,
+            ProjectionExpression=ANY
         )
 
     @patch("backend.lambdas.jobs.handlers.bucket_count", 3)
