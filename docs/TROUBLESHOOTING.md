@@ -166,8 +166,8 @@ To reprocess the objects, run a new deletion job.
 
 An individual Deletion Job can process max 375KB of items from the Deletion
 Queue (which should amount to at least 2500 items depending on each item size).
-When `DeletionQueueItemsSkipped` is `TRUE`, a portion of the queue wasn't
-processed. In order to complete the processing, run a new deletion job.
+When the `DeletionQueueItemsSkipped` attribute is set to `TRUE`, at least one match in the queue wasn't
+processed. In order to process any remaining matches, run a new deletion job.
 
 [user guide]: USER_GUIDE.md
 [vpc configuration]:

@@ -9,7 +9,7 @@ Name | Type | Description | Notes
 **JobStartTime** | [**Integer**](integer.md) | Job start date as Epoch timestamp | [optional] [default to null]
 **JobFinishTime** | [**Integer**](integer.md) | Job finish date as Epoch timestamp | [optional] [default to null]
 **DeletionQueueItems** | [**List**](string.md) | The deletion queue items applied to this job | [default to null]
-**DeletionQueueItemsSkipped** | [**Boolean**](boolean.md) | Indicates if any items in the queue were skipped from the job | [default to false]
+**DeletionQueueItemsSkipped** | [**Boolean**](boolean.md) | Indicates if any items in the queue were not processed by the job | [default to false]
 **AthenaConcurrencyLimit** | [**Integer**](integer.md) | Athena concurrency setting for this job | [default to null]
 **DeletionTasksMaxNumber** | [**Integer**](integer.md) | Max Fargate tasks setting for this job | [default to null]
 **ForgetQueueWaitSeconds** | [**Integer**](integer.md) | Forget queue wait setting for this job | [default to null]
@@ -29,4 +29,3 @@ Name | Type | Description | Notes
 **GSIBucket** | [**String**](string.md) | Internal field used as part of DynamoDB single table design | [default to null]
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-

@@ -57,8 +57,8 @@ supported:
   as many items as possible during its job. A flag called
   `DeletionQueueItemsSkipped` will tell if there were any items left out of a
   job and it will be part of the Job details (available via API or Web UI). If
-  the flag will be set to `TRUE`, it is recommended to run a job after
-  completion of the current one, until the queue is completely empty.
+  the attribute will be set to `TRUE`, we recommend running another job after
+  completion of the current one, to delete any remaining items in the queue.
 
 #### Service Quotas
 
