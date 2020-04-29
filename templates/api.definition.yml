@@ -494,6 +494,7 @@ components:
         - "JobStatus"
         - "CreatedAt"
         - "DeletionQueueItems"
+        - "DeletionQueueItemsSkipped"
         - "AthenaConcurrencyLimit"
         - "DeletionTasksMaxNumber"
         - "ForgetQueueWaitSeconds"
@@ -535,6 +536,10 @@ components:
           description: "The deletion queue items applied to this job"
           items:
             type: "string"
+        DeletionQueueItemsSkipped:
+          type: "boolean"
+          default: false
+          description: "Indicates if any items in the queue were not processed by the job"
         AthenaConcurrencyLimit:
           type: "integer"
           description: "Athena concurrency setting for this job"

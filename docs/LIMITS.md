@@ -51,6 +51,13 @@ supported:
   detected. If the rollback fails, you will need to manually reconcile the
   object versions to avoid data inconsistency or loss
 - Buckets with MFA Delete enabled are not supported
+- An individual [Deletion Job] can process max 375KB of items from the [Deletion
+  Queue]. When the queue is too large, the Job will automatically try to process
+  as many items as possible. The `DeletionQueueItemsSkipped`
+  attribute indicates if any matches in the deletion queue were not able to be
+  processed as part of this job. If the attribute is set to `TRUE`, we
+  recommend running another job after completion of the current one to delete
+  any remaining items in the queue.
 
 #### Service Quotas
 
@@ -87,3 +94,5 @@ service in question:
   https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-quotas.html
 [dynamodb service quotas]:
   https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Limits.html
+[deletion job]: ARCHITECTURE.md#deletion-jobs
+[deletion queue]: ARCHITECTURE.md#deletion-queue

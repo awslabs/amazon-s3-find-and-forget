@@ -160,8 +160,14 @@ Verify the following:
 - Your data is compatible within the [solution limits].
 - Your data is not corrupted.
 
-To reprocess the objects, populate the deletion queue with the same matches and
-run a new deletion job.
+To reprocess the objects, run a new deletion job.
+
+### Job status: COMPLETED with DeletionQueueItemsSkipped = TRUE
+
+An individual Deletion Job can process max 375KB of items from the Deletion
+Queue. When the `DeletionQueueItemsSkipped` attribute is set to `TRUE`, at least
+one match in the queue wasn't processed. In order to process any remaining
+matches, run a new deletion job.
 
 [user guide]: USER_GUIDE.md
 [vpc configuration]:
