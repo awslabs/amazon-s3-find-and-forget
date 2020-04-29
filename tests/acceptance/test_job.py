@@ -85,7 +85,7 @@ def test_it_returns_summary_fields_in_list(api_client, jobs_endpoint, job_factor
     assert response.status_code == 200
     for job in response_body["Jobs"]:
         assert all([k in job for k in [
-            "Id", "Sk", "CreatedAt", "JobStatus", "JobFinishTime", "JobStartTime", "TotalObjectRollbackFailedCount",
+            "Id", "CreatedAt", "JobStatus", "JobFinishTime", "JobStartTime", "TotalObjectRollbackFailedCount",
             "TotalObjectUpdatedCount", "TotalObjectUpdateFailedCount", "TotalQueryCount", "TotalQueryScannedInBytes",
             "TotalQuerySucceededCount", "TotalQueryTimeInMillis"
         ]])

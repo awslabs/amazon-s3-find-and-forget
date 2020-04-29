@@ -493,7 +493,6 @@ components:
         - "Id"
         - "JobStatus"
         - "CreatedAt"
-        - "Sk"
       properties:
         Id:
           type: "string"
@@ -554,9 +553,6 @@ components:
           type: "integer"
           description: "Total time spent by the query executor for this job"
           default: 0
-        Sk:
-          type: "string"
-          description: "Internal field used as part of DynamoDB single table design"
     Job:
       description: "A Job object"
       type: "object"

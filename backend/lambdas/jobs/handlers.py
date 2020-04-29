@@ -25,7 +25,7 @@ end_statuses = [
 ]
 
 job_summary_attributes = [
-    "Id", "Sk", "CreatedAt", "JobStatus", "JobFinishTime", "JobStartTime", "TotalObjectRollbackFailedCount",
+    "Id", "CreatedAt", "JobStatus", "JobFinishTime", "JobStartTime", "TotalObjectRollbackFailedCount",
     "TotalObjectUpdatedCount", "TotalObjectUpdateFailedCount", "TotalQueryCount", "TotalQueryFailedCount",
     "TotalQueryScannedInBytes", "TotalQuerySucceededCount", "TotalQueryTimeInMillis"
 ]

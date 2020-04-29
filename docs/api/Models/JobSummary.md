@@ -16,7 +16,6 @@ Name | Type | Description | Notes
 **TotalQueryScannedInBytes** | [**Integer**](integer.md) | Total amount of data scanned during the find phase | [optional] [default to 0]
 **TotalQuerySucceededCount** | [**Integer**](integer.md) | Total number of successfully executed queries during the find phase | [optional] [default to 0]
 **TotalQueryTimeInMillis** | [**Integer**](integer.md) | Total time spent by the query executor for this job | [optional] [default to 0]
-**Sk** | [**String**](string.md) | Internal field used as part of DynamoDB single table design | [default to null]
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 
