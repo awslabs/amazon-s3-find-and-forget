@@ -31,6 +31,7 @@ API | Operation | HTTP request | Description
  - [Error](./Models/Error.md)
  - [Job](./Models/Job.md)
  - [JobEvent](./Models/JobEvent.md)
+ - [JobSummary](./Models/JobSummary.md)
  - [ListOfDataMappers](./Models/ListOfDataMappers.md)
  - [ListOfJobEvents](./Models/ListOfJobEvents.md)
  - [ListOfJobs](./Models/ListOfJobs.md)

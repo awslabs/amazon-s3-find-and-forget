@@ -172,7 +172,7 @@ paths:
                     type: "array"
                     description: "The list of jobs"
                     items:
-                      $ref: '#/components/schemas/Job'
+                      $ref: '#/components/schemas/JobSummary'
                   NextStart:
                     type: "integer"
                     nullable: true
@@ -486,6 +486,77 @@ components:
           default: ["*"]
           items:
             type: "string"
+    JobSummary:
+      description: "A Job summary object"
+      type: "object"
+      required:
+        - "Id"
+        - "JobStatus"
+        - "CreatedAt"
+        - "Sk"
+      properties:
+        Id:
+          type: "string"
+          description: "The Job ID"
+        JobStatus:
+          type: "string"
+          description: "The Job status. When a job is first created, it will remain in queued till the workflow starts"
+          default: "QUEUED"
+          enum:
+            - "QUEUED"
+            - "RUNNING"
+            - "FORGET_COMPLETED_CLEANUP_IN_PROGRESS"
+            - "COMPLETED"
+            - "COMPLETED_CLEANUP_FAILED"
+            - "FAILED"
+            - "FIND_FAILED"
+            - "FORGET_FAILED"
+            - "FORGET_PARTIALLY_FAILED"
+        CreatedAt:
+          type: "integer"
+          description: "Job creation date as Epoch timestamp"
+          default: <the current time>
+        JobStartTime:
+          type: "integer"
+          description: "Job start date as Epoch timestamp"
+        JobFinishTime:
+          type: "integer"
+          description: "Job finish date as Epoch timestamp"
+        TotalObjectUpdatedCount:
+          type: "integer"
+          description: "Total number of successfully updated objects"
+          default: 0
+        TotalObjectUpdateFailedCount:
+          type: "integer"
+          description: "Total number of objects which could not be successfully updated"
+          default: 0
+        TotalObjectRollbackFailedCount:
+          type: "integer"
+          description: "Total number of objects which could not be successfully rolled back after detecting an integrity conflict"
+          default: 0
+        TotalQueryCount:
+          type: "integer"
+          description: "Total number of queries executed during the find phase"
+          default: 0
+        TotalQueryFailedCount:
+          type: "integer"
+          description: "Total number of unsuccessfully executed queries during the find phase"
+          default: 0
+        TotalQueryScannedInBytes:
+          type: "integer"
+          description: "Total amount of data scanned during the find phase"
+          default: 0
+        TotalQuerySucceededCount:
+          type: "integer"
+          description: "Total number of successfully executed queries during the find phase"
+          default: 0
+        TotalQueryTimeInMillis:
+          type: "integer"
+          description: "Total time spent by the query executor for this job"
+          default: 0
+        Sk:
+          type: "string"
+          description: "Internal field used as part of DynamoDB single table design"
     Job:
       description: "A Job object"
       type: "object"
