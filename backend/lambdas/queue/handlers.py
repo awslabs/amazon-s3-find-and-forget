@@ -108,10 +108,6 @@ def process_handler(event, context):
 
     job_id = str(uuid.uuid4())
     config = get_config()
-    deletion_queue = [
-        deserialize_item(i) for i in paginate(ddb_client, ddb_client.scan, "Items", TableName=deletion_queue_table_name)
-    ]
-    deletion_queue_initial_size = len(deletion_queue)
     item = {
         "Id": job_id,
         "Sk": job_id,
@@ -120,28 +116,37 @@ def process_handler(event, context):
         "GSIBucket": str(random.randint(0, bucket_count - 1)),
         "CreatedAt": utc_timestamp(),
         "DeletionQueueItems": [],
-        "DeletionQueueItemsSkipped": 0,
+        "DeletionQueueItemsSkipped": False,
         "CreatedBy": get_user_info(event),
         **{k: v for k, v in config.items() if k not in ["JobDetailsRetentionDays"]}
     }
+
     if int(config.get("JobDetailsRetentionDays", 0)) > 0:
         item["Expires"] = utc_timestamp(days=config["JobDetailsRetentionDays"])
+    
     item_size_bytes = calculate_ddb_item_bytes(item)
-    while len(deletion_queue) > 0:
-        current_item = deletion_queue.pop(0)
-        current_size_bytes = calculate_ddb_item_bytes(current_item)
+
+    for deletion_queue_item in get_deletion_queue():
+        current_size_bytes = calculate_ddb_item_bytes(deletion_queue_item)
         if item_size_bytes + current_size_bytes < max_size_bytes:
-            item['DeletionQueueItems'].append(current_item)
+            item['DeletionQueueItems'].append(deletion_queue_item)
             item_size_bytes += current_size_bytes
         else:
+            item['DeletionQueueItemsSkipped'] = True
             break
-    item['DeletionQueueItemsSkipped'] = deletion_queue_initial_size - len(item['DeletionQueueItems'])
+
     jobs_table.put_item(Item=item)
 
     return {
         "statusCode": 202,
         "body": json.dumps(item, cls=DecimalEncoder)
     }
+
+
+def get_deletion_queue():
+    results = paginate(ddb_client, ddb_client.scan, "Items", TableName=deletion_queue_table_name)
+    for result in results:
+        yield deserialize_item(result)
 
 
 def calculate_ddb_item_bytes(item):

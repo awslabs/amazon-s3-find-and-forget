@@ -537,8 +537,9 @@ components:
           items:
             type: "string"
         DeletionQueueItemsSkipped:
-          type: "integer"
-          description: "The number of items in the queue that were skipped from the job"
+          type: "boolean"
+          default: false
+          description: "Indicates if any items in the queue were skipped from the job"
         AthenaConcurrencyLimit:
           type: "integer"
           description: "Athena concurrency setting for this job"

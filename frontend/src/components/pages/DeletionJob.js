@@ -81,8 +81,7 @@ export default ({ gateway, jobId }) => {
   const errorCountClass = x =>
     x === 0 || isUndefined(x) ? "success" : "error";
 
-  const warningCountClass = x =>
-    x === 0 || isUndefined(x) ? "success" : "warning";
+  const warningCountClass = x => (!x ? "success" : "warning");
 
   useEffect(() => {
     if (withCountDown) {
@@ -230,14 +229,12 @@ export default ({ gateway, jobId }) => {
                 job.DeletionQueueItemsSkipped
               )}`}
             >
-              {!isUndefined(job.DeletionQueueItemsSkipped) && (
-                <Icon
-                  type={`alert-${warningCountClass(
-                    job.DeletionQueueItemsSkipped
-                  )}`}
-                />
-              )}
-              <span>{withDefault(job.DeletionQueueItemsSkipped)}</span>
+              <Icon
+                type={`alert-${warningCountClass(
+                  job.DeletionQueueItemsSkipped
+                )}`}
+              />
+              <span>{job.DeletionQueueItemsSkipped.toString().toUpperCase()}</span>
             </DetailsBox>
             <DetailsBox label="Start Time">
               {formatDateTime(job.JobStartTime)}

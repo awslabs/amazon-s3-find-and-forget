@@ -54,10 +54,10 @@ supported:
 - An individual [Deletion Job] can process max 375KB of items from the [Deletion
   Queue] (which should amount to at least 2500 items depending on each item
   size). When the queue is too large, the Job will automatically try to process
-  as many items as possible during its job. A counter called
-  `DeletionQueueItemsSkipped` will represent the number of items that were left
-  out of a job and it will be part of the Job details (available via API or Web
-  UI). When the counter is major than 0, it is recommended to run a job after
+  as many items as possible during its job. A flag called
+  `DeletionQueueItemsSkipped` will tell if there were any items left out of a
+  job and it will be part of the Job details (available via API or Web UI). If
+  the flag will be set to `TRUE`, it is recommended to run a job after
   completion of the current one, until the queue is completely empty.
 
 #### Service Quotas

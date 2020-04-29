@@ -205,7 +205,7 @@ def test_it_process_queue(mock_config, mock_running_job, job_table, uuid, pagina
         "GSIBucket": "0",
         "CreatedAt": ANY,
         "DeletionQueueItems": [{"MatchId": "123", "CreatedAt": 123}],
-        "DeletionQueueItemsSkipped": 0,
+        "DeletionQueueItemsSkipped": False,
         "AthenaConcurrencyLimit": 15,
         "DeletionTasksMaxNumber": 50,
         "QueryExecutionWaitSeconds": 5,
@@ -226,7 +226,7 @@ def test_it_process_queue(mock_config, mock_running_job, job_table, uuid, pagina
         "GSIBucket": "0",
         "CreatedAt": ANY,
         "DeletionQueueItems": [{"MatchId": "123", "CreatedAt": 123}],
-        "DeletionQueueItemsSkipped": 0,
+        "DeletionQueueItemsSkipped": False,
         "AthenaConcurrencyLimit": 15,
         "DeletionTasksMaxNumber": 50,
         "QueryExecutionWaitSeconds": 5,
@@ -283,7 +283,7 @@ def test_it_partitions_queue(mock_config, mock_running_job, job_table, uuid, pag
         "GSIBucket": "0",
         "CreatedAt": ANY,
         "DeletionQueueItems": [serialised_match],
-        "DeletionQueueItemsSkipped": 1,
+        "DeletionQueueItemsSkipped": True,
         "CreatedBy": {
             "Username": "cognitoUsername",
             "Sub": "cognitoSub"
@@ -299,7 +299,7 @@ def test_it_partitions_queue(mock_config, mock_running_job, job_table, uuid, pag
         "GSIBucket": "0",
         "CreatedAt": ANY,
         "DeletionQueueItems": [serialised_match],
-        "DeletionQueueItemsSkipped": 1,
+        "DeletionQueueItemsSkipped": True,
         "CreatedBy": {
             "Username": "cognitoUsername",
             "Sub": "cognitoSub"
@@ -341,7 +341,7 @@ def test_it_applies_expiry(mock_utc, mock_config, mock_running_job, job_table, u
         "CreatedAt": ANY,
         "Expires": 12346789,
         "DeletionQueueItems": [{"MatchId": "123", "CreatedAt": 123}],
-        "DeletionQueueItemsSkipped": 0,
+        "DeletionQueueItemsSkipped": False,
         "AthenaConcurrencyLimit": 15,
         "DeletionTasksMaxNumber": 50,
         "QueryExecutionWaitSeconds": 5,
