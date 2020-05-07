@@ -33,6 +33,7 @@ the solution.
   - [Scenario 1](#scenario-1)
   - [Scenario 2](#scenario-2)
   - [Scenario 3](#scenario-3)
+  - [Scenario 3](#scenario-4)
 
 ## Overview
 
@@ -206,13 +207,13 @@ This example shows how the charges would be calculated for a deletion job where:
 - The Forget phase uses 3 Fargate tasks with 4 vCPUs and 30GB of memory each,
   running concurrently for 60 minutes
 
-| Service        | Spending | Notes                                                     |
-| -------------- | -------- | --------------------------------------------------------- |
-| Amazon Athena  | \$0.03   | 6.8GB of data scanned                                     |
-| AWS Fargate    | \$0.89   | 3 tasks x 4 vCPUs, 30GB memory x 1 hour                   |
-| Amazon S3      | \$0.01   | $0.01 of requests and data retrieval. $0 of data transfer |
-| Other services | \$0.05   | n/a                                                       |
-| Total          | \$0.98   | n/a                                                       |
+| Service        | Spending | Notes                                                       |
+| -------------- | -------- | ----------------------------------------------------------- |
+| Amazon Athena  | \$0.03   | 6.8GB of data scanned                                       |
+| AWS Fargate    | \$0.89   | 3 tasks x 4 vCPUs, 30GB memory x 1 hour                     |
+| Amazon S3      | \$0.01   | \$0.01 of requests and data retrieval. \$0 of data transfer |
+| Other services | \$0.05   | n/a                                                         |
+| Total          | \$0.98   | n/a                                                         |
 
 ### Scenario 2
 
@@ -227,13 +228,13 @@ This example shows how the charges would be calculated for a deletion job where:
 - The Forget phase uses 50 Fargate tasks with 4 vCPUs and 30GB of memory each,
   running concurrently for 45 minutes
 
-| Service        | Spending | Notes                                                     |
-| -------------- | -------- | --------------------------------------------------------- |
-| Amazon Athena  | \$0.05   | 10GB of data scanned                                      |
-| AWS Fargate    | \$11.07  | 50 tasks x 4 vCPUs, 30GB memory x 0.75 hours              |
-| Amazon S3      | \$0.01   | $0.01 of requests and data retrieval. $0 of data transfer |
-| Other services | \$0.01   | n/a                                                       |
-| Total          | \$11.14  | n/a                                                       |
+| Service        | Spending | Notes                                                       |
+| -------------- | -------- | ----------------------------------------------------------- |
+| Amazon Athena  | \$0.05   | 10GB of data scanned                                        |
+| AWS Fargate    | \$11.07  | 50 tasks x 4 vCPUs, 30GB memory x 0.75 hours                |
+| Amazon S3      | \$0.01   | \$0.01 of requests and data retrieval. \$0 of data transfer |
+| Other services | \$0.01   | n/a                                                         |
+| Total          | \$11.14  | n/a                                                         |
 
 ### Scenario 3
 
@@ -248,13 +249,34 @@ This example shows how the charges would be calculated for a deletion job where:
 - The Forget phase uses 100 Fargate tasks with 4 vCPUs and 30GB of memory each,
   running concurrently for 150 minutes
 
-| Service        | Spending | Notes                                                     |
-| -------------- | -------- | --------------------------------------------------------- |
-| Amazon Athena  | \$0.76   | 156GB of data scanned                                     |
-| AWS Fargate    | \$73.82  | 100 tasks x 4 vCPUs, 30GB memory x 2.5 hours              |
-| Amazon S3      | \$0.11   | 0.11 of requests and data retrieval. \$0 of data transfer |
-| Other services | \$1      | n/a                                                       |
-| Total          | \$75.69  | n/a                                                       |
+| Service        | Spending | Notes                                                       |
+| -------------- | -------- | ----------------------------------------------------------- |
+| Amazon Athena  | \$0.76   | 156GB of data scanned                                       |
+| AWS Fargate    | \$73.82  | 100 tasks x 4 vCPUs, 30GB memory x 2.5 hours                |
+| Amazon S3      | \$0.11   | \$0.11 of requests and data retrieval. \$0 of data transfer |
+| Other services | \$1      | n/a                                                         |
+| Total          | \$75.69  | n/a                                                         |
+
+### Scenario 4
+
+This example shows how the charges would be calculated for a deletion job where:
+
+- Your dataset is 50TB of Snappy compressed Parquet objects that are distributed
+  across 5300 Partitions
+- The S3 bucket containing the objects is in the same region as the S3 Find and
+  Forget Solution
+- The total size of the data held in the column queried by Athena is 671GB
+- The Find phase returns 45300 objects which need to be modified
+- The Forget phase uses 100 Fargate tasks with 4 vCPUs and 30GB of memory each,
+  running concurrently for 10.5 hours
+
+| Service        | Spending | Notes                                                       |
+| -------------- | -------- | ----------------------------------------------------------- |
+| Amazon Athena  | \$3.28   | 671GB of data scanned                                       |
+| AWS Fargate    | \$310.03 | 100 tasks x 4 vCPUs, 30GB memory x 10.5 hours               |
+| Amazon S3      | \$0.49   | \$0.49 of requests and data retrieval. \$0 of data transfer |
+| Other services | \$3      | n/a                                                         |
+| Total          | \$316.8  | n/a                                                         |
 
 [aws cloudformation]: https://aws.amazon.com/cloudformation/
 [aws codebuild]: https://aws.amazon.com/codebuild/pricing/
