@@ -276,7 +276,7 @@ This example shows how the charges would be calculated for a deletion job where:
 | AWS Fargate    | \$310.03 | 100 tasks x 4 vCPUs, 30GB memory x 10.5 hours               |
 | Amazon S3      | \$0.49   | \$0.49 of requests and data retrieval. \$0 of data transfer |
 | Other services | \$3      | n/a                                                         |
-| Total          | \$316.8  | n/a                                                         |
+| Total          | \$316.80 | n/a                                                         |
 
 [aws cloudformation]: https://aws.amazon.com/cloudformation/
 [aws codebuild]: https://aws.amazon.com/codebuild/pricing/
