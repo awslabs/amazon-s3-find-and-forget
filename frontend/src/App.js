@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Authenticator, Greetings, SignUp } from "aws-amplify-react";
 
 import AppLayout from "./components/AppLayout";
@@ -28,7 +28,7 @@ export default () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [selectedJobId, selectJobId] = useState(undefined);
 
-  const goToJobDetails = jobId => {
+  const goToJobDetails = (jobId) => {
     selectJobId(jobId);
     setCurrentPage(6);
   };
@@ -43,28 +43,26 @@ export default () => {
           goToPage={setCurrentPage}
         />
       ),
-      help: <DashboardHelp />
+      help: <DashboardHelp />,
     },
     {
       title: "Data Mappers",
-      page: (
-        <DataMappersPage gateway={gateway} onPageChange={setCurrentPage} />
-      ),
-      help: <DataMappersHelp />
+      page: <DataMappersPage gateway={gateway} onPageChange={setCurrentPage} />,
+      help: <DataMappersHelp />,
     },
     {
       title: "Deletion Queue",
       page: (
         <DeletionQueuePage gateway={gateway} onPageChange={setCurrentPage} />
       ),
-      help: <DeletionQueueHelp />
+      help: <DeletionQueueHelp />,
     },
     {
       title: "Deletion Jobs",
       page: (
         <DeletionJobsPage gateway={gateway} goToJobDetails={goToJobDetails} />
       ),
-      help: <DeletionJobsHelp />
+      help: <DeletionJobsHelp />,
     },
     {
       title: "Create Data Mapper",
@@ -75,7 +73,7 @@ export default () => {
         />
       ),
       help: <NewDataMapperHelp />,
-      parent: 1
+      parent: 1,
     },
     {
       title: "Add item to the Deletion Queue",
@@ -86,7 +84,7 @@ export default () => {
         />
       ),
       help: <NewDeletionQueueMatchHelp />,
-      parent: 2
+      parent: 2,
     },
     {
       title: selectedJobId || "Deletion Job details",
@@ -98,13 +96,18 @@ export default () => {
         />
       ),
       help: <DeletionJobDetailsHelp />,
-      parent: 3
-    }
+      parent: 3,
+    },
   ];
 
   const classNames = ["App"];
   const signedIn = authState === "signedIn";
   if (!signedIn) classNames.push("amplify-auth");
+
+  useEffect(() => {
+    const inputs = document.getElementsByTagName("input");
+    Array.from(inputs).forEach((i) => i.setAttribute("autocomplete", "off"));
+  }, [authState]);
 
   return (
     <div className={classNames.join(" ")}>
@@ -117,7 +120,7 @@ export default () => {
         />
       ) : (
         <Authenticator
-          onStateChange={s => setAuthState(s)}
+          onStateChange={(s) => setAuthState(s)}
           hide={[Greetings, SignUp]}
         />
       )}
