@@ -125,6 +125,7 @@ export default ({ gateway, goToDeletionQueue }) => {
                   type="text"
                   onChange={e => setMatchId(e.target.value)}
                   placeholder="jane_doe"
+                  autoComplete="off"
                   {...validationAttributes(isMatchIdValid)}
                 />
               </Form.Group>

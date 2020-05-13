@@ -7,7 +7,7 @@ import {
   formatErrorMessage,
   isEmpty,
   isIdValid,
-  isRoleArnValid
+  isRoleArnValid,
 } from "../../utils";
 
 import { glueSerializer } from "../../utils/glueSerializer";
@@ -26,15 +26,15 @@ export default ({ gateway, goToDataMappers }) => {
   const [deletePreviousVersions, setDeletePreviousVersions] = useState(true);
   const [submitClicked, setSubmitClicked] = useState(false);
 
-  const addColumn = c => {
+  const addColumn = (c) => {
     if (!columns.includes(c)) setColumns([...columns, c]);
   };
 
-  const removeColumn = c => {
-    if (columns.includes(c)) setColumns(columns.filter(x => x !== c));
+  const removeColumn = (c) => {
+    if (columns.includes(c)) setColumns(columns.filter((x) => x !== c));
   };
 
-  const validationAttributes = isValid =>
+  const validationAttributes = (isValid) =>
     !submitClicked ? {} : isValid ? { isValid: true } : { isInvalid: true };
 
   const isDataMapperIdValid = !isEmpty(dataMapperId) && isIdValid(dataMapperId);
@@ -84,11 +84,11 @@ export default ({ gateway, goToDataMappers }) => {
   };
 
   const selectedDatabase = glueDatabase
-    ? glueData.databases.find(x => x.name === glueDatabase)
+    ? glueData.databases.find((x) => x.name === glueDatabase)
     : undefined;
 
   const selectedTable = selectedDatabase
-    ? selectedDatabase.tables.find(t => t.name === glueTable)
+    ? selectedDatabase.tables.find((t) => t.name === glueTable)
     : undefined;
 
   const tablesForSelectedDatabase = selectedDatabase
@@ -103,7 +103,7 @@ export default ({ gateway, goToDataMappers }) => {
       try {
         const databases = await gateway.getGlueDatabases();
         const tables = await Promise.all(
-          databases.DatabaseList.map(x => gateway.getGlueTables(x.Name))
+          databases.DatabaseList.map((x) => gateway.getGlueTables(x.Name))
         );
         setGlueData(glueSerializer(tables));
         setFormState("initial");
@@ -194,7 +194,7 @@ export default ({ gateway, goToDataMappers }) => {
                 </Form.Text>
                 <Form.Control
                   type="text"
-                  onChange={e => setDataMapperId(e.target.value)}
+                  onChange={(e) => setDataMapperId(e.target.value)}
                   {...validationAttributes(isDataMapperIdValid)}
                 />
               </Form.Group>
@@ -221,7 +221,7 @@ export default ({ gateway, goToDataMappers }) => {
                 </Form.Text>
                 <Form.Control
                   as="select"
-                  onChange={e => {
+                  onChange={(e) => {
                     setGlueDatabase(e.target.value);
                     resetGlueTable();
                     resetGlueColumns();
@@ -244,7 +244,7 @@ export default ({ gateway, goToDataMappers }) => {
                 </Form.Text>
                 <Form.Control
                   as="select"
-                  onChange={e => {
+                  onChange={(e) => {
                     setGlueTable(e.target.value);
                     resetGlueColumns();
                   }}
@@ -272,7 +272,7 @@ export default ({ gateway, goToDataMappers }) => {
                     key={index}
                     name="column"
                     label={c}
-                    onChange={e =>
+                    onChange={(e) =>
                       e.target.checked ? addColumn(c) : removeColumn(c)
                     }
                     {...validationAttributes(isColumnsValid)}
@@ -292,7 +292,8 @@ export default ({ gateway, goToDataMappers }) => {
                 </Form.Text>
                 <Form.Control
                   type="text"
-                  onChange={e => setRoleArn(e.target.value)}
+                  autoComplete="off"
+                  onChange={(e) => setRoleArn(e.target.value)}
                   {...validationAttributes(isRoleValid)}
                 />
               </Form.Group>
@@ -303,7 +304,9 @@ export default ({ gateway, goToDataMappers }) => {
                   name="column"
                   checked={deletePreviousVersions}
                   label="Delete previous object versions after update"
-                  onChange={e => setDeletePreviousVersions(!deletePreviousVersions)}
+                  onChange={(e) =>
+                    setDeletePreviousVersions(!deletePreviousVersions)
+                  }
                 />
               </Form.Group>
             </div>
