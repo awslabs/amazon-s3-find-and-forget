@@ -104,11 +104,6 @@ export default () => {
   const signedIn = authState === "signedIn";
   if (!signedIn) classNames.push("amplify-auth");
 
-  useEffect(() => {
-    const inputs = document.getElementsByTagName("input");
-    Array.from(inputs).forEach((i) => i.setAttribute("autocomplete", "off"));
-  }, [authState]);
-
   return (
     <div className={classNames.join(" ")}>
       <Header signedIn={signedIn} />
