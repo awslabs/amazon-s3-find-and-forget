@@ -52,7 +52,7 @@ Resources:
       UserPoolId: !Ref CognitoUserPool
       ClientName: !Sub ${ResourcePrefix}UserPoolClientName
       GenerateSecret: false
-      RefreshTokenValidity: 30
+      RefreshTokenValidity: 1
       PreventUserExistenceErrors: ENABLED
 
   ServiceInvokeRole:
