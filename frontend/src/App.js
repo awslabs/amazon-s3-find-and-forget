@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Authenticator, Greetings, SignUp } from "aws-amplify-react";
 
 import AppLayout from "./components/AppLayout";
