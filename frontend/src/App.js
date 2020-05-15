@@ -104,9 +104,17 @@ export default () => {
 
   useEffect(() => {
     if (isUndefined(authState)) {
+      // We want to establish if authState is undefined because the user is not authenticated
+      // or because the state hasn't been updated yet by the authenticator. This is important
+      // because the <AmplifyAuthenticator> doesn't show if the user is already authenticated,
+      // which is a scenario that can happen if the user closes the page and we want to persist
+      // its session.
       Auth.currentAuthenticatedUser()
         .then(() => setAuthState("signedin"))
-        .catch(() => {});
+        .catch(() => {
+          // The user appears unauthenticated. All fine. The <AmplifyAuthenticator> will be
+          // rendered correctly.
+        });
     }
   }, [authState]);
 
