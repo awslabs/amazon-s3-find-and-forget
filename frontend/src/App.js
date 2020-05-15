@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Authenticator, Greetings, SignUp } from "aws-amplify-react";
+import React, { useEffect, useState } from "react";
+import { AmplifyAuthenticator, AmplifySignIn } from "@aws-amplify/ui-react";
 
 import AppLayout from "./components/AppLayout";
 import Header from "./components/Header";
@@ -22,6 +22,8 @@ import {
   NewDeletionQueueMatchPage,
 } from "./components/pages";
 import gateway from "./utils/gateway";
+import { isUndefined } from "./utils";
+import { Auth } from "aws-amplify";
 
 export default () => {
   const [authState, setAuthState] = useState(undefined);
@@ -100,12 +102,17 @@ export default () => {
     },
   ];
 
-  const classNames = ["App"];
-  const signedIn = authState === "signedIn";
-  if (!signedIn) classNames.push("amplify-auth");
+  useEffect(() => {
+    if (isUndefined(authState)) {
+      Auth.currentAuthenticatedUser()
+        .then(() => setAuthState("signedin"))
+        .catch(() => {});
+    }
+  }, [authState]);
 
+  const signedIn = authState === "signedin";
   return (
-    <div className={classNames.join(" ")}>
+    <div className="App">
       <Header signedIn={signedIn} />
       {signedIn ? (
         <AppLayout
@@ -114,10 +121,33 @@ export default () => {
           pages={pages}
         />
       ) : (
-        <Authenticator
-          onStateChange={(s) => setAuthState(s)}
-          hide={[Greetings, SignUp]}
-        />
+        <div className="amplify-auth-container">
+          <AmplifyAuthenticator usernameAlias="email">
+            <AmplifySignIn
+              slot="sign-in"
+              usernameAlias="email"
+              handleAuthStateChange={(s) => setAuthState(s)}
+              formFields={[
+                {
+                  type: "email",
+                  label: "Username *",
+                  placeholder: "Enter your username",
+                  required: true,
+                  inputProps: { autoComplete: "off" },
+                },
+                {
+                  type: "password",
+                  label: "Password *",
+                  placeholder: "Enter your password",
+                  required: true,
+                  inputProps: { autoComplete: "off" },
+                },
+              ]}
+            >
+              <div slot="secondary-footer-content"></div>
+            </AmplifySignIn>
+          </AmplifyAuthenticator>
+        </div>
       )}
     </div>
   );
