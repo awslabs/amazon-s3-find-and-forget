@@ -10,7 +10,7 @@ import {
   isEmpty,
   isUndefined,
   sortBy,
-  formatDateTime
+  formatDateTime,
 } from "../../utils";
 
 const PAGE_SIZE = 10;
@@ -39,10 +39,7 @@ export default ({ gateway, onPageChange }) => {
     setFormState("initial");
     try {
       await gateway.deleteQueueMatches([
-        {
-          MatchId: queue[selectedRow].MatchId,
-          CreatedAt: queue[selectedRow].CreatedAt
-        }
+        { DeletionQueueItemId: queue[selectedRow].DeletionQueueItemId },
       ]);
       refreshQueue();
     } catch (e) {
@@ -65,7 +62,7 @@ export default ({ gateway, onPageChange }) => {
     fetchQueue();
   }, [gateway, renderTableCount]);
 
-  const shouldShowItem = index =>
+  const shouldShowItem = (index) =>
     index >= PAGE_SIZE * currentPage && index < PAGE_SIZE * (currentPage + 1);
 
   return (

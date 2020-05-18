@@ -187,8 +187,9 @@ def queue_table(ddb_resource, stack):
 @pytest.fixture
 def del_queue_factory(queue_table):
     def factory(match_id="testId", created_at=round(datetime.datetime.now(datetime.timezone.utc).timestamp()),
-                data_mappers=[]):
+                data_mappers=[], deletion_queue_item_id="id123"):
         item = {
+            "DeletionQueueItemId": deletion_queue_item_id,
             "MatchId": match_id,
             "CreatedAt": created_at,
             "DataMappers": data_mappers,
@@ -198,7 +199,7 @@ def del_queue_factory(queue_table):
 
     yield factory
 
-    empty_table(queue_table, "MatchId", "CreatedAt")
+    empty_table(queue_table, "DeletionQueueItemId")
 
 
 @pytest.fixture(scope="module")
@@ -368,6 +369,7 @@ def job_factory(job_table, sf_client, stack):
             "CreatedAt": created_at,
             "GSIBucket": gsib,
             "DeletionQueueItems": del_queue_items,
+            "DeletionQueueItemsSkipped": False,
             "AthenaConcurrencyLimit": 15,
             "DeletionTasksMaxNumber": 1,
             "QueryExecutionWaitSeconds": 1,

@@ -34,6 +34,7 @@ def enqueue_handler(event, context):
     match_id = body["MatchId"]
     data_mappers = body.get("DataMappers", [])
     item = {
+        "DeletionQueueItemId": str(uuid.uuid4()),
         "MatchId": match_id,
         "CreatedAt": utc_timestamp(),
         "DataMappers": data_mappers,
@@ -59,16 +60,14 @@ def get_handler(event, context):
     scan_params = {'Limit': page_size}
     start_at = qs.get("start_at")
     if start_at:
-        start_createdat, start_matchid = start_at.split('#', 1)
         scan_params['ExclusiveStartKey'] = {
-            'CreatedAt': int(start_createdat),
-            'MatchId': start_matchid
+            'DeletionQueueItemId': start_at
         }
     items = deletion_queue_table.scan(**scan_params).get("Items", [])
     if len(items) < page_size:
         next_start = None
     else:
-        next_start = "{}#{}".format(str(items[-1]['CreatedAt']), items[-1]['MatchId'])
+        next_start = items[-1]['DeletionQueueItemId']
     return {
         "statusCode": 200,
         "body": json.dumps({
@@ -90,8 +89,7 @@ def cancel_handler(event, context):
     with deletion_queue_table.batch_writer() as batch:
         for match in matches:
             batch.delete_item(Key={
-                "MatchId": match["MatchId"],
-                "CreatedAt": match["CreatedAt"],
+                "DeletionQueueItemId": match["DeletionQueueItemId"]
             })
 
     return {

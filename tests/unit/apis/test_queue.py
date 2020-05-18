@@ -37,6 +37,7 @@ def test_it_retrieves_all_items(table):
 def test_it_retrieves_all_items_with_size_and_pagination(table):
     table.scan.return_value = {
         "Items": [{
+            "DeletionQueueItemId": "id123",
             "MatchId": "foo",
             "DataMappers": [],
             "CreatedAt": 123456789
@@ -45,57 +46,24 @@ def test_it_retrieves_all_items_with_size_and_pagination(table):
     response = handlers.get_handler({
         "queryStringParameters": {
             "page_size": "1",
-            "start_at": "123456788#bar"
+            "start_at": "id000"
         }
     }, SimpleNamespace())
     assert {
         "statusCode": 200,
         "body": json.dumps({
             "MatchIds": [{
+                "DeletionQueueItemId": "id123",
                 "MatchId": "foo",
                 "DataMappers": [],
                 "CreatedAt": 123456789
             }],
-            "NextStart": "123456789#foo"
+            "NextStart": "id123"
         }),
         "headers": ANY
     } == response
     table.scan.assert_called_with(Limit=1, ExclusiveStartKey={
-        "CreatedAt": 123456788,
-        "MatchId": "bar"
-    })
-
-
-@patch("backend.lambdas.queue.handlers.deletion_queue_table")
-def test_it_retrieves_items_with_start_at_containing_special_chars(table):
-    table.scan.return_value = {
-        "Items": [{
-            "MatchId": "foo",
-            "DataMappers": [],
-            "CreatedAt": 123456789
-        }]
-    }
-    response = handlers.get_handler({
-        "queryStringParameters": {
-            "page_size": "1",
-            "start_at": "123456788#bar#baz"
-        }
-    }, SimpleNamespace())
-    assert {
-        "statusCode": 200,
-        "body": json.dumps({
-            "MatchIds": [{
-                "MatchId": "foo",
-                "DataMappers": [],
-                "CreatedAt": 123456789
-            }],
-            "NextStart": "123456789#foo"
-        }),
-        "headers": ANY
-    } == response
-    table.scan.assert_called_with(Limit=1, ExclusiveStartKey={
-        "CreatedAt": 123456788,
-        "MatchId": "bar#baz"
+        "DeletionQueueItemId": "id000"
     })
 
 
@@ -111,6 +79,7 @@ def test_it_add_to_queue(table):
 
     assert 201 == response["statusCode"]
     assert {
+        "DeletionQueueItemId": ANY,
         "MatchId": "test",
         "CreatedAt": ANY,
         "DataMappers": ["a"],
@@ -132,6 +101,7 @@ def test_it_provides_default_data_mappers(table):
 
     assert 201 == response["statusCode"]
     assert {
+        "DeletionQueueItemId": ANY,
         "MatchId": "test",
         "CreatedAt": ANY,
         "DataMappers": [],
@@ -149,8 +119,7 @@ def test_it_cancels_deletions(table, mock_running_job):
     response = handlers.cancel_handler({
         "body": json.dumps({
             "Matches": [{
-                "MatchId": "test",
-                "CreatedAt": 123456789,
+                "DeletionQueueItemId": "id123"
             }],
         })
     }, SimpleNamespace())
