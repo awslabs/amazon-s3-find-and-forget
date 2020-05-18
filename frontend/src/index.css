@@ -53,12 +53,16 @@ body {
   padding-left: 20px;
 }
 
-.amplify-auth label {
-  margin-bottom: 0;
+:root {
+  --amplify-primary-color: #ec7211;
+  --amplify-font-family: Helvetica, Arial, sans-serif;
+  --amplify-text-md: 18px;
+  --amplify-text-sm: 14px;
 }
 
-.amplify-auth input {
-  vertical-align: inherit;
+.amplify-auth-container {
+  text-align: center;
+  margin: 5% auto 50px;
 }
 
 /* BUTTONS */
@@ -68,6 +72,7 @@ button.btn-link:focus {
   color: #0073bb;
   background: transparent;
   border: 0;
+  box-shadow: none;
 }
 
 .home-button {
@@ -79,7 +84,6 @@ button.btn-link:focus {
   padding-top: 0.5rem;
 }
 
-.amplify-auth button,
 button,
 .aws-button,
 .aws-button:disabled {
@@ -100,7 +104,6 @@ button,
   line-height: 1.8rem;
 }
 
-.amplify-auth button:hover,
 button:hover,
 .aws-button:hover {
   background: #eb5f07;

@@ -39,6 +39,7 @@
 
 #right.open {
   width: 290px;
+  overflow: auto;
 }
 
 #left.closed .content,
