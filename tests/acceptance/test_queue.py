@@ -38,11 +38,11 @@ def test_it_adds_to_queue(api_client, queue_base_endpoint, queue_table, stack):
     # Check the response is ok
     assert 201 == response.status_code
     assert expected == response_body
-    # Check the item exists in the DDB Table
-    query_result = queue_table.query(KeyConditionExpression=Key("DeletionQueueItemId").eq(response_body["DeletionQueueItemId"]))
-    assert 1 == len(query_result["Items"])
-    assert expected == query_result["Items"][0]
     assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
+    # Check the item exists in the DDB Table
+    query_result = queue_table.get_item(Key={"DeletionQueueItemId": response_body["DeletionQueueItemId"]})
+    assert query_result["Item"]
+    assert expected == query_result["Item"]
 
 
 def test_it_rejects_invalid_add_to_queue(api_client, queue_base_endpoint, stack):
@@ -87,10 +87,10 @@ def test_it_cancels_deletion(api_client, del_queue_factory, queue_base_endpoint,
     }]})
     # Assert
     assert 204 == response.status_code
-    # Check the item doesn't exist in the DDB Table
-    query_result = queue_table.query(KeyConditionExpression=Key("DeletionQueueItemId").eq(deletion_queue_item_id))
-    assert 0 == len(query_result["Items"])
     assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
+    # Check the item doesn't exist in the DDB Table
+    query_result = queue_table.get_item(Key={"DeletionQueueItemId": deletion_queue_item_id})
+    assert not "Item" in query_result
 
 
 def test_it_handles_not_found(api_client, del_queue_factory, queue_base_endpoint, queue_table, stack):
@@ -102,10 +102,10 @@ def test_it_handles_not_found(api_client, del_queue_factory, queue_base_endpoint
     }]})
     # Assert
     assert 204 == response.status_code
-    # Check the item doesn't exist in the DDB Table
-    query_result = queue_table.query(KeyConditionExpression=Key("DeletionQueueItemId").eq(deletion_queue_item_id))
-    assert 0 == len(query_result["Items"])
     assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
+    # Check the item doesn't exist in the DDB Table
+    query_result = queue_table.get_item(Key={"DeletionQueueItemId": deletion_queue_item_id})
+    assert not "Item" in query_result
 
 
 def test_it_disables_cancel_deletion_whilst_job_in_progress(api_client, queue_base_endpoint, sf_client, job_table, execution_exists_waiter,
@@ -124,9 +124,9 @@ def test_it_disables_cancel_deletion_whilst_job_in_progress(api_client, queue_ba
     try:
         # Assert
         assert 400 == response.status_code
-        # Check the item doesn't exist in the DDB Table
-        query_result = queue_table.query(KeyConditionExpression=Key("DeletionQueueItemId").eq(deletion_queue_item_id))
-        assert 1 == len(query_result["Items"])
+        # Check the item still exists in the DDB Table
+        query_result = queue_table.get_item(Key={"DeletionQueueItemId": deletion_queue_item_id})
+        assert query_result["Item"]
     finally:
         execution_exists_waiter.wait(executionArn=execution_arn)
         sf_client.stop_execution(executionArn=execution_arn)
