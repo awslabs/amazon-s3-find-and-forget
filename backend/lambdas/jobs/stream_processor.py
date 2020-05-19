@@ -86,8 +86,7 @@ def clear_deletion_queue(job):
     for item in job.get("DeletionQueueItems", []):
         with q_table.batch_writer() as batch:
             batch.delete_item(Key={
-                "MatchId": item["MatchId"],
-                "CreatedAt": item["CreatedAt"]
+                "DeletionQueueItemId": item["DeletionQueueItemId"]
             })
 
 

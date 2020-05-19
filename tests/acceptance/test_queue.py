@@ -22,6 +22,7 @@ def test_it_adds_to_queue(api_client, queue_base_endpoint, queue_table, stack):
         "DataMappers": ["a", "b"],
     }
     expected = {
+        "DeletionQueueItemId": mock.ANY,
         "MatchId": key,
         "CreatedAt": mock.ANY,
         "DataMappers": ["a", "b"],
@@ -37,11 +38,11 @@ def test_it_adds_to_queue(api_client, queue_base_endpoint, queue_table, stack):
     # Check the response is ok
     assert 201 == response.status_code
     assert expected == response_body
-    # Check the item exists in the DDB Table
-    query_result = queue_table.query(KeyConditionExpression=Key("MatchId").eq(key))
-    assert 1 == len(query_result["Items"])
-    assert expected == query_result["Items"][0]
     assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
+    # Check the item exists in the DDB Table
+    query_result = queue_table.get_item(Key={"DeletionQueueItemId": response_body["DeletionQueueItemId"]})
+    assert query_result["Item"]
+    assert expected == query_result["Item"]
 
 
 def test_it_rejects_invalid_add_to_queue(api_client, queue_base_endpoint, stack):
@@ -79,57 +80,53 @@ def test_it_rejects_invalid_deletion(api_client, del_queue_factory, queue_base_e
 def test_it_cancels_deletion(api_client, del_queue_factory, queue_base_endpoint, queue_table, stack):
     # Arrange
     del_queue_item = del_queue_factory()
-    match_id = del_queue_item["MatchId"]
+    deletion_queue_item_id = del_queue_item["DeletionQueueItemId"]
     # Act
     response = api_client.delete("{}/matches".format(queue_base_endpoint), json={"Matches": [{
-        "MatchId": match_id,
-        "CreatedAt": del_queue_item["CreatedAt"]
+        "DeletionQueueItemId": deletion_queue_item_id
     }]})
     # Assert
     assert 204 == response.status_code
-    # Check the item doesn't exist in the DDB Table
-    query_result = queue_table.query(KeyConditionExpression=Key("MatchId").eq(match_id))
-    assert 0 == len(query_result["Items"])
     assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
+    # Check the item doesn't exist in the DDB Table
+    query_result = queue_table.get_item(Key={"DeletionQueueItemId": deletion_queue_item_id})
+    assert not "Item" in query_result
 
 
 def test_it_handles_not_found(api_client, del_queue_factory, queue_base_endpoint, queue_table, stack):
     # Arrange
-    del_queue_item = del_queue_factory()
-    match_id = del_queue_item["MatchId"]
+    deletion_queue_item_id = "test"
     # Act
     response = api_client.delete("{}/matches".format(queue_base_endpoint), json={"Matches": [{
-        "MatchId": match_id,
-        "CreatedAt": del_queue_item["CreatedAt"]
+        "DeletionQueueItemId": deletion_queue_item_id
     }]})
     # Assert
     assert 204 == response.status_code
-    # Check the item doesn't exist in the DDB Table
-    query_result = queue_table.query(KeyConditionExpression=Key("MatchId").eq(match_id))
-    assert 0 == len(query_result["Items"])
     assert response.headers.get("Access-Control-Allow-Origin") == stack["APIAccessControlAllowOriginHeader"]
+    # Check the item doesn't exist in the DDB Table
+    query_result = queue_table.get_item(Key={"DeletionQueueItemId": deletion_queue_item_id})
+    assert not "Item" in query_result
 
 
 def test_it_disables_cancel_deletion_whilst_job_in_progress(api_client, queue_base_endpoint, sf_client, job_table, execution_exists_waiter,
                                                             job_finished_waiter, queue_table, del_queue_factory, stack):
     # Arrange
     del_queue_item = del_queue_factory()
-    match_id = del_queue_item["MatchId"]
+    deletion_queue_item_id = del_queue_item["DeletionQueueItemId"]
     response = api_client.delete(queue_base_endpoint)
     response_body = response.json()
     job_id = response_body["Id"]
     execution_arn = "{}:{}".format(stack["StateMachineArn"].replace("stateMachine", "execution"), job_id)
     # Act
     response = api_client.delete("{}/matches".format(queue_base_endpoint), json={"Matches": [{
-        "MatchId": match_id,
-        "CreatedAt": del_queue_item["CreatedAt"]
+        "DeletionQueueItemId": deletion_queue_item_id
     }]})
     try:
         # Assert
         assert 400 == response.status_code
-        # Check the item doesn't exist in the DDB Table
-        query_result = queue_table.query(KeyConditionExpression=Key("MatchId").eq(match_id))
-        assert 1 == len(query_result["Items"])
+        # Check the item still exists in the DDB Table
+        query_result = queue_table.get_item(Key={"DeletionQueueItemId": deletion_queue_item_id})
+        assert query_result["Item"]
     finally:
         execution_exists_waiter.wait(executionArn=execution_arn)
         sf_client.stop_execution(executionArn=execution_arn)

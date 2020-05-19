@@ -30,18 +30,12 @@ Resources:
     Properties:
       AttributeDefinitions:
         -
-          AttributeName: MatchId
+          AttributeName: DeletionQueueItemId
           AttributeType: S
-        -
-          AttributeName: CreatedAt
-          AttributeType: N
       KeySchema:
         -
-          AttributeName: MatchId
+          AttributeName: DeletionQueueItemId
           KeyType: HASH
-        -
-          AttributeName: CreatedAt
-          KeyType: RANGE
       BillingMode: PAY_PER_REQUEST
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: !Ref EnableBackups
@@ -58,18 +52,12 @@ Resources:
     Properties:
       AttributeDefinitions:
         -
-          AttributeName: MatchId
+          AttributeName: DeletionQueueItemId
           AttributeType: S
-        -
-          AttributeName: CreatedAt
-          AttributeType: N
       KeySchema:
         -
-          AttributeName: MatchId
+          AttributeName: DeletionQueueItemId
           KeyType: HASH
-        -
-          AttributeName: CreatedAt
-          KeyType: RANGE
       BillingMode: PAY_PER_REQUEST
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: !Ref EnableBackups

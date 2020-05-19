@@ -131,16 +131,12 @@ paths:
                   items:
                     title: "MatchDeletion"
                     required:
-                      - "CreatedAt"
-                      - "MatchId"
+                      - "DeletionQueueItemId"
                     type: "object"
                     properties:
-                      MatchId:
+                      DeletionQueueItemId:
                         type: "string"
-                        description: "The Match ID to remove from the deletion queue"
-                      CreatedAt:
-                        type: "integer"
-                        description: "The Creation date of the Match ID"
+                        description: "The Deletion Queue Item ID to remove from the deletion queue"
         required: true
       x-amazon-apigateway-integration:
         uri:
@@ -456,10 +452,14 @@ components:
       description: "A Deletion Queue Item object"
       type: "object"
       required:
+        - "DeletionQueueItemId"
         - "MatchId"
         - "CreatedAt"
         - "DataMappers"
       properties:
+        DeletionQueueItemId:
+          type: "string"
+          description: "The Deletion Queue Item unique identifier"
         MatchId:
           type: "string"
           description: "The Match ID to remove from the deletion queue"
