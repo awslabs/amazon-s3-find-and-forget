@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { AmplifyAuthenticator, AmplifySignIn } from "@aws-amplify/ui-react";
-
+import { onAuthUIStateChange } from "@aws-amplify/ui-components";
 import AppLayout from "./components/AppLayout";
 import Header from "./components/Header";
 import {
@@ -22,8 +22,6 @@ import {
   NewDeletionQueueMatchPage,
 } from "./components/pages";
 import gateway from "./utils/gateway";
-import { isUndefined } from "./utils";
-import { Auth } from "aws-amplify";
 
 export default () => {
   const [authState, setAuthState] = useState(undefined);
@@ -103,20 +101,8 @@ export default () => {
   ];
 
   useEffect(() => {
-    if (isUndefined(authState)) {
-      // We want to establish if authState is undefined because the user is not authenticated
-      // or because the state hasn't been updated yet by the authenticator. This is important
-      // because the <AmplifyAuthenticator> doesn't show if the user is already authenticated,
-      // which is a scenario that can happen if the user closes the page and we want to persist
-      // its session.
-      Auth.currentAuthenticatedUser()
-        .then(() => setAuthState("signedin"))
-        .catch(() => {
-          // The user appears unauthenticated. All fine. The <AmplifyAuthenticator> will be
-          // rendered correctly.
-        });
-    }
-  }, [authState]);
+    return onAuthUIStateChange((s) => setAuthState(s));
+  }, []);
 
   const signedIn = authState === "signedin";
   return (
@@ -134,7 +120,6 @@ export default () => {
             <AmplifySignIn
               slot="sign-in"
               usernameAlias="email"
-              handleAuthStateChange={(s) => setAuthState(s)}
               formFields={[
                 {
                   type: "email",
