@@ -33,7 +33,7 @@ the solution.
   - [Scenario 1](#scenario-1)
   - [Scenario 2](#scenario-2)
   - [Scenario 3](#scenario-3)
-  - [Scenario 3](#scenario-4)
+  - [Scenario 4](#scenario-4)
 
 ## Overview
 
