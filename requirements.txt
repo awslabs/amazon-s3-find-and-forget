@@ -41,7 +41,7 @@ pip-tools==5.1.2          # via -r requirements.in
 pluggy==0.13.1            # via pytest
 pre-commit==2.1.1         # via -r requirements.in
 py==1.8.1                 # via pytest
-pyarrow==0.16.0           # via -r ./backend/ecs_tasks/delete_files/requirements.txt
+pyarrow==0.17.1           # via -r ./backend/ecs_tasks/delete_files/requirements.txt
 pyparsing==2.4.7          # via packaging
 pyrsistent==0.16.0        # via -r ./backend/lambda_layers/decorators/requirements.txt, jsonschema
 pytest-cov==2.8.1         # via -r requirements.in
@@ -53,7 +53,7 @@ pyyaml==5.3.1             # via cfn-flip, cfn-lint, pre-commit
 requests==2.23.0          # via -r ./backend/lambda_layers/cr_helper/requirements.txt, crhelper
 s3fs==0.4.0               # via -r ./backend/ecs_tasks/delete_files/requirements.txt
 s3transfer==0.3.3         # via -r ./backend/ecs_tasks/delete_files/requirements.txt, -r ./backend/lambda_layers/aws_sdk/requirements.txt, boto3
-six==1.14.0               # via -r ./backend/ecs_tasks/delete_files/requirements.txt, -r ./backend/lambda_layers/aws_sdk/requirements.txt, -r ./backend/lambda_layers/decorators/requirements.txt, aws-sam-translator, cfn-flip, cfn-lint, jsonschema, junit-xml, packaging, pip-tools, pyarrow, pyrsistent, python-dateutil, virtualenv
+six==1.14.0               # via -r ./backend/ecs_tasks/delete_files/requirements.txt, -r ./backend/lambda_layers/aws_sdk/requirements.txt, -r ./backend/lambda_layers/decorators/requirements.txt, aws-sam-translator, cfn-flip, cfn-lint, jsonschema, junit-xml, packaging, pip-tools, pyrsistent, python-dateutil, virtualenv
 toml==0.10.0              # via pre-commit
 urllib3==1.25.8           # via -r ./backend/ecs_tasks/delete_files/requirements.txt, -r ./backend/lambda_layers/aws_sdk/requirements.txt, -r ./backend/lambda_layers/cr_helper/requirements.txt, botocore, requests
 virtualenv==20.0.16       # via pre-commit
