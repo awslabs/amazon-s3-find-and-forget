@@ -431,3 +431,4 @@ Resources:
       CodeBuildArtefactBucket: !Ref CodeBuildArtefactBucket
       ECRRepository: !Ref ECRRepository
       LogLevel: !Ref LogLevel
+      Version: !Ref Version

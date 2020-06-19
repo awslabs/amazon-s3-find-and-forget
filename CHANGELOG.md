@@ -1,5 +1,12 @@
 # Change Log
 
+## v0.3
+
+### Summary
+
+- [#164](https://github.com/awslabs/amazon-s3-find-and-forget/pull/164): Fix for
+  a bug affecting v0.2 deployment via CloudFormation
+
 ## v0.2
 
 ### Summary
