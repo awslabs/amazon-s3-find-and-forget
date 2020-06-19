@@ -11,11 +11,11 @@ fsspec==0.7.2             # via s3fs
 jmespath==0.9.5           # via boto3, botocore
 numpy==1.18.2             # via pandas, pyarrow
 pandas==1.0.1             # via -r backend/ecs_tasks/delete_files/requirements.in
-pyarrow==0.16.0           # via -r backend/ecs_tasks/delete_files/requirements.in
+pyarrow==0.17.1           # via -r backend/ecs_tasks/delete_files/requirements.in
 python-dateutil==2.8.1    # via botocore, pandas
 python-snappy==0.5.4      # via -r backend/ecs_tasks/delete_files/requirements.in
 pytz==2019.3              # via pandas
 s3fs==0.4.0               # via -r backend/ecs_tasks/delete_files/requirements.in
 s3transfer==0.3.3         # via boto3
-six==1.14.0               # via pyarrow, python-dateutil
+six==1.14.0               # via python-dateutil
 urllib3==1.25.8           # via botocore

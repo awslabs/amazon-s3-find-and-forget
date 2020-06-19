@@ -38,7 +38,7 @@ def delete_matches_from_file(parquet_file, to_delete):
                 current_rows = get_row_count(df)
                 df = delete_from_dataframe(df, to_delete)
                 new_rows = get_row_count(df)
-                tab = pa.Table.from_pandas(df, preserve_index=False).replace_schema_metadata()
+                tab = pa.Table.from_pandas(df, schema=schema, preserve_index=False).replace_schema_metadata()
                 writer.write_table(tab)
                 stats.update({"DeletedRows": current_rows - new_rows})
         return out_stream, stats
