@@ -57,3 +57,17 @@ jobs:
           AWS_DEFAULT_REGION: eu-west-1
       - name: Frontend unit tests
         run: make test-frontend
+      - name: Set version
+        id: version
+        run: echo ::set-env name=THIS_VERSION::$(make version | sed s/^v//)
+      - name: Set latest
+        id: latest
+        run: echo ::set-env name=LATEST::$(git describe --tags $(git rev-list --tags --max-count=1) | sed s/^v// 2> /dev/null || echo '0')
+      - name: Test Setup Version Script
+        id: versionsetup
+        run: function version { echo "$@" | awk -F. '{ printf("%d%03d%03d%03d\n", $1,$2,$3,$4); }'; }
+      - name: Test Setup Version 1
+        id: versiontest
+        run: echo "Needs update"
+        if: $(version env.THIS_VERSION) -gt $(version env.LATEST)
+        
