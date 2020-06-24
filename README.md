@@ -13,7 +13,7 @@ example, pursuant to the European General Data Protection Regulation (GDPR).
 
 The solution can be used with Parquet-format data stored in Amazon S3 buckets.
 Your data lake is connected to the solution via AWS Glue tables and by
-specifying which columns in the tables contain user identifiers.
+specifying which columns in the tables contain item identifiers.
 
 Once configured, you can queue record identifiers that you want the
 corresponding data erased for. You can then run a deletion job to remove the
@@ -24,18 +24,19 @@ report log is provided of all the S3 objects modified.
 
 The solution is available as an AWS CloudFormation template and should take
 about 20 to 40 minutes to deploy. See the
-[deployment guide](docs/USER_GUIDE.md#deploying-the-solution) to launch the
-deployment with just one click and the
-[cost overview guide](docs/COST_OVERVIEW.md) to learn about its costs.
+[deployment guide](docs/USER_GUIDE.md#deploying-the-solution) for one-click
+deployment instructions, and the [cost overview guide](docs/COST_OVERVIEW.md) to
+learn about costs.
 
 > Warning: This project is currently in beta release which means:
 >
 > - It is actively developed by AWS
-> - You should review the code and documentation prior to using the solution
->   for production purposes
-> - Get in touch with the team via
->   [Github Issues](https://github.com/awslabs/amazon-s3-find-and-forget/issues)
->   for providing feedback and to ask any question. We appreciate your help
+> - You should review the code and documentation prior to using the solution for
+>   production purposes
+> - The
+>   [Github Issues Tracker](https://github.com/awslabs/amazon-s3-find-and-forget/issues)
+>   is used for providing feedback and to ask any question. We appreciate your
+>   help
 
 ## Usage
 
@@ -57,42 +58,41 @@ following design principles:
 
 1. **Security by design:** Every component implements least privilege access,
    encryption is performed at all layers at rest and in transit, authentication
-   is provided out of the box, expiration of logs is configurable, and
-   private data is automatically obfuscated or irreversibly deleted as soon as
-   possible when persisting state.
+   is provided out of the box, expiration of logs is configurable, and record
+   identifiers (known as **Match IDs**) are automatically obfuscated or
+   irreversibly deleted as soon as possible when persisting state.
 2. **Built to scale:** The system has been designed and battle tested for
    performance and high availability with Data Lakes of TB/PB size.
 3. **Cost optimised:**
    - **Perform work in batches:** Since the time complexity of removing a single
      vs multiple records in a single object is practically equal and it is
-     common for data owners to have the requirement of removing data
-     within a given _timeframe_, the solution is designed to allow the solution operator
+     common for data owners to have the requirement of removing data within a
+     given _timeframe_, the solution is designed to allow the solution operator
      to "queue" multiple matches to be removed in a single job.
    - **Fail fast:** A deletion job takes place in two distinct phases: Find and
      Forget. The Find phase queries the objects in your S3 data lakes to find
      any objects which contain records where a specified column contains at
-     least one of record identifiers (known as **Match IDs**) in the deletion
-     queue. If any queries fail, the job will abandon as soon as possible and
-     the Forget phase will not take place. The Forget Phase takes the list of
-     objects returned from the Find phase, and deletes only the relevant rows in
-     those objects.
-   - **Find, then Forget:** The process of separating the two phases, as
+     least one of the Match IDs in the deletion queue. If any queries fail, the
+     job will abandon as soon as possible and the Forget phase will not take
+     place. The Forget Phase takes the list of objects returned from the Find
+     phase, and deletes only the relevant rows in those objects.
+   - **Optimised for Parquet:** The process of separating the two phases, as
      opposite of processing the read/write on an object basis, is another cost
-     optimisation technique leveraging columnar dense formats such as
-     Parquet allow to efficiently find matches
-    by reading only relevant columns instead of full content from
-     all columns. By processing only the relevant columns during the Find and
-     delegating the queries to a serverless managed service such as Amazon Athena, we
-     can then process full rows only during the Forget phase, restricting the
-     most expensive operation to only the relevant objects.
+     optimisation technique leveraging columnar dense formats such as Parquet
+     allow to efficiently find matches by reading only relevant columns instead
+     of full content from all columns. By processing only the relevant columns
+     during the Find and delegating the queries to a serverless managed service
+     such as Amazon Athena, we can then process full rows only during the Forget
+     phase, restricting the most expensive operation to only the relevant
+     objects.
    - **Serverless:** Where possible, the solution only uses Serverless
-     components. All the components for Web UI, API and Deletion Jobs are
-     Serverless (for more information consult the
-     [Cost Overview guide](docs/COST_OVERVIEW.md)).
-4. **Easy to use and operate:** The solution is designed to interact directly to
-   Amazon S3 for high compatibility with existing toolsets. It provides a REST
-   API to allow you to integrate it in your own applications, and a easy to use
-   UI interface. When performing deletion jobs, information is provided in
+     components, in order to avoid paying for idle resources. All the components
+     for Web UI, API and Deletion Jobs are Serverless (for more information
+     consult the [Cost Overview guide](docs/COST_OVERVIEW.md)).
+4. **Simple to use and operate:** The solution is designed to interact directly
+   to Amazon S3 for high compatibility with existing toolsets. It provides a
+   REST API to allow you to integrate it in your own applications and a UI
+   interface. When performing deletion jobs, information is provided in
    real-time to allow good observability. After the job completes, detailed
    reports are available documenting all the actions performed to individual S3
    Objects, and detailed error traces in case of failures to guide the user to
