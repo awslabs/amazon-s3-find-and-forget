@@ -35,8 +35,8 @@ supported:
 - Only buckets with versioning set to **Enabled** are supported
 - Decompressed individual object size must be less than the Fargate task memory
   limit (`DeletionTaskMemory`) specified when launching the stack
-- S3 Objects using the `GLACIER` or `DEEP_ARCHIVE` storage classes are
-  not supported and will be ignored
+- S3 Objects using the `GLACIER` or `DEEP_ARCHIVE` storage classes are not
+  supported and will be ignored
 - The bucket targeted by a data mapper must be in the same region as the Amazon
   S3 Find and Forget deployment
 - S3 Objects encrypted with SSE-C are not supported

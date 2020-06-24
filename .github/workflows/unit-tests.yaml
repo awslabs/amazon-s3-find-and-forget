@@ -57,3 +57,5 @@ jobs:
           AWS_DEFAULT_REGION: eu-west-1
       - name: Frontend unit tests
         run: make test-frontend
+      - name: Upload unit test coverage reports to Codecov
+        uses: codecov/codecov-action@v1
