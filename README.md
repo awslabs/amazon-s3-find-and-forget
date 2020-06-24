@@ -90,7 +90,7 @@ following design principles:
      components, in order to avoid paying for idle resources. All the components
      for Web UI, API and Deletion Jobs are Serverless (for more information
      consult the [Cost Overview guide](docs/COST_OVERVIEW.md)).
-4. **Simple to use and operate:** The solution is designed to interact directly
+4. **Ready to use and operate:** The solution is designed to interact directly
    to Amazon S3 for high compatibility with existing toolsets. It provides a
    REST API to allow you to integrate it in your own applications and a UI
    interface. When performing deletion jobs, information is provided in
