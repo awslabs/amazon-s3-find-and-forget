@@ -1,9 +1,13 @@
-# Amazon S3 Find and Forget
+<h1 align="center">
+    Amazon S3 Find and Forget
+    <br>
+    <img src="https://img.shields.io/github/v/release/awslabs/amazon-s3-find-and-forget?include_prereleases"> 
+    <img src="https://github.com/awslabs/amazon-s3-find-and-forget/workflows/Unit%20Tests/badge.svg"> 
+    <img src="https://codecov.io/gh/awslabs/amazon-s3-find-and-forget/branch/master/graph/badge.svg">
+</h1>
 
 > Warning: This project is currently in beta and should not be used for
 > production purposes.
-
-![Unit Tests](https://github.com/awslabs/amazon-s3-find-and-forget/workflows/Unit%20Tests/badge.svg)
 
 Amazon S3 Find and Forget is a solution to the need to selectively erase records
 from data lakes stored on Amazon Simple Storage Service (Amazon S3). This

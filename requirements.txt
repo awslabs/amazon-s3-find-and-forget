@@ -44,7 +44,7 @@ py==1.8.1                 # via pytest
 pyarrow==0.17.1           # via -r ./backend/ecs_tasks/delete_files/requirements.txt
 pyparsing==2.4.7          # via packaging
 pyrsistent==0.16.0        # via -r ./backend/lambda_layers/decorators/requirements.txt, jsonschema
-pytest-cov==2.8.1         # via -r requirements.in
+pytest-cov==2.10.0        # via -r requirements.in
 pytest==5.3.5             # via -r requirements.in, pytest-cov
 python-dateutil==2.8.1    # via -r ./backend/ecs_tasks/delete_files/requirements.txt, -r ./backend/lambda_layers/aws_sdk/requirements.txt, botocore, pandas
 python-snappy==0.5.4      # via -r ./backend/ecs_tasks/delete_files/requirements.txt

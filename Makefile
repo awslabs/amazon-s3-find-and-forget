@@ -158,6 +158,9 @@ test-frontend:
 test-unit: | $(VENV)
 	$(VENV)/bin/pytest -m unit --log-cli-level info --cov=backend.lambdas --cov=decorators --cov=boto_utils --cov=backend.ecs_tasks --cov-report term-missing
 
+test-ci: | $(VENV)
+	$(VENV)/bin/pytest -m unit --log-cli-level info --cov=backend.lambdas --cov=decorators --cov=boto_utils --cov=backend.ecs_tasks --cov-report xml
+
 test-acceptance: | $(VENV)
 	$(VENV)/bin/pytest -m acceptance --log-cli-level info
 
