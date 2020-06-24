@@ -6,6 +6,16 @@
     <img src="https://codecov.io/gh/awslabs/amazon-s3-find-and-forget/branch/master/graph/badge.svg">
 </h1>
 
+> Warning: This project is currently in beta release which means:
+>
+> - It is actively developed by AWS
+> - You should review the code and documentation prior to using the solution for
+>   production purposes
+> - The
+>   [Github Issues Tracker](https://github.com/awslabs/amazon-s3-find-and-forget/issues)
+>   is used for providing feedback and to ask any question. We appreciate your
+>   help
+
 Amazon S3 Find and Forget is a solution to the need to selectively erase records
 from data lakes stored on Amazon Simple Storage Service (Amazon S3). This
 solution can assist data lake operators to handle data erasure requests, for
@@ -28,16 +38,6 @@ about 20 to 40 minutes to deploy. See the
 [deployment guide](docs/USER_GUIDE.md#deploying-the-solution) for one-click
 deployment instructions, and the [cost overview guide](docs/COST_OVERVIEW.md) to
 learn about costs.
-
-> Warning: This project is currently in beta release which means:
->
-> - It is actively developed by AWS
-> - You should review the code and documentation prior to using the solution for
->   production purposes
-> - The
->   [Github Issues Tracker](https://github.com/awslabs/amazon-s3-find-and-forget/issues)
->   is used for providing feedback and to ask any question. We appreciate your
->   help
 
 ## Usage
 
