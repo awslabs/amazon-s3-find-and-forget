@@ -13,7 +13,8 @@ example, pursuant to the European General Data Protection Regulation (GDPR).
 
 The solution can be used with Parquet-format data stored in Amazon S3 buckets.
 Your data lake is connected to the solution via AWS Glue tables and by
-specifying which columns in the tables contain item identifiers.
+specifying which columns in the tables need to be used to identify the data to
+be erased.
 
 Once configured, you can queue record identifiers that you want the
 corresponding data erased for. You can then run a deletion job to remove the
