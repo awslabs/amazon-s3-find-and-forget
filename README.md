@@ -28,10 +28,10 @@ about 20 to 40 minutes to deploy. See the
 deployment with just one click and the
 [cost overview guide](docs/COST_OVERVIEW.md) to learn about its costs.
 
-> Warning: This project is currently in beta release
+> Warning: This project is currently in beta release which means:
 >
-> - Actively developed by AWS
-> - Carefully review code and documentation if you intend to use the solution
+> - It is actively developed by AWS
+> - You should review the code and documentation prior to using the solution
 >   for production purposes
 > - Get in touch with the team via
 >   [Github Issues](https://github.com/awslabs/amazon-s3-find-and-forget/issues)
@@ -45,19 +45,19 @@ integrate it in your own applications.
 ![HomePage Screenshot](docs/images/home-screenshot.png)
 
 See the [user guide](docs/USER_GUIDE.md) to learn how to use the solution and
-the [API Specification](docs/api/README.md) to integrate the solution to your
+the [API Specification](docs/api/README.md) to integrate the solution with your
 own applications.
 
 ## Architecture
 
 The goal of the solution is to provide a secure, reliable, performant and cost
 effective tool for finding and removing individual records within objects stored
-in S3 buckets. In order to achieve these goals the solution has adopted the
+in S3 buckets. In order to achieve this goal the solution has adopted the
 following design principles:
 
-1. **Security first:** Every component implements least privilege access,
+1. **Security by design:** Every component implements least privilege access,
    encryption is performed at all layers at rest and in transit, authentication
-   is provided out of the box, expiration of logs is easily configurable, and
+   is provided out of the box, expiration of logs is configurable, and
    private data is automatically obfuscated or irreversibly deleted as soon as
    possible when persisting state.
 2. **Built to scale:** The system has been designed and battle tested for
@@ -65,8 +65,8 @@ following design principles:
 3. **Cost optimised:**
    - **Perform work in batches:** Since the time complexity of removing a single
      vs multiple records in a single object is practically equal and it is
-     common for data owners to have the legal requirement of removing data
-     within a given _timeframe_, the solution is designed to allow the customer
+     common for data owners to have the requirement of removing data
+     within a given _timeframe_, the solution is designed to allow the solution operator
      to "queue" multiple matches to be removed in a single job.
    - **Fail fast:** A deletion job takes place in two distinct phases: Find and
      Forget. The Find phase queries the objects in your S3 data lakes to find
@@ -74,15 +74,15 @@ following design principles:
      least one of record identifiers (known as **Match IDs**) in the deletion
      queue. If any queries fail, the job will abandon as soon as possible and
      the Forget phase will not take place. The Forget Phase takes the list of
-     objects returned from the Find phase, and deletes the relevant rows in only
+     objects returned from the Find phase, and deletes only the relevant rows in
      those objects.
    - **Find, then Forget:** The process of separating the two phases, as
      opposite of processing the read/write on an object basis, is another cost
-     optimisation technique based on the fact columnar dense formats such as
-     Parquet allow to find matches with increased performance and cost
-     optimisation by reading only relevant columns instead of full content from
+     optimisation technique leveraging columnar dense formats such as
+     Parquet allow to efficiently find matches
+    by reading only relevant columns instead of full content from
      all columns. By processing only the relevant columns during the Find and
-     deletegating it to a serverless managed service such as Amazon Athena, we
+     delegating the queries to a serverless managed service such as Amazon Athena, we
      can then process full rows only during the Forget phase, restricting the
      most expensive operation to only the relevant objects.
    - **Serverless:** Where possible, the solution only uses Serverless
@@ -96,8 +96,8 @@ following design principles:
    real-time to allow good observability. After the job completes, detailed
    reports are available documenting all the actions performed to individual S3
    Objects, and detailed error traces in case of failures to guide the user to
-   the troubleshooting process and easily identify remediation actions (for more
-   information consult the [Troubleshooting guide](docs/TROUBLESHOOTING.md)).
+   the troubleshooting process and identify remediation actions. For more
+   information consult the [Troubleshooting guide](docs/TROUBLESHOOTING.md).
 
 ### High-level overview diagram
 
