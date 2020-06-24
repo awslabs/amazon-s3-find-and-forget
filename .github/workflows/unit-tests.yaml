@@ -52,7 +52,7 @@ jobs:
       - name: CloudFormation unit tests
         run: make test-cfn
       - name: Backend unit tests
-        run: make test-unit
+        run: make test-ci
         env:
           AWS_DEFAULT_REGION: eu-west-1
       - name: Frontend unit tests
