@@ -44,10 +44,8 @@ learn about costs.
 The solution provides a web user interface, and a REST API to allow you to
 integrate it in your own applications.
 
-![HomePage Screenshot](docs/images/home-screenshot.png)
-
 See the [user guide](docs/USER_GUIDE.md) to learn how to use the solution and
-the [API Specification](docs/api/README.md) to integrate the solution with your
+the [API specification](docs/api/README.md) to integrate the solution with your
 own applications.
 
 ## Architecture
