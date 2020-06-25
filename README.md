@@ -88,15 +88,13 @@ following design principles:
      components, in order to avoid paying for idle resources. All the components
      for Web UI, API and Deletion Jobs are Serverless (for more information
      consult the [Cost Overview guide](docs/COST_OVERVIEW.md)).
-4. **Ready to use and operate:** The solution is designed to interact directly
-   to Amazon S3 for high compatibility with existing toolsets. It provides a
-   REST API to allow you to integrate it in your own applications and a UI
-   interface. When performing deletion jobs, information is provided in
-   real-time to allow good observability. After the job completes, detailed
-   reports are available documenting all the actions performed to individual S3
-   Objects, and detailed error traces in case of failures to guide the user to
-   the troubleshooting process and identify remediation actions. For more
-   information consult the [Troubleshooting guide](docs/TROUBLESHOOTING.md).
+4. **Robust monitoring and logging:** When performing deletion jobs, information
+   is provided in real-time to allow good observability. After the job
+   completes, detailed reports are available documenting all the actions
+   performed to individual S3 Objects, and detailed error traces in case of
+   failures to guide the user to the troubleshooting process and identify
+   remediation actions. For more information consult the
+   [Troubleshooting guide](docs/TROUBLESHOOTING.md).
 
 ### High-level overview diagram
 
