@@ -9,8 +9,8 @@
 > Warning: This project is currently in beta release which means:
 >
 > - It is actively developed by AWS
-> - You should review the code and documentation prior to using the solution for
->   production purposes
+> - You should conduct your own testing prior to using the solution in
+>   production
 > - The
 >   [Github Issues Tracker](https://github.com/awslabs/amazon-s3-find-and-forget/issues)
 >   is used for providing feedback and to ask any question. We appreciate your
