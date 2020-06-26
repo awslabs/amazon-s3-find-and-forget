@@ -9,9 +9,9 @@ Tracker].
 
 The following data formats are supported:
 
-| Data Format    | Compression                         |
-| -------------- | ----------------------------------- |
-| Apache Parquet | SNAPPY (default for Apache Parquet) |
+| Data Format    | Compression on read                | Compression on write |
+| -------------- | ---------------------------------- | -------------------- |
+| Apache Parquet | Snappy, Brotli, Gzip, uncompressed | Snappy               |
 
 #### Supported Query Providers
 
