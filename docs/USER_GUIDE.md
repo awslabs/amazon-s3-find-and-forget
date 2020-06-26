@@ -104,7 +104,8 @@ recommend you do this using a bucket policy. For more information, see
 ## Deploying the Solution
 
 The solution is deployed as an
-[AWS CloudFormation](https://aws.amazon.com/cloudformation) template.
+[AWS CloudFormation](https://aws.amazon.com/cloudformation) template and should
+take about 20 to 40 minutes to deploy.
 
 Your access to the AWS account must have IAM permissions to launch AWS
 CloudFormation templates that create IAM roles and to create the solution
