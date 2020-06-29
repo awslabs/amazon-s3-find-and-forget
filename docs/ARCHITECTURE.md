@@ -22,14 +22,15 @@ effective tool for finding and removing individual records within objects stored
 in S3 buckets. In order to achieve these goals the solution has adopted the
 following design principles:
 
-1. **Secure by design:** Every component is implemented with least privilege
-   access, encryption is performed at all layers at rest and in transit,
-   authentication is provided out of the box, expiration of logs is
-   configurable, and record identifiers (known as **Match IDs**) are
-   automatically obfuscated or irreversibly deleted as soon as possible when
-   persisting state.
-2. **Built to scale:** The system is designed and tested for performance
-   and high availability with Data Lakes of the scale of petabyte size.
+1. **Secure by design:**
+   - Every component is implemented with least privilege access
+   - Encryption is performed at all layers at rest and in transit
+   - Authentication is provided out of the box
+   - Expiration of logs is configurable
+   - Record identifiers (known as **Match IDs**) are automatically obfuscated or
+     irreversibly deleted as soon as possible when persisting state
+2. **Built to scale:** The system is designed and tested for performance and
+   high availability with petabyte scale Data Lakes
 3. **Cost optimised:**
    - **Perform work in batches:** Since the time complexity of removing a single
      vs multiple records in a single object is practically equal and it is

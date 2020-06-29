@@ -55,14 +55,15 @@ effective tool for finding and removing individual records within objects stored
 in S3 buckets. In order to achieve this goal the solution has adopted the
 following design principles:
 
-1. **Secure by design:** Every component is implemented with least privilege
-   access, encryption is performed at all layers at rest and in transit,
-   authentication is provided out of the box, expiration of logs is
-   configurable, and record identifiers (known as **Match IDs**) are
-   automatically obfuscated or irreversibly deleted as soon as possible when
-   persisting state.
-2. **Built to scale:** The system has been designed and tested for performance
-   and high availability with petabyte scale Data Lakes.
+1. **Secure by design:**
+   - Every component is implemented with least privilege access
+   - Encryption is performed at all layers at rest and in transit
+   - Authentication is provided out of the box
+   - Expiration of logs is configurable
+   - Record identifiers (known as **Match IDs**) are automatically obfuscated or
+     irreversibly deleted as soon as possible when persisting state
+2. **Built to scale:** The system is designed and tested for performance and
+   high availability with petabyte scale Data Lakes
 3. **Cost optimised:**
    - **Perform work in batches:** Since the time complexity of removing a single
      vs multiple records in a single object is practically equal and it is
@@ -77,7 +78,7 @@ following design principles:
      place. The Forget Phase takes the list of objects returned from the Find
      phase, and deletes only the relevant rows in those objects.
    - **Optimised for Parquet:** The process of separating the two phases, as
-     opposite of processing the read/write on an object basis, is another cost
+     opposed to processing the read/write on an object basis, is another cost
      optimisation technique leveraging columnar dense formats such as Parquet
      allow to efficiently find matches by reading only relevant columns instead
      of full content from all columns. By processing only the relevant columns
