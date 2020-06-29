@@ -28,7 +28,7 @@ following design principles:
    configurable, and record identifiers (known as **Match IDs**) are
    automatically obfuscated or irreversibly deleted as soon as possible when
    persisting state.
-2. **Built to scale:** The system has been designed and tested for performance
+2. **Built to scale:** The system is designed and tested for performance
    and high availability with Data Lakes of the scale of petabyte size.
 3. **Cost optimised:**
    - **Perform work in batches:** Since the time complexity of removing a single
@@ -44,7 +44,7 @@ following design principles:
      place. The Forget Phase takes the list of objects returned from the Find
      phase, and deletes only the relevant rows in those objects.
    - **Optimised for Parquet:** The process of separating the two phases, as
-     opposite of processing the read/write on an object basis, is another cost
+     opposed to processing the read/write on an object basis, is another cost
      optimisation technique leveraging columnar dense formats such as Parquet
      allow to efficiently find matches by reading only relevant columns instead
      of full content from all columns. By processing only the relevant columns

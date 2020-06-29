@@ -62,7 +62,7 @@ following design principles:
    automatically obfuscated or irreversibly deleted as soon as possible when
    persisting state.
 2. **Built to scale:** The system has been designed and tested for performance
-   and high availability with Data Lakes of the scale of petabyte size.
+   and high availability with petabyte scale Data Lakes.
 3. **Cost optimised:**
    - **Perform work in batches:** Since the time complexity of removing a single
      vs multiple records in a single object is practically equal and it is
