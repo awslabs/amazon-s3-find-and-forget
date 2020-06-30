@@ -155,7 +155,7 @@ export default {
     return apiGateway("queue", { method: "del" });
   },
 
-  putDataMapper(id, db, table, columns, roleArn, deleteOldVersions) {
+  putDataMapper(id, db, table, columns, roleArn, deleteOldVersions, format) {
     return apiGateway(`data_mappers/${id}`, {
       method: "put",
       data: {
@@ -167,7 +167,7 @@ export default {
           Database: db,
           Table: table
         },
-        Format: "parquet",
+        Format: format,
         RoleArn: roleArn,
         DeleteOldVersions: deleteOldVersions
       }

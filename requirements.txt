@@ -24,7 +24,7 @@ filelock==3.0.12          # via virtualenv
 fsspec==0.7.2             # via -r ./backend/ecs_tasks/delete_files/requirements.txt, s3fs
 identify==1.4.14          # via pre-commit
 idna==2.9                 # via -r ./backend/lambda_layers/cr_helper/requirements.txt, requests
-importlib-metadata==1.6.0  # via jsonschema, pluggy, pre-commit, pytest, virtualenv
+importlib-metadata==1.7.0  # via -r ./backend/lambda_layers/decorators/requirements.txt, jsonschema, pluggy, pre-commit, pytest, virtualenv
 jmespath==0.9.5           # via -r ./backend/ecs_tasks/delete_files/requirements.txt, -r ./backend/lambda_layers/aws_sdk/requirements.txt, boto3, botocore
 jsonpatch==1.25           # via cfn-lint
 jsonpointer==2.0          # via jsonpatch
@@ -58,7 +58,7 @@ toml==0.10.0              # via pre-commit
 urllib3==1.25.8           # via -r ./backend/ecs_tasks/delete_files/requirements.txt, -r ./backend/lambda_layers/aws_sdk/requirements.txt, -r ./backend/lambda_layers/cr_helper/requirements.txt, botocore, requests
 virtualenv==20.0.16       # via pre-commit
 wcwidth==0.1.9            # via pytest
-zipp==3.1.0               # via importlib-metadata
+zipp==3.1.0               # via -r ./backend/lambda_layers/decorators/requirements.txt, importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # pip

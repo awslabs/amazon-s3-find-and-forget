@@ -5,9 +5,11 @@
 #    pip-compile --output-file=backend/lambda_layers/decorators/requirements.txt backend/lambda_layers/decorators/requirements.in
 #
 attrs==19.3.0             # via jsonschema
+importlib-metadata==1.7.0  # via jsonschema
 jsonschema==3.2.0         # via -r backend/lambda_layers/decorators/requirements.in
 pyrsistent==0.16.0        # via jsonschema
-six==1.14.0               # via jsonschema
+six==1.14.0               # via jsonschema, pyrsistent
+zipp==3.1.0               # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools

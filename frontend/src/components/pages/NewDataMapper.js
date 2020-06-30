@@ -67,13 +67,15 @@ export default ({ gateway, goToDataMappers }) => {
     if (isFormValid) {
       setFormState("loading");
       try {
+        const format = selectedTable.format;
         await gateway.putDataMapper(
           dataMapperId,
           glueDatabase,
           glueTable,
           columns,
           roleArn,
-          deletePreviousVersions
+          deletePreviousVersions,
+          format
         );
         setFormState("saved");
       } catch (e) {
@@ -259,6 +261,14 @@ export default ({ gateway, goToDataMappers }) => {
                     </option>
                   ))}
                 </Form.Control>
+              </Form.Group>
+              <Form.Group>
+                <Form.Label>Format</Form.Label>{" "}
+                <Form.Text className="text-muted">
+                  {isEmpty(columnsForSelectedTable)
+                    ? "No table selected"
+                    : selectedTable.format}
+                </Form.Text>
               </Form.Group>
               <Form.Group>
                 <Form.Label>Columns used to query for matches</Form.Label>

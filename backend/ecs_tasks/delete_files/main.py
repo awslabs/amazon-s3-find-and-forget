@@ -16,7 +16,7 @@ from botocore.exceptions import ClientError
 from pyarrow.lib import ArrowException
 
 from events import sanitize_message, emit_failure_event, emit_deletion_event
-from parquet import load_file, delete_matches_from_file
+from arrow import delete_matches_from_file
 from s3 import validate_bucket_versioning, save, verify_object_versions_integrity, delete_old_versions, \
     IntegrityCheckFailedError, rollback_object_version, DeleteOldVersionsError
 
@@ -85,15 +85,14 @@ def execute(queue_url, message_body, receipt_handle):
         logger.info("Downloading and opening %s object in-memory", object_path)
         with s3.open(object_path, "rb") as f:
             source_version = f.version_id
-            logger.info("Generating new parquet file without matches")
             out_sink, stats = delete_matches_from_file(f, cols, file_format)
         if stats["DeletedRows"] == 0:
             raise ValueError(
                 "The object {} was processed successfully but no rows required deletion".format(object_path))
         with pa.BufferReader(out_sink.getvalue()) as output_buf:
             new_version = save(s3, client, output_buf, input_bucket, input_key, source_version)
-            logger.info("New object version: %s", new_version)
-            verify_object_versions_integrity(client, input_bucket, input_key, source_version, new_version)
+        logger.info("New object version: %s", new_version)
+        verify_object_versions_integrity(client, input_bucket, input_key, source_version, new_version)
         if body.get("DeleteOldVersions"):
             logger.info("Deleting object {} versions older than version {}".format(input_key, new_version))
             delete_old_versions(client, input_bucket, input_key, new_version)
