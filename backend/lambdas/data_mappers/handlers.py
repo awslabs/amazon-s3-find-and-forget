@@ -14,6 +14,7 @@ table = dynamodb_resource.Table(os.getenv("DataMapperTable"))
 glue_client = boto3.client("glue")
 
 SUPPORTED_SERDE_LIBS = [
+    "org.openx.data.jsonserde.JsonSerDe",
     "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"
 ]
 

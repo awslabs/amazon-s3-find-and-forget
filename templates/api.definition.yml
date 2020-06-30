@@ -26,10 +26,10 @@ paths:
       security:
         - CognitoAuthorizer: []
       parameters:
-        - '$ref': '#/components/parameters/StartAtQS'
-        - '$ref': '#/components/parameters/PageSizeQS'
+        - "$ref": "#/components/parameters/StartAtQS"
+        - "$ref": "#/components/parameters/PageSizeQS"
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -41,7 +41,7 @@ paths:
                     type: "array"
                     description: "The list of Match IDs currently in the queue"
                     items:
-                      $ref: '#/components/schemas/DeletionQueueItem'
+                      $ref: "#/components/schemas/DeletionQueueItem"
                   NextStart:
                     type: "string"
                     nullable: true
@@ -61,14 +61,14 @@ paths:
       security:
         - CognitoAuthorizer: []
       responses:
-        '202':
+        "202":
           description: "Job Started"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Job'
-        '422':
-          $ref: '#/components/responses/InvalidRequest'
+                $ref: "#/components/schemas/Job"
+        "422":
+          $ref: "#/components/responses/InvalidRequest"
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ProcessQueue.Arn}/invocations"
@@ -83,20 +83,20 @@ paths:
       security:
         - CognitoAuthorizer: []
       responses:
-        '201':
+        "201":
           description: "Created"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DeletionQueueItem'
-        '422':
-          $ref: '#/components/responses/InvalidRequest'
+                $ref: "#/components/schemas/DeletionQueueItem"
+        "422":
+          $ref: "#/components/responses/InvalidRequest"
       requestBody:
         description: "Request body containing details of the Match to add to the Deletion Queue"
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateDeletionQueueItem'
+              $ref: "#/components/schemas/CreateDeletionQueueItem"
         required: true
       x-amazon-apigateway-integration:
         uri:
@@ -113,7 +113,7 @@ paths:
       security:
         - CognitoAuthorizer: []
       responses:
-        '204':
+        "204":
           description: OK
       requestBody:
         description: "Request body containing a list of Matches to be deleted"
@@ -153,10 +153,10 @@ paths:
       security:
         - CognitoAuthorizer: []
       parameters:
-        - '$ref': '#/components/parameters/StartAtQS'
-        - '$ref': '#/components/parameters/PageSizeQS'
+        - "$ref": "#/components/parameters/StartAtQS"
+        - "$ref": "#/components/parameters/PageSizeQS"
       responses:
-        '200':
+        "200":
           description: "OK"
           content:
             application/json:
@@ -168,7 +168,7 @@ paths:
                     type: "array"
                     description: "The list of jobs"
                     items:
-                      $ref: '#/components/schemas/JobSummary'
+                      $ref: "#/components/schemas/JobSummary"
                   NextStart:
                     type: "integer"
                     nullable: true
@@ -182,7 +182,7 @@ paths:
         type: "aws_proxy"
   /v1/jobs/{job_id}:
     parameters:
-      - '$ref': '#/components/parameters/JobId'
+      - "$ref": "#/components/parameters/JobId"
     get:
       summary: Returns the details of a job
       tags:
@@ -191,12 +191,12 @@ paths:
       security:
         - CognitoAuthorizer: []
       responses:
-        '200':
+        "200":
           description: "OK"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Job'
+                $ref: "#/components/schemas/Job"
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetJob.Arn}/invocations"
@@ -205,7 +205,7 @@ paths:
         type: "aws_proxy"
   /v1/jobs/{job_id}/events:
     parameters:
-      - '$ref': '#/components/parameters/JobId'
+      - "$ref": "#/components/parameters/JobId"
     get:
       summary: Lists all events for a job
       tags:
@@ -214,8 +214,8 @@ paths:
       security:
         - CognitoAuthorizer: []
       parameters:
-        - '$ref': '#/components/parameters/StartAtQS'
-        - '$ref': '#/components/parameters/PageSizeQS'
+        - "$ref": "#/components/parameters/StartAtQS"
+        - "$ref": "#/components/parameters/PageSizeQS"
         - in: "query"
           name: "filter"
           required: "false"
@@ -232,7 +232,7 @@ paths:
             filters are supplied, they will applied on an **AND** basis.
             Supported keys: EventName. Supported Operators: =
       responses:
-        '200':
+        "200":
           description: "OK"
           content:
             application/json:
@@ -244,7 +244,7 @@ paths:
                     type: "array"
                     description: "The list of job events"
                     items:
-                      $ref: '#/components/schemas/JobEvent'
+                      $ref: "#/components/schemas/JobEvent"
                   NextStart:
                     type: "integer"
                     nullable: true
@@ -265,10 +265,10 @@ paths:
       security:
         - CognitoAuthorizer: []
       parameters:
-        - '$ref': '#/components/parameters/StartAtQS'
-        - '$ref': '#/components/parameters/PageSizeQS'
+        - "$ref": "#/components/parameters/StartAtQS"
+        - "$ref": "#/components/parameters/PageSizeQS"
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -280,7 +280,7 @@ paths:
                     type: "array"
                     description: "The list of data mappers"
                     items:
-                      $ref: '#/components/schemas/DataMapper'
+                      $ref: "#/components/schemas/DataMapper"
                   NextStart:
                     type: "string"
                     nullable: true
@@ -294,7 +294,7 @@ paths:
         type: "aws_proxy"
   /v1/data_mappers/{data_mapper_id}:
     parameters:
-      - '$ref': '#/components/parameters/DataMapperId'
+      - "$ref": "#/components/parameters/DataMapperId"
     put:
       summary: Creates a data mapper
       tags:
@@ -303,18 +303,18 @@ paths:
       security:
         - CognitoAuthorizer: []
       responses:
-        '201':
+        "201":
           description: "OK"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DataMapper'
+                $ref: "#/components/schemas/DataMapper"
       requestBody:
         description: "Request body containing details of the Data Mapper to create"
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DataMapper'
+              $ref: "#/components/schemas/DataMapper"
         required: true
       x-amazon-apigateway-integration:
         uri:
@@ -330,7 +330,7 @@ paths:
       security:
         - CognitoAuthorizer: []
       responses:
-        '204':
+        "204":
           description: OK
       x-amazon-apigateway-integration:
         uri:
@@ -347,12 +347,12 @@ paths:
       security:
         - CognitoAuthorizer: []
       responses:
-        '200':
+        "200":
           description: "OK"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Settings'
+                $ref: "#/components/schemas/Settings"
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ListSettings.Arn}/invocations"
@@ -409,6 +409,7 @@ components:
           type: "string"
           description: "The format of the dataset"
           enum:
+            - "json"
             - "parquet"
           default: "parquet"
         QueryExecutor:
@@ -740,7 +741,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
   securitySchemes:
     CognitoAuthorizer:
       type: "apiKey"

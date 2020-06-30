@@ -16,7 +16,7 @@ from botocore.exceptions import ClientError
 from pyarrow.lib import ArrowException
 
 from events import sanitize_message, emit_failure_event, emit_deletion_event
-from parquet import load_parquet, delete_matches_from_file
+from parquet import load_file, delete_matches_from_file
 from s3 import validate_bucket_versioning, save, verify_object_versions_integrity, delete_old_versions, \
     IntegrityCheckFailedError, rollback_object_version, DeleteOldVersionsError
 
@@ -68,7 +68,7 @@ def execute(queue_url, message_body, receipt_handle):
         body = json.loads(message_body)
         session = get_session(body.get("RoleArn"))
         client = session.client("s3")
-        cols, object_path, job_id = itemgetter('Columns', 'Object', 'JobId')(body)
+        cols, object_path, job_id, file_format = itemgetter('Columns', 'Object', 'JobId', 'Format')(body)
         input_bucket, input_key = parse_s3_url(object_path)
         validate_bucket_versioning(client, input_bucket)
         creds = session.get_credentials().get_frozen_credentials()
@@ -85,11 +85,8 @@ def execute(queue_url, message_body, receipt_handle):
         logger.info("Downloading and opening %s object in-memory", object_path)
         with s3.open(object_path, "rb") as f:
             source_version = f.version_id
-            logger.info("Using object version %s as source", source_version)
-            infile = load_parquet(f)
-            # Write new file in-memory
             logger.info("Generating new parquet file without matches")
-            out_sink, stats = delete_matches_from_file(infile, cols)
+            out_sink, stats = delete_matches_from_file(f, cols, file_format)
         if stats["DeletedRows"] == 0:
             raise ValueError(
                 "The object {} was processed successfully but no rows required deletion".format(object_path))
