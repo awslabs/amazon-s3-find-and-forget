@@ -52,7 +52,7 @@ following design principles:
      significant cost savings when operating on large data lakes with sparse
      matches.
    - **Serverless:** Where possible, the solution only uses Serverless
-     components to avoid paying for idle resources. All the components for Web
+     components to avoid costs for idle resources. All the components for Web
      UI, API and Deletion Jobs are Serverless (for more information consult the
      [Cost Overview guide]).
 4. **Robust monitoring and logging:** When performing deletion jobs, information
