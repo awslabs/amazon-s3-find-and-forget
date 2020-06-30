@@ -9,7 +9,7 @@ import pyarrow.parquet as pq
 logger = logging.getLogger(__name__)
 
 
-def load_parquet(f, file_format):
+def load_parquet(f):
     return pq.ParquetFile(f, memory_map=False)
 
 
