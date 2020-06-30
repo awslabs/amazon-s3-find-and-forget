@@ -55,13 +55,16 @@ effective tool for finding and removing individual records within objects stored
 in S3 buckets. In order to achieve this goal the solution has adopted the
 following design principles:
 
-1. **Security by design:** Every component implements least privilege access,
-   encryption is performed at all layers at rest and in transit, authentication
-   is provided out of the box, expiration of logs is configurable, and record
-   identifiers (known as **Match IDs**) are automatically obfuscated or
-   irreversibly deleted as soon as possible when persisting state.
-2. **Built to scale:** The system has been designed and battle tested for
-   performance and high availability with Data Lakes of TB/PB size.
+1. **Secure by design:**
+   - Every component is implemented with least privilege access
+   - Encryption is performed at all layers at rest and in transit
+   - Authentication is provided out of the box
+   - Expiration of logs is configurable
+   - Record identifiers (known as **Match IDs**) are automatically obfuscated or
+     irreversibly deleted as soon as possible when persisting state
+2. **Built to scale:** The system is designed and tested to work with
+   petabyte-scale Data Lakes containing thousands of partitions and hundreds of
+   thousands of objects
 3. **Cost optimised:**
    - **Perform work in batches:** Since the time complexity of removing a single
      vs multiple records in a single object is practically equal and it is
@@ -75,25 +78,22 @@ following design principles:
      job will abandon as soon as possible and the Forget phase will not take
      place. The Forget Phase takes the list of objects returned from the Find
      phase, and deletes only the relevant rows in those objects.
-   - **Optimised for Parquet:** The process of separating the two phases, as
-     opposite of processing the read/write on an object basis, is another cost
-     optimisation technique leveraging columnar dense formats such as Parquet
-     allow to efficiently find matches by reading only relevant columns instead
-     of full content from all columns. By processing only the relevant columns
-     during the Find and delegating the queries to a serverless managed service
-     such as Amazon Athena, we can then process full rows only during the Forget
-     phase, restricting the most expensive operation to only the relevant
-     objects.
+   - **Optimised for Parquet:** The split phase approach optimises scanning for
+     columnar dense formats such as Parquet. The Find phase only retrieves and
+     processes the data for relevant columns when determining which S3 objects
+     need to be processed in the Forget phase. This approach can have
+     significant cost savings when operating on large data lakes with sparse
+     matches.
    - **Serverless:** Where possible, the solution only uses Serverless
-     components, in order to avoid paying for idle resources. All the components
-     for Web UI, API and Deletion Jobs are Serverless (for more information
-     consult the [Cost Overview guide](docs/COST_OVERVIEW.md)).
+     components to avoid costs for idle resources. All the components for Web
+     UI, API and Deletion Jobs are Serverless (for more information consult the
+     [Cost Overview guide](docs/COST_OVERVIEW.md)).
 4. **Robust monitoring and logging:** When performing deletion jobs, information
-   is provided in real-time to allow good observability. After the job
-   completes, detailed reports are available documenting all the actions
-   performed to individual S3 Objects, and detailed error traces in case of
-   failures to guide the user to the troubleshooting process and identify
-   remediation actions. For more information consult the
+   is provided in real-time to provide visibility. After the job completes,
+   detailed reports are available documenting all the actions performed to
+   individual S3 Objects, and detailed error traces in case of failures to
+   facilitate troubleshooting processes and identify remediation actions. For
+   more information consult the
    [Troubleshooting guide](docs/TROUBLESHOOTING.md).
 
 ### High-level overview diagram

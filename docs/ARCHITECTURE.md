@@ -22,21 +22,45 @@ effective tool for finding and removing individual records within objects stored
 in S3 buckets. In order to achieve these goals the solution has adopted the
 following design principles:
 
-1. **Perform work in batches:** Since the time complexity of removing a single
-   vs multiple records in a single object is practically equal and it is common
-   for data owners to have the legal requirement of removing data within a given
-   _timeframe_, the solution is designed to allow the customer to "queue"
-   multiple matches to be removed in a single job.
-2. **Fail fast:** A deletion job takes place in two distinct phases: Find and
-   Forget. The Find phase queries the objects in your S3 data lakes to find any
-   objects which contain records where a specified column contains at least one
-   of record identifiers (known as **Match IDs**) in the deletion queue. If any
-   queries fail, the job will abandon as soon as possible and the Forget phase
-   will not take place. The Forget Phase takes the list of objects returned from
-   the Find phase, and deletes the relevant rows in only those objects.
-3. **Serverless:** Where possible, the solution only uses Serverless components.
-   All the components for Web UI, API and Deletion Jobs are Serverless (for more
-   information consult the [Cost Overview guide]).
+1. **Secure by design:**
+   - Every component is implemented with least privilege access
+   - Encryption is performed at all layers at rest and in transit
+   - Authentication is provided out of the box
+   - Expiration of logs is configurable
+   - Record identifiers (known as **Match IDs**) are automatically obfuscated or
+     irreversibly deleted as soon as possible when persisting state
+2. **Built to scale:** The system is designed and tested to work with
+   petabyte-scale Data Lakes containing thousands of partitions and hundreds of
+   thousands of objects
+3. **Cost optimised:**
+   - **Perform work in batches:** Since the time complexity of removing a single
+     vs multiple records in a single object is practically equal and it is
+     common for data owners to have the requirement of removing data within a
+     given _timeframe_, the solution is designed to allow the solution operator
+     to "queue" multiple matches to be removed in a single job.
+   - **Fail fast:** A deletion job takes place in two distinct phases: Find and
+     Forget. The Find phase queries the objects in your S3 data lakes to find
+     any objects which contain records where a specified column contains at
+     least one of the Match IDs in the deletion queue. If any queries fail, the
+     job will abandon as soon as possible and the Forget phase will not take
+     place. The Forget Phase takes the list of objects returned from the Find
+     phase, and deletes only the relevant rows in those objects.
+   - **Optimised for Parquet:** The split phase approach optimises scanning for
+     columnar dense formats such as Parquet. The Find phase only retrieves and
+     processes the data for relevant columns when determining which S3 objects
+     need to be processed in the Forget phase. This approach can have
+     significant cost savings when operating on large data lakes with sparse
+     matches.
+   - **Serverless:** Where possible, the solution only uses Serverless
+     components to avoid costs for idle resources. All the components for Web
+     UI, API and Deletion Jobs are Serverless (for more information consult the
+     [Cost Overview guide]).
+4. **Robust monitoring and logging:** When performing deletion jobs, information
+   is provided in real-time to provide visibility. After the job completes,
+   detailed reports are available documenting all the actions performed to
+   individual S3 Objects, and detailed error traces in case of failures to
+   facilitate troubleshooting processes and identify remediation actions. For
+   more information consult the [Troubleshooting guide].
 
 ## Core components
 
@@ -182,3 +206,4 @@ solution.
 [monitoring guide]: MONITORING.md
 [dynamodb ttl]:
   https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/TTL.html
+[troubleshooting guide]: docs/TROUBLESHOOTING.md
