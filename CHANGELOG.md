@@ -1,5 +1,13 @@
 # Change Log
 
+## v0.4
+
+### Summary
+
+- [#171](https://github.com/awslabs/amazon-s3-find-and-forget/pull/171): Fix for
+  a bug affecting the API for 5xx responses not returning the appropriate CORS
+  headers
+
 ## v0.3
 
 ### Summary
