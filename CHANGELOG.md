@@ -1,5 +1,13 @@
 # Change Log
 
+## v0.5
+
+### Summary
+
+- [#172](https://github.com/awslabs/amazon-s3-find-and-forget/pull/172): Fix for
+  an issue where Make may not install the required Lambda layer dependencies,
+  resulting in unusable builds.
+
 ## v0.4
 
 ### Summary
