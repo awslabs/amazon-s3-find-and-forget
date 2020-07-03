@@ -36,7 +36,7 @@ const ColumnsViewer = ({
         }
         {...extraAttributes}
         style={{ marginLeft: `${depth * 10}px` }}
-        disabled={!isEmpty(c.children)}
+        disabled={!c.canBeIdentifier}
       />
       {c.children && (
         <ColumnsViewer

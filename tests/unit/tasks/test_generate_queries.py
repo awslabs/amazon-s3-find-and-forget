@@ -447,33 +447,29 @@ class TestAthenaQueries:
             }
         )
 
-    def test_it_converts_strings(self):
-        res = convert_to_col_type("mystr", "test_col", {"StorageDescriptor": {"Columns": [{
-            "Name": "test_col",
-            "Type": "string"
-        }]}})
-        assert "mystr" == res
 
-    def test_it_converts_varchar(self):
-        res = convert_to_col_type("mystr", "test_col", {"StorageDescriptor": {"Columns": [{
-            "Name": "test_col",
-            "Type": "varchar"
-        }]}})
-        assert "mystr" == res
+    def test_it_converts_supported_types(self):
+        for scenario in [
+            {"value": "m", "type": "char", "expected": "m"},
+            {"value": "mystr", "type": "string", "expected": "mystr"},
+            {"value": "mystr", "type": "varchar", "expected": "mystr"},
+            {"value": "2", "type": "bigint", "expected": 2},
+            {"value": "2", "type": "int", "expected": 2},
+            {"value": "2", "type": "smallint", "expected": 2},
+            {"value": "2", "type": "tinyint", "expected": 2},
+            {"value": "2.23", "type": "double", "expected": 2.23},
+            {"value": "2.23", "type": "float", "expected": 2.23}]:
+            res = convert_to_col_type(scenario["value"], "test_col", {
+                "StorageDescriptor": {
+                    "Columns": [{
+                        "Name": "test_col",
+                        "Type": scenario["type"]
+                    }]
+                }
+            })
 
-    def test_it_converts_ints(self):
-        res = convert_to_col_type("2", "test_col", {"StorageDescriptor": {"Columns": [{
-            "Name": "test_col",
-            "Type": "int"
-        }]}})
-        assert 2 == res
+            assert res == scenario["expected"]
 
-    def test_it_converts_bigints(self):
-        res = convert_to_col_type("1572438253", "test_col", {"StorageDescriptor": {"Columns": [{
-            "Name": "test_col",
-            "Type": "bigint"
-        }]}})
-        assert 1572438253 == res
 
     def test_it_throws_for_unknown_col(self):
         with pytest.raises(ValueError):
@@ -484,9 +480,9 @@ class TestAthenaQueries:
 
     def test_it_throws_for_unsupported_col_types(self):
         with pytest.raises(ValueError):
-            convert_to_col_type("mystr", "test_col", {"StorageDescriptor": {"Columns": [{
+            convert_to_col_type("2.56", "test_col", {"StorageDescriptor": {"Columns": [{
                 "Name": "test_col",
-                "Type": "map"
+                "Type": "decimal"
             }]}})
 
     def test_it_throws_for_unconvertable_matches(self):

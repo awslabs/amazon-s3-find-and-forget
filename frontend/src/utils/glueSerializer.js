@@ -4,6 +4,17 @@ export const glueSerializer = tables => {
   const ARRAYSTRUCTPREFIX = "array<struct<";
   const STRUCTPREFIX = "struct<";
   const SCHEMA_INVALID = "Column schema is not valid";
+  const ALLOWEDTYPES = [
+    "bigint",
+    "char",
+    "double",
+    "float",
+    "int",
+    "smallint",
+    "string",
+    "tinyint",
+    "varchar"
+  ];
 
   const columnMapper = c => {
     let prefix,
@@ -20,7 +31,11 @@ export const glueSerializer = tables => {
       suffixLength = 1;
     }
 
-    const result = { name: c.Name, type: resultType };
+    const result = {
+      name: c.Name,
+      type: resultType,
+      canBeIdentifier: ALLOWEDTYPES.includes(resultType)
+    };
 
     if (prefix) {
       if (c.Type.slice(-suffixLength) !== ">".repeat(suffixLength))
@@ -59,7 +74,7 @@ export const glueSerializer = tables => {
         } else {
           const upperIndex = rest.indexOf(",");
           const type = upperIndex >= 0 ? rest.substr(0, upperIndex) : rest;
-          result.children.push({ name, type });
+          result.children.push({ name, type, canBeIdentifier: false });
           current = current.substr(name.length + type.length + 1);
         }
         if (current.startsWith(",")) current = current.substr(1);
