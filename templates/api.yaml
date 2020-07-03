@@ -133,6 +133,17 @@ Resources:
                 - DefaultAccessControlOrigin
                 - !Sub "'${WebUIOrigin}'"
                 - !Sub "'${AccessControlAllowOriginOverride}'"
+        DEFAULT_5XX:
+          ResponseTemplates:
+            "application/json": '{ "Message": $context.error.messageString }'
+          ResponseParameters:
+            Headers:
+              Access-Control-Allow-Methods: "'*'"
+              Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              Access-Control-Allow-Origin: !If
+                - DefaultAccessControlOrigin
+                - !Sub "'${WebUIOrigin}'"
+                - !Sub "'${AccessControlAllowOriginOverride}'"
 
   ## Queue
   EnqueueDeletion:
