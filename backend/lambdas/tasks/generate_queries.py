@@ -110,7 +110,8 @@ def get_partitions(db, table_name):
 def convert_to_col_type(val, col, table):
     column = next((i for i in table["StorageDescriptor"]["Columns"] if i["Name"] == col), None)
     if not column:
-        raise ValueError("Column {} not found".format(col))
+        return str(val)
+        # raise ValueError("Column {} not found".format(col))
 
     col_type = column["Type"]
 
