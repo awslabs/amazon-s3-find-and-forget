@@ -1,5 +1,13 @@
 # Change Log
 
+## 0.6 (unreleased)
+
+### Summary
+
+- [#173](https://github.com/awslabs/amazon-s3-find-and-forget/pull/173): Show
+  column types and hierarchy in the front-end during Data Mapper creation + add
+  support for char, smallint, tinyint, double, float
+
 ## v0.5
 
 ### Summary
