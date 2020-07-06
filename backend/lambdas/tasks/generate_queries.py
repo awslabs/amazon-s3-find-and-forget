@@ -114,11 +114,11 @@ def convert_to_col_type(val, col, table):
 
     col_type = column["Type"]
 
-    if col_type in ["char", "string", "varchar"]:
+    if col_type in ("char", "string", "varchar"):
         return str(val)
-    if col_type in ["bigint", "int", "smallint", "tinyint"]:
+    if col_type in ("bigint", "int", "smallint", "tinyint"):
         return int(val)
-    if col_type in ["double", "float"]:
+    if col_type in ("double", "float"):
         return float(val)
 
     raise ValueError("Column {} is type {} which is not a supported column type for querying")
