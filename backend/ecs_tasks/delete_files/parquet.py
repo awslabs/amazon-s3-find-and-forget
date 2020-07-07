@@ -15,26 +15,40 @@ def get_row_count(df):
     return len(df.index)
 
 
-def delete_from_dataframe(row, to_delete):
-    # iterate over flattened dataframe first in order to search
-    # for complex structs columns, for example reports.user.id
-    df = row.flatten().to_pandas()
-    current_rows = get_row_count(df)
+def needs_flattening(to_delete):
+    """
+    Lookup of the columns to identify if any are nested inside structs
+    (and therefore represented in a form like foo.bar).
+
+    Operating on flattened columns is necessary when operating with 
+    complex column types but it impacts performance during write as
+    we need to re-allocate the data in-memory as unflattened to 
+    preserve the initial schema's hierarchy.
+    This is why we check first. It allows to do the re-allocation only if
+    necessary.
+    """
+    return any(x['Column'].find(".") >= 0 for x in to_delete)
+
+def delete_from_table(table, to_delete, schema):
+    """
+    Deletes rows from a Arrow Table where any of the MatchIds is found as
+    value in one of any of the column identifiers
+    """
+    needs_flattened_columns = needs_flattening(to_delete)
+    df = (table.flatten() if needs_flattened_columns else table).to_pandas()
+    initial_rows = get_row_count(df)
     indexes_to_delete = []
     for column in to_delete:
         indexes = df[column["Column"]].isin(column["MatchIds"])
         indexes_to_delete.append(indexes)
-        # it's important to remove the indexes from the current df
-        # to guarantee the next operation will operate on same 
-        # indexes if iterating on multiple columns
         df = df[~indexes]
-    # now operate with unflattened row to preserve original schema
-    # and operate filtering in the same order as the previous one
-    df = row.to_pandas()
-    for indexes in indexes_to_delete:
-        df=df[~indexes]
-    deleted_rows = current_rows - get_row_count(df)
-    return df, deleted_rows
+    if needs_flattened_columns:
+        df = table.to_pandas()
+        for indexes in indexes_to_delete:
+            df=df[~indexes]
+    deleted_rows = initial_rows - get_row_count(df)
+    table = pa.Table.from_pandas(df, schema=schema, preserve_index=False).replace_schema_metadata()
+    return table, deleted_rows
 
 
 def delete_matches_from_file(parquet_file, to_delete):
@@ -50,9 +64,8 @@ def delete_matches_from_file(parquet_file, to_delete):
         with pq.ParquetWriter(out_stream, schema) as writer:
             for row_group in range(parquet_file.num_row_groups):
                 logger.info("Row group %s/%s", str(row_group + 1), str(parquet_file.num_row_groups))
-                row = parquet_file.read_row_group(row_group)
-                df, deleted_rows = delete_from_dataframe(row, to_delete)
-                tab = pa.Table.from_pandas(df, schema=schema, preserve_index=False).replace_schema_metadata()
-                writer.write_table(tab)
+                table = parquet_file.read_row_group(row_group)
+                table, deleted_rows = delete_from_table(table, to_delete, schema)
+                writer.write_table(table)
                 stats.update({"DeletedRows": deleted_rows})
         return out_stream, stats
