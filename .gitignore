@@ -153,6 +153,7 @@ backend/lambda_layers/decorators/python
 build.zip
 packaged.zip
 frontend/public/settings.js
+*.sentinel
 
 # docs
 .openapi-generator/

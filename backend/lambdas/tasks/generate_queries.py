@@ -115,9 +115,11 @@ def convert_to_col_type(val, col, table):
 
     col_type = column["Type"]
 
-    if col_type == "string" or col_type == "varchar":
+    if col_type in ("char", "string", "varchar"):
         return str(val)
-    if col_type == "int" or col_type == "bigint":
+    if col_type in ("bigint", "int", "smallint", "tinyint"):
         return int(val)
+    if col_type in ("double", "float"):
+        return float(val)
 
     raise ValueError("Column {} is type {} which is not a supported column type for querying")

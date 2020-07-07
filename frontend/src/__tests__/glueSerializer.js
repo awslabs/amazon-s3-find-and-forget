@@ -134,9 +134,14 @@ test("it should serialize dbs and tables", () => {
         tables: [
           {
             name: "table1",
-            columns: [{ name: "customer_id", type: "string" }]
+            columns: [
+              { name: "customer_id", type: "string", canBeIdentifier: true }
+            ]
           },
-          { name: "table2", columns: [{ name: "author", type: "string" }] }
+          {
+            name: "table2",
+            columns: [{ name: "author", type: "string", canBeIdentifier: true }]
+          }
         ]
       },
       {
@@ -144,7 +149,9 @@ test("it should serialize dbs and tables", () => {
         tables: [
           {
             name: "table5",
-            columns: [{ name: "customer_id", type: "string" }]
+            columns: [
+              { name: "customer_id", type: "string", canBeIdentifier: true }
+            ]
           }
         ]
       },
@@ -154,51 +161,60 @@ test("it should serialize dbs and tables", () => {
           {
             name: "complex",
             columns: [
-              { name: "id", type: "string" },
-              { name: "type", type: "string" },
+              { name: "id", type: "string", canBeIdentifier: true },
+              { name: "type", type: "string", canBeIdentifier: true },
               {
                 name: "repo",
                 type: "struct",
+                canBeIdentifier: false,
                 children: [
-                  { name: "id", type: "int" },
-                  { name: "name", type: "string" },
-                  { name: "url", type: "string" }
+                  { name: "id", type: "int", canBeIdentifier: true },
+                  { name: "name", type: "string", canBeIdentifier: true },
+                  { name: "url", type: "string", canBeIdentifier: true }
                 ]
               },
-              { name: "simplearr", type: "array<int>" },
+              { name: "simplearr", type: "array<int>", canBeIdentifier: false },
               {
                 name: "arr",
                 type: "array<struct>",
+                canBeIdentifier: false,
                 children: [
-                  { name: "field", type: "int" },
-                  { name: "n", type: "string" }
+                  { name: "field", type: "int", canBeIdentifier: false },
+                  { name: "n", type: "string", canBeIdentifier: false }
                 ]
               },
               {
                 name: "nestedstruct",
                 type: "struct",
+                canBeIdentifier: false,
                 children: [
-                  { name: "a", type: "int" },
-                  { name: "b", type: "string" },
+                  { name: "a", type: "int", canBeIdentifier: true },
+                  { name: "b", type: "string", canBeIdentifier: true },
                   {
                     name: "c",
                     type: "struct",
+                    canBeIdentifier: false,
                     children: [
-                      { name: "d", type: "int" },
+                      { name: "d", type: "int", canBeIdentifier: true },
                       {
                         name: "e",
                         type: "struct",
-                        children: [{ name: "f", type: "int" }]
+                        canBeIdentifier: false,
+                        children: [
+                          { name: "f", type: "int", canBeIdentifier: true }
+                        ]
                       }
                     ]
                   },
                   {
                     name: "g",
                     type: "struct",
+                    canBeIdentifier: false,
                     children: [
                       {
                         name: "h",
-                        type: "string"
+                        type: "string",
+                        canBeIdentifier: true
                       }
                     ]
                   }
@@ -207,46 +223,57 @@ test("it should serialize dbs and tables", () => {
               {
                 name: "structandarr",
                 type: "struct",
+                canBeIdentifier: false,
                 children: [
-                  { name: "a", type: "int" },
-                  { name: "b", type: "string" },
+                  { name: "a", type: "int", canBeIdentifier: true },
+                  { name: "b", type: "string", canBeIdentifier: true },
                   {
                     name: "c",
                     type: "struct",
+                    canBeIdentifier: false,
                     children: [
-                      { name: "d", type: "int" },
+                      { name: "d", type: "int", canBeIdentifier: true },
                       {
                         name: "e",
                         type: "struct",
-                        children: [{ name: "f", type: "int" }]
+                        canBeIdentifier: false,
+                        children: [
+                          { name: "f", type: "int", canBeIdentifier: true }
+                        ]
                       }
                     ]
                   },
                   {
                     name: "g",
                     type: "struct",
+                    canBeIdentifier: false,
                     children: [
                       {
                         name: "h",
-                        type: "string"
+                        type: "string",
+                        canBeIdentifier: true
                       }
                     ]
                   },
                   {
                     name: "i",
                     type: "array<struct>",
+                    canBeIdentifier: false,
                     children: [
                       {
                         name: "l",
-                        type: "int"
+                        type: "int",
+                        canBeIdentifier: false
                       },
                       {
                         name: "m",
                         type: "struct",
+                        canBeIdentifier: false,
                         children: [
                           {
                             name: "n",
-                            type: "string"
+                            type: "string",
+                            canBeIdentifier: false
                           }
                         ]
                       }
