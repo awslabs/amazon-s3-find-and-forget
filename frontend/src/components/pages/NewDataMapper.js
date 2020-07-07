@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useReducer, useState, Fragment } from "react";
 import { Button, Form, Spinner } from "react-bootstrap";
 
 import Alert from "../Alert";
@@ -14,8 +14,53 @@ import { glueSerializer } from "../../utils/glueSerializer";
 
 const region = window.s3f2Settings.region;
 
+const ColumnsViewer = ({
+  columns,
+  prefix = "",
+  depth = 0,
+  setColumns,
+  extraAttributes,
+}) =>
+  columns.map((c, index) => (
+    <Fragment key={`cv-${prefix}${c.name}-${index}`}>
+      <Form.Check
+        type="checkbox"
+        id={`cb-${prefix}${c.name}`}
+        name="column"
+        label={`${c.name} (${c.type})`}
+        onChange={(e) =>
+          setColumns({
+            type: e.target.checked ? "add" : "remove",
+            column: `${prefix}${c.name}`,
+          })
+        }
+        {...extraAttributes}
+        style={{ marginLeft: `${depth * 10}px` }}
+        disabled={!c.canBeIdentifier}
+      />
+      {c.children && (
+        <ColumnsViewer
+          columns={c.children}
+          prefix={`${prefix}${c.name}.`}
+          depth={depth + 1}
+          key={`n-${depth}`}
+          setColumns={setColumns}
+          extraAttributes={extraAttributes}
+        />
+      )}
+    </Fragment>
+  ));
+
 export default ({ gateway, goToDataMappers }) => {
-  const [columns, setColumns] = useState([]);
+  const [columns, setColumns] = useReducer((state, action) => {
+    if (action.type === "add" && !state.includes(action.column))
+      return [...state, action.column];
+    if (action.type === "remove" && state.includes(action.column))
+      return state.filter((x) => x !== action.column);
+    if (action.type === "reset") return [];
+    return state;
+  }, []);
+
   const [dataMapperId, setDataMapperId] = useState(undefined);
   const [errorDetails, setErrorDetails] = useState(undefined);
   const [formState, setFormState] = useState("loading");
@@ -25,14 +70,6 @@ export default ({ gateway, goToDataMappers }) => {
   const [roleArn, setRoleArn] = useState(undefined);
   const [deletePreviousVersions, setDeletePreviousVersions] = useState(true);
   const [submitClicked, setSubmitClicked] = useState(false);
-
-  const addColumn = (c) => {
-    if (!columns.includes(c)) setColumns([...columns, c]);
-  };
-
-  const removeColumn = (c) => {
-    if (columns.includes(c)) setColumns(columns.filter((x) => x !== c));
-  };
 
   const validationAttributes = (isValid) =>
     !submitClicked ? {} : isValid ? { isValid: true } : { isInvalid: true };
@@ -57,7 +94,7 @@ export default ({ gateway, goToDataMappers }) => {
   };
 
   const resetGlueColumns = () => {
-    setColumns([]);
+    setColumns({ type: "reset" });
     let checkboxes = document.getElementsByName("column");
     for (let i = 0; i < checkboxes.length; i++) checkboxes[i].checked = false;
   };
@@ -265,19 +302,11 @@ export default ({ gateway, goToDataMappers }) => {
                 <Form.Text className="text-muted">
                   Select one or more column from the table
                 </Form.Text>
-                {columnsForSelectedTable.map((c, index) => (
-                  <Form.Check
-                    type="checkbox"
-                    id={`cb-${index}`}
-                    key={index}
-                    name="column"
-                    label={c}
-                    onChange={(e) =>
-                      e.target.checked ? addColumn(c) : removeColumn(c)
-                    }
-                    {...validationAttributes(isColumnsValid)}
-                  />
-                ))}
+                <ColumnsViewer
+                  columns={columnsForSelectedTable}
+                  setColumns={setColumns}
+                  extraAttributes={validationAttributes(isColumnsValid)}
+                />
                 {isEmpty(columnsForSelectedTable) && (
                   <Form.Text className="text-muted">
                     No table selected
