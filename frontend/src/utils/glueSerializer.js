@@ -170,9 +170,8 @@ export const glueSerializer = tables => {
   tables.forEach(table => {
     const parquetTables = table.TableList.filter(
       x =>
-        true ||
         x.StorageDescriptor.SerdeInfo.SerializationLibrary ===
-          "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"
+        "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"
     );
 
     if (parquetTables.length > 0)
