@@ -7,7 +7,7 @@ from mock import patch
 
 with patch.dict(os.environ, {"QueryQueue": "test"}):
     from backend.lambdas.tasks.generate_queries import handler, get_table, get_partitions, convert_to_col_type, \
-        get_deletion_queue, generate_athena_queries, get_data_mappers
+        get_deletion_queue, generate_athena_queries, get_data_mappers, get_inner_children
 
 pytestmark = [pytest.mark.unit, pytest.mark.task]
 
@@ -510,13 +510,15 @@ class TestAthenaQueries:
                     }
                 })
     
-
+    
     def test_it_throws_for_unsupported_col_types(self):
-        with pytest.raises(ValueError):
+        print('matteo')
+        with pytest.raises(ValueError) as e:
             convert_to_col_type("2.56", "test_col", {"StorageDescriptor": {"Columns": [{
                 "Name": "test_col",
                 "Type": "decimal"
             }]}})
+        assert e.value.args[0] == 'Column test_col is not a supported column type for querying'
 
 
     def test_it_throws_for_unconvertable_matches(self):
@@ -525,6 +527,11 @@ class TestAthenaQueries:
                 "Name": "test_col",
                 "Type": "int"
             }]}})
+
+
+    def test_it_throws_for_invalid_schema(self):
+        with pytest.raises(ValueError):
+            get_inner_children('struct<name:string', 'struct<', '>')
 
 
 @patch("backend.lambdas.tasks.generate_queries.jobs_table")
