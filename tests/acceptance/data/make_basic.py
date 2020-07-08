@@ -11,9 +11,9 @@ filename = "basic.parquet"
 df = pd.DataFrame({
     'customer_id': ['12345', '23456', '34567'],
     'user_info': [
-        {'name': 'matteo', 'email': '12345@test.com'},
-        {'name': 'nick', 'email': '23456@test.com'},
-        {'name': 'chris', 'email': '34567@test.com'}],
+        {'email': '12345@test.com', 'name': 'matteo'},
+        {'email': '23456@test.com', 'name': 'nick'},
+        {'email': '34567@test.com', 'name': 'chris'}],
     'days_off': [['2020-01-01','2020-01-02'], ['2020-01-01','2020-01-07'], ['2020-01-05']]})
 
 table = pa.Table.from_pandas(df)

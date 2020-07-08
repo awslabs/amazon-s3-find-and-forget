@@ -99,6 +99,15 @@ def iam_client():
     return boto3.client("iam")
 
 
+@pytest.fixture(scope="session")
+def glue_columns():
+    return [
+        { 'Name': 'customer_id', 'Type': 'string'},
+        { 'Name': 'user_info', 'Type': 'struct<email:string,name:string>'},
+        { 'Name': 'days_off', 'Type': 'array<string>'}
+    ]
+
+
 @pytest.fixture(scope="session", autouse=True)
 def cognito_token(stack):
     # Generate User in Cognito
@@ -224,7 +233,7 @@ def glue_table_factory(dummy_lake, glue_client):
     items = []
     bucket_name = dummy_lake["bucket_name"]
 
-    def factory(columns=["customer_id"], fmt="parquet", database="acceptancetests",
+    def factory(columns, fmt="parquet", database="acceptancetests",
                 table="acceptancetests", prefix="prefix", partition_keys=[], partitions=[]):
         glue_client.create_database(DatabaseInput={'Name': database})
         glue_client.create_table(
@@ -232,10 +241,7 @@ def glue_table_factory(dummy_lake, glue_client):
             TableInput={
                 "Name": table,
                 "StorageDescriptor": {
-                    "Columns": [{
-                        'Name': col,
-                        'Type': 'string',
-                    } for col in columns],
+                    "Columns": columns,
                     "Location": "s3://{bucket}/{prefix}/".format(bucket=bucket_name, prefix=prefix),
                     "InputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
                     "OutputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
@@ -267,10 +273,7 @@ def glue_table_factory(dummy_lake, glue_client):
                 PartitionInput={
                     'Values': p,
                     'StorageDescriptor': {
-                        "Columns": [{
-                            'Name': col,
-                            'Type': 'string',
-                        } for col in columns],
+                        "Columns": columns,
                         'Location': "s3://{bucket}/{prefix}/{parts}/".format(bucket=dummy_lake["bucket_name"],
                                                                              prefix=prefix, parts="/".join(p)),
                         "InputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
@@ -304,17 +307,18 @@ def glue_table_factory(dummy_lake, glue_client):
 
 
 @pytest.fixture
-def glue_data_mapper_factory(glue_client, data_mapper_table, glue_table_factory):
+def glue_data_mapper_factory(glue_client, data_mapper_table, glue_table_factory, glue_columns):
     """
     Factory for registering a data mapper in DDB and createing a corresponding glue table
     """
     items = []
 
-    def factory(data_mapper_id="test", columns=["customer_id"], fmt="parquet", database="acceptancetests",
-                table="acceptancetests", partition_keys=[], partitions=[], role_arn=None, delete_old_versions=False):
+    def factory(data_mapper_id="test", columns=glue_columns, fmt="parquet", database="acceptancetests",
+                table="acceptancetests", partition_keys=[], partitions=[], role_arn=None, delete_old_versions=False,
+                column_identifiers=["customer_id"]):
         item = {
             "DataMapperId": data_mapper_id,
-            "Columns": columns,
+            "Columns": column_identifiers,
             "QueryExecutor": "athena",
             "QueryExecutorParameters": {
                 "DataCatalogProvider": "glue",
