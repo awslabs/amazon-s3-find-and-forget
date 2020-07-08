@@ -17,22 +17,22 @@ def get_row_count(df):
 
 def needs_flattening(to_delete):
     """
-    Lookup of the columns to identify if any are nested inside structs
+    Lookup the columns to identify if any are nested inside structs
     (and therefore represented in a form like foo.bar).
 
     Operating on flattened columns is necessary when operating with 
     complex column types but it impacts performance during write as
     we need to re-allocate the data in-memory as unflattened to 
-    preserve the initial schema's hierarchy.
-    This is why we check first. It allows to do the re-allocation only if
-    necessary.
+    preserve the initial schema's hierarchy after figuring out which rows
+    need deletion. This is why we check first: it allows to do the
+    re-allocation only if necessary.
     """
     return any(x['Column'].find(".") >= 0 for x in to_delete)
 
 def delete_from_table(table, to_delete, schema):
     """
     Deletes rows from a Arrow Table where any of the MatchIds is found as
-    value in one of any of the column identifiers
+    value in any of the columns
     """
     needs_flattened_columns = needs_flattening(to_delete)
     df = (table.flatten() if needs_flattened_columns else table).to_pandas()
