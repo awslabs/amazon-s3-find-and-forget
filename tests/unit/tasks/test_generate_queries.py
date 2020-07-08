@@ -512,7 +512,6 @@ class TestAthenaQueries:
     
     
     def test_it_throws_for_unsupported_col_types(self):
-        print('matteo')
         with pytest.raises(ValueError) as e:
             convert_to_col_type("2.56", "test_col", {"StorageDescriptor": {"Columns": [{
                 "Name": "test_col",
