@@ -4,6 +4,8 @@
 
 ### Summary
 
+- [#174](https://github.com/awslabs/amazon-s3-find-and-forget/pull/174): Add
+  support for types nested in struct
 - [#173](https://github.com/awslabs/amazon-s3-find-and-forget/pull/173): Show
   column types and hierarchy in the front-end during Data Mapper creation
 - [#173](https://github.com/awslabs/amazon-s3-find-and-forget/pull/173): Add
