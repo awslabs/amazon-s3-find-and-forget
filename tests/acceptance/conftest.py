@@ -229,11 +229,11 @@ def empty_data_mappers(data_mapper_table):
 
 
 @pytest.fixture
-def glue_table_factory(dummy_lake, glue_client):
+def glue_table_factory(dummy_lake, glue_client, glue_columns):
     items = []
     bucket_name = dummy_lake["bucket_name"]
 
-    def factory(columns, fmt="parquet", database="acceptancetests",
+    def factory(columns=glue_columns, fmt="parquet", database="acceptancetests",
                 table="acceptancetests", prefix="prefix", partition_keys=[], partitions=[]):
         glue_client.create_database(DatabaseInput={'Name': database})
         glue_client.create_table(
