@@ -3,8 +3,7 @@ from crhelper import CfnResource
 from decorators import with_logging
 
 
-helper = CfnResource(json_logging=False, log_level='DEBUG',
-                     boto_level='CRITICAL')
+helper = CfnResource(json_logging=False, log_level="DEBUG", boto_level="CRITICAL")
 
 s3 = boto3.resource("s3")
 
@@ -19,7 +18,7 @@ def create(event, context):
 @with_logging
 @helper.delete
 def delete(event, context):
-    props = event['ResourceProperties']
+    props = event["ResourceProperties"]
     bucket = s3.Bucket(props["Bucket"])
     bucket.objects.all().delete()
     bucket.object_versions.all().delete()

@@ -3,8 +3,7 @@ import boto3
 from crhelper import CfnResource
 from decorators import with_logging
 
-helper = CfnResource(json_logging=False, log_level='DEBUG',
-                     boto_level='CRITICAL')
+helper = CfnResource(json_logging=False, log_level="DEBUG", boto_level="CRITICAL")
 
 ecs_client = boto3.client("ecs")
 
@@ -15,12 +14,7 @@ ecs_client = boto3.client("ecs")
 def create(event, context):
     ecs_client.update_cluster_settings(
         cluster=os.getenv("Cluster"),
-        settings=[
-            {
-                'name': 'containerInsights',
-                'value': 'enabled'
-            }
-        ]
+        settings=[{"name": "containerInsights", "value": "enabled"}],
     )
     return None
 

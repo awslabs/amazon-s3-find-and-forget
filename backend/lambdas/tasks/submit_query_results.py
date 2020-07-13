@@ -16,11 +16,19 @@ queue = sqs.Queue(os.getenv("QueueUrl"))
 @with_logging
 def handler(event, context):
     query_id = event["QueryId"]
-    results = paginate(athena, athena.get_query_results, ["ResultSet.Rows"], QueryExecutionId=query_id)
+    results = paginate(
+        athena, athena.get_query_results, ["ResultSet.Rows"], QueryExecutionId=query_id
+    )
     rows = [result for result in results]
     header_row = rows.pop(0)
-    path_field_index = next((index for (index, d) in enumerate(header_row["Data"]) if d["VarCharValue"] == "$path"),
-                            None)
+    path_field_index = next(
+        (
+            index
+            for (index, d) in enumerate(header_row["Data"])
+            if d["VarCharValue"] == "$path"
+        ),
+        None,
+    )
 
     paths = [row["Data"][path_field_index]["VarCharValue"] for row in rows]
     messages = []
@@ -37,4 +45,3 @@ def handler(event, context):
     batch_sqs_msgs(queue, messages)
 
     return paths
-

@@ -12,9 +12,11 @@ def handler(event, context):
     response = client.start_query_execution(
         QueryString=make_query(event["QueryData"]),
         ResultConfiguration={
-            'OutputLocation': 's3://{bucket}/{prefix}/'.format(bucket=event["Bucket"], prefix=event["Prefix"])
+            "OutputLocation": "s3://{bucket}/{prefix}/".format(
+                bucket=event["Bucket"], prefix=event["Prefix"]
+            )
         },
-        WorkGroup=os.getenv("WorkGroup", "primary")
+        WorkGroup=os.getenv("WorkGroup", "primary"),
     )
 
     return response["QueryExecutionId"]
@@ -35,12 +37,12 @@ def make_query(query_data):
       "PartitionKeys": [{"Key":"k", "Value":"val"}]
     }
     """
-    template = '''
+    template = """
     SELECT DISTINCT "$path"
     FROM "{db}"."{table}"
     WHERE
         ({column_filters})
-    '''
+    """
     db = query_data["Database"]
     table = query_data["Table"]
     columns = query_data["Columns"]
@@ -50,11 +52,14 @@ def make_query(query_data):
     for i, col in enumerate(columns):
         if i > 0:
             column_filters = column_filters + " OR "
-        column_filters = column_filters + '{} in ({})'.format(
-            escape_column(col["Column"]), ', '.join("{0}".format(escape_item(m)) for m in col["MatchIds"]))
+        column_filters = column_filters + "{} in ({})".format(
+            escape_column(col["Column"]),
+            ", ".join("{0}".format(escape_item(m)) for m in col["MatchIds"]),
+        )
     for partition in partitions:
-        template = template + ' AND {key} = {value} '.format(key=escape_column(partition["Key"]), value=escape_item(
-            partition["Value"]))
+        template = template + " AND {key} = {value} ".format(
+            key=escape_column(partition["Key"]), value=escape_item(partition["Value"])
+        )
     return template.format(db=db, table=table, column_filters=column_filters)
 
 
@@ -64,7 +69,7 @@ def escape_column(item):
 
 def escape_item(item):
     if item is None:
-        return 'NULL'
+        return "NULL"
     elif isinstance(item, (int, float)):
         return escape_number(item)
     elif isinstance(item, str):

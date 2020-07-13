@@ -8,13 +8,21 @@ Script to generate the basic.parquet file used by acceptance tests
 
 filename = "basic.parquet"
 
-df = pd.DataFrame({
-    'customer_id': ['12345', '23456', '34567'],
-    'user_info': [
-        {'email': '12345@test.com', 'name': 'matteo'},
-        {'email': '23456@test.com', 'name': 'nick'},
-        {'email': '34567@test.com', 'name': 'chris'}],
-    'days_off': [['2020-01-01','2020-01-02'], ['2020-01-01','2020-01-07'], ['2020-01-05']]})
+df = pd.DataFrame(
+    {
+        "customer_id": ["12345", "23456", "34567"],
+        "user_info": [
+            {"email": "12345@test.com", "name": "matteo"},
+            {"email": "23456@test.com", "name": "nick"},
+            {"email": "34567@test.com", "name": "chris"},
+        ],
+        "days_off": [
+            ["2020-01-01", "2020-01-02"],
+            ["2020-01-01", "2020-01-07"],
+            ["2020-01-05"],
+        ],
+    }
+)
 
 table = pa.Table.from_pandas(df)
 pq.write_table(table, filename)

@@ -10,6 +10,8 @@
   column types and hierarchy in the front-end during Data Mapper creation
 - [#173](https://github.com/awslabs/amazon-s3-find-and-forget/pull/173): Add
   support for char, smallint, tinyint, double, float
+- [#177](https://github.com/awslabs/amazon-s3-find-and-forget/pull/177):
+  Reformat of Python source code (non-functional change)
 
 ## v0.5
 

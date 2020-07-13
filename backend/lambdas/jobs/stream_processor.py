@@ -16,7 +16,7 @@ from decorators import with_logging
 deserializer = TypeDeserializer()
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-client = boto3.client('stepfunctions')
+client = boto3.client("stepfunctions")
 state_machine_arn = getenv("StateMachineArn")
 ddb = boto3.resource("dynamodb")
 q_table = ddb.Table(getenv("DeletionQueueTable"))
@@ -26,11 +26,13 @@ q_table = ddb.Table(getenv("DeletionQueueTable"))
 def handler(event, context):
     records = event["Records"]
     new_jobs = [
-        deserialize_item(r["dynamodb"]["NewImage"]) for r in records
+        deserialize_item(r["dynamodb"]["NewImage"])
+        for r in records
         if is_record_type(r, "Job") and is_operation(r, "INSERT")
     ]
     events = [
-        deserialize_item(r["dynamodb"]["NewImage"]) for r in records
+        deserialize_item(r["dynamodb"]["NewImage"])
+        for r in records
         if is_record_type(r, "JobEvent") and is_operation(r, "INSERT")
     ]
     grouped_events = groupby(sorted(events, key=itemgetter("Id")), key=itemgetter("Id"))
@@ -43,51 +45,65 @@ def handler(event, context):
         update_stats(job_id, group)
         updated_job = update_status(job_id, group)
         # Perform cleanup if required
-        if updated_job and updated_job.get("JobStatus") == "FORGET_COMPLETED_CLEANUP_IN_PROGRESS":
+        if (
+            updated_job
+            and updated_job.get("JobStatus") == "FORGET_COMPLETED_CLEANUP_IN_PROGRESS"
+        ):
             try:
                 clear_deletion_queue(updated_job)
-                emit_event(job_id, "CleanupSucceeded", utc_timestamp(), "StreamProcessor")
+                emit_event(
+                    job_id, "CleanupSucceeded", utc_timestamp(), "StreamProcessor"
+                )
             except Exception as e:
-                emit_event(job_id, "CleanupFailed", {
-                    "Error": "Unable to clear deletion queue: {}".format(str(e))
-                }, "StreamProcessor")
+                emit_event(
+                    job_id,
+                    "CleanupFailed",
+                    {"Error": "Unable to clear deletion queue: {}".format(str(e))},
+                    "StreamProcessor",
+                )
         elif updated_job and updated_job.get("JobStatus") in skip_cleanup_states:
             emit_event(job_id, "CleanupSkipped", utc_timestamp(), "StreamProcessor")
 
 
 def process_job(job):
     job_id = job["Id"]
-    state = { k: job[k] for k in [
-        "AthenaConcurrencyLimit",
-        "DeletionTasksMaxNumber",
-        "ForgetQueueWaitSeconds",
-        "Id",
-        "QueryExecutionWaitSeconds",
-        "QueryQueueWaitSeconds"
-    ]}
+    state = {
+        k: job[k]
+        for k in [
+            "AthenaConcurrencyLimit",
+            "DeletionTasksMaxNumber",
+            "ForgetQueueWaitSeconds",
+            "Id",
+            "QueryExecutionWaitSeconds",
+            "QueryQueueWaitSeconds",
+        ]
+    }
 
     try:
         client.start_execution(
             stateMachineArn=state_machine_arn,
             name=job_id,
-            input=json.dumps(state, cls=DecimalEncoder)
+            input=json.dumps(state, cls=DecimalEncoder),
         )
     except client.exceptions.ExecutionAlreadyExists:
         logger.warning("Execution %s already exists", job_id)
     except (ClientError, ValueError) as e:
-        emit_event(job_id, "Exception", {
-            "Error": "ExecutionFailure",
-            "Cause": "Unable to start StepFunction execution: {}".format(str(e))
-        }, "StreamProcessor")
+        emit_event(
+            job_id,
+            "Exception",
+            {
+                "Error": "ExecutionFailure",
+                "Cause": "Unable to start StepFunction execution: {}".format(str(e)),
+            },
+            "StreamProcessor",
+        )
 
 
 def clear_deletion_queue(job):
     logger.info("Clearing successfully deleted matches")
     for item in job.get("DeletionQueueItems", []):
         with q_table.batch_writer() as batch:
-            batch.delete_item(Key={
-                "DeletionQueueItemId": item["DeletionQueueItemId"]
-            })
+            batch.delete_item(Key={"DeletionQueueItemId": item["DeletionQueueItemId"]})
 
 
 def is_operation(record, operation):

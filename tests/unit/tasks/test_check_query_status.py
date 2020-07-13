@@ -12,15 +12,13 @@ pytestmark = [pytest.mark.unit, pytest.mark.task]
 @patch("backend.lambdas.tasks.check_query_status.client")
 def test_it_returns_query_status(mock_client):
     mock_client.get_query_execution.return_value = {
-        'QueryExecution': {
-            'Status': {
-                'State': 'RUNNING',
-                'SubmissionDateTime': datetime(2015, 1, 1),
-                'CompletionDateTime': datetime(2015, 1, 1)
+        "QueryExecution": {
+            "Status": {
+                "State": "RUNNING",
+                "SubmissionDateTime": datetime(2015, 1, 1),
+                "CompletionDateTime": datetime(2015, 1, 1),
             },
-            'Statistics': {
-                'some': 'stats'
-            }
+            "Statistics": {"some": "stats"},
         }
     }
 
@@ -28,25 +26,21 @@ def test_it_returns_query_status(mock_client):
     assert {
         "State": "RUNNING",
         "Reason": "n/a",
-        "Statistics": {
-            "some": "stats"
-        }
+        "Statistics": {"some": "stats"},
     } == resp
 
 
 @patch("backend.lambdas.tasks.check_query_status.client")
 def test_it_provides_reason_where_supplied(mock_client):
     mock_client.get_query_execution.return_value = {
-        'QueryExecution': {
-            'Status': {
-                'State': 'FAILED',
-                'StateChangeReason': 'Some reason',
-                'SubmissionDateTime': datetime(2015, 1, 1),
-                'CompletionDateTime': datetime(2015, 1, 1)
+        "QueryExecution": {
+            "Status": {
+                "State": "FAILED",
+                "StateChangeReason": "Some reason",
+                "SubmissionDateTime": datetime(2015, 1, 1),
+                "CompletionDateTime": datetime(2015, 1, 1),
             },
-            'Statistics': {
-                'some': 'stats'
-            }
+            "Statistics": {"some": "stats"},
         }
     }
 
@@ -56,4 +50,3 @@ def test_it_provides_reason_where_supplied(mock_client):
         "Reason": "Some reason",
         "Statistics": {"some": "stats"},
     } == resp
-

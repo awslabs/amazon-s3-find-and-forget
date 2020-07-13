@@ -19,14 +19,19 @@ def handler(event, context):
     wait_duration = int(event.get("QueryExecutionWaitSeconds", 15))
     execution_id = event["ExecutionId"]
     job_id = event["ExecutionName"]
-    previously_started = event.get("RunningExecutions", {
-        "Data": [],
-        "Total": 0
-    })
+    previously_started = event.get("RunningExecutions", {"Data": [], "Total": 0})
     executions = [load_execution(execution) for execution in previously_started["Data"]]
-    succeeded = [execution for execution in executions if execution["status"] == "SUCCEEDED"]
-    still_running = [execution for execution in executions if execution["status"] == "RUNNING"]
-    failed = [execution for execution in executions if execution["status"] not in ["SUCCEEDED", "RUNNING"]]
+    succeeded = [
+        execution for execution in executions if execution["status"] == "SUCCEEDED"
+    ]
+    still_running = [
+        execution for execution in executions if execution["status"] == "RUNNING"
+    ]
+    failed = [
+        execution
+        for execution in executions
+        if execution["status"] not in ["SUCCEEDED", "RUNNING"]
+    ]
     clear_completed(succeeded)
     is_failing = previously_started.get("IsFailing", False)
     if len(failed) > 0:
@@ -47,22 +52,23 @@ def handler(event, context):
             body["WaitDuration"] = wait_duration
             query_executor = body["QueryExecutor"]
             if query_executor == "athena":
-                resp = sf_client.start_execution(stateMachineArn=state_machine_arn, input=json.dumps(body))
-                started.append({
-                    **resp,
-                    "ReceiptHandle": msg.receipt_handle
-                })
+                resp = sf_client.start_execution(
+                    stateMachineArn=state_machine_arn, input=json.dumps(body)
+                )
+                started.append({**resp, "ReceiptHandle": msg.receipt_handle})
             else:
-                raise NotImplementedError("Unsupported query executor: '{}'".format(query_executor))
+                raise NotImplementedError(
+                    "Unsupported query executor: '{}'".format(query_executor)
+                )
         still_running += started
 
     return {
         "IsFailing": is_failing,
-        "Data": [{
-            "ExecutionArn": e["executionArn"],
-            "ReceiptHandle": e["ReceiptHandle"]
-        } for e in still_running],
-        "Total": len(still_running)
+        "Data": [
+            {"ExecutionArn": e["executionArn"], "ReceiptHandle": e["ReceiptHandle"]}
+            for e in still_running
+        ],
+        "Total": len(still_running),
     }
 
 
@@ -79,6 +85,8 @@ def clear_completed(executions):
 
 
 def abandon_execution(failed):
-    raise RuntimeError("Abandoning execution because one or more queries failed. {}".format(", ".join([
-        f["executionArn"] for f in failed
-    ])))
+    raise RuntimeError(
+        "Abandoning execution because one or more queries failed. {}".format(
+            ", ".join([f["executionArn"] for f in failed])
+        )
+    )

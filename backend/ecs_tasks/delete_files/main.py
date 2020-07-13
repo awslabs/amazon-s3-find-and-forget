@@ -17,18 +17,31 @@ from pyarrow.lib import ArrowException
 
 from events import sanitize_message, emit_failure_event, emit_deletion_event
 from parquet import load_parquet, delete_matches_from_file
-from s3 import validate_bucket_versioning, save, verify_object_versions_integrity, delete_old_versions, \
-    IntegrityCheckFailedError, rollback_object_version, DeleteOldVersionsError
+from s3 import (
+    validate_bucket_versioning,
+    save,
+    verify_object_versions_integrity,
+    delete_old_versions,
+    IntegrityCheckFailedError,
+    rollback_object_version,
+    DeleteOldVersionsError,
+)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(os.getenv("LOG_LEVEL", logging.INFO))
-formatter = logging.Formatter('[%(levelname)s] %(message)s')
+formatter = logging.Formatter("[%(levelname)s] %(message)s")
 handler = logging.StreamHandler(stream=sys.stdout)
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 
-def handle_error(sqs_msg, message_body, err_message, event_name="ObjectUpdateFailed", change_msg_visibility=True):
+def handle_error(
+    sqs_msg,
+    message_body,
+    err_message,
+    event_name="ObjectUpdateFailed",
+    change_msg_visibility=True,
+):
     logger.error(sanitize_message(err_message, message_body))
     try:
         emit_failure_event(message_body, err_message, event_name)
@@ -44,8 +57,8 @@ def handle_error(sqs_msg, message_body, err_message, event_name="ObjectUpdateFai
         try:
             sqs_msg.change_visibility(VisibilityTimeout=0)
         except (
-                sqs_msg.meta.client.exceptions.MessageNotInflight,
-                sqs_msg.meta.client.exceptions.ReceiptHandleIsInvalid,
+            sqs_msg.meta.client.exceptions.MessageNotInflight,
+            sqs_msg.meta.client.exceptions.ReceiptHandleIsInvalid,
         ) as e:
             logger.error("Unable to change message visibility: %s", str(e))
 
@@ -68,7 +81,7 @@ def execute(queue_url, message_body, receipt_handle):
         body = json.loads(message_body)
         session = get_session(body.get("RoleArn"))
         client = session.client("s3")
-        cols, object_path, job_id = itemgetter('Columns', 'Object', 'JobId')(body)
+        cols, object_path, job_id = itemgetter("Columns", "Object", "JobId")(body)
         input_bucket, input_key = parse_s3_url(object_path)
         validate_bucket_versioning(client, input_bucket)
         creds = session.get_credentials().get_frozen_credentials()
@@ -76,10 +89,10 @@ def execute(queue_url, message_body, receipt_handle):
             key=creds.access_key,
             secret=creds.secret_key,
             token=creds.token,
-            default_cache_type='none',
+            default_cache_type="none",
             requester_pays=True,
             default_fill_cache=False,
-            version_aware=True
+            version_aware=True,
         )
         # Download the object in-memory and convert to PyArrow NativeFile
         logger.info("Downloading and opening %s object in-memory", object_path)
@@ -92,13 +105,24 @@ def execute(queue_url, message_body, receipt_handle):
             out_sink, stats = delete_matches_from_file(infile, cols)
         if stats["DeletedRows"] == 0:
             raise ValueError(
-                "The object {} was processed successfully but no rows required deletion".format(object_path))
+                "The object {} was processed successfully but no rows required deletion".format(
+                    object_path
+                )
+            )
         with pa.BufferReader(out_sink.getvalue()) as output_buf:
-            new_version = save(s3, client, output_buf, input_bucket, input_key, source_version)
+            new_version = save(
+                s3, client, output_buf, input_bucket, input_key, source_version
+            )
             logger.info("New object version: %s", new_version)
-            verify_object_versions_integrity(client, input_bucket, input_key, source_version, new_version)
+            verify_object_versions_integrity(
+                client, input_bucket, input_key, source_version, new_version
+            )
         if body.get("DeleteOldVersions"):
-            logger.info("Deleting object {} versions older than version {}".format(input_key, new_version))
+            logger.info(
+                "Deleting object {} versions older than version {}".format(
+                    input_key, new_version
+                )
+            )
             delete_old_versions(client, input_bucket, input_key, new_version)
         msg.delete()
         emit_deletion_event(body, stats)
@@ -126,10 +150,19 @@ def execute(queue_url, message_body, receipt_handle):
         handle_error(msg, message_body, err_message)
     except IntegrityCheckFailedError as e:
         err_description, client, bucket, key, version_id = e.args
-        err_message = "Object version integrity check failed: {}".format(err_description)
+        err_message = "Object version integrity check failed: {}".format(
+            err_description
+        )
         handle_error(msg, message_body, err_message)
-        rollback_object_version(client, bucket, key, version_id,
-                                on_error=lambda err: handle_error(None, "{}", err, "ObjectRollbackFailed", False))
+        rollback_object_version(
+            client,
+            bucket,
+            key,
+            version_id,
+            on_error=lambda err: handle_error(
+                None, "{}", err, "ObjectRollbackFailed", False
+            ),
+        )
     except Exception as e:
         err_message = "Unknown error during message processing: {}".format(str(e))
         handle_error(msg, message_body, err_message)
@@ -148,8 +181,10 @@ def kill_handler(msgs, process_pool):
 
 def get_queue(queue_url, **resource_kwargs):
     if not resource_kwargs.get("endpoint_url") and os.getenv("AWS_DEFAULT_REGION"):
-        resource_kwargs["endpoint_url"] = "https://sqs.{}.amazonaws.com".format(os.getenv("AWS_DEFAULT_REGION"))
-    sqs = boto3.resource('sqs', **resource_kwargs)
+        resource_kwargs["endpoint_url"] = "https://sqs.{}.amazonaws.com".format(
+            os.getenv("AWS_DEFAULT_REGION")
+        )
+    sqs = boto3.resource("sqs", **resource_kwargs)
     return sqs.Queue(queue_url)
 
 
@@ -162,7 +197,9 @@ def main(queue_url, max_messages, wait_time, sleep_time):
         signal.signal(signal.SIGTERM, lambda *_: kill_handler(messages, pool))
         while 1:
             logger.info("Fetching messages...")
-            messages = queue.receive_messages(WaitTimeSeconds=wait_time, MaxNumberOfMessages=max_messages)
+            messages = queue.receive_messages(
+                WaitTimeSeconds=wait_time, MaxNumberOfMessages=max_messages
+            )
             if len(messages) == 0:
                 logger.info("No messages. Sleeping")
                 time.sleep(sleep_time)
@@ -173,15 +210,18 @@ def main(queue_url, max_messages, wait_time, sleep_time):
 
 
 def parse_args(args):
-    parser = argparse.ArgumentParser(description="Read and process new deletion tasks from a deletion queue")
+    parser = argparse.ArgumentParser(
+        description="Read and process new deletion tasks from a deletion queue"
+    )
     parser.add_argument("--wait_time", type=int, default=5)
     parser.add_argument("--max_messages", type=int, default=1)
     parser.add_argument("--sleep_time", type=int, default=30)
-    parser.add_argument("--queue_url", type=str, default=os.getenv("DELETE_OBJECTS_QUEUE"))
+    parser.add_argument(
+        "--queue_url", type=str, default=os.getenv("DELETE_OBJECTS_QUEUE")
+    )
     return parser.parse_args(args)
 
 
 if __name__ == "__main__":
     opts = parse_args(sys.argv[1:])
     main(opts.queue_url, opts.max_messages, opts.wait_time, opts.sleep_time)
-

@@ -5,7 +5,7 @@ import boto3
 
 from decorators import with_logging
 
-sqs = boto3.resource('sqs')
+sqs = boto3.resource("sqs")
 
 
 @with_logging

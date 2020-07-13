@@ -6,8 +6,16 @@ import pytest
 from mock import patch
 
 with patch.dict(os.environ, {"QueryQueue": "test"}):
-    from backend.lambdas.tasks.generate_queries import handler, get_table, get_partitions, convert_to_col_type, \
-        get_deletion_queue, generate_athena_queries, get_data_mappers, get_inner_children
+    from backend.lambdas.tasks.generate_queries import (
+        handler,
+        get_table,
+        get_partitions,
+        convert_to_col_type,
+        get_deletion_queue,
+        generate_athena_queries,
+        get_data_mappers,
+        get_inner_children,
+    )
 
 pytestmark = [pytest.mark.unit, pytest.mark.task]
 
@@ -16,30 +24,38 @@ pytestmark = [pytest.mark.unit, pytest.mark.task]
 @patch("backend.lambdas.tasks.generate_queries.get_deletion_queue")
 @patch("backend.lambdas.tasks.generate_queries.get_data_mappers")
 @patch("backend.lambdas.tasks.generate_queries.generate_athena_queries")
-def test_it_invokes_athena_query_generator(gen_athena_queries, get_data_mappers, get_del_q, batch_sqs_msgs_mock):
+def test_it_invokes_athena_query_generator(
+    gen_athena_queries, get_data_mappers, get_del_q, batch_sqs_msgs_mock
+):
     get_del_q.return_value = [{"MatchId": "hi"}]
-    queries = [{
-        "DataMapperId": "a",
-        "QueryExecutor": "athena",
-        "Format": "parquet",
-        "Database": "test_db",
-        "Table": "test_table",
-        "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
-        "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
-        "DeleteOldVersions": True
-    }]
-    gen_athena_queries.return_value = queries
-    get_data_mappers.return_value = iter([{
-        "DataMapperId": "a",
-        "QueryExecutor": "athena",
-        "Columns": ["customer_id"],
-        "Format": "parquet",
-        "QueryExecutorParameters": {
-            "DataCatalogProvider": "glue",
+    queries = [
+        {
+            "DataMapperId": "a",
+            "QueryExecutor": "athena",
+            "Format": "parquet",
             "Database": "test_db",
-            "Table": "test_table"
-        },
-    }])
+            "Table": "test_table",
+            "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
+            "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
+            "DeleteOldVersions": True,
+        }
+    ]
+    gen_athena_queries.return_value = queries
+    get_data_mappers.return_value = iter(
+        [
+            {
+                "DataMapperId": "a",
+                "QueryExecutor": "athena",
+                "Columns": ["customer_id"],
+                "Format": "parquet",
+                "QueryExecutorParameters": {
+                    "DataCatalogProvider": "glue",
+                    "Database": "test_db",
+                    "Table": "test_table",
+                },
+            }
+        ]
+    )
     handler({"ExecutionName": "test"}, SimpleNamespace())
     batch_sqs_msgs_mock.assert_called_with(mock.ANY, queries)
 
@@ -47,19 +63,25 @@ def test_it_invokes_athena_query_generator(gen_athena_queries, get_data_mappers,
 @patch("backend.lambdas.tasks.generate_queries.batch_sqs_msgs")
 @patch("backend.lambdas.tasks.generate_queries.get_deletion_queue")
 @patch("backend.lambdas.tasks.generate_queries.get_data_mappers")
-def test_it_raises_for_unknown_query_executor(get_data_mappers, get_del_q, batch_sqs_msgs_mock):
+def test_it_raises_for_unknown_query_executor(
+    get_data_mappers, get_del_q, batch_sqs_msgs_mock
+):
     get_del_q.return_value = [{"MatchId": "hi"}]
-    get_data_mappers.return_value = iter([{
-        "DataMapperId": "a",
-        "QueryExecutor": "invalid",
-        "Columns": ["customer_id"],
-        "Format": "parquet",
-        "QueryExecutorParameters": {
-            "DataCatalogProvider": "glue",
-            "Database": "test_db",
-            "Table": "test_table"
-        },
-    }])
+    get_data_mappers.return_value = iter(
+        [
+            {
+                "DataMapperId": "a",
+                "QueryExecutor": "invalid",
+                "Columns": ["customer_id"],
+                "Format": "parquet",
+                "QueryExecutorParameters": {
+                    "DataCatalogProvider": "glue",
+                    "Database": "test_db",
+                    "Table": "test_table",
+                },
+            }
+        ]
+    )
     with pytest.raises(NotImplementedError):
         handler({"ExecutionName": "test"}, SimpleNamespace())
         batch_sqs_msgs_mock.assert_not_called()
@@ -76,27 +98,32 @@ class TestAthenaQueries:
         get_partitions_mock.return_value = [
             partition_stub(p, columns) for p in partitions
         ]
-        resp = generate_athena_queries({
-            "DataMapperId": "a",
-            "QueryExecutor": "athena",
-            "Columns": columns,
-            "Format": "parquet",
-            "QueryExecutorParameters": {
-                "DataCatalogProvider": "glue",
-                "Database": "test_db",
-                "Table": "test_table"
+        resp = generate_athena_queries(
+            {
+                "DataMapperId": "a",
+                "QueryExecutor": "athena",
+                "Columns": columns,
+                "Format": "parquet",
+                "QueryExecutorParameters": {
+                    "DataCatalogProvider": "glue",
+                    "Database": "test_db",
+                    "Table": "test_table",
+                },
             },
-        }, [{"MatchId": "hi"}])
-        assert resp == [{
-            "DataMapperId": "a",
-            "QueryExecutor": "athena",
-            "Format": "parquet",
-            "Database": "test_db",
-            "Table": "test_table",
-            "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
-            "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
-            "DeleteOldVersions": True
-        }]
+            [{"MatchId": "hi"}],
+        )
+        assert resp == [
+            {
+                "DataMapperId": "a",
+                "QueryExecutor": "athena",
+                "Format": "parquet",
+                "Database": "test_db",
+                "Table": "test_table",
+                "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
+                "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
+                "DeleteOldVersions": True,
+            }
+        ]
 
     @patch("backend.lambdas.tasks.generate_queries.get_table")
     @patch("backend.lambdas.tasks.generate_queries.get_partitions")
@@ -108,35 +135,42 @@ class TestAthenaQueries:
         get_partitions_mock.return_value = [
             partition_stub(p, columns) for p in partitions
         ]
-        resp = generate_athena_queries({
-            "DataMapperId": "a",
-            "QueryExecutor": "athena",
-            "Columns": columns,
-            "Format": "parquet",
-            "QueryExecutorParameters": {
-                "DataCatalogProvider": "glue",
-                "Database": "test_db",
-                "Table": "test_table"
-            }
-        }, [{"MatchId": "hi"}])
+        resp = generate_athena_queries(
+            {
+                "DataMapperId": "a",
+                "QueryExecutor": "athena",
+                "Columns": columns,
+                "Format": "parquet",
+                "QueryExecutorParameters": {
+                    "DataCatalogProvider": "glue",
+                    "Database": "test_db",
+                    "Table": "test_table",
+                },
+            },
+            [{"MatchId": "hi"}],
+        )
 
-        assert resp == [{
-            "DataMapperId": "a",
-            "QueryExecutor": "athena",
-            "Format": "parquet",
-            "Database": "test_db",
-            "Table": "test_table",
-            "Columns": [
-                {"Column": "customer_id", "MatchIds": ["hi"]},
-                {"Column": "alt_customer_id", "MatchIds": ["hi"]}
-            ],
-            "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
-            "DeleteOldVersions": True
-        }]
+        assert resp == [
+            {
+                "DataMapperId": "a",
+                "QueryExecutor": "athena",
+                "Format": "parquet",
+                "Database": "test_db",
+                "Table": "test_table",
+                "Columns": [
+                    {"Column": "customer_id", "MatchIds": ["hi"]},
+                    {"Column": "alt_customer_id", "MatchIds": ["hi"]},
+                ],
+                "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
+                "DeleteOldVersions": True,
+            }
+        ]
 
     @patch("backend.lambdas.tasks.generate_queries.get_table")
     @patch("backend.lambdas.tasks.generate_queries.get_partitions")
-    def test_it_handles_multiple_partition_keys(self, get_partitions_mock, get_table_mock):
+    def test_it_handles_multiple_partition_keys(
+        self, get_partitions_mock, get_table_mock
+    ):
         columns = ["customer_id"]
         partition_keys = ["year", "month"]
         partitions = [["2019", "01"]]
@@ -145,35 +179,42 @@ class TestAthenaQueries:
             partition_stub(p, columns) for p in partitions
         ]
 
-        resp = generate_athena_queries({
-            "DataMapperId": "a",
-            "QueryExecutor": "athena",
-            "Columns": columns,
-            "Format": "parquet",
-            "QueryExecutorParameters": {
-                "DataCatalogProvider": "glue",
-                "Database": "test_db",
-                "Table": "test_table"
-            }
-        }, [{"MatchId": "hi"}])
+        resp = generate_athena_queries(
+            {
+                "DataMapperId": "a",
+                "QueryExecutor": "athena",
+                "Columns": columns,
+                "Format": "parquet",
+                "QueryExecutorParameters": {
+                    "DataCatalogProvider": "glue",
+                    "Database": "test_db",
+                    "Table": "test_table",
+                },
+            },
+            [{"MatchId": "hi"}],
+        )
 
-        assert resp == [{
-            "DataMapperId": "a",
-            "QueryExecutor": "athena",
-            "Format": "parquet",
-            "Database": "test_db",
-            "Table": "test_table",
-            "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
-            "PartitionKeys": [
-                {"Key": "year", "Value": "2019"},
-                {"Key": "month", "Value": "01"}
-            ],
-            "DeleteOldVersions": True
-        }]
+        assert resp == [
+            {
+                "DataMapperId": "a",
+                "QueryExecutor": "athena",
+                "Format": "parquet",
+                "Database": "test_db",
+                "Table": "test_table",
+                "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
+                "PartitionKeys": [
+                    {"Key": "year", "Value": "2019"},
+                    {"Key": "month", "Value": "01"},
+                ],
+                "DeleteOldVersions": True,
+            }
+        ]
 
     @patch("backend.lambdas.tasks.generate_queries.get_table")
     @patch("backend.lambdas.tasks.generate_queries.get_partitions")
-    def test_it_handles_multiple_partition_values(self, get_partitions_mock, get_table_mock):
+    def test_it_handles_multiple_partition_values(
+        self, get_partitions_mock, get_table_mock
+    ):
         columns = ["customer_id"]
         partition_keys = ["year", "month"]
         partitions = [["2018", "12"], ["2019", "01"], ["2019", "02"]]
@@ -182,61 +223,68 @@ class TestAthenaQueries:
             partition_stub(p, columns) for p in partitions
         ]
 
-        resp = generate_athena_queries({
-            "DataMapperId": "a",
-            "Columns": columns,
-            "Format": "parquet",
-            "QueryExecutor": "athena",
-            "QueryExecutorParameters": {
-                "DataCatalogProvider": "glue",
-                "Database": "test_db",
-                "Table": "test_table"
-            }
-        }, [{"MatchId": "hi"}])
+        resp = generate_athena_queries(
+            {
+                "DataMapperId": "a",
+                "Columns": columns,
+                "Format": "parquet",
+                "QueryExecutor": "athena",
+                "QueryExecutorParameters": {
+                    "DataCatalogProvider": "glue",
+                    "Database": "test_db",
+                    "Table": "test_table",
+                },
+            },
+            [{"MatchId": "hi"}],
+        )
 
-        assert resp == [{
-            "DataMapperId": "a",
-            "Database": "test_db",
-            "Table": "test_table",
-            "QueryExecutor": "athena",
-            "Format": "parquet",
-            "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
-            "PartitionKeys": [
-                {"Key": "year", "Value": "2018"},
-                {"Key": "month", "Value": "12"}
-            ],
-            "DeleteOldVersions": True
-        },
-        {
-            "DataMapperId": "a",
-            "Database": "test_db",
-            "Table": "test_table",
-            "QueryExecutor": "athena",
-            "Format": "parquet",
-            "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
-            "PartitionKeys": [
-                {"Key": "year", "Value": "2019"},
-                {"Key": "month", "Value": "01"}
-            ],
-            "DeleteOldVersions": True
-        },
-        {
-            "DataMapperId": "a",
-            "Database": "test_db",
-            "Table": "test_table",
-            "QueryExecutor": "athena",
-            "Format": "parquet",
-            "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
-            "PartitionKeys": [
-                {"Key": "year", "Value": "2019"},
-                {"Key": "month", "Value": "02"}
-            ],
-            "DeleteOldVersions": True
-        }]
+        assert resp == [
+            {
+                "DataMapperId": "a",
+                "Database": "test_db",
+                "Table": "test_table",
+                "QueryExecutor": "athena",
+                "Format": "parquet",
+                "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
+                "PartitionKeys": [
+                    {"Key": "year", "Value": "2018"},
+                    {"Key": "month", "Value": "12"},
+                ],
+                "DeleteOldVersions": True,
+            },
+            {
+                "DataMapperId": "a",
+                "Database": "test_db",
+                "Table": "test_table",
+                "QueryExecutor": "athena",
+                "Format": "parquet",
+                "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
+                "PartitionKeys": [
+                    {"Key": "year", "Value": "2019"},
+                    {"Key": "month", "Value": "01"},
+                ],
+                "DeleteOldVersions": True,
+            },
+            {
+                "DataMapperId": "a",
+                "Database": "test_db",
+                "Table": "test_table",
+                "QueryExecutor": "athena",
+                "Format": "parquet",
+                "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
+                "PartitionKeys": [
+                    {"Key": "year", "Value": "2019"},
+                    {"Key": "month", "Value": "02"},
+                ],
+                "DeleteOldVersions": True,
+            },
+        ]
 
     @patch("backend.lambdas.tasks.generate_queries.get_table")
     @patch("backend.lambdas.tasks.generate_queries.get_partitions")
-    def test_it_propagates_optional_properties(self, get_partitions_mock, get_table_mock):
+    def test_it_propagates_optional_properties(
+        self, get_partitions_mock, get_table_mock
+    ):
         columns = ["customer_id"]
         partition_keys = ["year", "month"]
         partitions = [["2018", "12"], ["2019", "01"]]
@@ -245,52 +293,59 @@ class TestAthenaQueries:
             partition_stub(p, columns) for p in partitions
         ]
 
-        resp = generate_athena_queries({
-            "DataMapperId": "a",
-            "QueryExecutor": "athena",
-            "Columns": columns,
-            "Format": "parquet",
-            "QueryExecutorParameters": {
-                "DataCatalogProvider": "glue",
-                "Database": "test_db",
-                "Table": "test_table"
+        resp = generate_athena_queries(
+            {
+                "DataMapperId": "a",
+                "QueryExecutor": "athena",
+                "Columns": columns,
+                "Format": "parquet",
+                "QueryExecutorParameters": {
+                    "DataCatalogProvider": "glue",
+                    "Database": "test_db",
+                    "Table": "test_table",
+                },
+                "RoleArn": "arn:aws:iam::accountid:role/rolename",
+                "DeleteOldVersions": True,
             },
-            "RoleArn": "arn:aws:iam::accountid:role/rolename",
-            "DeleteOldVersions": True
-        }, [{"MatchId": "hi"}])
+            [{"MatchId": "hi"}],
+        )
 
-        assert resp == [{
-            "DataMapperId": "a",
-            "Database": "test_db",
-            "Table": "test_table",
-            "QueryExecutor": "athena",
-            "Format": "parquet",
-            "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
-            "PartitionKeys": [
-                {"Key": "year", "Value": "2018"},
-                {"Key": "month", "Value": "12"}
-            ],
-            "RoleArn": "arn:aws:iam::accountid:role/rolename",
-            "DeleteOldVersions": True
-        },
-        {
-            "DataMapperId": "a",
-            "Database": "test_db",
-            "Table": "test_table",
-            "QueryExecutor": "athena",
-            "Format": "parquet",
-            "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
-            "PartitionKeys": [
-                {"Key": "year", "Value": "2019"},
-                {"Key": "month", "Value": "01"}
-            ],
-            "RoleArn": "arn:aws:iam::accountid:role/rolename",
-            "DeleteOldVersions": True
-        }]
+        assert resp == [
+            {
+                "DataMapperId": "a",
+                "Database": "test_db",
+                "Table": "test_table",
+                "QueryExecutor": "athena",
+                "Format": "parquet",
+                "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
+                "PartitionKeys": [
+                    {"Key": "year", "Value": "2018"},
+                    {"Key": "month", "Value": "12"},
+                ],
+                "RoleArn": "arn:aws:iam::accountid:role/rolename",
+                "DeleteOldVersions": True,
+            },
+            {
+                "DataMapperId": "a",
+                "Database": "test_db",
+                "Table": "test_table",
+                "QueryExecutor": "athena",
+                "Format": "parquet",
+                "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
+                "PartitionKeys": [
+                    {"Key": "year", "Value": "2019"},
+                    {"Key": "month", "Value": "01"},
+                ],
+                "RoleArn": "arn:aws:iam::accountid:role/rolename",
+                "DeleteOldVersions": True,
+            },
+        ]
 
     @patch("backend.lambdas.tasks.generate_queries.get_table")
     @patch("backend.lambdas.tasks.generate_queries.get_partitions")
-    def test_it_filters_users_from_non_applicable_tables(self, get_partitions_mock, get_table_mock):
+    def test_it_filters_users_from_non_applicable_tables(
+        self, get_partitions_mock, get_table_mock
+    ):
         columns = ["customer_id"]
         partition_keys = ["product_category"]
         partitions = [["Books"]]
@@ -298,31 +353,36 @@ class TestAthenaQueries:
         get_partitions_mock.return_value = [
             partition_stub(p, columns) for p in partitions
         ]
-        resp = generate_athena_queries({
-            "DataMapperId": "B",
-            "QueryExecutor": "athena",
-            "Columns": columns,
-            "Format": "parquet",
-            "QueryExecutorParameters": {
-                "DataCatalogProvider": "glue",
-                "Database": "test_db",
-                "Table": "B"
-            }
-        }, [
-            {"MatchId": "123", "DataMappers": ["A"]},
-            {"MatchId": "456", "DataMappers": []}
-        ])
+        resp = generate_athena_queries(
+            {
+                "DataMapperId": "B",
+                "QueryExecutor": "athena",
+                "Columns": columns,
+                "Format": "parquet",
+                "QueryExecutorParameters": {
+                    "DataCatalogProvider": "glue",
+                    "Database": "test_db",
+                    "Table": "B",
+                },
+            },
+            [
+                {"MatchId": "123", "DataMappers": ["A"]},
+                {"MatchId": "456", "DataMappers": []},
+            ],
+        )
 
-        assert resp == [{
-            "DataMapperId": "B",
-            "Database": "test_db",
-            "Table": "B",
-            "QueryExecutor": "athena",
-            "Format": "parquet",
-            "Columns": [{"Column": "customer_id", "MatchIds": ["456"]}],
-            "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
-            "DeleteOldVersions": True
-        }]
+        assert resp == [
+            {
+                "DataMapperId": "B",
+                "Database": "test_db",
+                "Table": "B",
+                "QueryExecutor": "athena",
+                "Format": "parquet",
+                "Columns": [{"Column": "customer_id", "MatchIds": ["456"]}],
+                "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
+                "DeleteOldVersions": True,
+            }
+        ]
 
     @patch("backend.lambdas.tasks.generate_queries.get_table")
     @patch("backend.lambdas.tasks.generate_queries.get_partitions")
@@ -330,81 +390,99 @@ class TestAthenaQueries:
         columns = ["customer_id"]
         get_table_mock.return_value = table_stub(columns, [])
         get_partitions_mock.return_value = []
-        resp = generate_athena_queries({
-            "DataMapperId": "a",
-            "QueryExecutor": "athena",
-            "Columns": columns,
-            "Format": "parquet",
-            "QueryExecutorParameters": {
-                "DataCatalogProvider": "glue",
-                "Database": "test_db",
-                "Table": "test_table"
-            }
-        }, [{"MatchId": "hi"}])
-        assert resp == [{
-            "DataMapperId": "a",
-            "Database": "test_db",
-            "Table": "test_table",
-            "QueryExecutor": "athena",
-            "Format": "parquet",
-            "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
-            "PartitionKeys": [],
-            "DeleteOldVersions": True,
-        }]
-
-    @patch("backend.lambdas.tasks.generate_queries.get_table")
-    @patch("backend.lambdas.tasks.generate_queries.get_partitions")
-    def test_it_propagates_role_arn_for_unpartitioned_data(self, get_partitions_mock, get_table_mock):
-        columns = ["customer_id"]
-        get_table_mock.return_value = table_stub(columns, [])
-        get_partitions_mock.return_value = []
-        resp = generate_athena_queries({
-            "DataMapperId": "a",
-            "QueryExecutor": "athena",
-            "Columns": columns,
-            "Format": "parquet",
-            "QueryExecutorParameters": {
-                "DataCatalogProvider": "glue",
-                "Database": "test_db",
-                "Table": "test_table"
+        resp = generate_athena_queries(
+            {
+                "DataMapperId": "a",
+                "QueryExecutor": "athena",
+                "Columns": columns,
+                "Format": "parquet",
+                "QueryExecutorParameters": {
+                    "DataCatalogProvider": "glue",
+                    "Database": "test_db",
+                    "Table": "test_table",
+                },
             },
-            "RoleArn": "arn:aws:iam::accountid:role/rolename",
-        }, [{"MatchId": "hi"}])
-        assert resp == [{
-            "DataMapperId": "a",
-            "Database": "test_db",
-            "Table": "test_table",
-            "QueryExecutor": "athena",
-            "Format": "parquet",
-            "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
-            "PartitionKeys": [],
-            "RoleArn": "arn:aws:iam::accountid:role/rolename",
-            "DeleteOldVersions": True,
-        }]
+            [{"MatchId": "hi"}],
+        )
+        assert resp == [
+            {
+                "DataMapperId": "a",
+                "Database": "test_db",
+                "Table": "test_table",
+                "QueryExecutor": "athena",
+                "Format": "parquet",
+                "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
+                "PartitionKeys": [],
+                "DeleteOldVersions": True,
+            }
+        ]
 
     @patch("backend.lambdas.tasks.generate_queries.get_table")
     @patch("backend.lambdas.tasks.generate_queries.get_partitions")
-    def test_it_removes_queries_with_no_applicable_matches(self, get_partitions_mock, get_table_mock):
+    def test_it_propagates_role_arn_for_unpartitioned_data(
+        self, get_partitions_mock, get_table_mock
+    ):
         columns = ["customer_id"]
         get_table_mock.return_value = table_stub(columns, [])
         get_partitions_mock.return_value = []
-        resp = generate_athena_queries({
-            "DataMapperId": "A",
-            "QueryExecutor": "athena",
-            "Columns": columns,
-            "Format": "parquet",
-            "QueryExecutorParameters": {
-                "DataCatalogProvider": "glue",
+        resp = generate_athena_queries(
+            {
+                "DataMapperId": "a",
+                "QueryExecutor": "athena",
+                "Columns": columns,
+                "Format": "parquet",
+                "QueryExecutorParameters": {
+                    "DataCatalogProvider": "glue",
+                    "Database": "test_db",
+                    "Table": "test_table",
+                },
+                "RoleArn": "arn:aws:iam::accountid:role/rolename",
+            },
+            [{"MatchId": "hi"}],
+        )
+        assert resp == [
+            {
+                "DataMapperId": "a",
                 "Database": "test_db",
-                "Table": "test_table"
+                "Table": "test_table",
+                "QueryExecutor": "athena",
+                "Format": "parquet",
+                "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
+                "PartitionKeys": [],
+                "RoleArn": "arn:aws:iam::accountid:role/rolename",
+                "DeleteOldVersions": True,
             }
-        }, [{"MatchId": "123", "DataMappers": ["B"]}])
+        ]
+
+    @patch("backend.lambdas.tasks.generate_queries.get_table")
+    @patch("backend.lambdas.tasks.generate_queries.get_partitions")
+    def test_it_removes_queries_with_no_applicable_matches(
+        self, get_partitions_mock, get_table_mock
+    ):
+        columns = ["customer_id"]
+        get_table_mock.return_value = table_stub(columns, [])
+        get_partitions_mock.return_value = []
+        resp = generate_athena_queries(
+            {
+                "DataMapperId": "A",
+                "QueryExecutor": "athena",
+                "Columns": columns,
+                "Format": "parquet",
+                "QueryExecutorParameters": {
+                    "DataCatalogProvider": "glue",
+                    "Database": "test_db",
+                    "Table": "test_table",
+                },
+            },
+            [{"MatchId": "123", "DataMappers": ["B"]}],
+        )
         assert resp == []
 
     @patch("backend.lambdas.tasks.generate_queries.get_table")
     @patch("backend.lambdas.tasks.generate_queries.get_partitions")
     def test_it_removes_queries_with_no_applicable_matches_for_partitioned_data(
-            self, get_partitions_mock, get_table_mock):
+        self, get_partitions_mock, get_table_mock
+    ):
         columns = ["customer_id"]
         partition_keys = ["product_category"]
         partitions = [["Books"], ["Beauty"]]
@@ -412,17 +490,20 @@ class TestAthenaQueries:
         get_partitions_mock.return_value = [
             partition_stub(p, columns) for p in partitions
         ]
-        resp = generate_athena_queries({
-            "DataMapperId": "A",
-            "QueryExecutor": "athena",
-            "Columns": columns,
-            "Format": "parquet",
-            "QueryExecutorParameters": {
-                "DataCatalogProvider": "glue",
-                "Database": "test_db",
-                "Table": "test_table"
-            }
-        }, [{"MatchId": "123", "DataMappers": ["C"]}])
+        resp = generate_athena_queries(
+            {
+                "DataMapperId": "A",
+                "QueryExecutor": "athena",
+                "Columns": columns,
+                "Format": "parquet",
+                "QueryExecutorParameters": {
+                    "DataCatalogProvider": "glue",
+                    "Database": "test_db",
+                    "Table": "test_table",
+                },
+            },
+            [{"MatchId": "123", "DataMappers": ["C"]}],
+        )
         assert resp == []
 
     @patch("backend.lambdas.tasks.generate_queries.glue_client")
@@ -430,11 +511,7 @@ class TestAthenaQueries:
         client.get_table.return_value = {"Table": {"Name": "test"}}
         result = get_table("test_db", "test_table")
         assert {"Name": "test"} == result
-        client.get_table.assert_called_with(
-            DatabaseName="test_db",
-            Name="test_table"
-        )
-
+        client.get_table.assert_called_with(DatabaseName="test_db", Name="test_table")
 
     @patch("backend.lambdas.tasks.generate_queries.paginate")
     def test_it_returns_all_partitions(self, paginate):
@@ -442,12 +519,11 @@ class TestAthenaQueries:
         result = list(get_partitions("test_db", "test_table"))
         assert ["blah"] == result
         paginate.assert_called_with(
-            mock.ANY, mock.ANY, ["Partitions"], **{
-                "DatabaseName": "test_db",
-                "TableName": "test_table"
-            }
+            mock.ANY,
+            mock.ANY,
+            ["Partitions"],
+            **{"DatabaseName": "test_db", "TableName": "test_table"}
         )
-
 
     def test_it_converts_supported_types(self):
         for scenario in [
@@ -459,37 +535,44 @@ class TestAthenaQueries:
             {"value": "2", "type": "smallint", "expected": 2},
             {"value": "2", "type": "tinyint", "expected": 2},
             {"value": "2.23", "type": "double", "expected": 2.23},
-            {"value": "2.23", "type": "float", "expected": 2.23}]:
-            res = convert_to_col_type(scenario["value"], "test_col", {
-                "StorageDescriptor": {
-                    "Columns": [{
-                        "Name": "test_col",
-                        "Type": scenario["type"]
-                    }]
-                }
-            })
+            {"value": "2.23", "type": "float", "expected": 2.23},
+        ]:
+            res = convert_to_col_type(
+                scenario["value"],
+                "test_col",
+                {
+                    "StorageDescriptor": {
+                        "Columns": [{"Name": "test_col", "Type": scenario["type"]}]
+                    }
+                },
+            )
 
             assert res == scenario["expected"]
-
 
     def test_it_converts_supported_types_when_nested_in_struct(self):
         column_type = "struct<type:int,x:map<string,struct<a:int>>,info:struct<user_id:int,name:string>>"
-        table = {"StorageDescriptor":{"Columns":[{"Name": "user","Type": column_type }]}}
+        table = {
+            "StorageDescriptor": {"Columns": [{"Name": "user", "Type": column_type}]}
+        }
         for scenario in [
             {"value": "john_doe", "id": "user.info.name", "expected": "john_doe"},
             {"value": "1234567890", "id": "user.info.user_id", "expected": 1234567890},
-            {"value": "1", "id": "user.type", "expected": 1}]:
+            {"value": "1", "id": "user.type", "expected": 1},
+        ]:
             res = convert_to_col_type(scenario["value"], scenario["id"], table)
             assert res == scenario["expected"]
 
-
     def test_it_throws_for_unknown_col(self):
         with pytest.raises(ValueError):
-            convert_to_col_type("mystr", "doesnt_exist", {"StorageDescriptor": {"Columns": [{
-                "Name": "test_col",
-                "Type": "string"
-            }]}})
-
+            convert_to_col_type(
+                "mystr",
+                "doesnt_exist",
+                {
+                    "StorageDescriptor": {
+                        "Columns": [{"Name": "test_col", "Type": "string"}]
+                    }
+                },
+            )
 
     def test_it_throws_for_unsupported_complex_nested_types(self):
         for scenario in [
@@ -498,58 +581,61 @@ class TestAthenaQueries:
             "struct<a:array<struct<a:int,x:int>>>",
             "array<struct<a:int,b:struct<x:int>>>",
             "struct<a:map<string,struct<x:int>>>",
-            "map<string,struct<x:int>>"
-            ]:
+            "map<string,struct<x:int>>",
+        ]:
             with pytest.raises(ValueError):
-                convert_to_col_type(123, "user.x", {
-                    "StorageDescriptor":{
-                        "Columns":[{
-                            "Name": "user",
-                            "Type": scenario
-                        }]
-                    }
-                })
-    
-    
+                convert_to_col_type(
+                    123,
+                    "user.x",
+                    {
+                        "StorageDescriptor": {
+                            "Columns": [{"Name": "user", "Type": scenario}]
+                        }
+                    },
+                )
+
     def test_it_throws_for_unsupported_col_types(self):
         with pytest.raises(ValueError) as e:
-            convert_to_col_type("2.56", "test_col", {"StorageDescriptor": {"Columns": [{
-                "Name": "test_col",
-                "Type": "decimal"
-            }]}})
-        assert e.value.args[0] == 'Column test_col is not a supported column type for querying'
-
+            convert_to_col_type(
+                "2.56",
+                "test_col",
+                {
+                    "StorageDescriptor": {
+                        "Columns": [{"Name": "test_col", "Type": "decimal"}]
+                    }
+                },
+            )
+        assert (
+            e.value.args[0]
+            == "Column test_col is not a supported column type for querying"
+        )
 
     def test_it_throws_for_unconvertable_matches(self):
         with pytest.raises(ValueError):
-            convert_to_col_type("mystr", "test_col", {"StorageDescriptor": {"Columns": [{
-                "Name": "test_col",
-                "Type": "int"
-            }]}})
-
+            convert_to_col_type(
+                "mystr",
+                "test_col",
+                {
+                    "StorageDescriptor": {
+                        "Columns": [{"Name": "test_col", "Type": "int"}]
+                    }
+                },
+            )
 
     def test_it_throws_for_invalid_schema(self):
         with pytest.raises(ValueError):
-            get_inner_children('struct<name:string', 'struct<', '>')
+            get_inner_children("struct<name:string", "struct<", ">")
 
 
 @patch("backend.lambdas.tasks.generate_queries.jobs_table")
 def test_it_fetches_deletion_queue_from_ddb(table_mock):
     table_mock.get_item.return_value = {
-        "Item": {
-            "DeletionQueueItems": [{
-                "DataMappers": [],
-                "MatchId": "123"
-            }]
-        }
+        "Item": {"DeletionQueueItems": [{"DataMappers": [], "MatchId": "123"}]}
     }
 
     resp = get_deletion_queue("job123")
-    assert resp == [{
-        'DataMappers': [],
-        'MatchId': '123'
-    }]
-    table_mock.get_item.assert_called_with(Key={'Id': 'job123', 'Sk': 'job123'})
+    assert resp == [{"DataMappers": [], "MatchId": "123"}]
+    table_mock.get_item.assert_called_with(Key={"Id": "job123", "Sk": "job123"})
 
 
 @patch("backend.lambdas.tasks.generate_queries.deserialize_item")
@@ -563,7 +649,7 @@ def test_it_fetches_deserialized_data_mappers(paginate_mock, deserialize_mock):
         "QueryExecutorParameters": {
             "DataCatalogProvider": "glue",
             "Database": "test_db",
-            "Table": "test_table"
+            "Table": "test_table",
         },
     }
     deserialize_mock.return_value = dm
@@ -581,12 +667,7 @@ def partition_stub(values, columns, table_name="test_table"):
         "CreationTime": 1572440736.0,
         "LastAccessTime": 0.0,
         "StorageDescriptor": {
-            "Columns": [
-                {
-                    "Name": col,
-                    "Type": "string"
-                } for col in columns
-            ],
+            "Columns": [{"Name": col, "Type": "string"} for col in columns],
             "Location": "s3://bucket/location",
             "InputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
             "OutputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
@@ -594,9 +675,7 @@ def partition_stub(values, columns, table_name="test_table"):
             "NumberOfBuckets": -1,
             "SerdeInfo": {
                 "SerializationLibrary": "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
-                "Parameters": {
-                    "serialization.format": "1"
-                }
+                "Parameters": {"serialization.format": "1"},
             },
             "BucketColumns": [],
             "SortColumns": [],
@@ -604,10 +683,10 @@ def partition_stub(values, columns, table_name="test_table"):
             "SkewedInfo": {
                 "SkewedColumnNames": [],
                 "SkewedColumnValues": [],
-                "SkewedColumnValueLocationMaps": {}
+                "SkewedColumnValueLocationMaps": {},
             },
-            "StoredAsSubDirectories": False
-        }
+            "StoredAsSubDirectories": False,
+        },
     }
 
 
@@ -621,12 +700,7 @@ def table_stub(columns, partition_keys, table_name="test_table"):
         "LastAccessTime": 0.0,
         "Retention": 0,
         "StorageDescriptor": {
-            "Columns": [
-                {
-                    "Name": col,
-                    "Type": "string"
-                } for col in columns
-            ],
+            "Columns": [{"Name": col, "Type": "string"} for col in columns],
             "Location": "s3://bucket/location",
             "InputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
             "OutputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
@@ -634,9 +708,7 @@ def table_stub(columns, partition_keys, table_name="test_table"):
             "NumberOfBuckets": -1,
             "SerdeInfo": {
                 "SerializationLibrary": "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
-                "Parameters": {
-                    "serialization.format": "1"
-                }
+                "Parameters": {"serialization.format": "1"},
             },
             "BucketColumns": [],
             "SortColumns": [],
@@ -644,18 +716,14 @@ def table_stub(columns, partition_keys, table_name="test_table"):
             "SkewedInfo": {
                 "SkewedColumnNames": [],
                 "SkewedColumnValues": [],
-                "SkewedColumnValueLocationMaps": {}
+                "SkewedColumnValueLocationMaps": {},
             },
-            "StoredAsSubDirectories": False
+            "StoredAsSubDirectories": False,
         },
         "PartitionKeys": [
-            {
-                "Name": partition_key,
-                "Type": "string"
-            } for partition_key in partition_keys
+            {"Name": partition_key, "Type": "string"}
+            for partition_key in partition_keys
         ],
         "TableType": "EXTERNAL_TABLE",
-        "Parameters": {
-            "EXTERNAL": "TRUE",
-        },
+        "Parameters": {"EXTERNAL": "TRUE",},
     }

@@ -4,7 +4,11 @@ import json
 import pytest
 from mock import patch, MagicMock
 
-from backend.lambdas.custom_resources.enable_container_insights import create, delete, handler
+from backend.lambdas.custom_resources.enable_container_insights import (
+    create,
+    delete,
+    handler,
+)
 
 pytestmark = [pytest.mark.unit, pytest.mark.task]
 
@@ -16,12 +20,7 @@ def test_it_updates_cluster_setting(getenv_mock, mock_client):
     resp = create({}, MagicMock())
     mock_client.update_cluster_settings.assert_called_with(
         cluster="cluster-name",
-        settings=[
-            {
-                'name': 'containerInsights',
-                'value': 'enabled'
-            }
-        ]
+        settings=[{"name": "containerInsights", "value": "enabled"}],
     )
 
     assert not resp

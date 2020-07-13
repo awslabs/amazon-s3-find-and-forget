@@ -14,14 +14,10 @@ def test_it_returns_correct_queue_size(mock_resource):
     mock_resource.Queue.return_value = mock_queue
     mock_queue.attributes = {
         "ApproximateNumberOfMessages": "4",
-        "ApproximateNumberOfMessagesNotVisible": "2"
+        "ApproximateNumberOfMessagesNotVisible": "2",
     }
 
     event = {"QueueUrl": "queue_url"}
 
     resp = handler(event, SimpleNamespace())
-    assert {
-        "Visible": 4,
-        "NotVisible": 2,
-        "Total": 6
-    } == resp
+    assert {"Visible": 4, "NotVisible": 2, "Total": 6} == resp
