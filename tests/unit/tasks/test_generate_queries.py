@@ -7,7 +7,7 @@ from mock import patch
 
 with patch.dict(os.environ, {"QueryQueue": "test"}):
     from backend.lambdas.tasks.generate_queries import handler, get_table, get_partitions, convert_to_col_type, \
-        get_deletion_queue, generate_athena_queries, get_data_mappers
+        get_deletion_queue, generate_athena_queries, get_data_mappers, get_inner_children
 
 pytestmark = [pytest.mark.unit, pytest.mark.task]
 
@@ -435,6 +435,7 @@ class TestAthenaQueries:
             Name="test_table"
         )
 
+
     @patch("backend.lambdas.tasks.generate_queries.paginate")
     def test_it_returns_all_partitions(self, paginate):
         paginate.return_value = iter(["blah"])
@@ -471,6 +472,17 @@ class TestAthenaQueries:
             assert res == scenario["expected"]
 
 
+    def test_it_converts_supported_types_when_nested_in_struct(self):
+        column_type = "struct<type:int,x:map<string,struct<a:int>>,info:struct<user_id:int,name:string>>"
+        table = {"StorageDescriptor":{"Columns":[{"Name": "user","Type": column_type }]}}
+        for scenario in [
+            {"value": "john_doe", "id": "user.info.name", "expected": "john_doe"},
+            {"value": "1234567890", "id": "user.info.user_id", "expected": 1234567890},
+            {"value": "1", "id": "user.type", "expected": 1}]:
+            res = convert_to_col_type(scenario["value"], scenario["id"], table)
+            assert res == scenario["expected"]
+
+
     def test_it_throws_for_unknown_col(self):
         with pytest.raises(ValueError):
             convert_to_col_type("mystr", "doesnt_exist", {"StorageDescriptor": {"Columns": [{
@@ -478,12 +490,35 @@ class TestAthenaQueries:
                 "Type": "string"
             }]}})
 
+
+    def test_it_throws_for_unsupported_complex_nested_types(self):
+        for scenario in [
+            "array<x:int>",
+            "array<struct<x:int>>",
+            "struct<a:array<struct<a:int,x:int>>>",
+            "array<struct<a:int,b:struct<x:int>>>",
+            "struct<a:map<string,struct<x:int>>>",
+            "map<string,struct<x:int>>"
+            ]:
+            with pytest.raises(ValueError):
+                convert_to_col_type(123, "user.x", {
+                    "StorageDescriptor":{
+                        "Columns":[{
+                            "Name": "user",
+                            "Type": scenario
+                        }]
+                    }
+                })
+    
+    
     def test_it_throws_for_unsupported_col_types(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as e:
             convert_to_col_type("2.56", "test_col", {"StorageDescriptor": {"Columns": [{
                 "Name": "test_col",
                 "Type": "decimal"
             }]}})
+        assert e.value.args[0] == 'Column test_col is not a supported column type for querying'
+
 
     def test_it_throws_for_unconvertable_matches(self):
         with pytest.raises(ValueError):
@@ -491,6 +526,11 @@ class TestAthenaQueries:
                 "Name": "test_col",
                 "Type": "int"
             }]}})
+
+
+    def test_it_throws_for_invalid_schema(self):
+        with pytest.raises(ValueError):
+            get_inner_children('struct<name:string', 'struct<', '>')
 
 
 @patch("backend.lambdas.tasks.generate_queries.jobs_table")

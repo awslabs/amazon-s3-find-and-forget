@@ -168,9 +168,9 @@ test("it should serialize dbs and tables", () => {
                 type: "struct",
                 canBeIdentifier: false,
                 children: [
-                  { name: "id", type: "int", canBeIdentifier: false },
-                  { name: "name", type: "string", canBeIdentifier: false },
-                  { name: "url", type: "string", canBeIdentifier: false }
+                  { name: "id", type: "int", canBeIdentifier: true },
+                  { name: "name", type: "string", canBeIdentifier: true },
+                  { name: "url", type: "string", canBeIdentifier: true }
                 ]
               },
               { name: "simplearr", type: "array<int>", canBeIdentifier: false },
@@ -188,20 +188,20 @@ test("it should serialize dbs and tables", () => {
                 type: "struct",
                 canBeIdentifier: false,
                 children: [
-                  { name: "a", type: "int", canBeIdentifier: false },
-                  { name: "b", type: "string", canBeIdentifier: false },
+                  { name: "a", type: "int", canBeIdentifier: true },
+                  { name: "b", type: "string", canBeIdentifier: true },
                   {
                     name: "c",
                     type: "struct",
                     canBeIdentifier: false,
                     children: [
-                      { name: "d", type: "int", canBeIdentifier: false },
+                      { name: "d", type: "int", canBeIdentifier: true },
                       {
                         name: "e",
                         type: "struct",
                         canBeIdentifier: false,
                         children: [
-                          { name: "f", type: "int", canBeIdentifier: false }
+                          { name: "f", type: "int", canBeIdentifier: true }
                         ]
                       }
                     ]
@@ -214,7 +214,7 @@ test("it should serialize dbs and tables", () => {
                       {
                         name: "h",
                         type: "string",
-                        canBeIdentifier: false
+                        canBeIdentifier: true
                       }
                     ]
                   }
@@ -225,20 +225,20 @@ test("it should serialize dbs and tables", () => {
                 type: "struct",
                 canBeIdentifier: false,
                 children: [
-                  { name: "a", type: "int", canBeIdentifier: false },
-                  { name: "b", type: "string", canBeIdentifier: false },
+                  { name: "a", type: "int", canBeIdentifier: true },
+                  { name: "b", type: "string", canBeIdentifier: true },
                   {
                     name: "c",
                     type: "struct",
                     canBeIdentifier: false,
                     children: [
-                      { name: "d", type: "int", canBeIdentifier: false },
+                      { name: "d", type: "int", canBeIdentifier: true },
                       {
                         name: "e",
                         type: "struct",
                         canBeIdentifier: false,
                         children: [
-                          { name: "f", type: "int", canBeIdentifier: false }
+                          { name: "f", type: "int", canBeIdentifier: true }
                         ]
                       }
                     ]
@@ -251,7 +251,7 @@ test("it should serialize dbs and tables", () => {
                       {
                         name: "h",
                         type: "string",
-                        canBeIdentifier: false
+                        canBeIdentifier: true
                       }
                     ]
                   },

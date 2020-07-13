@@ -65,6 +65,33 @@ export const glueSerializer = tables => {
     return upperIndex >= 0 ? str.substr(0, upperIndex) : str;
   };
 
+  // Function to set canBeIdentifier=false to item and its children
+  // Example:
+  // {
+  //   name: "arr",
+  //   type: "array<struct>",
+  //   canBeIdentifier: false,
+  //   children: [
+  //     { name: "field", type: "int", canBeIdentifier: true },
+  //     { name: "n", type: "string", canBeIdentifier: true }
+  //   ]
+  // }
+  // =>
+  // {
+  //   name: "arr",
+  //   type: "array<struct>",
+  //   canBeIdentifier: false,
+  //   children: [
+  //     { name: "field", type: "int", canBeIdentifier: false },
+  //     { name: "n", type: "string", canBeIdentifier: false }
+  //   ]
+  // }
+  const setNoIdentifierToNodeAndItsChildren = node => {
+    node.canBeIdentifier = false;
+    if (node.children)
+      node.children.forEach(c => setNoIdentifierToNodeAndItsChildren(c));
+  };
+
   // Function to map Columns from AWS Glue schema to tree
   // Example 1:
   // { Name: "Name", Type: "int" } =>
@@ -122,8 +149,11 @@ export const glueSerializer = tables => {
             : getNestedChildren(rest, nestedType);
 
         result.children.push(
-          // nested types are currently not allowed as identifiers
-          columnMapper({ Name: name, Type: type, canBeIdentifier: false })
+          columnMapper({
+            Name: name,
+            Type: type,
+            canBeIdentifier: ALLOWEDTYPES.includes(type)
+          })
         );
         childrenToParse = childrenToParse.substr(
           name.length + sep.length + type.length
@@ -131,6 +161,7 @@ export const glueSerializer = tables => {
         if (childrenToParse.startsWith(","))
           childrenToParse = childrenToParse.substr(1);
       }
+      if (resultType !== STRUCT) setNoIdentifierToNodeAndItsChildren(result);
     }
 
     return result;

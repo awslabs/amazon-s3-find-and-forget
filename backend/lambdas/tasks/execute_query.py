@@ -59,7 +59,7 @@ def make_query(query_data):
 
 
 def escape_column(item):
-    return '"{}"'.format(item.replace('"', '""'))
+    return '"{}"'.format(item.replace('"', '""').replace(".", '"."'))
 
 
 def escape_item(item):
