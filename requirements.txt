@@ -4,9 +4,10 @@
 #
 #    pip-compile --output-file=requirements.txt requirements.in
 #
-appdirs==1.4.3            # via virtualenv
-attrs==19.3.0             # via -r ./backend/lambda_layers/decorators/requirements.txt, jsonschema, pytest
+appdirs==1.4.3            # via black, virtualenv
+attrs==19.3.0             # via -r ./backend/lambda_layers/decorators/requirements.txt, black, jsonschema, pytest
 aws-sam-translator==1.23.0  # via cfn-lint
+black==19.10b0            # via -r requirements.in
 boto3==1.12.11            # via -r ./backend/ecs_tasks/delete_files/requirements.txt, -r ./backend/lambda_layers/aws_sdk/requirements.txt, aws-sam-translator, s3fs
 botocore==1.15.38         # via -r ./backend/ecs_tasks/delete_files/requirements.txt, -r ./backend/lambda_layers/aws_sdk/requirements.txt, boto3, s3fs, s3transfer
 certifi==2020.4.5.1       # via -r ./backend/lambda_layers/cr_helper/requirements.txt, requests
@@ -14,7 +15,7 @@ cfgv==3.1.0               # via pre-commit
 cfn-flip==1.2.3           # via -r requirements.in
 cfn-lint==0.32.1          # via -r requirements.in
 chardet==3.0.4            # via -r ./backend/lambda_layers/cr_helper/requirements.txt, requests
-click==7.1.1              # via cfn-flip, pip-tools
+click==7.1.1              # via black, cfn-flip, pip-tools
 coverage==5.0.4           # via pytest-cov
 crhelper==2.0.5           # via -r ./backend/lambda_layers/cr_helper/requirements.txt
 decorator==4.4.2          # via networkx
@@ -24,7 +25,6 @@ filelock==3.0.12          # via virtualenv
 fsspec==0.7.2             # via -r ./backend/ecs_tasks/delete_files/requirements.txt, s3fs
 identify==1.4.14          # via pre-commit
 idna==2.9                 # via -r ./backend/lambda_layers/cr_helper/requirements.txt, requests
-importlib-metadata==1.6.0  # via jsonschema, pluggy, pre-commit, pytest, virtualenv
 jmespath==0.9.5           # via -r ./backend/ecs_tasks/delete_files/requirements.txt, -r ./backend/lambda_layers/aws_sdk/requirements.txt, boto3, botocore
 jsonpatch==1.25           # via cfn-lint
 jsonpointer==2.0          # via jsonpatch
@@ -37,6 +37,7 @@ nodeenv==1.3.5            # via pre-commit
 numpy==1.18.2             # via -r ./backend/ecs_tasks/delete_files/requirements.txt, pandas, pyarrow
 packaging==20.3           # via pytest
 pandas==1.0.1             # via -r ./backend/ecs_tasks/delete_files/requirements.txt
+pathspec==0.8.0           # via black
 pip-tools==5.1.2          # via -r requirements.in
 pluggy==0.13.1            # via pytest
 pre-commit==2.1.1         # via -r requirements.in
@@ -50,15 +51,16 @@ python-dateutil==2.8.1    # via -r ./backend/ecs_tasks/delete_files/requirements
 python-snappy==0.5.4      # via -r ./backend/ecs_tasks/delete_files/requirements.txt
 pytz==2019.3              # via -r ./backend/ecs_tasks/delete_files/requirements.txt, pandas
 pyyaml==5.3.1             # via cfn-flip, cfn-lint, pre-commit
+regex==2020.6.8           # via black
 requests==2.23.0          # via -r ./backend/lambda_layers/cr_helper/requirements.txt, crhelper
 s3fs==0.4.0               # via -r ./backend/ecs_tasks/delete_files/requirements.txt
 s3transfer==0.3.3         # via -r ./backend/ecs_tasks/delete_files/requirements.txt, -r ./backend/lambda_layers/aws_sdk/requirements.txt, boto3
 six==1.14.0               # via -r ./backend/ecs_tasks/delete_files/requirements.txt, -r ./backend/lambda_layers/aws_sdk/requirements.txt, -r ./backend/lambda_layers/decorators/requirements.txt, aws-sam-translator, cfn-flip, cfn-lint, jsonschema, junit-xml, packaging, pip-tools, pyrsistent, python-dateutil, virtualenv
-toml==0.10.0              # via pre-commit
+toml==0.10.0              # via black, pre-commit
+typed-ast==1.4.1          # via black
 urllib3==1.25.8           # via -r ./backend/ecs_tasks/delete_files/requirements.txt, -r ./backend/lambda_layers/aws_sdk/requirements.txt, -r ./backend/lambda_layers/cr_helper/requirements.txt, botocore, requests
 virtualenv==20.0.16       # via pre-commit
 wcwidth==0.1.9            # via pytest
-zipp==3.1.0               # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # pip

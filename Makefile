@@ -63,6 +63,18 @@ format-js:
 	npx prettier-eslint $(PWD)/frontend/src/**/*.js --write --prose-wrap always
 	git add frontend/src/
 
+.PHONY: format-python
+format-python: | $(VENV)
+	for src in \
+		tests/ \
+		backend/ecs_tasks/ \
+		backend/lambdas/ \
+		backend/lambda_layers/boto_utils/python/boto_utils.py \
+		backend/lambda_layers/decorators/python/decorators.py \
+	; do \
+		$(VENV)/bin/black "$$src" \
+	; done
+
 generate-api-docs:
 	npx openapi-generator generate -i ./templates/api.definition.yml -g markdown -t ./docs/templates/ -o docs/api
 	git add docs/api
