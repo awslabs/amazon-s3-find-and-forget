@@ -27,7 +27,7 @@ def needs_flattening(to_delete):
     need deletion. This is why we check first: it allows to do the
     re-allocation only if necessary.
     """
-    return any(x['Column'].find(".") >= 0 for x in to_delete)
+    return any('.' in x['Column'] for x in to_delete)
 
 def delete_from_table(table, to_delete, schema):
     """

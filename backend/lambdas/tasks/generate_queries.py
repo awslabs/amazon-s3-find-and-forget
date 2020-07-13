@@ -123,7 +123,7 @@ def get_inner_children(str, prefix, suffix):
     """
     if not str.endswith(suffix):
         raise ValueError(SCHEMA_INVALID)
-    return str[len(prefix):(len(str) - len(suffix))]
+    return str[len(prefix):-len(suffix)]
 
 
 def get_nested_children(str, nested_type):
