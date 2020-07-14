@@ -5,7 +5,7 @@ import boto3
 
 from decorators import with_logging
 
-sqs = boto3.resource('sqs')
+sqs = boto3.resource("sqs")
 
 
 def get_attribute(q, attribute):
@@ -20,5 +20,5 @@ def handler(event, context):
     return {
         "Visible": visible,
         "NotVisible": not_visible,
-        "Total": visible + not_visible
+        "Total": visible + not_visible,
     }

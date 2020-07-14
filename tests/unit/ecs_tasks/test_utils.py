@@ -9,12 +9,15 @@ pytestmark = [pytest.mark.unit, pytest.mark.ecs_tasks]
 
 
 def get_list_object_versions_error():
-    return ClientError({
-        'Error': {
-            'Code': 'InvalidArgument',
-            'Message': 'Invalid version id specified'
-        }
-    }, "ListObjectVersions")
+    return ClientError(
+        {
+            "Error": {
+                "Code": "InvalidArgument",
+                "Message": "Invalid version id specified",
+            }
+        },
+        "ListObjectVersions",
+    )
 
 
 @patch("time.sleep")
@@ -48,7 +51,7 @@ def test_it_doesnt_retry_non_retriable_fn(sleep_mock):
     with pytest.raises(NameError) as e:
         result = retry_wrapper(fn, retry_wait_seconds=1, retry_factor=3)(22)
 
-    assert e.value.args[0] == 'fail!'
+    assert e.value.args[0] == "fail!"
     assert fn.call_args_list == [call(22)]
     assert not sleep_mock.called
 
@@ -61,13 +64,13 @@ def test_it_retries_and_gives_up_fn(sleep_mock):
     with pytest.raises(ClientError) as e:
         result = retry_wrapper(fn, max_retries=3)(22)
 
-    assert e.value.args[0] == 'An error occurred (InvalidArgument) when calling the ListObjectVersions operation: Invalid version id specified'
+    assert (
+        e.value.args[0]
+        == "An error occurred (InvalidArgument) when calling the ListObjectVersions operation: Invalid version id specified"
+    )
     assert fn.call_args_list == [call(22), call(22), call(22), call(22)]
     assert sleep_mock.call_args_list == [call(2), call(4), call(8)]
 
 
 def test_it_removes_empty_keys():
-    assert {"test": "value"} == remove_none({
-        "test": "value",
-        "none": None
-    })
+    assert {"test": "value"} == remove_none({"test": "value", "none": None})

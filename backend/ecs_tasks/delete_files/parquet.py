@@ -27,7 +27,8 @@ def needs_flattening(to_delete):
     need deletion. This is why we check first: it allows to do the
     re-allocation only if necessary.
     """
-    return any('.' in x['Column'] for x in to_delete)
+    return any("." in x["Column"] for x in to_delete)
+
 
 def delete_from_table(table, to_delete, schema):
     """
@@ -45,9 +46,11 @@ def delete_from_table(table, to_delete, schema):
     if needs_flattened_columns:
         df = table.to_pandas()
         for indexes in indexes_to_delete:
-            df=df[~indexes]
+            df = df[~indexes]
     deleted_rows = initial_rows - get_row_count(df)
-    table = pa.Table.from_pandas(df, schema=schema, preserve_index=False).replace_schema_metadata()
+    table = pa.Table.from_pandas(
+        df, schema=schema, preserve_index=False
+    ).replace_schema_metadata()
     return table, deleted_rows
 
 
@@ -63,7 +66,11 @@ def delete_matches_from_file(parquet_file, to_delete):
     with pa.BufferOutputStream() as out_stream:
         with pq.ParquetWriter(out_stream, schema) as writer:
             for row_group in range(parquet_file.num_row_groups):
-                logger.info("Row group %s/%s", str(row_group + 1), str(parquet_file.num_row_groups))
+                logger.info(
+                    "Row group %s/%s",
+                    str(row_group + 1),
+                    str(parquet_file.num_row_groups),
+                )
                 table = parquet_file.read_row_group(row_group)
                 table, deleted_rows = delete_from_table(table, to_delete, schema)
                 writer.write_table(table)

@@ -56,6 +56,4 @@ def empty_table(table, pk, sk=None):
             }
             if sk:
                 key[sk] = item[sk]
-            batch.delete_item(
-                Key=key
-            )
+            batch.delete_item(Key=key)

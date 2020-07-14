@@ -5,8 +5,12 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 import pandas as pd
-from backend.ecs_tasks.delete_files.parquet import delete_matches_from_file, delete_from_table, load_parquet,\
-    get_row_count
+from backend.ecs_tasks.delete_files.parquet import (
+    delete_matches_from_file,
+    delete_from_table,
+    load_parquet,
+    get_row_count,
+)
 
 pytestmark = [pytest.mark.unit, pytest.mark.ecs_tasks]
 
@@ -14,15 +18,14 @@ pytestmark = [pytest.mark.unit, pytest.mark.ecs_tasks]
 @patch("backend.ecs_tasks.delete_files.parquet.delete_from_table")
 def test_it_generates_new_file_without_matches(mock_delete):
     # Arrange
-    column = {"Column": "customer_id",
-              "MatchIds": ["12345", "23456"]}
-    data = [{'customer_id': '12345'}, {'customer_id': '23456'}]
+    column = {"Column": "customer_id", "MatchIds": ["12345", "23456"]}
+    data = [{"customer_id": "12345"}, {"customer_id": "23456"}]
     df = pd.DataFrame(data)
     buf = BytesIO()
     df.to_parquet(buf)
     br = pa.BufferReader(buf.getvalue())
     f = pq.ParquetFile(br, memory_map=False)
-    mock_df = pd.DataFrame([{'customer_id': '12345'}])
+    mock_df = pd.DataFrame([{"customer_id": "12345"}])
     mock_delete.return_value = [pa.Table.from_pandas(mock_df), 1]
     # Act
     out, stats = delete_matches_from_file(f, [column])
@@ -35,13 +38,11 @@ def test_it_generates_new_file_without_matches(mock_delete):
 
 def test_delete_correct_rows_from_table():
     data = [
-        {'customer_id': '12345'},
-        {'customer_id': '23456'},
-        {'customer_id': '34567'},
+        {"customer_id": "12345"},
+        {"customer_id": "23456"},
+        {"customer_id": "34567"},
     ]
-    columns = [
-        {"Column": "customer_id", "MatchIds": ["12345", "23456"]}
-    ]
+    columns = [{"Column": "customer_id", "MatchIds": ["12345", "23456"]}]
     df = pd.DataFrame(data)
     table = pa.Table.from_pandas(df)
     schema = pa.Schema.from_pandas(df)
@@ -54,15 +55,14 @@ def test_delete_correct_rows_from_table():
 
 def test_delete_correct_rows_from_table_with_complex_types():
     data = {
-        'customer_id': [12345, 23456, 34567],
-        'user_info': [
-            {'name': 'matteo', 'email': '12345@test.com'},
-            {'name': 'nick', 'email': '23456@test.com'},
-            {'name': 'chris', 'email': '34567@test.com'}]
+        "customer_id": [12345, 23456, 34567],
+        "user_info": [
+            {"name": "matteo", "email": "12345@test.com"},
+            {"name": "nick", "email": "23456@test.com"},
+            {"name": "chris", "email": "34567@test.com"},
+        ],
     }
-    columns = [
-        {"Column": "user_info.name", "MatchIds": ["matteo", "chris"]}
-    ]
+    columns = [{"Column": "user_info.name", "MatchIds": ["matteo", "chris"]}]
     df = pd.DataFrame(data)
     table = pa.Table.from_pandas(df)
     schema = pa.Schema.from_pandas(df)
@@ -72,21 +72,21 @@ def test_delete_correct_rows_from_table_with_complex_types():
     assert deleted_rows == 2
     assert res["customer_id"].values[0] == 23456
     # user_info is saved unflattened preserving original schema:
-    assert res["user_info"].values[0] == {'name': 'nick', 'email': '23456@test.com'}
+    assert res["user_info"].values[0] == {"name": "nick", "email": "23456@test.com"}
 
 
 def test_it_gets_row_count():
     data = [
-        {'customer_id': '12345'},
-        {'customer_id': '23456'},
-        {'customer_id': '34567'},
+        {"customer_id": "12345"},
+        {"customer_id": "23456"},
+        {"customer_id": "34567"},
     ]
     df = pd.DataFrame(data)
     assert 3 == get_row_count(df)
 
 
 def test_it_loads_parquet_files():
-    data = [{'customer_id': '12345'}, {'customer_id': '23456'}]
+    data = [{"customer_id": "12345"}, {"customer_id": "23456"}]
     df = pd.DataFrame(data)
     buf = BytesIO()
     df.to_parquet(buf, compression="snappy")

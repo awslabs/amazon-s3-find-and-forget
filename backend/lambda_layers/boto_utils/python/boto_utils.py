@@ -16,13 +16,17 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 batch_size = 10  # SQS Max Batch Size
 
-ssm = boto3.client('ssm')
+ssm = boto3.client("ssm")
 ddb = boto3.resource("dynamodb")
 table = ddb.Table(os.getenv("JobTable", "S3F2_Jobs"))
 index = os.getenv("JobTableDateGSI", "Date-GSI")
 bucket_count = int(os.getenv("GSIBucketCount", 1))
-sts = boto3.client('sts', endpoint_url="https://sts.{}.amazonaws.com".format(
-    os.getenv("AWS_DEFAULT_REGION", os.getenv("AWS_REGION", None))))
+sts = boto3.client(
+    "sts",
+    endpoint_url="https://sts.{}.amazonaws.com".format(
+        os.getenv("AWS_DEFAULT_REGION", os.getenv("AWS_REGION", None))
+    ),
+)
 
 
 def paginate(client, method, iter_keys, **kwargs):
@@ -48,7 +52,9 @@ def paginate(client, method, iter_keys, **kwargs):
         iter_keys = [iter_keys]
     for page in page_iterator:
         # Support dot notation nested keys
-        results = [reduce(lambda d, x: d.get(x, []), k.split("."), page) for k in iter_keys]
+        results = [
+            reduce(lambda d, x: d.get(x, []), k.split("."), page) for k in iter_keys
+        ]
         longest = len(max(results, key=len))
         for i in range(0, longest):
             # If only one iter key supplied, return the next result for that key
@@ -57,9 +63,12 @@ def paginate(client, method, iter_keys, **kwargs):
             # If multiple iter keys supplied, return a tuple of the next result for each iter key,
             # defaulting an element in the tuple to None if the corresponding iter key has no more results
             else:
-                yield tuple([
-                    iter_page[i] if len(iter_page) > i else None for iter_page in results
-                ])
+                yield tuple(
+                    [
+                        iter_page[i] if len(iter_page) > i else None
+                        for iter_page in results
+                    ]
+                )
 
 
 def read_queue(queue, number_to_read=10):
@@ -67,26 +76,33 @@ def read_queue(queue, number_to_read=10):
     while len(msgs) < number_to_read:
         received = queue.receive_messages(
             MaxNumberOfMessages=min((number_to_read - len(msgs)), batch_size),
-            AttributeNames=['All']
+            AttributeNames=["All"],
         )
         if len(received) == 0:
             break  # no messages left
         remaining = number_to_read - len(msgs)
-        i = min(remaining, len(received))  # take as many as allowed from the received messages
+        i = min(
+            remaining, len(received)
+        )  # take as many as allowed from the received messages
         msgs = msgs + received[:i]
     return msgs
 
 
 def batch_sqs_msgs(queue, messages, **kwargs):
-    chunks = [messages[x:x + batch_size] for x in range(0, len(messages), batch_size)]
+    chunks = [messages[x : x + batch_size] for x in range(0, len(messages), batch_size)]
     for chunk in chunks:
         entries = [
             {
-                'Id': str(uuid.uuid4()),
-                'MessageBody': json.dumps(m),
-                **({'MessageGroupId': str(uuid.uuid4())} if queue.attributes.get("FifoQueue", False) else {}),
+                "Id": str(uuid.uuid4()),
+                "MessageBody": json.dumps(m),
+                **(
+                    {"MessageGroupId": str(uuid.uuid4())}
+                    if queue.attributes.get("FifoQueue", False)
+                    else {}
+                ),
                 **kwargs,
-            } for m in chunk
+            }
+            for m in chunk
         ]
         queue.send_messages(Entries=entries)
 
@@ -121,12 +137,10 @@ def running_job_exists():
     for gsi_bucket in range(0, bucket_count):
         response = table.query(
             IndexName=index,
-            KeyConditionExpression=Key('GSIBucket').eq(str(gsi_bucket)),
+            KeyConditionExpression=Key("GSIBucket").eq(str(gsi_bucket)),
             ScanIndexForward=False,
             FilterExpression="(#s = :r) or (#s = :q) or (#s = :c)",
-            ExpressionAttributeNames={
-                "#s": "JobStatus"
-            },
+            ExpressionAttributeNames={"#s": "JobStatus"},
             ExpressionAttributeValues={
                 ":r": "RUNNING",
                 ":q": "QUEUED",
@@ -142,7 +156,11 @@ def running_job_exists():
 def get_config():
     try:
         param_name = os.getenv("ConfigParam", "S3F2-Configuration")
-        return json.loads(ssm.get_parameter(Name=param_name, WithDecryption=True)["Parameter"]["Value"])
+        return json.loads(
+            ssm.get_parameter(Name=param_name, WithDecryption=True)["Parameter"][
+                "Value"
+            ]
+        )
     except (KeyError, ValueError) as e:
         logger.error("Invalid configuration supplied: %s", str(e))
         raise e
@@ -188,9 +206,7 @@ def normalise_dates(data):
 
 
 def deserialize_item(item):
-    return {
-        k: deserializer.deserialize(v) for k, v in item.items()
-    }
+    return {k: deserializer.deserialize(v) for k, v in item.items()}
 
 
 def parse_s3_url(s3_url):
@@ -200,19 +216,23 @@ def parse_s3_url(s3_url):
 
 
 def get_user_info(event):
-    req = event.get('requestContext', {})
-    auth = req.get('authorizer', {})
-    claims = auth.get('claims', {})
+    req = event.get("requestContext", {})
+    auth = req.get("authorizer", {})
+    claims = auth.get("claims", {})
     return {
-        'Username': claims.get('cognito:username', 'N/A'),
-        'Sub': claims.get('sub', 'N/A')
+        "Username": claims.get("cognito:username", "N/A"),
+        "Sub": claims.get("sub", "N/A"),
     }
 
 
 def get_session(assume_role_arn=None, role_session_name="s3f2"):
     if assume_role_arn:
-        response = sts.assume_role(RoleArn=assume_role_arn, RoleSessionName=role_session_name)
-        return boto3.session.Session(aws_access_key_id=response['Credentials']['AccessKeyId'],
-                                     aws_secret_access_key=response['Credentials']['SecretAccessKey'],
-                                     aws_session_token=response['Credentials']['SessionToken'])
+        response = sts.assume_role(
+            RoleArn=assume_role_arn, RoleSessionName=role_session_name
+        )
+        return boto3.session.Session(
+            aws_access_key_id=response["Credentials"]["AccessKeyId"],
+            aws_secret_access_key=response["Credentials"]["SecretAccessKey"],
+            aws_session_token=response["Credentials"]["SessionToken"],
+        )
     return boto3.session.Session()

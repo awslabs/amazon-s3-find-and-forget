@@ -13,12 +13,10 @@ pytestmark = [pytest.mark.unit, pytest.mark.api, pytest.mark.data_mappers]
 
 autorization_mock = {
     "authorizer": {
-        "claims": {
-            "sub": "cognitoSub",
-            "cognito:username": "cognitoUsername"
-        }
+        "claims": {"sub": "cognitoSub", "cognito:username": "cognitoUsername"}
     }
 }
+
 
 @patch("backend.lambdas.data_mappers.handlers.table")
 def test_it_retrieves_all_items(table):
@@ -27,100 +25,52 @@ def test_it_retrieves_all_items(table):
     assert {
         "statusCode": 200,
         "body": json.dumps({"DataMappers": [], "NextStart": None}),
-        "headers": ANY
+        "headers": ANY,
     } == response
     table.scan.assert_called_with(Limit=10)
 
 
 @patch("backend.lambdas.data_mappers.handlers.table")
 def test_it_retrieves_all_items_with_size_and_pagination(table):
-    table.scan.return_value = {
-        "Items": [{
-            "DataMapperId": "foo"
-        }]
-    }
-    response = handlers.get_data_mappers_handler({
-        "queryStringParameters": {
-            "page_size": "1",
-            "start_at": "bar"
-        }
-    }, SimpleNamespace())
+    table.scan.return_value = {"Items": [{"DataMapperId": "foo"}]}
+    response = handlers.get_data_mappers_handler(
+        {"queryStringParameters": {"page_size": "1", "start_at": "bar"}},
+        SimpleNamespace(),
+    )
     assert {
         "statusCode": 200,
-        "body": json.dumps({
-            "DataMappers": [{
-                "DataMapperId": "foo"
-            }],
-            "NextStart": "foo"
-        }),
-        "headers": ANY
+        "body": json.dumps(
+            {"DataMappers": [{"DataMapperId": "foo"}], "NextStart": "foo"}
+        ),
+        "headers": ANY,
     } == response
-    table.scan.assert_called_with(Limit=1, ExclusiveStartKey={
-        "DataMapperId": "bar"
-    })
+    table.scan.assert_called_with(Limit=1, ExclusiveStartKey={"DataMapperId": "bar"})
 
 
 @patch("backend.lambdas.data_mappers.handlers.table")
 @patch("backend.lambdas.data_mappers.handlers.validate_mapper")
 def test_it_creates_data_mapper(validate_mapper, table):
-    response = handlers.create_data_mapper_handler({
-        "pathParameters": {
-            "data_mapper_id": "test"
+    response = handlers.create_data_mapper_handler(
+        {
+            "pathParameters": {"data_mapper_id": "test"},
+            "body": json.dumps(
+                {
+                    "Columns": ["column"],
+                    "QueryExecutor": "athena",
+                    "QueryExecutorParameters": {
+                        "DataCatalogProvider": "glue",
+                        "Database": "test",
+                        "Table": "test",
+                    },
+                    "Format": "parquet",
+                    "RoleArn": "arn:aws:iam::accountid:role/S3F2DataAccessRole",
+                    "DeleteOldVersions": False,
+                }
+            ),
+            "requestContext": autorization_mock,
         },
-        "body": json.dumps({
-            "Columns": ["column"],
-            "QueryExecutor": "athena",
-            "QueryExecutorParameters": {
-                "DataCatalogProvider": "glue",
-                "Database": "test",
-                "Table": "test"
-            },
-            "Format": "parquet",
-            "RoleArn": "arn:aws:iam::accountid:role/S3F2DataAccessRole",
-            "DeleteOldVersions": False,
-        }),
-        "requestContext": autorization_mock
-    }, SimpleNamespace())
-
-    assert 201 == response["statusCode"]
-    assert {
-               "DataMapperId": "test",
-               "Columns": ["column"],
-               "QueryExecutor": "athena",
-               "QueryExecutorParameters": {
-                   "DataCatalogProvider": "glue",
-                   "Database": "test",
-                   "Table": "test"
-               },
-               "Format": "parquet",
-               "CreatedBy": {
-                   "Username": "cognitoUsername",
-                   "Sub": "cognitoSub"
-               },
-               "RoleArn": "arn:aws:iam::accountid:role/S3F2DataAccessRole",
-               "DeleteOldVersions": False
-           } == json.loads(response["body"])
-
-
-@patch("backend.lambdas.data_mappers.handlers.table")
-@patch("backend.lambdas.data_mappers.handlers.validate_mapper")
-def test_it_supports_optionals(validate_mapper, table):
-    response = handlers.create_data_mapper_handler({
-        "pathParameters": {
-            "data_mapper_id": "test"
-        },
-        "body": json.dumps({
-            "Columns": ["column"],
-            "QueryExecutor": "athena",
-            "QueryExecutorParameters": {
-                "DataCatalogProvider": "glue",
-                "Database": "test",
-                "Table": "test"
-            },
-            "RoleArn": "arn:aws:iam::accountid:role/S3F2DataAccessRole",
-        }),
-        "requestContext": autorization_mock
-    }, SimpleNamespace())
+        SimpleNamespace(),
+    )
 
     assert 201 == response["statusCode"]
     assert {
@@ -130,92 +80,134 @@ def test_it_supports_optionals(validate_mapper, table):
         "QueryExecutorParameters": {
             "DataCatalogProvider": "glue",
             "Database": "test",
-            "Table": "test"
+            "Table": "test",
+        },
+        "Format": "parquet",
+        "CreatedBy": {"Username": "cognitoUsername", "Sub": "cognitoSub"},
+        "RoleArn": "arn:aws:iam::accountid:role/S3F2DataAccessRole",
+        "DeleteOldVersions": False,
+    } == json.loads(response["body"])
+
+
+@patch("backend.lambdas.data_mappers.handlers.table")
+@patch("backend.lambdas.data_mappers.handlers.validate_mapper")
+def test_it_supports_optionals(validate_mapper, table):
+    response = handlers.create_data_mapper_handler(
+        {
+            "pathParameters": {"data_mapper_id": "test"},
+            "body": json.dumps(
+                {
+                    "Columns": ["column"],
+                    "QueryExecutor": "athena",
+                    "QueryExecutorParameters": {
+                        "DataCatalogProvider": "glue",
+                        "Database": "test",
+                        "Table": "test",
+                    },
+                    "RoleArn": "arn:aws:iam::accountid:role/S3F2DataAccessRole",
+                }
+            ),
+            "requestContext": autorization_mock,
+        },
+        SimpleNamespace(),
+    )
+
+    assert 201 == response["statusCode"]
+    assert {
+        "DataMapperId": "test",
+        "Columns": ["column"],
+        "QueryExecutor": "athena",
+        "QueryExecutorParameters": {
+            "DataCatalogProvider": "glue",
+            "Database": "test",
+            "Table": "test",
         },
         "Format": "parquet",
         "DeleteOldVersions": True,
         "RoleArn": "arn:aws:iam::accountid:role/S3F2DataAccessRole",
-        "CreatedBy": {
-            "Username": "cognitoUsername",
-            "Sub": "cognitoSub"
-        }
+        "CreatedBy": {"Username": "cognitoUsername", "Sub": "cognitoSub"},
     } == json.loads(response["body"])
 
 
 @patch("backend.lambdas.data_mappers.handlers.validate_mapper")
 def test_it_rejects_where_glue_validation_fails(validate_mapper):
     # Simulate raising an exception for table not existing
-    validate_mapper.side_effect = ClientError({"ResponseMetadata": {"HTTPStatusCode": 400}}, "get_table")
-    response = handlers.create_data_mapper_handler({
-        "pathParameters": {
-            "data_mapper_id": "test"
+    validate_mapper.side_effect = ClientError(
+        {"ResponseMetadata": {"HTTPStatusCode": 400}}, "get_table"
+    )
+    response = handlers.create_data_mapper_handler(
+        {
+            "pathParameters": {"data_mapper_id": "test"},
+            "body": json.dumps(
+                {
+                    "Columns": ["column"],
+                    "QueryExecutor": "athena",
+                    "QueryExecutorParameters": {
+                        "DataCatalogProvider": "glue",
+                        "Database": "test",
+                        "Table": "test",
+                    },
+                }
+            ),
+            "requestContext": autorization_mock,
         },
-        "body": json.dumps({
-            "Columns": ["column"],
-            "QueryExecutor": "athena",
-            "QueryExecutorParameters": {
-                "DataCatalogProvider": "glue",
-                "Database": "test",
-                "Table": "test"
-            },
-        }),
-        "requestContext": autorization_mock
-    }, SimpleNamespace())
+        SimpleNamespace(),
+    )
     assert 400 == response["statusCode"]
 
 
-@patch("backend.lambdas.data_mappers.handlers.running_job_exists", Mock(return_value=False))
+@patch(
+    "backend.lambdas.data_mappers.handlers.running_job_exists", Mock(return_value=False)
+)
 @patch("backend.lambdas.data_mappers.handlers.table")
 def test_it_deletes_data_mapper(table):
-    response = handlers.delete_data_mapper_handler({
-        "pathParameters": {
-            "data_mapper_id": "test",
-        }
-    }, SimpleNamespace())
-    assert {
-        "statusCode": 204,
-        "headers": ANY
-    } == response
+    response = handlers.delete_data_mapper_handler(
+        {"pathParameters": {"data_mapper_id": "test",}}, SimpleNamespace()
+    )
+    assert {"statusCode": 204, "headers": ANY} == response
 
 
-@patch("backend.lambdas.data_mappers.handlers.running_job_exists", Mock(return_value=True))
+@patch(
+    "backend.lambdas.data_mappers.handlers.running_job_exists", Mock(return_value=True)
+)
 def test_it_rejects_deletes_whilst_job_running():
-    response = handlers.delete_data_mapper_handler({
-        "pathParameters": {
-            "data_mapper_id": "test",
-        }
-    }, SimpleNamespace())
-    assert {
-               "body": ANY,
-               "statusCode": 400,
-               "headers": ANY
-           } == response
+    response = handlers.delete_data_mapper_handler(
+        {"pathParameters": {"data_mapper_id": "test",}}, SimpleNamespace()
+    )
+    assert {"body": ANY, "statusCode": 400, "headers": ANY} == response
 
 
 @patch("backend.lambdas.data_mappers.handlers.get_existing_s3_locations")
 @patch("backend.lambdas.data_mappers.handlers.get_table_details_from_mapper")
-def test_it_rejects_non_existent_glue_tables(mock_get_details, get_existing_s3_locations):
+def test_it_rejects_non_existent_glue_tables(
+    mock_get_details, get_existing_s3_locations
+):
     # Simulate raising an exception for table not existing
     get_existing_s3_locations.return_value = ["s3://bucket/prefix/"]
-    mock_get_details.side_effect = ClientError({"ResponseMetadata": {"HTTPStatusCode": 404}}, "get_table")
+    mock_get_details.side_effect = ClientError(
+        {"ResponseMetadata": {"HTTPStatusCode": 404}}, "get_table"
+    )
     with pytest.raises(ClientError):
-        handlers.validate_mapper({
-            "Columns": ["column"],
-            "QueryExecutor": "athena",
-            "QueryExecutorParameters": {
-                "DataCatalogProvider": "glue",
-                "Database": "test",
-                "Table": "test"
-            },
-        })
+        handlers.validate_mapper(
+            {
+                "Columns": ["column"],
+                "QueryExecutor": "athena",
+                "QueryExecutorParameters": {
+                    "DataCatalogProvider": "glue",
+                    "Database": "test",
+                    "Table": "test",
+                },
+            }
+        )
 
 
 @patch("backend.lambdas.data_mappers.handlers.get_existing_s3_locations")
 @patch("backend.lambdas.data_mappers.handlers.get_glue_table_location")
 @patch("backend.lambdas.data_mappers.handlers.get_glue_table_format")
 @patch("backend.lambdas.data_mappers.handlers.get_table_details_from_mapper")
-def test_it_rejects_overlapping_s3_paths(mock_get_details, mock_get_format, mock_get_location,
-                                         get_existing_s3_locations):
+def test_it_rejects_overlapping_s3_paths(
+    mock_get_details, mock_get_format, mock_get_location, get_existing_s3_locations
+):
     mock_get_details.return_value = get_table_stub({"Location": "s3://bucket/prefix/"})
     get_existing_s3_locations.return_value = ["s3://bucket/prefix/"]
     mock_get_location.return_value = "s3://bucket/prefix/"
@@ -225,22 +217,26 @@ def test_it_rejects_overlapping_s3_paths(mock_get_details, mock_get_format, mock
         "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
     )
     with pytest.raises(ValueError):
-        handlers.validate_mapper({
-            "Columns": ["column"],
-            "QueryExecutor": "athena",
-            "QueryExecutorParameters": {
-                "DataCatalogProvider": "glue",
-                "Database": "test",
-                "Table": "test"
-            },
-        })
+        handlers.validate_mapper(
+            {
+                "Columns": ["column"],
+                "QueryExecutor": "athena",
+                "QueryExecutorParameters": {
+                    "DataCatalogProvider": "glue",
+                    "Database": "test",
+                    "Table": "test",
+                },
+            }
+        )
 
 
 @patch("backend.lambdas.data_mappers.handlers.get_existing_s3_locations")
 @patch("backend.lambdas.data_mappers.handlers.get_glue_table_location")
 @patch("backend.lambdas.data_mappers.handlers.get_glue_table_format")
 @patch("backend.lambdas.data_mappers.handlers.get_table_details_from_mapper")
-def test_it_rejects_non_parquet_tables(mock_get_details, mock_get_format, mock_get_location, get_existing_s3_locations):
+def test_it_rejects_non_parquet_tables(
+    mock_get_details, mock_get_format, mock_get_location, get_existing_s3_locations
+):
     mock_get_details.return_value = get_table_stub({"Location": "s3://bucket/prefix/"})
     get_existing_s3_locations.return_value = []
     mock_get_location.return_value = "s3://bucket/prefix/"
@@ -250,15 +246,17 @@ def test_it_rejects_non_parquet_tables(mock_get_details, mock_get_format, mock_g
         "org.openx.data.jsonserde.JsonSerDe",
     )
     with pytest.raises(ValueError):
-        handlers.validate_mapper({
-            "Columns": ["column"],
-            "QueryExecutor": "athena",
-            "QueryExecutorParameters": {
-                "DataCatalogProvider": "glue",
-                "Database": "test",
-                "Table": "test"
-            },
-        })
+        handlers.validate_mapper(
+            {
+                "Columns": ["column"],
+                "QueryExecutor": "athena",
+                "QueryExecutorParameters": {
+                    "DataCatalogProvider": "glue",
+                    "Database": "test",
+                    "Table": "test",
+                },
+            }
+        )
 
 
 def test_it_detects_overlaps():
@@ -277,22 +275,24 @@ def test_it_detects_non_overlapping_prefixes_in_same_bucket():
 @patch("backend.lambdas.data_mappers.handlers.table")
 @patch("backend.lambdas.data_mappers.handlers.get_glue_table_location")
 @patch("backend.lambdas.data_mappers.handlers.get_table_details_from_mapper")
-def test_it_gets_existing_s3_locations(mock_get_details, mock_get_location, mock_dynamo):
+def test_it_gets_existing_s3_locations(
+    mock_get_details, mock_get_location, mock_dynamo
+):
     mock_dynamo.scan.return_value = {
-        "Items": [{
-            "QueryExecutorParameters": {
-                "DataCatalogProvider": "glue",
-                "Database": "db",
-                "Table": "table"
+        "Items": [
+            {
+                "QueryExecutorParameters": {
+                    "DataCatalogProvider": "glue",
+                    "Database": "db",
+                    "Table": "table",
+                }
             }
-        }]
+        ]
     }
     mock_get_details.return_value = get_table_stub()
     mock_get_location.return_value = "s3://bucket/prefix/"
     resp = handlers.get_existing_s3_locations()
-    assert [
-               "s3://bucket/prefix/"
-           ] == resp
+    assert ["s3://bucket/prefix/"] == resp
 
 
 def test_it_gets_s3_location_for_glue_table():
@@ -311,13 +311,15 @@ def test_it_gets_glue_table_format_info():
 @patch("backend.lambdas.data_mappers.handlers.glue_client")
 def test_it_gets_details_for_table(mock_client):
     mock_client.get_table.return_value = get_table_stub()
-    handlers.get_table_details_from_mapper({
-        "QueryExecutorParameters": {
-            "DataCatalogProvider": "glue",
-            "Database": "db",
-            "Table": "table"
+    handlers.get_table_details_from_mapper(
+        {
+            "QueryExecutorParameters": {
+                "DataCatalogProvider": "glue",
+                "Database": "db",
+                "Table": "table",
+            }
         }
-    })
+    )
     mock_client.get_table.assert_called_with(DatabaseName="db", Name="table")
 
 
@@ -331,8 +333,4 @@ def get_table_stub(storage_descriptor={}):
         },
     }
     sd.update(storage_descriptor)
-    return {
-        "Table": {
-            "StorageDescriptor": sd
-        }
-    }
+    return {"Table": {"StorageDescriptor": sd}}

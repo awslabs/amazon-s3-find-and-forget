@@ -14,18 +14,15 @@ client = boto3.client("ecs")
 def handler(event, context):
     try:
         service = client.describe_services(
-            cluster=event["Cluster"],
-            services=[
-                event["ServiceName"],
-            ],
+            cluster=event["Cluster"], services=[event["ServiceName"],],
         )["services"][0]
         pending = service["pendingCount"]
         running = service["runningCount"]
-        return {
-            "Pending": pending,
-            "Running": running,
-            "Total": pending + running
-        }
+        return {"Pending": pending, "Running": running, "Total": pending + running}
     except IndexError:
         logger.error("Unable to find service '%s'", event["ServiceName"])
-        raise ValueError("Service {} in cluster {} not found".format(event["ServiceName"], event["Cluster"]))
+        raise ValueError(
+            "Service {} in cluster {} not found".format(
+                event["ServiceName"], event["Cluster"]
+            )
+        )

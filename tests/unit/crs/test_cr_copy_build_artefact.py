@@ -9,11 +9,11 @@ pytestmark = [pytest.mark.unit, pytest.mark.task]
 @patch("backend.lambdas.custom_resources.copy_build_artefact.s3_client")
 def test_it_copies_file(mock_client):
     event = {
-        'ResourceProperties': {
-            'ArtefactName': 'build/s3f2.zip',
-            'CodeBuildArtefactBucket': 'codebuild-bucket',
-            'PreBuiltArtefactsBucket': 'source-bucket-eu-west-1',
-            'Version': '1.0'
+        "ResourceProperties": {
+            "ArtefactName": "build/s3f2.zip",
+            "CodeBuildArtefactBucket": "codebuild-bucket",
+            "PreBuiltArtefactsBucket": "source-bucket-eu-west-1",
+            "Version": "1.0",
         }
     }
 
@@ -22,7 +22,8 @@ def test_it_copies_file(mock_client):
     mock_client.copy_object.assert_called_with(
         Bucket="codebuild-bucket",
         CopySource="source-bucket-eu-west-1/amazon-s3-find-and-forget/1.0/build.zip",
-        Key="build/s3f2.zip")
+        Key="build/s3f2.zip",
+    )
 
     assert resp == "arn:aws:s3:::codebuild-bucket/build/s3f2.zip"
 
@@ -30,11 +31,11 @@ def test_it_copies_file(mock_client):
 @patch("backend.lambdas.custom_resources.copy_build_artefact.s3_client")
 def test_it_does_nothing_on_delete(mock_client):
     event = {
-        'ResourceProperties': {
-            'ArtefactName': 'build/s3f2.zip',
-            'CodeBuildArtefactBucket': 'source-bucket-eu-west-1',
-            'PreBuiltArtefactsBucket': 'codebuild-bucket',
-            'Version': '1.0'
+        "ResourceProperties": {
+            "ArtefactName": "build/s3f2.zip",
+            "CodeBuildArtefactBucket": "source-bucket-eu-west-1",
+            "PreBuiltArtefactsBucket": "codebuild-bucket",
+            "Version": "1.0",
         }
     }
     resp = delete(event, MagicMock())

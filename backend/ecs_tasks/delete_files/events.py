@@ -27,7 +27,7 @@ def emit_failure_event(message_body, err_message, event_name):
         raise ValueError("Message missing Job ID")
     event_data = {
         "Error": err_message,
-        'Message': json_body,
+        "Message": json_body,
     }
     emit_event(job_id, event_name, event_data, get_emitter_id())
 
@@ -62,12 +62,20 @@ def get_emitter_id():
         try:
             res = urllib.request.urlopen(metadata_endpoint, timeout=1).read()
             metadata = json.loads(res)
-            return "ECSTask_{}".format(metadata["Labels"]["com.amazonaws.ecs.task-arn"].rsplit("/", 1)[1])
+            return "ECSTask_{}".format(
+                metadata["Labels"]["com.amazonaws.ecs.task-arn"].rsplit("/", 1)[1]
+            )
         except urllib.error.URLError as e:
-            logger.warning("Error when accessing the metadata service: {}".format(e.reason))
+            logger.warning(
+                "Error when accessing the metadata service: {}".format(e.reason)
+            )
         except (AttributeError, KeyError, IndexError) as e:
-            logger.warning("Malformed response from the metadata service: {}".format(res))
+            logger.warning(
+                "Malformed response from the metadata service: {}".format(res)
+            )
         except Exception as e:
-            logger.warning("Error when getting emitter id from metadata service: {}".format(str(e)))
+            logger.warning(
+                "Error when getting emitter id from metadata service: {}".format(str(e))
+            )
 
     return "ECSTask"

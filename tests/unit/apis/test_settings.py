@@ -19,7 +19,7 @@ def test_it_process_queue(mock_config):
         "ForgetQueueWaitSeconds": 30,
     }
     response = handlers.list_settings_handler({}, SimpleNamespace())
-    
+
     assert 200 == response["statusCode"]
     assert "headers" in response
     assert {

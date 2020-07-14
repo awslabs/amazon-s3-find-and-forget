@@ -16,11 +16,7 @@ def test_it_does_nothing_on_create(mock_client):
 
 @patch("backend.lambdas.custom_resources.cleanup_bucket.s3")
 def test_it_removes_all_objects_from_bucket_when_no_versioning(mock_client):
-    event = {
-        'ResourceProperties': {
-            'Bucket': 'webuibucket'
-        }
-    }
+    event = {"ResourceProperties": {"Bucket": "webuibucket"}}
 
     all_method = MagicMock()
     all_method2 = MagicMock()

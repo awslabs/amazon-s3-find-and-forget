@@ -5,7 +5,7 @@ import boto3
 
 from decorators import with_logging
 
-ecs = boto3.client('ecs')
+ecs = boto3.client("ecs")
 
 
 @with_logging
@@ -15,10 +15,6 @@ def handler(event, context):
     queue_size = event["QueueSize"]
     service = event["DeleteService"]
     desired_count = min(queue_size, max_tasks)
-    ecs.update_service(
-        cluster=cluster,
-        service=service,
-        desiredCount=desired_count
-    )
+    ecs.update_service(cluster=cluster, service=service, desiredCount=desired_count)
 
     return desired_count
