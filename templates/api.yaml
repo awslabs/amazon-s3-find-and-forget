@@ -62,25 +62,25 @@ Parameters:
 
 Conditions:
   EnableAccessLogging: !Equals [!Ref EnableAccessLogging, "true"]
-  DefaultAccessControlOrigin:
-    !Equals [!Ref AccessControlAllowOriginOverride, "false"]
-
+  DefaultAccessControlOrigin: !Equals [!Ref AccessControlAllowOriginOverride, "false"]
+  
 Resources:
   Api:
     Type: AWS::Serverless::Api
     Properties:
-      OpenApiVersion: "3.0.1"
+      OpenApiVersion: '3.0.1'
       StageName: Prod
-      MethodSettings: !If
+      MethodSettings:
+        !If
         - EnableAccessLogging
         - - LoggingLevel: INFO
             DataTraceEnabled: false
-            ResourcePath: "/*"
-            HttpMethod: "*"
+            ResourcePath: '/*'
+            HttpMethod: '*'
         - !Ref AWS::NoValue
       DefinitionBody:
-        "Fn::Transform":
-          Name: "AWS::Include"
+        'Fn::Transform':
+          Name: 'AWS::Include'
           Parameters:
             Location: ./api.definition.yml
       EndpointConfiguration: REGIONAL
@@ -159,8 +159,8 @@ Resources:
             Method: PATCH
             RestApiId: !Ref Api
       Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Ref DeletionQueueTableName
+      - DynamoDBCrudPolicy:
+          TableName: !Ref DeletionQueueTableName
   GetDeletionQueue:
     Type: AWS::Serverless::Function
     Properties:
@@ -212,9 +212,9 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref JobTableName
         - Statement:
-            - Action: "ssm:GetParameter"
-              Effect: "Allow"
-              Resource: !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${ConfigParameter}"
+          - Action: "ssm:GetParameter"
+            Effect: "Allow"
+            Resource: !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${ConfigParameter}"
   # DataMappers
   CreateDataMapper:
     Type: AWS::Serverless::Function
@@ -229,20 +229,20 @@ Resources:
             Method: PUT
             RestApiId: !Ref Api
       Policies:
-        - Statement:
-            - Action:
-                - "glue:BatchGetPartition"
-                - "glue:GetDatabase*"
-                - "glue:GetPartition*"
-                - "glue:GetTable*"
-              Effect: "Allow"
-              Resource:
-                - !Sub "arn:${AWS::Partition}:glue:*:*:catalog*"
-                - !Sub "arn:${AWS::Partition}:glue:*:*:database*"
-                - !Sub "arn:${AWS::Partition}:glue:*:*:table*"
-                - !Sub "arn:${AWS::Partition}:glue:*:*:partition*"
-        - DynamoDBCrudPolicy:
-            TableName: !Ref DataMapperTableName
+      - Statement:
+        - Action:
+            - "glue:BatchGetPartition"
+            - "glue:GetDatabase*"
+            - "glue:GetPartition*"
+            - "glue:GetTable*"
+          Effect: "Allow"
+          Resource:
+            - !Sub "arn:${AWS::Partition}:glue:*:*:catalog*"
+            - !Sub "arn:${AWS::Partition}:glue:*:*:database*"
+            - !Sub "arn:${AWS::Partition}:glue:*:*:table*"
+            - !Sub "arn:${AWS::Partition}:glue:*:*:partition*"
+      - DynamoDBCrudPolicy:
+          TableName: !Ref DataMapperTableName
   GetDataMappers:
     Type: AWS::Serverless::Function
     Properties:
@@ -339,9 +339,9 @@ Resources:
             RestApiId: !Ref Api
       Policies:
         - Statement:
-            - Action: "ssm:GetParameter"
-              Effect: "Allow"
-              Resource: !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${ConfigParameter}"
+          - Action: "ssm:GetParameter"
+            Effect: "Allow"
+            Resource: !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${ConfigParameter}"
 
 Outputs:
   AccessControlAllowOriginHeader:
@@ -353,3 +353,4 @@ Outputs:
   ApiUrl:
     Description: API endpoint URL for Prod environment
     Value: !Sub https://${Api}.execute-api.${AWS::Region}.amazonaws.com/Prod/
+  
