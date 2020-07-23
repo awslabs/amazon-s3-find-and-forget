@@ -1,5 +1,34 @@
 # Change Log
 
+## 0.6 (unreleased)
+
+### Summary
+
+- [#174](https://github.com/awslabs/amazon-s3-find-and-forget/pull/174): Add
+  support for types nested in struct
+- [#173](https://github.com/awslabs/amazon-s3-find-and-forget/pull/173): Show
+  column types and hierarchy in the front-end during Data Mapper creation
+- [#173](https://github.com/awslabs/amazon-s3-find-and-forget/pull/173): Add
+  support for char, smallint, tinyint, double, float
+- [#177](https://github.com/awslabs/amazon-s3-find-and-forget/pull/177):
+  Reformat of Python source code (non-functional change)
+
+## v0.5
+
+### Summary
+
+- [#172](https://github.com/awslabs/amazon-s3-find-and-forget/pull/172): Fix for
+  an issue where Make may not install the required Lambda layer dependencies,
+  resulting in unusable builds.
+
+## v0.4
+
+### Summary
+
+- [#171](https://github.com/awslabs/amazon-s3-find-and-forget/pull/171): Fix for
+  a bug affecting the API for 5xx responses not returning the appropriate CORS
+  headers
+
 ## v0.3
 
 ### Summary

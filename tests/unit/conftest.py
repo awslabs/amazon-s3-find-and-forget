@@ -24,4 +24,5 @@ def cr_helper_mocks(monkeypatch):
     """
 
     import crhelper
+
     monkeypatch.setattr(crhelper, "CfnResource", MagicMock())

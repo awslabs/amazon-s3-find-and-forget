@@ -63,6 +63,18 @@ format-js:
 	npx prettier-eslint $(PWD)/frontend/src/**/*.js --write --prose-wrap always
 	git add frontend/src/
 
+.PHONY: format-python
+format-python: | $(VENV)
+	for src in \
+		tests/ \
+		backend/ecs_tasks/ \
+		backend/lambdas/ \
+		backend/lambda_layers/boto_utils/python/boto_utils.py \
+		backend/lambda_layers/decorators/python/decorators.py \
+	; do \
+		$(VENV)/bin/black "$$src" \
+	; done
+
 generate-api-docs:
 	npx openapi-generator generate -i ./templates/api.definition.yml -g markdown -t ./docs/templates/ -o docs/api
 	git add docs/api
@@ -111,9 +123,12 @@ setup: | $(VENV) lambda-layer-deps
 	gem install cfn-nag
 
 # virtualenv setup
-$(VENV): requirements.txt
+.PHONY: $(VENV)
+$(VENV): $(VENV)/pip-sync.sentinel
+
+$(VENV)/pip-sync.sentinel: requirements.txt | $(VENV)/bin/pip-sync
 	$(VENV)/bin/pip-sync $<
-	touch $(VENV)
+	touch $@
 
 $(VENV)/bin/activate:
 	test -d $(VENV) || virtualenv $(VENV)
@@ -124,14 +139,15 @@ $(VENV)/bin/pip-compile $(VENV)/bin/pip-sync: $(VENV)/bin/activate
 # Lambda layers
 .PHONY: lambda-layer-deps
 lambda-layer-deps: \
-	backend/lambda_layers/aws_sdk/python \
-	backend/lambda_layers/cr_helper/python \
-	backend/lambda_layers/decorators/python \
+	backend/lambda_layers/aws_sdk/requirements-installed.sentinel \
+	backend/lambda_layers/cr_helper/requirements-installed.sentinel \
+	backend/lambda_layers/decorators/requirements-installed.sentinel \
 	;
 
-backend/lambda_layers/%/python: backend/lambda_layers/%/requirements.txt | $(VENV)
-	# pip-sync only works with virtualenv, so we can't use it here.
-	$(VENV)/bin/pip install -r $< -t $@
+backend/lambda_layers/%/requirements-installed.sentinel: backend/lambda_layers/%/requirements.txt | $(VENV)
+	@# pip-sync only works with virtualenv, so we can't use it here.
+	$(VENV)/bin/pip install -r $< -t $(subst requirements-installed.sentinel,python,$@)
+	touch $@
 
 setup-frontend-local-dev:
 	$(eval WEBUI_BUCKET := $(shell aws cloudformation describe-stacks --stack-name S3F2 --query 'Stacks[0].Outputs[?OutputKey==`WebUIBucket`].OutputValue' --output text))

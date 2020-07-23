@@ -8,7 +8,13 @@ import boto3
 from boto3.dynamodb.conditions import Key, Attr
 
 from boto_utils import DecimalEncoder, utc_timestamp
-from decorators import with_logging, request_validator, catch_errors, add_cors_headers, load_schema
+from decorators import (
+    with_logging,
+    request_validator,
+    catch_errors,
+    add_cors_headers,
+    load_schema,
+)
 
 ddb = boto3.resource("dynamodb")
 table = ddb.Table(os.getenv("JobTable", "S3F2_Jobs"))
@@ -21,13 +27,23 @@ end_statuses = [
     "FAILED",
     "FIND_FAILED",
     "FORGET_FAILED",
-    "FORGET_PARTIALLY_FAILED"
+    "FORGET_PARTIALLY_FAILED",
 ]
 
 job_summary_attributes = [
-    "Id", "CreatedAt", "JobStatus", "JobFinishTime", "JobStartTime", "TotalObjectRollbackFailedCount",
-    "TotalObjectUpdatedCount", "TotalObjectUpdateFailedCount", "TotalQueryCount", "TotalQueryFailedCount",
-    "TotalQueryScannedInBytes", "TotalQuerySucceededCount", "TotalQueryTimeInMillis"
+    "Id",
+    "CreatedAt",
+    "JobStatus",
+    "JobFinishTime",
+    "JobStartTime",
+    "TotalObjectRollbackFailedCount",
+    "TotalObjectUpdatedCount",
+    "TotalObjectUpdateFailedCount",
+    "TotalQueryCount",
+    "TotalQueryFailedCount",
+    "TotalQueryScannedInBytes",
+    "TotalQuerySucceededCount",
+    "TotalQueryTimeInMillis",
 ]
 
 
@@ -37,22 +53,12 @@ job_summary_attributes = [
 @catch_errors
 def get_job_handler(event, context):
     job_id = event["pathParameters"]["job_id"]
-    resp = table.get_item(
-        Key={
-            'Id': job_id,
-            'Sk': job_id,
-        }
-    )
-    item = resp.get('Item')
+    resp = table.get_item(Key={"Id": job_id, "Sk": job_id,})
+    item = resp.get("Item")
     if not item:
-        return {
-            "statusCode": 404
-        }
+        return {"statusCode": 404}
 
-    return {
-        "statusCode": 200,
-        "body": json.dumps(item, cls=DecimalEncoder)
-    }
+    return {"statusCode": 200, "body": json.dumps(item, cls=DecimalEncoder)}
 
 
 @with_logging
@@ -70,13 +76,14 @@ def list_jobs_handler(event, context):
     for gsi_bucket in range(0, bucket_count):
         response = table.query(
             IndexName=index,
-            KeyConditionExpression=Key('GSIBucket').eq(str(gsi_bucket)) & Key('CreatedAt').lt(start_at),
+            KeyConditionExpression=Key("GSIBucket").eq(str(gsi_bucket))
+            & Key("CreatedAt").lt(start_at),
             ScanIndexForward=False,
             Limit=page_size,
-            ProjectionExpression=", ".join(job_summary_attributes)
+            ProjectionExpression=", ".join(job_summary_attributes),
         )
         items += response.get("Items", [])
-    items = sorted(items, key=lambda i: i['CreatedAt'], reverse=True)[:page_size]
+    items = sorted(items, key=lambda i: i["CreatedAt"], reverse=True)[:page_size]
     if len(items) < page_size:
         next_start = None
     else:
@@ -84,10 +91,9 @@ def list_jobs_handler(event, context):
 
     return {
         "statusCode": 200,
-        "body": json.dumps({
-            "Jobs": items,
-            "NextStart": next_start,
-        }, cls=DecimalEncoder)
+        "body": json.dumps(
+            {"Jobs": items, "NextStart": next_start,}, cls=DecimalEncoder
+        ),
     }
 
 
@@ -106,16 +112,9 @@ def list_job_events_handler(event, context):
     page_size = int(qs.get("page_size", 20))
     start_at = qs.get("start_at", "0")
     # Check the job exists
-    job = table.get_item(
-        Key={
-            'Id': job_id,
-            'Sk': job_id,
-        }
-    ).get("Item")
+    job = table.get_item(Key={"Id": job_id, "Sk": job_id,}).get("Item")
     if not job:
-        return {
-            "statusCode": 404
-        }
+        return {"statusCode": 404}
 
     watermark_boundary_mu = (job.get("JobFinishTime", utc_timestamp()) + 1) * 1000
 
@@ -124,7 +123,7 @@ def list_job_events_handler(event, context):
         raise ValueError("Watermark {} is out of bounds for this job".format(start_at))
 
     # Apply filters
-    filter_expression = Attr('Type').eq("JobEvent")
+    filter_expression = Attr("Type").eq("JobEvent")
     user_filters = mvqs.get("filter", [])
     for f in user_filters:
         k, v = f.split("=")
@@ -139,37 +138,41 @@ def list_job_events_handler(event, context):
     last_query_size = 0
     while len(items) < page_size:
         resp = table.query(
-            KeyConditionExpression=Key('Id').eq(job_id),
+            KeyConditionExpression=Key("Id").eq(job_id),
             ScanIndexForward=True,
             FilterExpression=filter_expression,
             Limit=100 if len(user_filters) else page_size + 1,
-            ExclusiveStartKey={
-                "Id": job_id,
-                "Sk": query_start_key
-            }
+            ExclusiveStartKey={"Id": job_id, "Sk": query_start_key},
         )
         results = resp.get("Items", [])
         last_query_size = len(results)
-        items.extend(results[:page_size - len(items)])
+        items.extend(results[: page_size - len(items)])
         query_start_key = resp.get("LastEvaluatedKey", {}).get("Sk")
         if not query_start_key:
             break
         last_evaluated = query_start_key
 
-    next_start = _get_watermark(items, start_at, page_size, job["JobStatus"], last_evaluated, last_query_size)
+    next_start = _get_watermark(
+        items, start_at, page_size, job["JobStatus"], last_evaluated, last_query_size
+    )
 
-    resp = {k: v for k, v in {
-        "JobEvents": items,
-        "NextStart": next_start
-    }.items() if v is not None}
-
-    return {
-        "statusCode": 200,
-        "body": json.dumps(resp, cls=DecimalEncoder)
+    resp = {
+        k: v
+        for k, v in {"JobEvents": items, "NextStart": next_start}.items()
+        if v is not None
     }
 
+    return {"statusCode": 200, "body": json.dumps(resp, cls=DecimalEncoder)}
 
-def _get_watermark(items, initial_start_key, page_size, job_status, last_evaluated_ddb_key, last_query_size):
+
+def _get_watermark(
+    items,
+    initial_start_key,
+    page_size,
+    job_status,
+    last_evaluated_ddb_key,
+    last_query_size,
+):
     """
     Work out the watermark to return to the user using the following logic:
     1. If the job is in progress, we always return a watermark but the source of the watermark

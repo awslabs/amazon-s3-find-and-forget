@@ -9,9 +9,9 @@ Tracker].
 
 The following data formats are supported:
 
-| Data Format    | Compression                         |
-| -------------- | ----------------------------------- |
-| Apache Parquet | SNAPPY (default for Apache Parquet) |
+| Data Format    | Compression on read                | Compression on write | Supported Types for Column Identifier                                                                                                                                   |
+| -------------- | ---------------------------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Apache Parquet | Snappy, Brotli, Gzip, uncompressed | Snappy               | bigint, char, double, float, int, smallint, string, tinyint, varchar. Nested types (types whose parent is a struct, map, array) are only supported for **struct** type. |
 
 #### Supported Query Providers
 

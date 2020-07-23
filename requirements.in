@@ -5,6 +5,7 @@ cfn-flip==1.2.3
 mock==4.0.1
 pytest-cov==2.10.0
 pre-commit==2.1.1
+black>=19.10b0,<20.0
 -r ./backend/ecs_tasks/delete_files/requirements.txt
 -r ./backend/lambda_layers/aws_sdk/requirements.txt
 -r ./backend/lambda_layers/cr_helper/requirements.txt

@@ -40,6 +40,7 @@ def json_body_loader(handler):
     """
     Decorator which loads the JSON body of a request
     """
+
     @functools.wraps(handler)
     def wrapper(event, context):
         if isinstance(event.get("body"), str):
@@ -64,16 +65,16 @@ def request_validator(request_schema):
                 logger.fatal("Invalid configuration: %s", str(e))
                 return {
                     "statusCode": 500,
-                    "body": json.dumps({
-                        "Message": "Invalid configuration: {}".format(str(e)),
-                    })
+                    "body": json.dumps(
+                        {"Message": "Invalid configuration: {}".format(str(e)),}
+                    ),
                 }
             except jsonschema.ValidationError as exception:
                 return {
                     "statusCode": 422,
-                    "body": json.dumps({
-                        "Message": "Invalid Request: {}".format(exception.message),
-                    })
+                    "body": json.dumps(
+                        {"Message": "Invalid Request: {}".format(exception.message),}
+                    ),
                 }
 
             return handler(to_validate, *args, **kwargs)
@@ -94,24 +95,20 @@ def catch_errors(handler):
             return handler(event, context)
         except ClientError as e:
             return {
-                "statusCode": e.response['ResponseMetadata'].get('HTTPStatusCode', 400),
-                "body": json.dumps({
-                    "Message": "Client error: {}".format(str(e)),
-                })
+                "statusCode": e.response["ResponseMetadata"].get("HTTPStatusCode", 400),
+                "body": json.dumps({"Message": "Client error: {}".format(str(e)),}),
             }
         except ValueError as e:
             return {
                 "statusCode": 400,
-                "body": json.dumps({
-                    "Message": "Invalid request: {}".format(str(e)),
-                })
+                "body": json.dumps({"Message": "Invalid request: {}".format(str(e)),}),
             }
         except Exception as e:
             return {
                 "statusCode": 400,
-                "body": json.dumps({
-                    "Message": "Unable to process request: {}".format(str(e)),
-                })
+                "body": json.dumps(
+                    {"Message": "Unable to process request: {}".format(str(e)),}
+                ),
             }
 
     return wrapper
@@ -131,22 +128,28 @@ def add_cors_headers(handler):
     Decorator which returns standard response headers to be used on each API method
     """
 
-    @functools.wraps(handler) 
-    def wrapper(event, context): 
-        resp = handler(event, context) 
-        resp["headers"] = { 
-           'Content-Type': 'application/json', 
-           'Access-Control-Allow-Origin': os.getenv("AllowOrigin", ""), 
-           **resp.get("headers", {}) 
+    @functools.wraps(handler)
+    def wrapper(event, context):
+        resp = handler(event, context)
+        resp["headers"] = {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": os.getenv("AllowOrigin", ""),
+            **resp.get("headers", {}),
         }
 
         return resp
- 
+
     return wrapper
 
 
-def s3_state_store(load_keys=[], offload_keys=[], should_offload=True, should_load=True,
-                   bucket=None, prefix="state/"):
+def s3_state_store(
+    load_keys=[],
+    offload_keys=[],
+    should_offload=True,
+    should_load=True,
+    bucket=None,
+    prefix="state/",
+):
     """
     Decorator which auto (re)stores state to/from S3.
     Only dictionaries and lists can be (re)stored to/from S3
@@ -170,7 +173,11 @@ def s3_state_store(load_keys=[], offload_keys=[], should_offload=True, should_lo
         loaded = {}
 
         for k, v in d.items():
-            if (k in load_keys or len(load_keys) == 0) and isinstance(v, str) and v.startswith("s3://"):
+            if (
+                (k in load_keys or len(load_keys) == 0)
+                and isinstance(v, str)
+                and v.startswith("s3://")
+            ):
                 loaded[k] = _load_value(v)
             elif isinstance(v, dict):
                 loaded[k] = load(v)
@@ -182,7 +189,9 @@ def s3_state_store(load_keys=[], offload_keys=[], should_offload=True, should_lo
         offloaded = {}
 
         for k, v in d.items():
-            if (k in offload_keys or len(offload_keys) == 0) and isinstance(v, (dict, list)):
+            if (k in offload_keys or len(offload_keys) == 0) and isinstance(
+                v, (dict, list)
+            ):
                 offloaded[k] = _offload_value(v)
             elif isinstance(v, dict):
                 offloaded[k] = offload(v)
@@ -202,7 +211,9 @@ def s3_state_store(load_keys=[], offload_keys=[], should_offload=True, should_lo
             if should_offload and isinstance(resp, dict):
                 resp = offload(resp)
             return resp
+
         return wrapper
+
     return wrapper_wrapper
 
 
@@ -211,11 +222,13 @@ def sanitize_args(args):
     disallowed_keys = ["match"]
     if isinstance(args, dict):
         for k, v in args.items():
-            if isinstance(k, str) and any([disallowed.lower() in k.lower() for disallowed in disallowed_keys]):
+            if isinstance(k, str) and any(
+                [disallowed.lower() in k.lower() for disallowed in disallowed_keys]
+            ):
                 if isinstance(v, (list, tuple)):
-                    args[k] = ['*** MATCH ID ***' for _ in v]
+                    args[k] = ["*** MATCH ID ***" for _ in v]
                 else:
-                    args[k] = '*** MATCH ID ***'
+                    args[k] = "*** MATCH ID ***"
             elif isinstance(v, (dict, list, tuple)):
                 args[k] = sanitize_args(v)
         return args

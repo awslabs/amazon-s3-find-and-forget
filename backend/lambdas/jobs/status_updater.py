@@ -26,7 +26,12 @@ status_map = {
 }
 
 unlocked_states = ["RUNNING", "QUEUED", "FORGET_COMPLETED_CLEANUP_IN_PROGRESS"]
-skip_cleanup_states = ["FIND_FAILED", "FORGET_FAILED", "FAILED", "FORGET_PARTIALLY_FAILED"]
+skip_cleanup_states = [
+    "FIND_FAILED",
+    "FORGET_FAILED",
+    "FAILED",
+    "FORGET_PARTIALLY_FAILED",
+]
 
 time_statuses = {
     "JobStartTime": ["RUNNING"],
@@ -36,8 +41,8 @@ time_statuses = {
         "FAILED",
         "FIND_FAILED",
         "FORGET_FAILED",
-        "FORGET_PARTIALLY_FAILED"
-    ]
+        "FORGET_PARTIALLY_FAILED",
+    ],
 }
 
 
@@ -51,7 +56,10 @@ def update_status(job_id, events):
 
         new_status = determine_status(job_id, event_name)
         # Only change the status if it's still in an unlocked state
-        if not attr_updates.get("JobStatus") or attr_updates.get("JobStatus") in unlocked_states:
+        if (
+            not attr_updates.get("JobStatus")
+            or attr_updates.get("JobStatus") in unlocked_states
+        ):
             attr_updates["JobStatus"] = new_status
 
         # Update any job attributes
@@ -74,19 +82,20 @@ def determine_status(job_id, event_name):
 
 
 def job_has_errors(job_id):
-    item = table.get_item(
-        Key={
-            'Id': job_id,
-            'Sk': job_id,
-        },
-        ConsistentRead=True
-    )['Item']
-    return item.get("TotalObjectUpdateFailedCount", 0) > 0 or item.get("TotalQueryFailedCount") > 0
+    item = table.get_item(Key={"Id": job_id, "Sk": job_id,}, ConsistentRead=True)[
+        "Item"
+    ]
+    return (
+        item.get("TotalObjectUpdateFailedCount", 0) > 0
+        or item.get("TotalQueryFailedCount") > 0
+    )
 
 
 def _update_item(job_id, attr_updates):
     try:
-        update_expression = "set " + ", ".join(["#{k} = :{k}".format(k=k) for k, v in attr_updates.items()])
+        update_expression = "set " + ", ".join(
+            ["#{k} = :{k}".format(k=k) for k, v in attr_updates.items()]
+        )
         attr_names = {}
         attr_values = {}
 
@@ -94,20 +103,21 @@ def _update_item(job_id, attr_updates):
             attr_names["#{}".format(k)] = k
             attr_values[":{}".format(k)] = v
 
-        unlocked_states_condition = " OR ".join(["#JobStatus = :{}".format(s) for s in unlocked_states])
+        unlocked_states_condition = " OR ".join(
+            ["#JobStatus = :{}".format(s) for s in unlocked_states]
+        )
 
         return table.update_item(
-            Key={
-                'Id': job_id,
-                'Sk': job_id,
-            },
+            Key={"Id": job_id, "Sk": job_id,},
             UpdateExpression=update_expression,
-            ConditionExpression="#Id = :Id AND #Sk = :Sk AND ({})".format(unlocked_states_condition),
+            ConditionExpression="#Id = :Id AND #Sk = :Sk AND ({})".format(
+                unlocked_states_condition
+            ),
             ExpressionAttributeNames={
                 "#Id": "Id",
                 "#Sk": "Sk",
                 "#JobStatus": "JobStatus",
-                **attr_names
+                **attr_names,
             },
             ExpressionAttributeValues={
                 ":Id": job_id,
@@ -115,7 +125,7 @@ def _update_item(job_id, attr_updates):
                 **{":{}".format(s): s for s in unlocked_states},
                 **attr_values,
             },
-            ReturnValues="ALL_NEW"
+            ReturnValues="ALL_NEW",
         )["Attributes"]
     except ddb.meta.client.exceptions.ConditionalCheckFailedException:
         logger.warning("Job %s is already in a status which cannot be updated", job_id)
