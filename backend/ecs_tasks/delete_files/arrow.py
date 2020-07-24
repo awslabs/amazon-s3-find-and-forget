@@ -37,7 +37,6 @@ def delete_from_table(table, to_delete):
     Deletes rows from a Arrow Table where any of the MatchIds is found as
     value in any of the columns. Returns a Pandas DataFrame
     """
-    print("matteo")
     needs_flattened_columns = needs_flattening(to_delete)
     df = (table.flatten() if needs_flattened_columns else table).to_pandas()
     initial_rows = get_row_count(df)
