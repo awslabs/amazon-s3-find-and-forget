@@ -13,6 +13,10 @@ def load_parquet(f):
     return pq.ParquetFile(f, memory_map=False)
 
 
+def load_json(f):
+    return pj.read_json(f, parse_options=pj.ParseOptions(newlines_in_values=True))
+
+
 def get_row_count(df):
     return len(df.index)
 
@@ -66,9 +70,7 @@ def delete_matches_from_file(input_file, to_delete, file_format):
 
 
 def delete_matches_from_json_file(input_file, to_delete):
-    json_file = pj.read_json(
-        input_file, parse_options=pj.ParseOptions(newlines_in_values=True)
-    )
+    json_file = load_json(input_file)
     total_rows = json_file.num_rows
     stats = Counter({"ProcessedRows": total_rows, "DeletedRows": 0})
     with pa.BufferOutputStream() as out_stream:

@@ -1,13 +1,15 @@
-from io import BytesIO
+from io import BytesIO, StringIO
 from mock import patch
 
 import pyarrow as pa
+import pyarrow.json as pj
 import pyarrow.parquet as pq
 import pytest
 import pandas as pd
 from backend.ecs_tasks.delete_files.arrow import (
     delete_matches_from_file,
     delete_from_table,
+    load_json,
     load_parquet,
     get_row_count,
 )
@@ -17,7 +19,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.ecs_tasks]
 
 @patch("backend.ecs_tasks.delete_files.arrow.load_parquet")
 @patch("backend.ecs_tasks.delete_files.arrow.delete_from_table")
-def test_it_generates_new_file_without_matches(mock_delete, mock_load_parquet):
+def test_it_generates_new_parquet_file_without_matches(mock_delete, mock_load_parquet):
     # Arrange
     to_delete = [{"Column": "customer_id", "MatchIds": ["23456"]}]
     data = [{"customer_id": "12345"}, {"customer_id": "23456"}]
@@ -36,6 +38,23 @@ def test_it_generates_new_file_without_matches(mock_delete, mock_load_parquet):
     res = pa.BufferReader(out.getvalue())
     newf = pq.ParquetFile(res, memory_map=False)
     assert 1 == newf.read().num_rows
+
+
+@patch("backend.ecs_tasks.delete_files.arrow.delete_from_table")
+def test_it_generates_new_json_file_without_matches(mock_delete):
+    # Arrange
+    to_delete = [{"Column": "customer_id", "MatchIds": ["23456"]}]
+    data = [{"customer_id": "12345"}, {"customer_id": "23456"}]
+    out_stream = to_json_stream(data)
+    mock_df = pd.DataFrame([{"customer_id": "12345"}])
+    mock_delete.return_value = [mock_df, 1]
+    # Act
+    out, stats = delete_matches_from_file(out_stream.getvalue(), to_delete, "json")
+    assert isinstance(out, pa.BufferOutputStream)
+    assert {"ProcessedRows": 2, "DeletedRows": 1} == stats
+    res = pa.BufferReader(out.getvalue())
+    newf = load_json(res)
+    assert 1 == newf.num_rows
 
 
 def test_delete_correct_rows_from_table():
@@ -83,6 +102,12 @@ def test_it_gets_row_count():
     assert 3 == get_row_count(df)
 
 
+def test_it_loads_json_files():
+    out_stream = to_json_stream([{"customer_id": "12345"}, {"customer_id": "23456"}])
+    resp = load_json(out_stream.getvalue())
+    assert 2 == resp.num_rows
+
+
 def test_it_loads_parquet_files():
     data = [{"customer_id": "12345"}, {"customer_id": "23456"}]
     df = pd.DataFrame(data)
@@ -90,3 +115,12 @@ def test_it_loads_parquet_files():
     df.to_parquet(buf, compression="snappy")
     resp = load_parquet(buf)
     assert 2 == resp.read().num_rows
+
+
+def to_json_stream(data):
+    df = pd.DataFrame(data)
+    buf = StringIO()
+    out_stream = pa.BufferOutputStream()
+    df.to_json(buf, orient="records", lines=True)
+    out_stream.write(buf.getvalue().encode())
+    return out_stream
