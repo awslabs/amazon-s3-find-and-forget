@@ -234,7 +234,7 @@ def test_it_rejects_overlapping_s3_paths(
 @patch("backend.lambdas.data_mappers.handlers.get_glue_table_location")
 @patch("backend.lambdas.data_mappers.handlers.get_glue_table_format")
 @patch("backend.lambdas.data_mappers.handlers.get_table_details_from_mapper")
-def test_it_rejects_non_parquet_tables(
+def test_it_rejects_not_supported_tables(
     mock_get_details, mock_get_format, mock_get_location, get_existing_s3_locations
 ):
     mock_get_details.return_value = get_table_stub({"Location": "s3://bucket/prefix/"})
@@ -243,7 +243,7 @@ def test_it_rejects_non_parquet_tables(
     mock_get_format.return_value = (
         "org.apache.hadoop.mapred.TextInputFormat",
         "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
-        "org.openx.data.jsonserde.JsonSerDe",
+        "org.apache.hadoop.hive.serde2.OpenCSVSerde",
     )
     with pytest.raises(ValueError):
         handlers.validate_mapper(

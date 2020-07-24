@@ -5,7 +5,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 import pandas as pd
-from backend.ecs_tasks.delete_files.parquet import (
+from backend.ecs_tasks.delete_files.arrow import (
     delete_matches_from_file,
     delete_from_table,
     load_parquet,
@@ -15,10 +15,11 @@ from backend.ecs_tasks.delete_files.parquet import (
 pytestmark = [pytest.mark.unit, pytest.mark.ecs_tasks]
 
 
-@patch("backend.ecs_tasks.delete_files.parquet.delete_from_table")
-def test_it_generates_new_file_without_matches(mock_delete):
+@patch("backend.ecs_tasks.delete_files.arrow.load_parquet")
+@patch("backend.ecs_tasks.delete_files.arrow.delete_from_table")
+def test_it_generates_new_file_without_matches(mock_delete, mock_load_parquet):
     # Arrange
-    column = {"Column": "customer_id", "MatchIds": ["12345", "23456"]}
+    to_delete = [{"Column": "customer_id", "MatchIds": ["23456"]}]
     data = [{"customer_id": "12345"}, {"customer_id": "23456"}]
     df = pd.DataFrame(data)
     buf = BytesIO()
@@ -26,9 +27,10 @@ def test_it_generates_new_file_without_matches(mock_delete):
     br = pa.BufferReader(buf.getvalue())
     f = pq.ParquetFile(br, memory_map=False)
     mock_df = pd.DataFrame([{"customer_id": "12345"}])
-    mock_delete.return_value = [pa.Table.from_pandas(mock_df), 1]
+    mock_delete.return_value = [mock_df, 1]
+    mock_load_parquet.return_value = f
     # Act
-    out, stats = delete_matches_from_file(f, [column])
+    out, stats = delete_matches_from_file("input_file.parquet", to_delete, "parquet")
     assert isinstance(out, pa.BufferOutputStream)
     assert {"ProcessedRows": 2, "DeletedRows": 1} == stats
     res = pa.BufferReader(out.getvalue())
@@ -45,9 +47,7 @@ def test_delete_correct_rows_from_table():
     columns = [{"Column": "customer_id", "MatchIds": ["12345", "23456"]}]
     df = pd.DataFrame(data)
     table = pa.Table.from_pandas(df)
-    schema = pa.Schema.from_pandas(df)
-    table, deleted_rows = delete_from_table(table, columns, schema)
-    res = table.to_pandas()
+    res, deleted_rows = delete_from_table(table, columns)
     assert len(res) == 1
     assert deleted_rows == 2
     assert res["customer_id"].values[0] == "34567"
@@ -65,9 +65,7 @@ def test_delete_correct_rows_from_table_with_complex_types():
     columns = [{"Column": "user_info.name", "MatchIds": ["matteo", "chris"]}]
     df = pd.DataFrame(data)
     table = pa.Table.from_pandas(df)
-    schema = pa.Schema.from_pandas(df)
-    table, deleted_rows = delete_from_table(table, columns, schema)
-    res = table.to_pandas()
+    res, deleted_rows = delete_from_table(table, columns)
     assert len(res) == 1
     assert deleted_rows == 2
     assert res["customer_id"].values[0] == 23456
