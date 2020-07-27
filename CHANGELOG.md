@@ -14,7 +14,7 @@
   Reformat of Python source code (non-functional change)
 - Dependency version updates for:
   - [#178](https://github.com/awslabs/amazon-s3-find-and-forget/pull/178),
-    [#178](https://github.com/awslabs/amazon-s3-find-and-forget/pull/180) lodash
+    [#180](https://github.com/awslabs/amazon-s3-find-and-forget/pull/180) lodash
   - [#179](https://github.com/awslabs/amazon-s3-find-and-forget/pull/179)
     websocket-extensions
 
