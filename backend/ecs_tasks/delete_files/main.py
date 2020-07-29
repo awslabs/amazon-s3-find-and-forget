@@ -99,6 +99,8 @@ def execute(queue_url, message_body, receipt_handle):
         logger.info("Downloading and opening %s object in-memory", object_path)
         with s3.open(object_path, "rb") as f:
             source_version = f.version_id
+            # Write new file in-memory
+            logger.info("Using object version %s as source", source_version)
             out_sink, stats = delete_matches_from_file(f, cols, file_format)
         if stats["DeletedRows"] == 0:
             raise ValueError(
