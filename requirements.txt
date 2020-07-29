@@ -43,7 +43,7 @@ pip-tools==5.2.1          # via -r requirements.in
 pluggy==0.13.1            # via pytest
 pre-commit==2.1.1         # via -r requirements.in
 py==1.9.0                 # via pytest
-pyarrow==0.17.1           # via -r ./backend/ecs_tasks/delete_files/requirements.txt
+pyarrow==1.0.0            # via -r ./backend/ecs_tasks/delete_files/requirements.txt
 pyparsing==2.4.7          # via packaging
 pyrsistent==0.16.0        # via -r ./backend/lambda_layers/decorators/requirements.txt, jsonschema
 pytest-cov==2.10.0        # via -r requirements.in

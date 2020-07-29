@@ -11,7 +11,7 @@ fsspec==0.7.2             # via s3fs
 jmespath==0.9.5           # via boto3, botocore
 numpy==1.18.2             # via pandas, pyarrow
 pandas==1.0.1             # via -r backend/ecs_tasks/delete_files/requirements.in
-pyarrow==0.17.1           # via -r backend/ecs_tasks/delete_files/requirements.in
+pyarrow==1.0.0            # via -r backend/ecs_tasks/delete_files/requirements.in
 python-dateutil==2.8.1    # via botocore, pandas
 python-snappy==0.5.4      # via -r backend/ecs_tasks/delete_files/requirements.in
 pytz==2019.3              # via pandas
