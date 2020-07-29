@@ -10,8 +10,10 @@ Tracker].
 The following data formats are supported:
 
 | Data Format    | Compression on read                | Compression on write | Supported Types for Column Identifier                                                                                                                                   |
-| -------------- | ---------------------------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Apache Parquet | Snappy, Brotli, Gzip, uncompressed | Snappy               | bigint, char, double, float, int, smallint, string, tinyint, varchar. Nested types (types whose parent is a struct, map, array) are only supported for **struct** type. |
+| -------------- | ---------------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Apache Parquet | Snappy, Brotli, Gzip, uncompressed | Snappy               | bigint, char, double, float, int, smallint, string, tinyint, varchar. Nested types (types whose parent is a struct, map, array) are only supported for **struct** type (*). |
+
+> (*) When using a type nested in a struct as column identifier, use the Athena's `AmazonAthenaPreviewFunctionality` Workgroup. For more information, see [Managing Workgroups].
 
 #### Supported Query Providers
 
@@ -98,3 +100,4 @@ service in question:
   https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Limits.html
 [deletion job]: ARCHITECTURE.md#deletion-jobs
 [deletion queue]: ARCHITECTURE.md#deletion-queue
+[managing workgroups]: https://docs.aws.amazon.com/athena/latest/ug/workgroups-create-update-delete.html
