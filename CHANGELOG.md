@@ -1,5 +1,12 @@
 # Change Log
 
+## v0.7
+
+### Summary
+
+- [#183](https://github.com/awslabs/amazon-s3-find-and-forget/pull/183):
+  Dependency version updates for elliptic
+
 ## v0.6
 
 ### Summary
