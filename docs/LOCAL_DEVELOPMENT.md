@@ -38,7 +38,7 @@ make deploy \
 ```
 
 > For information on how to obtain your subnet and security group IDs, see
-> [Obtaining VPC Information](USER_GUIDE.md#obtaining-vpc-information).
+> [Configuring a VPC for the Solution](USER_GUIDE.md#configuring-a-vpc-for-the-solution).
 
 This will deploy the Amazon S3 Find and Forget solution using the AWS CLI
 profile of the current shell. By default this will be the profile `default`.
