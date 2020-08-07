@@ -1,5 +1,12 @@
 # Change Log
 
+## v0.8 (unreleased)
+
+### Summary
+
+- [185](https://github.com/awslabs/amazon-s3-find-and-forget/pull/185): Fix dead
+  links to VPC info in docs
+
 ## v0.7
 
 ### Summary
