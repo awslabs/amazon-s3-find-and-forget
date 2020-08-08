@@ -1,17 +1,36 @@
 # Change Log
 
-## 0.6 (unreleased)
+## v0.8 (unreleased)
 
 ### Summary
 
-- [#174](https://github.com/awslabs/amazon-s3-find-and-forget/pull/174): Add
-  support for types nested in struct
+- [185](https://github.com/awslabs/amazon-s3-find-and-forget/pull/185): Fix dead
+  links to VPC info in docs
+
+## v0.7
+
+### Summary
+
+- [#183](https://github.com/awslabs/amazon-s3-find-and-forget/pull/183):
+  Dependency version updates for elliptic
+
+## v0.6
+
+### Summary
+
 - [#173](https://github.com/awslabs/amazon-s3-find-and-forget/pull/173): Show
   column types and hierarchy in the front-end during Data Mapper creation
 - [#173](https://github.com/awslabs/amazon-s3-find-and-forget/pull/173): Add
   support for char, smallint, tinyint, double, float
+- [#174](https://github.com/awslabs/amazon-s3-find-and-forget/pull/174): Add
+  support for types nested in struct
 - [#177](https://github.com/awslabs/amazon-s3-find-and-forget/pull/177):
   Reformat of Python source code (non-functional change)
+- Dependency version updates for:
+  - [#178](https://github.com/awslabs/amazon-s3-find-and-forget/pull/178),
+    [#180](https://github.com/awslabs/amazon-s3-find-and-forget/pull/180) lodash
+  - [#179](https://github.com/awslabs/amazon-s3-find-and-forget/pull/179)
+    websocket-extensions
 
 ## v0.5
 

@@ -144,10 +144,10 @@ resources.
      this Amazon S3 Find and Forget deployment.
    - **VpcSecurityGroups:** List of security group IDs to apply to Fargate
      deletion tasks. For more information on how to obtain these IDs, see
-     [Obtaining VPC Information](#obtaining-vpc-information)
+     [Configuring a VPC for the Solution](#configuring-a-vpc-for-the-solution)
    - **VpcSubnets:** List of subnets to run Fargate deletion tasks in. For more
      information on how to obtain these IDs, see
-     [Obtaining VPC Information](#obtaining-vpc-information)
+     [Configuring a VPC for the Solution](#configuring-a-vpc-for-the-solution)
 
    The following parameters are optional and allow further customisation of the
    solution if required:
