@@ -1,9 +1,9 @@
 import io
+import json
 import logging
 from collections import Counter
 
 import pyarrow as pa
-import pyarrow.json as pj
 import pyarrow.parquet as pq
 
 logger = logging.getLogger(__name__)
@@ -11,10 +11,6 @@ logger = logging.getLogger(__name__)
 
 def load_parquet(f):
     return pq.ParquetFile(f, memory_map=False)
-
-
-def load_json(f):
-    return pj.read_json(f, parse_options=pj.ParseOptions(newlines_in_values=True))
 
 
 def get_row_count(df):
@@ -70,15 +66,24 @@ def delete_matches_from_file(input_file, to_delete, file_format):
 
 
 def delete_matches_from_json_file(input_file, to_delete):
-    json_file = load_json(input_file)
-    total_rows = json_file.num_rows
-    stats = Counter({"ProcessedRows": total_rows, "DeletedRows": 0})
+    total_rows = deleted_rows = 0
     with pa.BufferOutputStream() as out_stream:
-        with io.StringIO() as json_stream:
-            df, deleted_rows = delete_from_table(json_file, to_delete)
-            df.to_json(json_stream, orient="records", lines=True)
-            out_stream.write(json_stream.getvalue().encode())
-            stats.update({"DeletedRows": deleted_rows})
+        while True:
+            line = input_file.readline()
+            if line:
+                total_rows += 1
+            else:
+                break
+            parsed = json.loads(line)
+            for column in to_delete:
+                record = parsed
+                for segment in column["Column"].split("."):
+                    record = record[segment]
+                if record in column["MatchIds"]:
+                    deleted_rows += 1
+                else:
+                    out_stream.write(line)
+        stats = Counter({"ProcessedRows": total_rows, "DeletedRows": deleted_rows})
         return out_stream, stats
 
 
