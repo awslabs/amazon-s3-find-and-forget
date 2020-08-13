@@ -6,6 +6,8 @@
 
 - [185](https://github.com/awslabs/amazon-s3-find-and-forget/pull/185): Fix dead
   links to VPC info in docs
+- [186](https://github.com/awslabs/amazon-s3-find-and-forget/pull/186): Fix
+  forget task log sanitiser to handle integer match IDs
 
 ## v0.7
 
