@@ -145,5 +145,15 @@ def test_it_sanitises_matches(message_stub):
     )
 
 
+def test_it_sanitises_int_matches(message_stub):
+    assert (
+        "This message contains ID *** MATCH ID *** and *** MATCH ID ***"
+        == sanitize_message(
+            "This message contains ID 12345 and 23456",
+            message_stub(Columns=[{"Column": "a", "MatchIds": [12345, 23456, 34567]}]),
+        )
+    )
+
+
 def test_sanitiser_handles_malformed_messages():
     assert "an error message" == sanitize_message("an error message", "not json")
