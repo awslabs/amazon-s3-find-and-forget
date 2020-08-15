@@ -5,20 +5,10 @@ import boto3
 from decorators import with_logging
 
 client = boto3.client("athena")
-# s3 = boto3.resource("s3")
-# athena_deletion_queue_db = os.getenv("AthenaDeletionQueueDb")
-# athena_deletion_queue_table = os.getenv("AthenaDeletionQueueTable")
+
 
 @with_logging
 def handler(event, context):
-    # bucket = event["QueryData"]["Bucket"]
-    # key = event["QueryData"]["Key"]
-    # obj = s3.Object(bucket, key)
-    # raw_data = obj.get()['Body'].read().decode('utf-8')
-    # data = json.loads(raw_data)
-    # data["PartitionKeys"] = event["QueryData"]["PartitionKeys"]
-    # data["Database"] = event["QueryData"]["Database"]
-    # data["Table"] = event["QueryData"]["Table"]
     data = event["QueryData"]
     response = client.start_query_execution(
         QueryString=make_query(data),

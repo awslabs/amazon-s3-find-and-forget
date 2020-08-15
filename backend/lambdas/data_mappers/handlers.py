@@ -151,6 +151,7 @@ def camel_to_snake_case(value):
 
 
 def validate_mapper(mapper):
+    # TODO:: consider dropping that
     if any(len(mapper["Columns"]) != n for n in get_existing_number_of_columns()):
         raise ValueError("All data mappers must have the same number of match keys")
     existing_s3_locations = get_existing_s3_locations()

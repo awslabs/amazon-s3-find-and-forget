@@ -21,7 +21,6 @@ state_machine_arn = getenv("StateMachineArn")
 ddb = boto3.resource("dynamodb")
 q_table = ddb.Table(getenv("DeletionQueueTable"))
 s3 = boto3.resource("s3")
-eraser_head_lambda = getenv("EraserHeadLambda")
 
 
 @with_logging
@@ -63,17 +62,6 @@ def handler(event, context):
                     {"Error": "Unable to clear deletion queue: {}".format(str(e))},
                     "StreamProcessor",
                 )
-        if updated_job and updated_job.get("JobStatus") in final_statuses:
-            lambda_client = boto3.client('lambda', 'us-west-2')
-            p = {
-                "neura_env": updated_job.get("NeuraEnv", "staging"),
-                "data_stores": "s3_verification"
-            }
-            try:
-                lambda_client.invoke_async(FunctionName=eraser_head_lambda, InvokeArgs=json.dumps(p))
-                logger.info("Successfully invoked {} Lambda".format(eraser_head_lambda))
-            except Exception:
-                logger.exception("Couldnt start eraserHead Lambda")
 
 
 def process_job(job):

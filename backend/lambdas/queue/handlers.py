@@ -173,23 +173,13 @@ def process_handler(event, context):
             raise ValueError("Cannot start job with different number of columns")
         first = False
         prev_num_of_cols = number_of_cols
-        # current_size_bytes = calculate_ddb_item_bytes(deletion_queue_item)
-        # if item_size_bytes + current_size_bytes < max_size_bytes:
-        #     item['DeletionQueueItems'].append(deletion_queue_item)
-        #     item_size_bytes += current_size_bytes
-        # else:
-        #     item['DeletionQueueItemsSkipped'] = True
-        #     break
+
     obj = s3.Object(deletion_queue_bucket, deletion_queue_key)
     obj.put(Body=json.dumps(deletion_queue_items))
     jobs_table.put_item(Item=item)
 
     # after sending the data to dynamo add the deletion_queue to the response
     item["DeletionQueueItems"] = list(map(lambda x: x["MatchId"], deletion_queue_items["DeletionQueueItems"]))
-
-    # add to athena deletion_queue
-    obj = s3.Object(deletion_queue_bucket, 'deletion_keys/deletion_queue/data.csv')
-    obj.put(Body="user_id\n" + '\n'.join(item["DeletionQueueItems"]))
 
     return {
         "statusCode": 202,
