@@ -1,0 +1,36 @@
+s3:
+    1) generate a bucket for s3f2 flow- {flow_bucket_name} (will be referenced next)
+
+IAM:
+    1) grant generateQueriesRole and queueProcessorRole with WR permission to {flow_bucket_name}
+,		2) grant deleteTaskRole and getJobRole with R permission to  {flow_bucket_name}
+    3) grant streamProcessorRole with permissions to:
+        a)  sts * for resource: dataAccessRole
+        b) sqs PurgeQueue for resource: {del_object_queue_arn}
+        c) R permission for {flow_bucket_name}
+    4) grant enqueueDeletionRole with access to dynamodb for:
+        "dynamodb:BatchGetItem",
+        ”dynamodb:DescribeTable",
+        ”dynamodb:GetItem",
+        ”dynamodb:Scan",
+        “dynamodb:Query"
+        Resource: [
+            "{data_mappers_table_name}",
+            "{data_mappers_table_name}/index/*"
+        ]
+
+lambdas:
+    queueProcessor:
+        environment variables:
+            JobBucket: {flow_bucket_name}
+            DataMappersTable: {data_mappers_table_name}
+    streamProcessor:
+        environment variables:
+            DeletionQueueUrl: sqs- {del_object_queue_url}
+    CreateDataMapper:
+        "JobBucket": {flow_bucket_name}
+        "TempBucket": {temp_bucket_name}
+
+dynamodb:
+    deletion_queue_table:
+        1) add DeletionQueueItemId index

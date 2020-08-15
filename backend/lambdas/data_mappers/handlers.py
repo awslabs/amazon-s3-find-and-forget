@@ -17,8 +17,8 @@ from decorators import (
     load_schema,
 )
 
-s3f2_flow_bucket = os.getenv("s3f2FlowBucket")
-s3f2_temp_bucket = os.getenv("s3f2TempBucket")
+s3f2_flow_bucket = os.getenv("JobBucket", "")
+s3f2_temp_bucket = os.getenv("TempBucket", "")
 
 dynamodb_resource = boto3.resource("dynamodb")
 table = dynamodb_resource.Table(os.getenv("DataMapperTable"))
