@@ -3,6 +3,7 @@ DataMapper handlers
 """
 import json
 import os
+import re
 
 import boto3
 
@@ -16,9 +17,14 @@ from decorators import (
     load_schema,
 )
 
+s3f2_flow_bucket = os.getenv("s3f2FlowBucket")
+s3f2_temp_bucket = os.getenv("s3f2TempBucket")
+
 dynamodb_resource = boto3.resource("dynamodb")
 table = dynamodb_resource.Table(os.getenv("DataMapperTable"))
+
 glue_client = boto3.client("glue")
+athena_client = boto3.client("athena")
 
 SUPPORTED_SERDE_LIBS = ["org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"]
 
@@ -58,6 +64,10 @@ def create_data_mapper_handler(event, context):
     path_params = event["pathParameters"]
     body = event["body"]
     validate_mapper(body)
+    deletion_db = body["QueryExecutorParameters"]["Database"]
+    deletion_table = "deletion_queue_{}".format(camel_to_snake_case(path_params["data_mapper_id"]))
+    deletion_queue_prefix = "data_mappers/{}/deletion_queue/".format(path_params["data_mapper_id"])
+    generate_athena_table_for_mapper(body, deletion_db, deletion_table, s3f2_flow_bucket, deletion_queue_prefix)
     item = {
         "DataMapperId": path_params["data_mapper_id"],
         "Columns": body["Columns"],
@@ -66,6 +76,10 @@ def create_data_mapper_handler(event, context):
         "CreatedBy": get_user_info(event),
         "RoleArn": body["RoleArn"],
         "Format": body.get("Format", "parquet"),
+        "DeletionQueueDb": deletion_db,
+        "DeletionQueueTableName": deletion_table,
+        "DeletionQueueBucket": s3f2_flow_bucket,
+        "DeletionQueuePrefix": deletion_queue_prefix,
         "DeleteOldVersions": body.get("DeleteOldVersions", True),
     }
     table.put_item(Item=item)
@@ -86,7 +100,59 @@ def delete_data_mapper_handler(event, context):
     return {"statusCode": 204}
 
 
+def generate_athena_table_for_mapper(mapper, deletion_db, deletion_table_name, deletion_queue_bucket, deletion_queue_key):
+    response = athena_client.start_query_execution(
+        QueryString=make_query(mapper, deletion_db, deletion_table_name, deletion_queue_bucket, deletion_queue_key),
+        ResultConfiguration={
+            "OutputLocation": "s3://{bucket}/{prefix}/".format(
+                bucket=s3f2_temp_bucket, prefix="data_mappers/queries"
+            )
+        },
+        WorkGroup=os.getenv("WorkGroup", "primary"),
+    )
+
+
+def make_query(mapper, db, table_name, deletion_queue_bucket, deletion_queue_key):
+    t = get_table_details_from_mapper(mapper)["Table"]
+    columns = t["StorageDescriptor"]["Columns"]
+    x = ["`{col_name}` {col_type}".format(col_name=c["Name"], col_type=c["Type"])
+         for c in columns if c in mapper["Columns"]]
+    deletion_columns = ", ".join(x)
+
+    return """
+            CREATE EXTERNAL TABLE {db}.{table_name}(
+              {deletion_columns}
+              )
+            ROW FORMAT SERDE 
+              'org.apache.hadoop.hive.serde2.OpenCSVSerde' 
+            WITH SERDEPROPERTIES ( 
+              'escapeChar'='\\', 
+              'quoteChar'='\"', 
+              'separatorChar'=',') 
+            STORED AS INPUTFORMAT 
+              'org.apache.hadoop.mapred.TextInputFormat' 
+            OUTPUTFORMAT 
+              'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
+            LOCATION
+              's3://{deletion_queue_bucket}/{deletion_queue_key}/'
+            TBLPROPERTIES (
+              'has_encrypted_data'='false', 
+              'skip.header.line.count'='1', 
+              'transient_lastDdlTime'='1596023961')
+        """.format(db=db,
+                   table_name=table_name,
+                   deletion_columns=deletion_columns,
+                   deletion_queue_bucket=deletion_queue_bucket,
+                   deletion_queue_key=deletion_queue_key)
+
+
+def camel_to_snake_case(value):
+    return re.sub(r'(?<!^)(?=[A-Z])', '_', value).lower()
+
+
 def validate_mapper(mapper):
+    if any(len(mapper["Columns"]) != n for n in get_existing_number_of_columns()):
+        raise ValueError("All data mappers must have the same number of match keys")
     existing_s3_locations = get_existing_s3_locations()
     if mapper["QueryExecutorParameters"].get("DataCatalogProvider") == "glue":
         table_details = get_table_details_from_mapper(mapper)
@@ -102,6 +168,11 @@ def validate_mapper(mapper):
                     ", ".join(SUPPORTED_SERDE_LIBS)
                 )
             )
+
+
+def get_existing_number_of_columns():
+    items = table.scan()["Items"]
+    return [len(mapper["Columns"]) for mapper in items]
 
 
 def get_existing_s3_locations():

@@ -48,7 +48,7 @@ def sanitize_message(err_message, message_body):
             if isinstance(match_ids, Iterable):
                 matches.extend(match_ids)
         for m in matches:
-            sanitised = sanitised.replace(str(m), "*** MATCH ID ***")
+            sanitised = sanitised.replace(m, "*** MATCH ID ***")
         return sanitised
     except (json.decoder.JSONDecodeError, ValueError):
         return err_message

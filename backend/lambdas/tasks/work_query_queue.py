@@ -4,13 +4,13 @@ import boto3
 
 from decorators import with_logging, s3_state_store
 from boto_utils import read_queue
-
+import time
 queue_url = os.getenv("QueueUrl")
 state_machine_arn = os.getenv("StateMachineArn")
 sqs = boto3.resource("sqs")
 queue = sqs.Queue(queue_url)
 sf_client = boto3.client("stepfunctions")
-
+s3 = boto3.resource("s3")
 
 @with_logging
 @s3_state_store(offload_keys=["Data"])
@@ -51,9 +51,24 @@ def handler(event, context):
             body["JobId"] = job_id
             body["WaitDuration"] = wait_duration
             query_executor = body["QueryExecutor"]
+            payload = {
+                "Bucket": body["QueryBucket"],
+                "Key": body["QueryKey"],
+                "AllFiles": body["AllFiles"],
+                "WaitDuration": wait_duration,
+                "JobId": job_id,
+                "Columns": body["Columns"],
+                "AWS_STEP_FUNCTIONS_STARTED_BY_EXECUTION_ID": execution_id,
+                "RoleArn": body["RoleArn"],
+                "DeleteOldVersions": body["DeleteOldVersions"],
+                "PartitionKeys": body["PartitionKeys"],
+                "DataMapperId": body["DataMapperId"],
+                "Table": body["Table"],
+                "Database": body["Database"]
+            }
             if query_executor == "athena":
                 resp = sf_client.start_execution(
-                    stateMachineArn=state_machine_arn, input=json.dumps(body)
+                    stateMachineArn=state_machine_arn, input=json.dumps(payload)
                 )
                 started.append({**resp, "ReceiptHandle": msg.receipt_handle})
             else:

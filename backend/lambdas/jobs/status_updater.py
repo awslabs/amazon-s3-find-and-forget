@@ -33,6 +33,13 @@ skip_cleanup_states = [
     "FORGET_PARTIALLY_FAILED",
 ]
 
+final_statuses = ["COMPLETED_CLEANUP_FAILED",
+                  "COMPLETED",
+                  "FAILED",
+                  "FIND_FAILED",
+                  "FORGET_FAILED",
+                  "FORGET_PARTIALLY_FAILED"]
+
 time_statuses = {
     "JobStartTime": ["RUNNING"],
     "JobFinishTime": [

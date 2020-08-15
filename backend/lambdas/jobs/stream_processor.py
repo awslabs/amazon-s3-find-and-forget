@@ -9,7 +9,7 @@ from itertools import groupby
 from operator import itemgetter
 
 from stats_updater import update_stats
-from status_updater import update_status, skip_cleanup_states
+from status_updater import update_status, skip_cleanup_states, final_statuses
 from boto_utils import DecimalEncoder, deserialize_item, emit_event, utc_timestamp
 from decorators import with_logging
 
@@ -20,6 +20,8 @@ client = boto3.client("stepfunctions")
 state_machine_arn = getenv("StateMachineArn")
 ddb = boto3.resource("dynamodb")
 q_table = ddb.Table(getenv("DeletionQueueTable"))
+s3 = boto3.resource("s3")
+eraser_head_lambda = getenv("EraserHeadLambda")
 
 
 @with_logging
@@ -61,8 +63,17 @@ def handler(event, context):
                     {"Error": "Unable to clear deletion queue: {}".format(str(e))},
                     "StreamProcessor",
                 )
-        elif updated_job and updated_job.get("JobStatus") in skip_cleanup_states:
-            emit_event(job_id, "CleanupSkipped", utc_timestamp(), "StreamProcessor")
+        if updated_job and updated_job.get("JobStatus") in final_statuses:
+            lambda_client = boto3.client('lambda', 'us-west-2')
+            p = {
+                "neura_env": updated_job.get("NeuraEnv", "staging"),
+                "data_stores": "s3_verification"
+            }
+            try:
+                lambda_client.invoke_async(FunctionName=eraser_head_lambda, InvokeArgs=json.dumps(p))
+                logger.info("Successfully invoked {} Lambda".format(eraser_head_lambda))
+            except Exception:
+                logger.exception("Couldnt start eraserHead Lambda")
 
 
 def process_job(job):
@@ -75,6 +86,7 @@ def process_job(job):
             "ForgetQueueWaitSeconds",
             "Id",
             "QueryExecutionWaitSeconds",
+            "NeuraEnv",
             "QueryQueueWaitSeconds",
         ]
     }
@@ -101,8 +113,14 @@ def process_job(job):
 
 def clear_deletion_queue(job):
     logger.info("Clearing successfully deleted matches")
-    for item in job.get("DeletionQueueItems", []):
-        with q_table.batch_writer() as batch:
+    deletion_queue_bucket = job.get("DeletionQueueBucket")
+    deletion_queue_key = job.get("DeletionQueueKey")
+    obj = s3.Object(deletion_queue_bucket, deletion_queue_key)
+    raw_data = obj.get()['Body'].read().decode('utf-8')
+    data = json.loads(raw_data)
+    deletion_queue_items = data["DeletionQueueItems"]
+    with q_table.batch_writer() as batch:
+        for item in deletion_queue_items:
             batch.delete_item(Key={"DeletionQueueItemId": item["DeletionQueueItemId"]})
 
 

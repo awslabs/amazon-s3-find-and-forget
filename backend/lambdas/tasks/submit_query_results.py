@@ -12,6 +12,7 @@ athena = boto3.client("athena")
 sqs = boto3.resource("sqs")
 queue = sqs.Queue(os.getenv("QueueUrl"))
 
+NUM_OF_MESSAGES_IN_BATCH = 200
 
 @with_logging
 def handler(event, context):
@@ -34,14 +35,17 @@ def handler(event, context):
     messages = []
     for p in paths:
         msg = {
+            "AllFiles": event["AllFiles"],
             "JobId": event["JobId"],
             "Object": p,
-            "Columns": event["Columns"],
+            "QueryBucket": event["Bucket"],
+            "QueryKey": event["Key"],
             "RoleArn": event.get("RoleArn", None),
             "DeleteOldVersions": event.get("DeleteOldVersions", True),
         }
         messages.append({k: v for k, v in msg.items() if v is not None})
+    btached_msgs = [messages[i:i + NUM_OF_MESSAGES_IN_BATCH] for i in range(0, len(messages), NUM_OF_MESSAGES_IN_BATCH)]
+    for batch in btached_msgs:
+        batch_sqs_msgs(queue, batch)
 
-    batch_sqs_msgs(queue, messages)
-
-    return paths
+    return None

@@ -7,7 +7,7 @@ import os
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
 
-from boto_utils import DecimalEncoder, utc_timestamp
+from boto_utils import (DecimalEncoder, utc_timestamp, deserialize_item)
 from decorators import (
     with_logging,
     request_validator,
@@ -16,6 +16,7 @@ from decorators import (
     load_schema,
 )
 
+s3 = boto3.resource("s3")
 ddb = boto3.resource("dynamodb")
 table = ddb.Table(os.getenv("JobTable", "S3F2_Jobs"))
 index = os.getenv("JobTableDateGSI", "Date-GSI")
@@ -55,6 +56,13 @@ def get_job_handler(event, context):
     job_id = event["pathParameters"]["job_id"]
     resp = table.get_item(Key={"Id": job_id, "Sk": job_id,})
     item = resp.get("Item")
+    if "DeletionQueueItems" not in item.keys():
+        deletion_queue_bucket = item["DeletionQueueBucket"]
+        deletion_queue_key = item["DeletionQueueKey"]
+        obj = s3.Object(deletion_queue_bucket, deletion_queue_key)
+        raw_data = obj.get()['Body'].read().decode('utf-8')
+        match_id_items = json.loads(raw_data)
+        item["DeletionQueueItems"] = list(map(lambda x: x["MatchId"], match_id_items["DeletionQueueItems"]))
     if not item:
         return {"statusCode": 404}
 

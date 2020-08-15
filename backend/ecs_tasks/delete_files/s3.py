@@ -181,6 +181,43 @@ def validate_bucket_versioning(client, bucket):
     return True
 
 
+def revert_last(client, input_bucket, input_key):
+    try:
+        resp = list(
+            paginate(
+                client,
+                client.list_object_versions,
+                ["Versions", "DeleteMarkers"],
+                Bucket=input_bucket,
+                Prefix=input_key
+            )
+        )
+        versions = [el[0] for el in resp if el[0] is not None]
+        sorted_versions = sorted(versions, key=lambda x: x["LastModified"], reverse=True)
+        delete_markers = [el[1] for el in resp if el[1] is not None]
+        sorted_deletions = sorted(delete_markers, key=lambda x: x["LastModified"], reverse=True)
+
+        latest_version = sorted_versions[0]
+        if not latest_version["IsLatest"]:
+            raise RevertLastVersionError(
+                errors=[
+                    "Delete object {} version {} failed: {}".format(input_key, latest_version, "IsLatest and LastModified don't match")
+                ]
+            )
+        if len(sorted_versions) > 1 and (len(sorted_deletions) == 0 or sorted_deletions[0]["LastModified"] < sorted_versions[1]["LastModified"]):
+            try:
+                client.delete_object(Bucket=input_bucket, Key=input_key, VersionId=latest_version["VersionId"])
+                logger.info("File {}/{} was Reverted Successfully".format(input_bucket, input_key))
+            except Exception as e:
+                raise RevertLastVersionError(
+                    errors=["Delete object {} version {} failed: {}".format(input_key, latest_version, str(e))]
+                )
+        else:
+            logger.info("Skipped Reversion for File: {}/{} since there are no prior versions".format(input_bucket, input_key))
+    except Exception as e:
+        raise RevertLastVersionError(errors=[str(e)])
+
+
 def delete_old_versions(client, input_bucket, input_key, new_version):
     try:
         resp = list(
@@ -286,6 +323,12 @@ def rollback_object_version(client, bucket, key, version, on_error):
 
 
 class DeleteOldVersionsError(Exception):
+    def __init__(self, errors):
+        super().__init__("\n".join(errors))
+        self.errors = errors
+
+
+class RevertLastVersionError(Exception):
     def __init__(self, errors):
         super().__init__("\n".join(errors))
         self.errors = errors

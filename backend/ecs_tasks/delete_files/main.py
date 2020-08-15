@@ -25,6 +25,8 @@ from s3 import (
     IntegrityCheckFailedError,
     rollback_object_version,
     DeleteOldVersionsError,
+    RevertLastVersionError,
+    revert_last
 )
 
 logger = logging.getLogger(__name__)
@@ -33,6 +35,7 @@ formatter = logging.Formatter("[%(levelname)s] %(message)s")
 handler = logging.StreamHandler(stream=sys.stdout)
 handler.setFormatter(formatter)
 logger.addHandler(handler)
+s3_client = boto3.resource("s3")
 
 
 def handle_error(
@@ -40,7 +43,7 @@ def handle_error(
     message_body,
     err_message,
     event_name="ObjectUpdateFailed",
-    change_msg_visibility=True,
+    change_msg_visibility=True
 ):
     logger.error(sanitize_message(err_message, message_body))
     try:
@@ -63,9 +66,16 @@ def handle_error(
             logger.error("Unable to change message visibility: %s", str(e))
 
 
+def parse_msg_body_and_revert_last(message_body, client):
+    body = json.loads(message_body)
+    object_path = body.get("Object")
+    input_bucket, input_key = parse_s3_url(object_path)
+    revert_last(client, input_bucket, input_key)
+
+
 def validate_message(message):
     body = json.loads(message)
-    mandatory_keys = ["JobId", "Object", "Columns"]
+    mandatory_keys = ["JobId", "Object", "QueryBucket", "QueryKey", "AllFiles"]
     for k in mandatory_keys:
         if k not in body:
             raise ValueError("Malformed message. Missing key: %s", k)
@@ -81,7 +91,11 @@ def execute(queue_url, message_body, receipt_handle):
         body = json.loads(message_body)
         session = get_session(body.get("RoleArn"))
         client = session.client("s3")
-        cols, object_path, job_id = itemgetter("Columns", "Object", "JobId")(body)
+        query_bucket, query_key, object_path, job_id, all_files = itemgetter("QueryBucket", "QueryKey", "Object", "JobId", "AllFiles")(body)
+        obj = s3_client.Object(query_bucket, query_key)
+        raw_data = obj.get()['Body'].read().decode('utf-8')
+        data = json.loads(raw_data)
+        cols = data["Columns"]
         input_bucket, input_key = parse_s3_url(object_path)
         validate_bucket_versioning(client, input_bucket)
         creds = session.get_credentials().get_frozen_credentials()
@@ -104,26 +118,30 @@ def execute(queue_url, message_body, receipt_handle):
             logger.info("Generating new parquet file without matches")
             out_sink, stats = delete_matches_from_file(infile, cols)
         if stats["DeletedRows"] == 0:
-            raise ValueError(
-                "The object {} was processed successfully but no rows required deletion".format(
-                    object_path
+            if all_files:
+                logger.info("The object {} was processed successfully but no rows required deletion".format(object_path))
+            else:
+                raise ValueError(
+                    "The object {} was processed successfully but no rows required deletion".format(
+                        object_path
+                    )
                 )
-            )
-        with pa.BufferReader(out_sink.getvalue()) as output_buf:
-            new_version = save(
-                s3, client, output_buf, input_bucket, input_key, source_version
-            )
-            logger.info("New object version: %s", new_version)
-            verify_object_versions_integrity(
-                client, input_bucket, input_key, source_version, new_version
-            )
-        if body.get("DeleteOldVersions"):
-            logger.info(
-                "Deleting object {} versions older than version {}".format(
-                    input_key, new_version
+        else:
+            with pa.BufferReader(out_sink.getvalue()) as output_buf:
+                new_version = save(
+                    s3, client, output_buf, input_bucket, input_key, source_version
                 )
-            )
-            delete_old_versions(client, input_bucket, input_key, new_version)
+                logger.info("New object version: %s", new_version)
+                verify_object_versions_integrity(
+                    client, input_bucket, input_key, source_version, new_version
+                )
+            if body.get("DeleteOldVersions"):
+                logger.info(
+                    "Deleting object {} versions older than version {}".format(
+                        input_key, new_version
+                    )
+                )
+                delete_old_versions(client, input_bucket, input_key, new_version)
         msg.delete()
         emit_deletion_event(body, stats)
     except (KeyError, ArrowException) as e:
@@ -177,6 +195,16 @@ def kill_handler(msgs, process_pool):
         except (ClientError, ValueError) as e:
             logger.error("Unable to gracefully cleanup message: %s", str(e))
     sys.exit(1 if len(msgs) > 0 else 0)
+
+
+def purge_queue(queue_url, **resource_kwargs):
+    if not resource_kwargs.get("endpoint_url") and os.getenv("AWS_DEFAULT_REGION"):
+        resource_kwargs["endpoint_url"] = "https://sqs.{}.amazonaws.com".format(
+            os.getenv("AWS_DEFAULT_REGION")
+        )
+    sqs = boto3.resource("sqs", **resource_kwargs)
+    queue = sqs.Queue(queue_url)
+    queue.purge()
 
 
 def get_queue(queue_url, **resource_kwargs):

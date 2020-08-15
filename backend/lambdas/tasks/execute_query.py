@@ -1,16 +1,27 @@
 import os
-
+import json
 import boto3
 
 from decorators import with_logging
 
 client = boto3.client("athena")
-
+# s3 = boto3.resource("s3")
+# athena_deletion_queue_db = os.getenv("AthenaDeletionQueueDb")
+# athena_deletion_queue_table = os.getenv("AthenaDeletionQueueTable")
 
 @with_logging
 def handler(event, context):
+    # bucket = event["QueryData"]["Bucket"]
+    # key = event["QueryData"]["Key"]
+    # obj = s3.Object(bucket, key)
+    # raw_data = obj.get()['Body'].read().decode('utf-8')
+    # data = json.loads(raw_data)
+    # data["PartitionKeys"] = event["QueryData"]["PartitionKeys"]
+    # data["Database"] = event["QueryData"]["Database"]
+    # data["Table"] = event["QueryData"]["Table"]
+    data = event["QueryData"]
     response = client.start_query_execution(
-        QueryString=make_query(event["QueryData"]),
+        QueryString=make_query(data),
         ResultConfiguration={
             "OutputLocation": "s3://{bucket}/{prefix}/".format(
                 bucket=event["Bucket"], prefix=event["Prefix"]
@@ -37,30 +48,35 @@ def make_query(query_data):
       "PartitionKeys": [{"Key":"k", "Value":"val"}]
     }
     """
+    # todo:: change dq db and table name
     template = """
-    SELECT DISTINCT "$path"
-    FROM "{db}"."{table}"
-    WHERE
-        ({column_filters})
-    """
+    SELECT DISTINCT(t."$path")
+    FROM "{db}"."{table}" t
+    INNER JOIN "{deletion_queue_db}"."{deletion_queue_table}" dq on ({join_part})
+    {partitions_part}
+    """.strip()
+
+    columns = query_data["Columns"]
     db = query_data["Database"]
     table = query_data["Table"]
-    columns = query_data["Columns"]
+    athena_deletion_queue_db = query_data["DeletionQueueDb"]
+    athena_deletion_queue_table = query_data["DeletionQueueTableName"]
     partitions = query_data.get("PartitionKeys", [])
-
-    column_filters = ""
-    for i, col in enumerate(columns):
-        if i > 0:
-            column_filters = column_filters + " OR "
-        column_filters = column_filters + "{} in ({})".format(
-            escape_column(col["Column"]),
-            ", ".join("{0}".format(escape_item(m)) for m in col["MatchIds"]),
-        )
+    partitions_list = []
+    columns_match = []
+    for i, col_name in enumerate(columns):
+        columns_match.append(' t.{col_name} = dq.{col_name} '.format(col_name=col_name))
+    join_part = 'AND'.join(columns_match)
     for partition in partitions:
-        template = template + " AND {key} = {value} ".format(
-            key=escape_column(partition["Key"]), value=escape_item(partition["Value"])
-        )
-    return template.format(db=db, table=table, column_filters=column_filters)
+        partitions_list.append("{key} = {value}".format(key=escape_column(partition["Key"]), value=escape_item(partition["Value"])))
+
+    partitions_part = "WHERE " + " AND ".join(partitions_list) if len(partitions) > 0 else ''
+    return template.format(db=db,
+                           table=table,
+                           deletion_queue_db=athena_deletion_queue_db,
+                           deletion_queue_table=athena_deletion_queue_table,
+                           join_part=join_part,
+                           partitions_part=partitions_part)
 
 
 def escape_column(item):
