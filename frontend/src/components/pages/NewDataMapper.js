@@ -243,7 +243,7 @@ export default ({ gateway, goToDataMappers }) => {
               <p>Query Executor Type</p>
               <div className="radio-card selected">
                 <Form.Check inline readOnly checked type="radio" />
-                <span>Athena + Glue</span>
+                <span>Athena</span>
                 <p>
                   Amazon Athena is responsible for the Find operation. AWS Glue
                   is used to catalog data in S3 and maintain metadata such as
