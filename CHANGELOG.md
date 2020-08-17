@@ -1,5 +1,12 @@
 # Change Log
 
+## v0.9 (unreleased)
+
+### Summary
+
+- [#189](https://github.com/awslabs/amazon-s3-find-and-forget/pull/189): UI
+  Updates
+
 ## v0.8
 
 ### Summary
