@@ -74,7 +74,6 @@ def process_job(job):
             "ForgetQueueWaitSeconds",
             "Id",
             "QueryExecutionWaitSeconds",
-            "NeuraEnv",
             "QueryQueueWaitSeconds",
         ]
     }
