@@ -2,12 +2,17 @@ s3:
     1) generate a bucket for s3f2 flow- {flow_bucket_name} (will be referenced next)
 
 IAM:
-    1) grant generateQueriesRole and queueProcessorRole with WR permission to {flow_bucket_name}
-,		2) grant deleteTaskRole and getJobRole with R permission to  {flow_bucket_name}
+    1) grant generateQueriesRole and queueProcessorRole with:
+        "s3:GetObject", "S3:PutObject" permission to resource: {flow_bucket_name}
+
+    2) grant deleteTaskRole and getJobRole with
+        "s3:GetObject" permission to resource: {flow_bucket_name}
+
     3) grant streamProcessorRole with permissions to:
-        a)  sts * for resource: dataAccessRole
-        b) sqs PurgeQueue for resource: {del_object_queue_arn}
-        c) R permission for {flow_bucket_name}
+        a) "sts:*" to resource: dataAccessRole
+        b) "sqs:PurgeQueue" to resource: {del_object_queue_arn}
+        c) "S3:GetObject" permission to resource: {flow_bucket_name}
+
     4) grant enqueueDeletionRole with access to dynamodb for:
         "dynamodb:BatchGetItem",
         ”dynamodb:DescribeTable",
@@ -18,18 +23,58 @@ IAM:
             "{data_mappers_table_name}",
             "{data_mappers_table_name}/index/*"
         ]
+    5) grant CreateDataMapperRole and DeleteDataMapperRole with permissions to
+        a) Athena:
+            "athena:StartQuery",
+            "athena:getQueryResults"
+        b) Glue:
+            "glue:CreateTable"
+        c)s3:
+            actions:
+                "s3:getObject",
+                "s3:putObject",
+                "s3:ListBucket",
+                "s3:GetBucketLocation",
+            resorce: [
+                {flow_bucket_name}/*",
+                {flow_bucket_name}
+            ]
+
+    6) grant DeleteDataMapperRole with permissions to
+        a) Athena:
+            "athena:StartQuery",
+            "athena:getQueryResults"
+        b) Glue:
+            "glue:GetDatabase*",
+            "glue:BatchGetPartition",
+            "glue:DeleteTable",
+            "glue:GetPartition*",
+            "glue:GetTable*
+        c)s3:
+            actions:
+                "s3:getObject",
+                "s3:putObject",
+                "s3:ListBucket",
+                "s3:GetBucketLocation"
+            resorce: [
+                {flow_bucket_name}/*",
+                {flow_bucket_name}
+            ]
+
 
 lambdas:
     queueProcessor:
         environment variables:
-            JobBucket: {flow_bucket_name}
-            DataMappersTable: {data_mappers_table_name}
+            FlowBucket: {flow_bucket_name}
     streamProcessor:
         environment variables:
             DeletionQueueUrl: sqs- {del_object_queue_url}
     CreateDataMapper:
-        "JobBucket": {flow_bucket_name}
-        "TempBucket": {temp_bucket_name}
+        environment variables:
+            FlowBucket: {flow_bucket_name}
+    DeleteDataMapper:
+        environment variables:
+            FlowBucket: {flow_bucket_name}
 
 dynamodb:
     deletion_queue_table:

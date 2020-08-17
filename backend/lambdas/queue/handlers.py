@@ -38,9 +38,7 @@ deletion_queue_table = ddb_resource.Table(deletion_queue_table_name)
 jobs_table = ddb_resource.Table(os.getenv("JobTable", "S3F2_Jobs"))
 bucket_count = int(os.getenv("GSIBucketCount", 1))
 max_size_bytes = 375000
-deletion_queue_bucket = os.getenv("JobBucket")
-
-data_mapper_table_name = os.getenv("DataMapperTable")
+deletion_queue_bucket = os.getenv("FlowBucket")
 
 
 @with_logging
@@ -56,25 +54,11 @@ def enqueue_handler(event, context):
         "MatchId": match_id,
         "CreatedAt": utc_timestamp(),
         "DataMappers": data_mappers,
-        "CreatedBy": get_user_info(event)
+        "CreatedBy": get_user_info(event),
     }
-    data_mappers_table = get_data_mappers()
-    relevant_mappers = [da for da in data_mappers_table if da["DataMapperId"] in data_mappers] if len(data_mappers) > 0 else data_mappers_table
-    number_of_match_ids = match_id.count(",") + 1
-    if all(len(r["Columns"]) == number_of_match_ids for r in relevant_mappers):
-        deletion_queue_table.put_item(Item=item)
-        return {
-            "statusCode": 201,
-            "body": json.dumps(item, cls=DecimalEncoder)
-        }
-    else:
-        raise ValueError("Cannot add DeletionQueueItem with data mappers that has different number of match columns")
+    deletion_queue_table.put_item(Item=item)
 
-
-def get_data_mappers():
-    results = paginate(ddb_client, ddb_client.scan, "Items", TableName=data_mapper_table_name)
-    for result in results:
-        yield deserialize_item(result)
+    return {"statusCode": 201, "body": json.dumps(item, cls=DecimalEncoder)}
 
 
 @with_logging
@@ -133,7 +117,6 @@ def process_handler(event, context):
     if running_job_exists():
         raise ValueError("There is already a job in progress")
 
-    neura_env = event.get("headers", {}).get("neura_env", "staging")
     job_id = str(uuid.uuid4())
     config = get_config()
     deletion_queue_key = 'jobs/{}/deletion_queue/data.json'.format(job_id)
@@ -147,7 +130,6 @@ def process_handler(event, context):
         "DeletionQueueBucket": deletion_queue_bucket,
         "DeletionQueueKey": deletion_queue_key,
         "DeletionQueueItemsSkipped": False,
-        "NeuraEnv": neura_env,
         "CreatedBy": get_user_info(event),
         **{k: v for k, v in config.items() if k not in ["JobDetailsRetentionDays"]}
     }
@@ -155,12 +137,9 @@ def process_handler(event, context):
     if int(config.get("JobDetailsRetentionDays", 0)) > 0:
         item["Expires"] = utc_timestamp(days=config["JobDetailsRetentionDays"])
 
-    item_size_bytes = calculate_ddb_item_bytes(item)
     deletion_queue_items = {
      "DeletionQueueItems": []
     }
-    first = True
-    prev_num_of_cols = 1
     for extended_deletion_queue_item in get_deletion_queue():
         deletion_item = {
             "DeletionQueueItemId": extended_deletion_queue_item["DeletionQueueItemId"],
@@ -168,11 +147,6 @@ def process_handler(event, context):
             "DataMappers": extended_deletion_queue_item["DataMappers"]
         }
         deletion_queue_items["DeletionQueueItems"].append(deletion_item)
-        number_of_cols = extended_deletion_queue_item["MatchId"].count(",") + 1
-        if not first and number_of_cols != prev_num_of_cols:
-            raise ValueError("Cannot start job with different number of columns")
-        first = False
-        prev_num_of_cols = number_of_cols
 
     obj = s3.Object(deletion_queue_bucket, deletion_queue_key)
     obj.put(Body=json.dumps(deletion_queue_items))

@@ -18,8 +18,6 @@ jobs_table = ddb.Table(os.getenv("JobTable", "S3F2_Jobs"))
 data_mapper_table_name = os.getenv("DataMapperTable", "S3F2_DataMappers")
 s3 = boto3.resource("s3")
 
-NUM_OF_RECORDS_IN_QUERY = 17000
-
 
 @with_logging
 def handler(event, context):
@@ -70,6 +68,7 @@ def generate_athena_queries(data_mapper, deletion_items, bucket, job_id):
         queries.append(msg)
     else:
         # For every partition combo of every table, create a query
+        # TODO:: make sure  get_partitions() works as expected, in some cases it didn't return all partition combos
         partitions = get_partitions(db, table_name)
         for partition in partitions:
             values = partition["Values"]
@@ -86,17 +85,6 @@ def generate_athena_queries(data_mapper, deletion_items, bucket, job_id):
         item["MatchId"] for item in deletion_items
         if data_mapper["DataMapperId"] in item.get("DataMappers", []) or len(item.get("DataMappers", [])) == 0
     ]
-
-    ### todo:: use or delete
-    # payload = {
-    #     "Columns": []
-    # }
-    # for i, c in enumerate(columns):
-    #     payload["Columns"].append({
-    #             "Column": c,
-    #             "MatchIds": [mid.split(",")[i] for mid in applicable_match_ids]
-    #         })
-    ###
     if len(applicable_match_ids) > 0:
         payload = {
             "Columns": [
@@ -112,7 +100,7 @@ def generate_athena_queries(data_mapper, deletion_items, bucket, job_id):
 
         # send data to Athena deletion queue
         deletion_queue_object = s3.Object(mapper_deletion_queue_bucket, mapper_deletion_queue_key)
-        dq_pl = "{}\n".format(" ,".join(columns)) + "\n".join(applicable_match_ids)
+        dq_pl = "{}\n".format(",".join(columns)) + "\n".join(applicable_match_ids)
         deletion_queue_object.put(Body=dq_pl)
 
         filtered = queries

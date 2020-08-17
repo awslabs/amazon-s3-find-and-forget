@@ -38,7 +38,6 @@ def make_query(query_data):
       "PartitionKeys": [{"Key":"k", "Value":"val"}]
     }
     """
-    # todo:: change dq db and table name
     template = """
     SELECT DISTINCT(t."$path")
     FROM "{db}"."{table}" t
@@ -57,10 +56,12 @@ def make_query(query_data):
     for i, col_name in enumerate(columns):
         columns_match.append(' t.{col_name} = dq.{col_name} '.format(col_name=col_name))
     join_part = 'AND'.join(columns_match)
-    for partition in partitions:
-        partitions_list.append("{key} = {value}".format(key=escape_column(partition["Key"]), value=escape_item(partition["Value"])))
 
+    for partition in partitions:
+        partitions_list.append("{key} = {value}"
+                               .format(key=escape_column(partition["Key"]), value=escape_item(partition["Value"])))
     partitions_part = "WHERE " + " AND ".join(partitions_list) if len(partitions) > 0 else ''
+
     return template.format(db=db,
                            table=table,
                            deletion_queue_db=athena_deletion_queue_db,

@@ -47,7 +47,7 @@ def _aggregate_stats(events):
                 "TotalObjectRollbackFailedCount": 1 if event_name == "ObjectRollbackFailed" else 0,
             })
             if event_name == "ObjectUpdateFailed":
-            # TODO:: this can only work when deleteOldVersion flag is True for all involved data mappers
+                # TODO:: this can only work when deleteOldVersion flag is True for all involved data mappers
                 try:
                     data_access_role_arn = event_data["Message"].get("RoleArn", getenv("DataAccessRoleArn"))
                     session = get_session(data_access_role_arn)

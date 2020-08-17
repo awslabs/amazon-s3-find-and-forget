@@ -52,6 +52,8 @@ def handler(event, context):
             body["WaitDuration"] = wait_duration
             query_executor = body["QueryExecutor"]
             payload = {
+                "DeletionQueueDb": body["DeletionQueueDb"],
+                "DeletionQueueTableName": body["DeletionQueueTableName"],
                 "Bucket": body["QueryBucket"],
                 "Key": body["QueryKey"],
                 "AllFiles": body["AllFiles"],

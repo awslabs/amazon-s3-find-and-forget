@@ -4,7 +4,7 @@ DataMapper handlers
 import json
 import os
 import re
-
+import time
 import boto3
 
 from boto_utils import DecimalEncoder, get_user_info, running_job_exists
@@ -17,8 +17,7 @@ from decorators import (
     load_schema,
 )
 
-s3f2_flow_bucket = os.getenv("JobBucket", "")
-s3f2_temp_bucket = os.getenv("TempBucket", "")
+s3f2_flow_bucket = os.getenv("FlowBucket", "")
 
 dynamodb_resource = boto3.resource("dynamodb")
 table = dynamodb_resource.Table(os.getenv("DataMapperTable"))
@@ -95,9 +94,37 @@ def delete_data_mapper_handler(event, context):
     if running_job_exists():
         raise ValueError("Cannot delete Data Mappers whilst there is a job in progress")
     data_mapper_id = event["pathParameters"]["data_mapper_id"]
-    table.delete_item(Key={"DataMapperId": data_mapper_id})
-
+    data_mapper = table.get_item(Key={"DataMapperId": data_mapper_id})["Item"]
+    query = "DROP TABLE {}.{}".format(data_mapper["DeletionQueueDb"], data_mapper["DeletionQueueTableName"])
+    response = athena_client.start_query_execution(
+        QueryString=query,
+        ResultConfiguration={
+            "OutputLocation": "s3://{bucket}/{prefix}/".format(
+                bucket=s3f2_flow_bucket, prefix="data_mappers/queries/drop/"
+            )
+        },
+        WorkGroup=os.getenv("WorkGroup", "primary"),
+    )
+    if is_athena_query_successful(response):
+        table.delete_item(Key={"DataMapperId": data_mapper_id})
+    else:
+        raise ValueError("Failed to delete Deletion Queue Athena Table for Data Mapper")
     return {"statusCode": 204}
+
+
+def is_athena_query_successful(response):
+    res = False
+    for i in range(10):
+        new_response = athena_client.get_query_execution(
+            QueryExecutionId=response['QueryExecutionId']
+        )
+        if new_response['QueryExecution']['Status']['State'] not in ['RUNNING', 'QUEUED']:
+            break
+        time.sleep(3)
+
+    if new_response['QueryExecution']['Status']['State'] == 'SUCCEEDED':
+        res = True
+    return res
 
 
 def generate_athena_table_for_mapper(mapper, deletion_db, deletion_table_name, deletion_queue_bucket, deletion_queue_key):
@@ -105,28 +132,28 @@ def generate_athena_table_for_mapper(mapper, deletion_db, deletion_table_name, d
         QueryString=make_query(mapper, deletion_db, deletion_table_name, deletion_queue_bucket, deletion_queue_key),
         ResultConfiguration={
             "OutputLocation": "s3://{bucket}/{prefix}/".format(
-                bucket=s3f2_temp_bucket, prefix="data_mappers/queries"
+                bucket=s3f2_flow_bucket, prefix="data_mappers/queries/create"
             )
         },
         WorkGroup=os.getenv("WorkGroup", "primary"),
     )
+    if not is_athena_query_successful(response):
+        raise ValueError("Failed to Create Deletion Queue Athena Table for Data Mapper")
 
 
 def make_query(mapper, db, table_name, deletion_queue_bucket, deletion_queue_key):
     t = get_table_details_from_mapper(mapper)["Table"]
     columns = t["StorageDescriptor"]["Columns"]
     x = ["`{col_name}` {col_type}".format(col_name=c["Name"], col_type=c["Type"])
-         for c in columns if c in mapper["Columns"]]
+         for c in columns if c["Name"] in mapper["Columns"]]
     deletion_columns = ", ".join(x)
-
-    return """
+    query = """
             CREATE EXTERNAL TABLE {db}.{table_name}(
               {deletion_columns}
               )
             ROW FORMAT SERDE 
               'org.apache.hadoop.hive.serde2.OpenCSVSerde' 
             WITH SERDEPROPERTIES ( 
-              'escapeChar'='\\', 
               'quoteChar'='\"', 
               'separatorChar'=',') 
             STORED AS INPUTFORMAT 
@@ -144,6 +171,8 @@ def make_query(mapper, db, table_name, deletion_queue_bucket, deletion_queue_key
                    deletion_columns=deletion_columns,
                    deletion_queue_bucket=deletion_queue_bucket,
                    deletion_queue_key=deletion_queue_key)
+    print(query)
+    return query
 
 
 def camel_to_snake_case(value):
@@ -151,9 +180,6 @@ def camel_to_snake_case(value):
 
 
 def validate_mapper(mapper):
-    # TODO:: consider dropping that
-    if any(len(mapper["Columns"]) != n for n in get_existing_number_of_columns()):
-        raise ValueError("All data mappers must have the same number of match keys")
     existing_s3_locations = get_existing_s3_locations()
     if mapper["QueryExecutorParameters"].get("DataCatalogProvider") == "glue":
         table_details = get_table_details_from_mapper(mapper)

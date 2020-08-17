@@ -8,6 +8,7 @@ from botocore.exceptions import ClientError
 from utils import remove_none, retry_wrapper
 
 logger = logging.getLogger(__name__)
+# TODO:: I Have moved this module to boto_utils package so stream_processor could use it for rollback.
 
 
 def save(s3, client, buf, bucket, key, source_version=None):
