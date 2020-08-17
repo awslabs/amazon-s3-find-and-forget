@@ -8,6 +8,8 @@ from botocore.exceptions import ClientError
 from utils import remove_none, retry_wrapper
 
 logger = logging.getLogger(__name__)
+# TODO:: This module should be placed in a directory which is shared between ecs_tasks and lambdas
+#  stream_processor uses it to rollback corrupted files. currently created a duplication.
 
 
 def save(s3, client, buf, bucket, key, source_version=None):
