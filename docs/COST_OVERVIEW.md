@@ -41,8 +41,10 @@ The Amazon S3 Find and Forget solution uses a serverless computing architecture.
 This model minimises costs when you're not actively using the solution, and
 allows the solution to scale while only paying for what you use.
 
-For typical usage, the greatest proportion of what you pay will be for use of
-Amazon Athena, Amazon S3 and AWS Fargate.
+The sample VPC provided in this solution makes use of VPC Endpoints, which have
+an hourly cost as well as data transfer cost. All the other costs depend on the
+usage of the API, and for typical usage, the greatest proportion of what you pay
+will be for use of Amazon Athena, Amazon S3 and AWS Fargate.
 
 ### AWS Fargate
 
@@ -215,6 +217,8 @@ This example shows how the charges would be calculated for a deletion job where:
 | Other services | \$0.05   | n/a                                                         |
 | Total          | \$0.98   | n/a                                                         |
 
+> Note: This estimate doesn't include the costs for Amazon VPC
+
 ### Scenario 2
 
 This example shows how the charges would be calculated for a deletion job where:
@@ -235,6 +239,8 @@ This example shows how the charges would be calculated for a deletion job where:
 | Amazon S3      | \$0.01   | \$0.01 of requests and data retrieval. \$0 of data transfer |
 | Other services | \$0.01   | n/a                                                         |
 | Total          | \$11.14  | n/a                                                         |
+
+> Note: This estimate doesn't include the costs for Amazon VPC
 
 ### Scenario 3
 
@@ -257,6 +263,8 @@ This example shows how the charges would be calculated for a deletion job where:
 | Other services | \$1      | n/a                                                         |
 | Total          | \$75.69  | n/a                                                         |
 
+> Note: This estimate doesn't include the costs for Amazon VPC
+
 ### Scenario 4
 
 This example shows how the charges would be calculated for a deletion job where:
@@ -277,6 +285,8 @@ This example shows how the charges would be calculated for a deletion job where:
 | Amazon S3      | \$0.49   | \$0.49 of requests and data retrieval. \$0 of data transfer |
 | Other services | \$3      | n/a                                                         |
 | Total          | \$316.80 | n/a                                                         |
+
+> Note: This estimate doesn't include the costs for Amazon VPC
 
 [aws cloudformation]: https://aws.amazon.com/cloudformation/
 [aws codebuild]: https://aws.amazon.com/codebuild/pricing/
