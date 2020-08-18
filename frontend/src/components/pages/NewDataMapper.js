@@ -300,7 +300,7 @@ export default ({ gateway, goToDataMappers }) => {
                 </Form.Control>
               </Form.Group>
               <Form.Group>
-                <Form.Label>Format</Form.Label>{" "}
+                <Form.Label>Format</Form.Label>
                 <Form.Text className="text-muted">
                   {isEmpty(columnsForSelectedTable)
                     ? "No table selected"

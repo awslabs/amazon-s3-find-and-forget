@@ -14,7 +14,8 @@ from boto_utils import parse_s3_url, get_session
 from botocore.exceptions import ClientError
 from pyarrow.lib import ArrowException
 from events import sanitize_message, emit_failure_event, emit_deletion_event
-from arrow import delete_matches_from_file
+from json_handler import delete_matches_from_json_file
+from parquet_handler import delete_matches_from_parquet_file
 from s3 import (
     validate_bucket_versioning,
     save,
@@ -68,6 +69,13 @@ def validate_message(message):
     for k in mandatory_keys:
         if k not in body:
             raise ValueError("Malformed message. Missing key: %s", k)
+
+
+def delete_matches_from_file(input_file, to_delete, file_format):
+    logger.info("Generating new file without matches")
+    if file_format == "json":
+        return delete_matches_from_json_file(input_file, to_delete)
+    return delete_matches_from_parquet_file(input_file, to_delete)
 
 
 def execute(queue_url, message_body, receipt_handle):

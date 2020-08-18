@@ -21,6 +21,7 @@ with patch.dict(
         get_queue,
         main,
         parse_args,
+        delete_matches_from_file,
     )
 
 pytestmark = [pytest.mark.unit, pytest.mark.ecs_tasks]
@@ -764,3 +765,23 @@ def test_it_sets_kill_handlers(mock_queue, mock_signal):
         main("https://queue/url", 1, 1, 1)
     assert mock_signal.SIGINT, ANY == mock_signal.signal.call_args_list[0][0]
     assert mock_signal.SIGTERM, ANY == mock_signal.signal.call_args_list[1][0]
+
+
+@patch("backend.ecs_tasks.delete_files.main.delete_matches_from_json_file")
+@patch("backend.ecs_tasks.delete_files.main.delete_matches_from_parquet_file")
+def test_it_deletes_from_json_file(mock_parquet, mock_json):
+    f = MagicMock()
+    cols = MagicMock()
+    delete_matches_from_file(f, cols, "json")
+    mock_json.assert_called_with(f, cols)
+    mock_parquet.assert_not_called()
+
+
+@patch("backend.ecs_tasks.delete_files.main.delete_matches_from_json_file")
+@patch("backend.ecs_tasks.delete_files.main.delete_matches_from_parquet_file")
+def test_it_deletes_from_parquet_file(mock_parquet, mock_json):
+    f = MagicMock()
+    cols = MagicMock()
+    delete_matches_from_file(f, cols, "parquet")
+    mock_parquet.assert_called_with(f, cols)
+    mock_json.assert_not_called()

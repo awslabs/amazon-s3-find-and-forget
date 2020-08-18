@@ -1,5 +1,4 @@
 import io
-import json
 import logging
 from collections import Counter
 
@@ -32,10 +31,10 @@ def needs_flattening(to_delete):
     return any("." in x["Column"] for x in to_delete)
 
 
-def delete_from_table(table, to_delete):
+def delete_from_table(table, to_delete, schema):
     """
     Deletes rows from a Arrow Table where any of the MatchIds is found as
-    value in any of the columns. Returns a Pandas DataFrame
+    value in any of the columns.
     """
     needs_flattened_columns = needs_flattening(to_delete)
     df = (table.flatten() if needs_flattened_columns else table).to_pandas()
@@ -50,41 +49,10 @@ def delete_from_table(table, to_delete):
         for indexes in indexes_to_delete:
             df = df[~indexes]
     deleted_rows = initial_rows - get_row_count(df)
-    return df, deleted_rows
-
-
-def delete_matches_from_file(input_file, to_delete, file_format):
-    """
-    Deletes matches from file where to_delete is a list of dicts where
-    each dict contains a column to search and the MatchIds to search for in
-    that particular column
-    """
-    logger.info("Generating new file without matches")
-    if file_format == "json":
-        return delete_matches_from_json_file(input_file, to_delete)
-    return delete_matches_from_parquet_file(input_file, to_delete)
-
-
-def delete_matches_from_json_file(input_file, to_delete):
-    total_rows = deleted_rows = 0
-    with pa.BufferOutputStream() as out_stream:
-        while True:
-            line = input_file.readline()
-            if line:
-                total_rows += 1
-            else:
-                break
-            parsed = json.loads(line)
-            for column in to_delete:
-                record = parsed
-                for segment in column["Column"].split("."):
-                    record = record[segment]
-                if record in column["MatchIds"]:
-                    deleted_rows += 1
-                else:
-                    out_stream.write(line)
-        stats = Counter({"ProcessedRows": total_rows, "DeletedRows": deleted_rows})
-        return out_stream, stats
+    table = pa.Table.from_pandas(
+        df, schema=schema, preserve_index=False
+    ).replace_schema_metadata()
+    return table, deleted_rows
 
 
 def delete_matches_from_parquet_file(input_file, to_delete):
@@ -101,10 +69,7 @@ def delete_matches_from_parquet_file(input_file, to_delete):
                     str(parquet_file.num_row_groups),
                 )
                 table = parquet_file.read_row_group(row_group)
-                df, deleted_rows = delete_from_table(table, to_delete)
-                table = pa.Table.from_pandas(
-                    df, schema=schema, preserve_index=False
-                ).replace_schema_metadata()
+                table, deleted_rows = delete_from_table(table, to_delete, schema)
                 writer.write_table(table)
                 stats.update({"DeletedRows": deleted_rows})
         return out_stream, stats
