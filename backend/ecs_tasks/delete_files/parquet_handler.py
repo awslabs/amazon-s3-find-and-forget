@@ -1,4 +1,3 @@
-import io
 import logging
 from collections import Counter
 
@@ -34,7 +33,7 @@ def needs_flattening(to_delete):
 def delete_from_table(table, to_delete, schema):
     """
     Deletes rows from a Arrow Table where any of the MatchIds is found as
-    value in any of the columns.
+    value in any of the columns
     """
     needs_flattened_columns = needs_flattening(to_delete)
     df = (table.flatten() if needs_flattened_columns else table).to_pandas()
