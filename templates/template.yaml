@@ -73,9 +73,11 @@ Parameters:
       - "true"
       - "false"
   FlowLogsGroup:
+    Description: Optional CloudWatch Logs group to send VPC flow logs to. Flow Logs incur additional cost. Leave blank to disable
     Type: String
     Default: ""
   FlowLogsRoleArn:
+    Description: Optional IAM role to use to send Flow Logs to CloudWatch. Flow Logs incur additional cost. Leave blank to disable
     Type: String
     Default: ""
   ForgetQueueWaitSeconds:

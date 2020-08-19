@@ -144,16 +144,18 @@ resources.
    - **VpcSecurityGroups:** (Default: "") List of security group IDs to apply to
      Fargate deletion tasks. For more information on how to obtain these IDs,
      see
-     [Configuring a VPC for the Solution](#configuring-a-vpc-for-the-solution)
+     [Configuring a VPC for the Solution](#configuring-a-vpc-for-the-solution).
+     Leave blank to use the solution provided VPC.
    - **VpcSubnets:** (Default: "") List of subnets to run Fargate deletion tasks
      in. For more information on how to obtain these IDs, see
-     [Configuring a VPC for the Solution](#configuring-a-vpc-for-the-solution)
+     [Configuring a VPC for the Solution](#configuring-a-vpc-for-the-solution).
+     Leave blank to use the solution provided VPC.
    - **FlowLogsGroup**: (Default: "") If using the solution provided VPC,
      defines the CloudWatch Log group which should be used for flow logs. If not
      set, flow logs will not be enabled. If both _VpcSecurityGroups_ and
      _VpcSubnets_ are set, this parameter is ignored. Enabling flow logs will
-     incur additional costs. See the [VPC Pricing] page for the associated
-     costs.
+     incur additional costs. See the [CloudWatch Logs Pricing] page for the
+     associated costs.
    - **FlowLogsRoleArn**: (Default: "") If using the solution provided VPC,
      defines which IAM Role should be used to send flow logs to CloudWatch. If
      not set, flow logs will not be enabled. If both _VpcSecurityGroups_ and
@@ -675,6 +677,7 @@ To delete a stack via the AWS CLI
   https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html#fargate-tasks-size
 [vpc endpoints]:
   https://docs.aws.amazon.com/vpc/latest/userguide/vpc-endpoints.html
+[cloudwatch logs pricing]: https://aws.amazon.com/cloudwatch/pricing/
 [dynamodb streams]:
   https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Streams.html
 [dynamodb point-in-time recovery]:
