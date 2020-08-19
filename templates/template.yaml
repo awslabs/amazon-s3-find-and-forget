@@ -72,6 +72,12 @@ Parameters:
     AllowedValues:
       - "true"
       - "false"
+  FlowLogsGroup:
+    Type: String
+    Default: ""
+  FlowLogsRoleArn:
+    Type: String
+    Default: ""
   ForgetQueueWaitSeconds:
     Description: Wait interval for checking Forget progress
     Type: Number
@@ -107,12 +113,15 @@ Parameters:
   VpcSecurityGroups:
     Description: List of security groups to apply to Fargate tasks
     Type: CommaDelimitedList
+    Default: ""
   VpcSubnets:
     Description: List of subnets to deploy Fargate tasks in
     Type: CommaDelimitedList
+    Default: ""
 
 Conditions:
   DefaultPreBuiltArtefactsBucket: !Equals [!Ref PreBuiltArtefactsBucketOverride, "false"]
+  DeployVpc: !Or [!Equals [!Join [",", !Ref VpcSecurityGroups], ""], !Equals [!Join [",", !Ref VpcSubnets], ""]]
 
 Mappings:
   Solution:
@@ -238,8 +247,8 @@ Resources:
         EnableContainerInsights: !Ref EnableContainerInsights
         JobTableName: !GetAtt DDBStack.Outputs.JobTable
         ResourcePrefix: !Ref ResourcePrefix
-        VpcSecurityGroups: !Join [",", !Ref VpcSecurityGroups]
-        VpcSubnets: !Join [",", !Ref VpcSubnets]
+        VpcSecurityGroups: !If [DeployVpc, !GetAtt VpcStack.Outputs.SecurityGroup, !Join [",", !Ref VpcSecurityGroups]]
+        VpcSubnets: !If [DeployVpc, !GetAtt VpcStack.Outputs.Subnets, !Join [",", !Ref VpcSubnets]]
   DeployStack:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -300,6 +309,14 @@ Resources:
         JobTableName: !GetAtt DDBStack.Outputs.JobTable
         JobTableStreamArn: !GetAtt DDBStack.Outputs.JobTableStreamArn
         StateMachineArn: !GetAtt StateMachineStack.Outputs.StateMachineArn
+  VpcStack:
+    Type: AWS::CloudFormation::Stack
+    Condition: DeployVpc
+    Properties:
+      TemplateURL: ./vpc.yaml
+      Parameters:
+        FlowLogsGroup: !Ref FlowLogsGroup
+        FlowLogsRoleArn: !Ref FlowLogsRoleArn
   WebUIStack:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -366,11 +383,13 @@ Metadata:
           default: "Required"
         Parameters:
           - AdminEmail
-          - VpcSecurityGroups
-          - VpcSubnets
       - Label:
           default: "Network Configuration"
         Parameters:
+          - VpcSecurityGroups
+          - VpcSubnets
+          - FlowLogsGroup
+          - FlowLogsRoleArn
           - CreateCloudFrontDistribution
           - AccessControlAllowOriginOverride
       - Label:
