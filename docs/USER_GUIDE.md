@@ -46,8 +46,8 @@ Endpoints]:
 #### Creating a New VPC
 
 If you do not have an existing VPC you wish to use, a VPC will be created for
-you. This template will create a VPC with private subnets and all the relevant
-VPC Endpoints required by the Amazon S3 Find and Forget solution.
+you with private subnets and all the relevant VPC Endpoints required by the
+Amazon S3 Find and Forget solution.
 
 #### Using an Existing VPC
 

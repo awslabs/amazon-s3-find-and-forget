@@ -4,7 +4,6 @@
 
 ### Summary
 
-<<<<<<< HEAD
 - [#189](https://github.com/awslabs/amazon-s3-find-and-forget/pull/189): UI
   Updates
 
@@ -19,13 +18,6 @@
   numeric Match IDs from its logs
 - [#187](https://github.com/awslabs/amazon-s3-find-and-forget/pull/187):
   Dependency version updates for react-scripts
-=======
-- [185](https://github.com/awslabs/amazon-s3-find-and-forget/pull/185): Fix dead
-  links to VPC info in docs
-- [186](https://github.com/awslabs/amazon-s3-find-and-forget/pull/186): Fix:
-  Solves an issue where the forget phase container could crash when redacting
-  numeric Match IDs from its logs
->>>>>>> deploy VPC by default
 
 ## v0.7
 
