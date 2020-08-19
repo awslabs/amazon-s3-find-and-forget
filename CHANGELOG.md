@@ -6,6 +6,8 @@
 
 - [#189](https://github.com/awslabs/amazon-s3-find-and-forget/pull/189): UI
   Updates
+- [#191](https://github.com/awslabs/amazon-s3-find-and-forget/pull/191): Deploy
+  VPC template by default
 
 ## v0.8
 
