@@ -43,6 +43,13 @@ Parameters:
     Description: The memory to be allocated to the Deletion Fargate Task
     Type: String
     Default: '30720'
+  DeployVpc:
+    Description: Whether or not the solution to deploy the solution provided VPC. If set to "false", both VpcSecurityGroups and VpcSubnets must be set
+    Type: String
+    Default: "true"
+    AllowedValues:
+      - "true"
+      - "false"
   EnableAPIAccessLogging:
     Description: Whether to enable API Gateway access logging. Enabling access logging will incur additional CloudWatch Logs charges
     Type: String
@@ -73,11 +80,11 @@ Parameters:
       - "true"
       - "false"
   FlowLogsGroup:
-    Description: Optional CloudWatch Logs group to send VPC flow logs to. Flow Logs incur additional cost. Leave blank to disable
+    Description: Optional CloudWatch Logs group to send VPC flow logs to. Flow Logs incur additional cost. Leave blank to disable. If DeployVpc is true, this parameter is ignored
     Type: String
     Default: ""
   FlowLogsRoleArn:
-    Description: Optional IAM role to use to send Flow Logs to CloudWatch. Flow Logs incur additional cost. Leave blank to disable
+    Description: Optional IAM role to use to send Flow Logs to CloudWatch. Flow Logs incur additional cost. Leave blank to disable. If DeployVpc is true, this parameter is ignored
     Type: String
     Default: ""
   ForgetQueueWaitSeconds:
@@ -113,17 +120,17 @@ Parameters:
       - "true"
       - "false"
   VpcSecurityGroups:
-    Description: List of security groups to apply to Fargate tasks
+    Description: List of security groups to apply to Fargate tasks. If DeployVpc is true, this parameter is ignored. If DeployVpc is false, both this parameter and VpcSubnets must be provided
     Type: CommaDelimitedList
     Default: ""
   VpcSubnets:
-    Description: List of subnets to deploy Fargate tasks in
+    Description: List of subnets to deploy Fargate tasks in. If DeployVpc is true, this parameter is ignored. If DeployVpc is false, both this parameter and VpcSecurityGroups must be provided
     Type: CommaDelimitedList
     Default: ""
 
 Conditions:
   DefaultPreBuiltArtefactsBucket: !Equals [!Ref PreBuiltArtefactsBucketOverride, "false"]
-  DeployVpc: !Or [!Equals [!Join [",", !Ref VpcSecurityGroups], ""], !Equals [!Join [",", !Ref VpcSubnets], ""]]
+  ShouldDeployVpc: !Equals [!Ref DeployVpc, "true"]
 
 Mappings:
   Solution:
@@ -249,8 +256,8 @@ Resources:
         EnableContainerInsights: !Ref EnableContainerInsights
         JobTableName: !GetAtt DDBStack.Outputs.JobTable
         ResourcePrefix: !Ref ResourcePrefix
-        VpcSecurityGroups: !If [DeployVpc, !GetAtt VpcStack.Outputs.SecurityGroup, !Join [",", !Ref VpcSecurityGroups]]
-        VpcSubnets: !If [DeployVpc, !GetAtt VpcStack.Outputs.Subnets, !Join [",", !Ref VpcSubnets]]
+        VpcSecurityGroups: !If [ShouldDeployVpc, !GetAtt VpcStack.Outputs.SecurityGroup, !Join [",", !Ref VpcSecurityGroups]]
+        VpcSubnets: !If [ShouldDeployVpc, !GetAtt VpcStack.Outputs.Subnets, !Join [",", !Ref VpcSubnets]]
   DeployStack:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -313,7 +320,7 @@ Resources:
         StateMachineArn: !GetAtt StateMachineStack.Outputs.StateMachineArn
   VpcStack:
     Type: AWS::CloudFormation::Stack
-    Condition: DeployVpc
+    Condition: ShouldDeployVpc
     Properties:
       TemplateURL: ./vpc.yaml
       Parameters:
@@ -388,6 +395,7 @@ Metadata:
       - Label:
           default: "Network Configuration"
         Parameters:
+          - DeployVpc
           - VpcSecurityGroups
           - VpcSubnets
           - FlowLogsGroup

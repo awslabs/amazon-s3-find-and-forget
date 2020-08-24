@@ -45,15 +45,17 @@ Endpoints]:
 
 #### Creating a New VPC
 
-If you do not have an existing VPC you wish to use, a VPC will be created for
-you with private subnets and all the relevant VPC Endpoints required by the
-Amazon S3 Find and Forget solution.
+If you do not have an existing VPC you wish to use, a solution provided VPC can
+be created by setting _DeployVpc_ to true when deploying the solution. The
+solution provided VPC only has private subnets and has all the relevant VPC
+Endpoints required by the Amazon S3 Find and Forget solution.
 
 #### Using an Existing VPC
 
 If you wish to use an existing VPC in your account with the Amazon S3 Find and
 Forget solution, you must ensure that when deploying the solution you select
-subnets and security groups which permit access to the aforementioned services.
+subnets and security groups which permit access to the aforementioned services
+and you set _DeployVpc_ to false.
 
 You can obtain your subnet and security group IDs from the AWS Console or by
 using the AWS CLI. If using the AWS CLI, you can use the following command to
@@ -141,25 +143,29 @@ resources.
    The following parameters are optional and allow further customisation of the
    solution if required:
 
+   - **DeployVpc:** (Default: true) Whether to deploy the solution provided VPC.
+     If you wish to use your own VPC, set this value to false. The solution
+     provided VPC uses VPC Endpoints to access the required services which will
+     incur additional costs. For more details, see the [VPC Endpoint Pricing]
+     page.
    - **VpcSecurityGroups:** (Default: "") List of security group IDs to apply to
      Fargate deletion tasks. For more information on how to obtain these IDs,
      see
      [Configuring a VPC for the Solution](#configuring-a-vpc-for-the-solution).
-     Leave blank to use the solution provided VPC.
+     If _DeployVpc_ is true, this parameter is ignored.
    - **VpcSubnets:** (Default: "") List of subnets to run Fargate deletion tasks
      in. For more information on how to obtain these IDs, see
      [Configuring a VPC for the Solution](#configuring-a-vpc-for-the-solution).
-     Leave blank to use the solution provided VPC.
+     If _DeployVpc_ is true, this parameter is ignored.
    - **FlowLogsGroup**: (Default: "") If using the solution provided VPC,
      defines the CloudWatch Log group which should be used for flow logs. If not
-     set, flow logs will not be enabled. If both _VpcSecurityGroups_ and
-     _VpcSubnets_ are set, this parameter is ignored. Enabling flow logs will
-     incur additional costs. See the [CloudWatch Logs Pricing] page for the
-     associated costs.
+     set, flow logs will not be enabled. If _DeployVpc_ is false, this parameter
+     is ignored. Enabling flow logs will incur additional costs. See the
+     [CloudWatch Logs Pricing] page for the associated costs.
    - **FlowLogsRoleArn**: (Default: "") If using the solution provided VPC,
      defines which IAM Role should be used to send flow logs to CloudWatch. If
-     not set, flow logs will not be enabled. If both _VpcSecurityGroups_ and
-     _VpcSubnets_ are set, this parameter is ignored.
+     not set, flow logs will not be enabled. If _DeployVpc_ is false, this
+     parameter is ignored.
    - **CreateCloudFrontDistribution:** (Default: true) Creates a CloudFront
      distribution for accessing the web interface of the solution.
    - **AccessControlAllowOriginOverride:** (Default: false) Allows overriding
@@ -677,6 +683,7 @@ To delete a stack via the AWS CLI
   https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html#fargate-tasks-size
 [vpc endpoints]:
   https://docs.aws.amazon.com/vpc/latest/userguide/vpc-endpoints.html
+[vpc endpoint pricing]: https://aws.amazon.com/privatelink/pricing/
 [cloudwatch logs pricing]: https://aws.amazon.com/cloudwatch/pricing/
 [dynamodb streams]:
   https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Streams.html
