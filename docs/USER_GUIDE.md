@@ -55,7 +55,17 @@ recommended to use an existing VPC as described in the following section.
 
 #### Using an Existing VPC
 
-If you wish to use an existing VPC in your account with the Amazon S3 Find and
+Amazon S3 Find and Forget can also be used in an existing VPC. You may
+want to do this if you have requirements that aren't met by using the VPC
+provided with the solution.
+
+To use an existing VPC, set the `DeployVpc` parameter to `false` when
+launching the solution CloudFormation stack. You must also specify the
+subnet and security groups that the Fargate tasks will use by setting the
+`VpcSubnets` and `VpcSecurityGroups` parameters respectively.
+
+The subnets and security groups that you specify must allow the tasks to
+connect to the aforementioned AWS services.
 Forget solution, you must ensure that when deploying the solution you select
 subnets and security groups which permit access to the aforementioned services
 and you set _DeployVpc_ to false.
