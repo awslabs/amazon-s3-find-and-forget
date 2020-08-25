@@ -124,7 +124,7 @@ Parameters:
     Type: CommaDelimitedList
     Default: ""
   VpcSubnets:
-    Description: List of subnets to deploy Fargate tasks in. If DeployVpc is true, this parameter is ignored. If DeployVpc is false, both this parameter and VpcSecurityGroups must be provided
+    Description: Comma-delimited list of subnets to deploy Fargate tasks in. This parameter must be set if the DeployVpc parameter is "true", otherwise it is ignored.
     Type: CommaDelimitedList
     Default: ""
 
