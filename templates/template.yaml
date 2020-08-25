@@ -84,7 +84,7 @@ Parameters:
     Type: String
     Default: ""
   FlowLogsRoleArn:
-    Description: Optional IAM role to use to send Flow Logs to CloudWatch. Flow Logs incur additional cost. Leave blank to disable. If DeployVpc is false, this parameter is ignored
+    Description: Optional: IAM role to use to send Flow Logs to CloudWatch. Flow Logs incur additional cost. Set to "" to disable. This parameter is ignored if the DeployVpc parameter is set to "false".
     Type: String
     Default: ""
   ForgetQueueWaitSeconds:
