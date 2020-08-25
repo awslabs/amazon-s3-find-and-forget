@@ -80,7 +80,7 @@ Parameters:
       - "true"
       - "false"
   FlowLogsGroup:
-    Description: Optional CloudWatch Logs group to send VPC flow logs to. Flow Logs incur additional cost. Leave blank to disable. If DeployVpc is false, this parameter is ignored
+    Description: Optional: CloudWatch Logs group to send VPC flow logs to. Flow Logs incur additional cost. Set to "" to disable. This parameter is ignored if the DeployVpc parameter is set to "false".
     Type: String
     Default: ""
   FlowLogsRoleArn:
