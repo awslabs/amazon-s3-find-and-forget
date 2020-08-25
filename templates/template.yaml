@@ -120,7 +120,7 @@ Parameters:
       - "true"
       - "false"
   VpcSecurityGroups:
-    Description: List of security groups to apply to Fargate tasks. If DeployVpc is true, this parameter is ignored. If DeployVpc is false, both this parameter and VpcSubnets must be provided
+    Description: Comma-delimited list of security groups to apply to Fargate tasks. This parameter must be set if the DeployVpc parameter is "true", otherwise it is ignored.
     Type: CommaDelimitedList
     Default: ""
   VpcSubnets:
