@@ -44,7 +44,7 @@ Parameters:
     Type: String
     Default: '30720'
   DeployVpc:
-    Description: Whether or not the solution to deploy the solution provided VPC. If set to "false", both VpcSecurityGroups and VpcSubnets must be set
+    Description: Deploy a new dedicated VPC for this solution. To use an existing VPC, set this to "false" and provide values for the VpcSecurityGroups and VpcSubnets parameters.
     Type: String
     Default: "true"
     AllowedValues:
