@@ -116,6 +116,7 @@ architecture.
 - [API Specification](docs/api/README.md)
 - [Local Development](docs/LOCAL_DEVELOPMENT.md)
 - [Change Log](CHANGELOG.md)
+- [Upgrade Guide](docs/UPGRADE_GUIDE.md)
 
 ## Contributing
 
