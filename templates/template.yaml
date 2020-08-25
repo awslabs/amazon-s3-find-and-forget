@@ -80,11 +80,11 @@ Parameters:
       - "true"
       - "false"
   FlowLogsGroup:
-    Description: Optional: CloudWatch Logs group to send VPC flow logs to. Flow Logs incur additional cost. Set to "" to disable. This parameter is ignored if the DeployVpc parameter is set to "false".
+    Description: Optional CloudWatch Logs group to send VPC flow logs to. Flow Logs incur additional cost. Set to "" to disable. This parameter is ignored if the DeployVpc parameter is set to "false".
     Type: String
     Default: ""
   FlowLogsRoleArn:
-    Description: Optional: IAM role to use to send Flow Logs to CloudWatch. Flow Logs incur additional cost. Set to "" to disable. This parameter is ignored if the DeployVpc parameter is set to "false".
+    Description: Optional IAM role to use to send Flow Logs to CloudWatch. Flow Logs incur additional cost. Set to "" to disable. This parameter is ignored if the DeployVpc parameter is set to "false".
     Type: String
     Default: ""
   ForgetQueueWaitSeconds:
@@ -120,11 +120,11 @@ Parameters:
       - "true"
       - "false"
   VpcSecurityGroups:
-    Description: Comma-delimited list of security groups to apply to Fargate tasks. This parameter must be set if the DeployVpc parameter is "true", otherwise it is ignored.
+    Description: Comma-delimited list of security groups to apply to Fargate tasks. This parameter must be set if the DeployVpc parameter is "false", otherwise it is ignored.
     Type: CommaDelimitedList
     Default: ""
   VpcSubnets:
-    Description: Comma-delimited list of subnets to deploy Fargate tasks in. This parameter must be set if the DeployVpc parameter is "true", otherwise it is ignored.
+    Description: Comma-delimited list of subnets to deploy Fargate tasks in. This parameter must be set if the DeployVpc parameter is "false", otherwise it is ignored.
     Type: CommaDelimitedList
     Default: ""
 

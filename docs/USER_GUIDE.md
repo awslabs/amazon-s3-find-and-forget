@@ -50,25 +50,24 @@ purpose-built for the solution. The VPC includes VPC endpoints for the
 aforementioned services, and does not provision internet connectivity.
 
 You can use the provided VPC to operate the solution with no further
-customisations. However, if you have more complex requirements it is
-recommended to use an existing VPC as described in the following section.
+customisations. However, if you have more complex requirements it is recommended
+to use an existing VPC as described in the following section.
 
 #### Using an Existing VPC
 
-Amazon S3 Find and Forget can also be used in an existing VPC. You may
-want to do this if you have requirements that aren't met by using the VPC
-provided with the solution.
+Amazon S3 Find and Forget can also be used in an existing VPC. You may want to
+do this if you have requirements that aren't met by using the VPC provided with
+the solution.
 
-To use an existing VPC, set the `DeployVpc` parameter to `false` when
-launching the solution CloudFormation stack. You must also specify the
-subnet and security groups that the Fargate tasks will use by setting the
-`VpcSubnets` and `VpcSecurityGroups` parameters respectively.
+To use an existing VPC, set the `DeployVpc` parameter to `false` when launching
+the solution CloudFormation stack. You must also specify the subnet and security
+groups that the Fargate tasks will use by setting the `VpcSubnets` and
+`VpcSecurityGroups` parameters respectively.
 
-The subnets and security groups that you specify must allow the tasks to
-connect to the aforementioned AWS services.
-Forget solution, you must ensure that when deploying the solution you select
-subnets and security groups which permit access to the aforementioned services
-and you set _DeployVpc_ to false.
+The subnets and security groups that you specify must allow the tasks to connect
+to the aforementioned AWS services. Forget solution, you must ensure that when
+deploying the solution you select subnets and security groups which permit
+access to the aforementioned services and you set _DeployVpc_ to false.
 
 You can obtain your subnet and security group IDs from the AWS Console or by
 using the AWS CLI. If using the AWS CLI, you can use the following command to
