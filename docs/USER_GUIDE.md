@@ -45,10 +45,13 @@ Endpoints]:
 
 #### Creating a New VPC
 
-If you do not have an existing VPC you wish to use, a solution provided VPC can
-be created by setting _DeployVpc_ to true when deploying the solution. The
-solution provided VPC only has private subnets and has all the relevant VPC
-Endpoints required by the Amazon S3 Find and Forget solution.
+By default the CloudFormation template will create a new VPC that has been
+purpose-built for the solution. The VPC includes VPC endpoints for the
+aforementioned services, and does not provision internet connectivity.
+
+You can use the provided VPC to operate the solution with no further
+customisations. However, if you have more complex requirements it is
+recommended to use an existing VPC as described in the following section.
 
 #### Using an Existing VPC
 
