@@ -1,6 +1,6 @@
 # Change Log
 
-## v0.9 (unreleased)
+## v0.9
 
 ### Summary
 

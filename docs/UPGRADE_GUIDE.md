@@ -11,5 +11,5 @@ same values for the `FlowLogsGroup` and `FlowLogsRoleArn` parameters that were
 used when deploying the standalone VPC stack. After the deployment of v0.9 is
 complete, you should delete the old VPC stack.
 
-To continue using an existing VPC, you must set `DeployVpc` to
-**false** when upgrading to v0.9.
+To continue using an existing VPC, you must set `DeployVpc` to **false** when
+upgrading to v0.9.
