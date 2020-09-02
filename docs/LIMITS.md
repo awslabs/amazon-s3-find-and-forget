@@ -12,10 +12,11 @@ The following data formats are supported:
 | Data Format    | Compression on read                | Compression on write | Supported Types for Column Identifier                                                                                                                                        |
 | -------------- | ---------------------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Apache Parquet | Snappy, Brotli, Gzip, uncompressed | Snappy               | bigint, char, double, float, int, smallint, string, tinyint, varchar. Nested types (types whose parent is a struct, map, array) are only supported for **struct** type (\*). |
+| JSON           | Gzip, uncompressed                 | Gzip, uncompressed   | number, string. Nested types (types whose parent is a object, array) are only supported for **object** type.                                                                 |
 
-> (\*) When using a type nested in a struct as column identifier, use the
-> Athena's `AmazonAthenaPreviewFunctionality` Workgroup. For more information,
-> see [Managing Workgroups].
+> (\*) When using a type nested in a struct as column identifier with Apache
+> Parquet files, use the Athena's `AmazonAthenaPreviewFunctionality` Workgroup.
+> For more information, see [Managing Workgroups].
 
 #### Supported Query Providers
 

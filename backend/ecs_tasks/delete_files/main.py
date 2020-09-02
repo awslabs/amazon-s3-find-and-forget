@@ -71,10 +71,10 @@ def validate_message(message):
             raise ValueError("Malformed message. Missing key: %s", k)
 
 
-def delete_matches_from_file(input_file, to_delete, file_format):
+def delete_matches_from_file(input_file, to_delete, file_format, compressed=False):
     logger.info("Generating new file without matches")
     if file_format == "json":
-        return delete_matches_from_json_file(input_file, to_delete)
+        return delete_matches_from_json_file(input_file, to_delete, compressed)
     return delete_matches_from_parquet_file(input_file, to_delete)
 
 
@@ -109,7 +109,8 @@ def execute(queue_url, message_body, receipt_handle):
             source_version = f.version_id
             # Write new file in-memory
             logger.info("Using object version %s as source", source_version)
-            out_sink, stats = delete_matches_from_file(f, cols, file_format)
+            compressed = object_path.endswith(".gz")
+            out_sink, stats = delete_matches_from_file(f, cols, file_format, compressed)
         if stats["DeletedRows"] == 0:
             raise ValueError(
                 "The object {} was processed successfully but no rows required deletion".format(
