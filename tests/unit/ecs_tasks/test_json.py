@@ -1,6 +1,6 @@
-from io import BytesIO, StringIO
 from mock import patch
 
+import gzip
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
@@ -30,6 +30,25 @@ def test_it_generates_new_json_file_without_matches():
     )
 
 
+def test_it_handles_json_with_gzip_compression():
+    # Arrange
+    to_delete = [{"Column": "customer_id", "MatchIds": ["23456"]}]
+    data = (
+        '{"customer_id": "12345", "x": 7, "d":"2001-01-01"}\n'
+        '{"customer_id": "23456", "x": 8, "d":"2001-01-03"}\n'
+        '{"customer_id": "34567", "x": 9, "d":"2001-01-05"}\n'
+    )
+    out_stream = to_compressed_json_file(data)
+    # Act
+    out, stats = delete_matches_from_json_file(out_stream, to_delete, True)
+    assert isinstance(out, pa.BufferOutputStream)
+    assert {"ProcessedRows": 3, "DeletedRows": 1} == stats
+    assert to_decompressed_json_string(out) == (
+        '{"customer_id": "12345", "x": 7, "d":"2001-01-01"}\n'
+        '{"customer_id": "34567", "x": 9, "d":"2001-01-05"}\n'
+    )
+
+
 def test_delete_correct_rows_from_json_table_with_complex_types():
     # Arrange
     to_delete = [{"Column": "user.id", "MatchIds": ["23456"]}]
@@ -49,16 +68,26 @@ def test_delete_correct_rows_from_json_table_with_complex_types():
     )
 
 
-def to_json_file(data):
-    tmp = tempfile.NamedTemporaryFile(mode="w+t")
+def to_json_file(data, compressed=False):
+    mode = "wb" if compressed else "w+t"
+    tmp = tempfile.NamedTemporaryFile(mode=mode)
     tmp.write(data)
     tmp.flush()
     return open(tmp.name, "rb")
 
 
-def to_json_string(buf):
+def to_compressed_json_file(data):
+    return to_json_file(gzip.compress(bytes(data, "utf-8")), True)
+
+
+def to_json_string(buf, compressed=False):
     tmp = tempfile.NamedTemporaryFile(mode="wb")
     tmp.write(buf.getvalue())
     tmp.flush()
-    result = open(tmp.name, "r")
+    mode = "rb" if compressed else "r"
+    result = open(tmp.name, mode)
     return result.read()
+
+
+def to_decompressed_json_string(buf):
+    return gzip.decompress(to_json_string(buf, True)).decode("utf-8")

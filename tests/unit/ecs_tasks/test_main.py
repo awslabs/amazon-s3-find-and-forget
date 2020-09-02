@@ -93,6 +93,55 @@ def test_happy_path_when_queue_not_empty(
     "backend.ecs_tasks.delete_files.main.validate_bucket_versioning",
     MagicMock(return_value=True),
 )
+@patch("backend.ecs_tasks.delete_files.main.validate_message", MagicMock())
+@patch("backend.ecs_tasks.delete_files.main.get_queue", MagicMock())
+@patch("backend.ecs_tasks.delete_files.main.verify_object_versions_integrity")
+@patch("backend.ecs_tasks.delete_files.main.get_session")
+@patch("backend.ecs_tasks.delete_files.main.s3fs")
+@patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
+@patch("backend.ecs_tasks.delete_files.main.emit_deletion_event")
+@patch("backend.ecs_tasks.delete_files.main.save")
+def test_happy_path_when_queue_not_empty_for_compressed_json(
+    mock_save,
+    mock_emit,
+    mock_delete,
+    mock_s3,
+    mock_session,
+    mock_verify_integrity,
+    message_stub,
+):
+    mock_s3.S3FileSystem.return_value = mock_s3
+    column = {"Column": "customer_id", "MatchIds": ["12345", "23456"]}
+    mock_file = MagicMock(version_id="abc123")
+    mock_save.return_value = "new_version123"
+    mock_s3.open.return_value = mock_s3
+    mock_s3.__enter__.return_value = mock_file
+    mock_delete.return_value = pa.BufferOutputStream(), {"DeletedRows": 1}
+    execute(
+        "https://queue/url",
+        message_stub(Object="s3://bucket/path/basic.json.gz", Format="json"),
+        "receipt_handle",
+    )
+    mock_s3.open.assert_called_with("s3://bucket/path/basic.json.gz", "rb")
+    mock_delete.assert_called_with(mock_file, [column], "json", True)
+    mock_save.assert_called_with(
+        ANY, ANY, ANY, "bucket", "path/basic.json.gz", "abc123"
+    )
+    mock_emit.assert_called()
+    mock_session.assert_called_with(None)
+    mock_verify_integrity.assert_called_with(
+        ANY, "bucket", "path/basic.json.gz", "abc123", "new_version123"
+    )
+    buf = mock_save.call_args[0][2]
+    assert buf.read
+    assert isinstance(buf, pa.BufferReader)  # must be BufferReader for zero-copy
+
+
+@patch.dict(os.environ, {"JobTable": "test"})
+@patch(
+    "backend.ecs_tasks.delete_files.main.validate_bucket_versioning",
+    MagicMock(return_value=True),
+)
 @patch(
     "backend.ecs_tasks.delete_files.main.verify_object_versions_integrity",
     MagicMock(return_value=True),
