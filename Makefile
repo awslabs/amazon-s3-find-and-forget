@@ -12,12 +12,6 @@ endif
 ifndef ADMIN_EMAIL
 	$(error ADMIN_EMAIL is undefined)
 endif
-ifndef SUBNETS
-	$(error SUBNETS is undefined)
-endif
-ifndef SEC_GROUPS
-	$(error SEC_GROUPS is undefined)
-endif
 
 pre-run:
 ifndef ROLE_NAME
@@ -39,7 +33,7 @@ deploy-vpc:
 deploy-cfn:
 	aws cloudformation package --template-file templates/template.yaml --s3-bucket $(TEMP_BUCKET) --output-template-file packaged.yaml
 	aws cloudformation deploy --template-file ./packaged.yaml --stack-name S3F2 --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND \
-		--parameter-overrides CreateCloudFrontDistribution=false EnableContainerInsights=true AdminEmail=$(ADMIN_EMAIL) AccessControlAllowOriginOverride=* PreBuiltArtefactsBucketOverride=$(TEMP_BUCKET) VpcSubnets=${SUBNETS} VpcSecurityGroups=${SEC_GROUPS}
+		--parameter-overrides CreateCloudFrontDistribution=false EnableContainerInsights=true AdminEmail=$(ADMIN_EMAIL) AccessControlAllowOriginOverride=* PreBuiltArtefactsBucketOverride=$(TEMP_BUCKET)
 
 deploy-artefacts:
 	$(eval VERSION := $(shell $(MAKE) -s version))
