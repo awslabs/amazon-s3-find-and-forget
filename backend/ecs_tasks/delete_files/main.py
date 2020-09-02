@@ -7,12 +7,14 @@ import time
 import logging
 from multiprocessing import Pool, cpu_count
 from operator import itemgetter
+
 import boto3
 import pyarrow as pa
 import s3fs
 from boto_utils import parse_s3_url, get_session
 from botocore.exceptions import ClientError
 from pyarrow.lib import ArrowException
+
 from events import sanitize_message, emit_failure_event, emit_deletion_event
 from json_handler import delete_matches_from_json_file
 from parquet_handler import delete_matches_from_parquet_file
@@ -25,7 +27,6 @@ from s3 import (
     rollback_object_version,
     DeleteOldVersionsError,
 )
-
 
 logger = logging.getLogger(__name__)
 logger.setLevel(os.getenv("LOG_LEVEL", logging.INFO))

@@ -172,16 +172,16 @@ export const glueSerializer = tables => {
   };
 
   tables.forEach(table => {
-    const parquetTables = table.TableList.filter(x =>
+    const supportedTables = table.TableList.filter(x =>
       [PARQUET_SERDE, JSON_SERDE].includes(
         x.StorageDescriptor.SerdeInfo.SerializationLibrary
       )
     );
 
-    if (parquetTables.length > 0)
+    if (supportedTables.length > 0)
       result.databases.push({
-        name: parquetTables[0].DatabaseName,
-        tables: parquetTables.map(t => ({
+        name: supportedTables[0].DatabaseName,
+        tables: supportedTables.map(t => ({
           name: t.Name,
           columns: t.StorageDescriptor.Columns.map(columnMapper),
           format:
