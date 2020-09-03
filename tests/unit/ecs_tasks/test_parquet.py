@@ -19,7 +19,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.ecs_tasks]
 def test_it_generates_new_file_without_matches(mock_delete):
     # Arrange
     column = {"Column": "customer_id", "MatchIds": ["12345", "23456"]}
-    data = [{"customer_id": "12345"}, {"customer_id": "23456"}]
+    data = [{"customer_id": "12345"}, {"customer_id": "34567"}]
     df = pd.DataFrame(data)
     buf = BytesIO()
     df.to_parquet(buf)
@@ -36,6 +36,32 @@ def test_it_generates_new_file_without_matches(mock_delete):
     assert 1 == newf.read().num_rows
 
 
+def test_it_handles_files_with_multiple_row_groups_and_pandas_indexes():
+    # Arrange
+    data = [
+        {"customer_id": "12345"},
+        {"customer_id": "34567"},
+    ]
+    columns = [{"Column": "customer_id", "MatchIds": ["12345"]}]
+    df = pd.DataFrame(data, list("ab"))
+    table = pa.Table.from_pandas(df)
+    buf = BytesIO()
+    # Create parquet with multiple row groups
+    with pq.ParquetWriter(buf, table.schema) as writer:
+        for i in range(3):
+            writer.write_table(table)
+    br = pa.BufferReader(buf.getvalue())
+    f = pq.ParquetFile(br, memory_map=False)
+    # Act
+    out, stats = delete_matches_from_file(f, columns)
+    # Assert
+    assert {"ProcessedRows": 6, "DeletedRows": 3} == stats
+    res = pa.BufferReader(out.getvalue())
+    newf = pq.ParquetFile(res, memory_map=False)
+    assert 3 == newf.num_row_groups
+    assert 3 == newf.read().num_rows
+
+
 def test_delete_correct_rows_from_table():
     data = [
         {"customer_id": "12345"},
@@ -50,7 +76,24 @@ def test_delete_correct_rows_from_table():
     res = table.to_pandas()
     assert len(res) == 1
     assert deleted_rows == 2
-    assert res["customer_id"].values[0] == "34567"
+    assert table.to_pydict() == {"customer_id": ["34567"]}
+
+
+def test_it_handles_data_with_pandas_indexes():
+    data = [
+        {"customer_id": "12345"},
+        {"customer_id": "23456"},
+        {"customer_id": "34567"},
+    ]
+    columns = [{"Column": "customer_id", "MatchIds": ["12345", "23456"]}]
+    df = pd.DataFrame(data, list("abc"))
+    table = pa.Table.from_pandas(df)
+    schema = pa.Schema.from_pandas(df)
+    table, deleted_rows = delete_from_table(table, columns, schema)
+    res = table.to_pandas()
+    assert len(res) == 1
+    assert deleted_rows == 2
+    assert table.to_pydict() == {"customer_id": ["34567"], "__index_level_0__": ["c"]}
 
 
 def test_delete_correct_rows_from_table_with_complex_types():
