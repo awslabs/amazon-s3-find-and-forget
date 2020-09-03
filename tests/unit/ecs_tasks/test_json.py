@@ -49,7 +49,7 @@ def test_it_handles_json_with_gzip_compression():
     )
 
 
-def test_delete_correct_rows_from_json_table_with_complex_types():
+def test_delete_correct_rows_from_json_file_with_complex_types():
     # Arrange
     to_delete = [{"Column": "user.id", "MatchIds": ["23456"]}]
     data = (
@@ -66,6 +66,44 @@ def test_delete_correct_rows_from_json_table_with_complex_types():
         '{"user": {"id": "12345", "name": "John"}, "d":["2001-01-01"]}\n'
         '{"user": {"id": "34567", "name": "Mary"}, "d":["2001-01-08"]}\n'
     )
+
+
+def test_delete_correct_rows_from_json_file_with_nullable_or_undefined_identifiers():
+    # Arrange
+    to_delete = [{"Column": "mother", "MatchIds": ["23456"]}]
+    data = (
+        '{"user": {"id": "12345", "name": "John"}, "mother": "23456"}\n'
+        '{"user": {"id": "23456", "name": "Jane"}, "mother": null}\n'
+        '{"user": {"id": "34567", "name": "Mary"}}\n'
+    )
+    out_stream = to_json_file(data)
+    # Act
+    out, stats = delete_matches_from_json_file(out_stream, to_delete)
+    assert isinstance(out, pa.BufferOutputStream)
+    assert {"ProcessedRows": 3, "DeletedRows": 1} == stats
+    assert to_json_string(out) == (
+        '{"user": {"id": "23456", "name": "Jane"}, "mother": null}\n'
+        '{"user": {"id": "34567", "name": "Mary"}}\n'
+    )
+
+
+def test_delete_correct_rows_from_json_file_with_multiple_identifiers():
+    # Arrange
+    to_delete = [
+        {"Column": "user.id", "MatchIds": ["23456"]},
+        {"Column": "mother", "MatchIds": ["23456"]},
+    ]
+    data = (
+        '{"user": {"id": "12345", "name": "John"}, "mother": "23456"}\n'
+        '{"user": {"id": "23456", "name": "Jane"}, "mother": null}\n'
+        '{"user": {"id": "34567", "name": "Mary"}}\n'
+    )
+    out_stream = to_json_file(data)
+    # Act
+    out, stats = delete_matches_from_json_file(out_stream, to_delete)
+    assert isinstance(out, pa.BufferOutputStream)
+    assert {"ProcessedRows": 3, "DeletedRows": 2} == stats
+    assert to_json_string(out) == '{"user": {"id": "34567", "name": "Mary"}}\n'
 
 
 def to_json_file(data, compressed=False):

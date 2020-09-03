@@ -301,7 +301,9 @@ def test_it_handles_missing_col_exceptions(
     # Act
     execute("https://queue/url", message_stub(), "receipt_handle")
     # Assert
-    mock_error_handler.assert_called_with(ANY, ANY, "Parquet processing error: 'FAIL'")
+    mock_error_handler.assert_called_with(
+        ANY, ANY, "Apache Arrow processing error: 'FAIL'"
+    )
 
 
 @patch.dict(os.environ, {"JobTable": "test"})
@@ -321,7 +323,9 @@ def test_it_handles_arrow_exceptions(mock_error_handler, mock_delete, message_st
     # Act
     execute("https://queue/url", message_stub(), "receipt_handle")
     # Assert
-    mock_error_handler.assert_called_with(ANY, ANY, "Parquet processing error: FAIL")
+    mock_error_handler.assert_called_with(
+        ANY, ANY, "Apache Arrow processing error: FAIL"
+    )
 
 
 @patch.dict(os.environ, {"JobTable": "test"})

@@ -136,7 +136,7 @@ def execute(queue_url, message_body, receipt_handle):
         msg.delete()
         emit_deletion_event(body, stats)
     except (KeyError, ArrowException) as e:
-        err_message = "Parquet processing error: {}".format(str(e))
+        err_message = "Apache Arrow processing error: {}".format(str(e))
         handle_error(msg, message_body, err_message)
     except IOError as e:
         err_message = "Unable to retrieve object: {}".format(str(e))
