@@ -1,5 +1,13 @@
 # Change Log
 
+## v0.10 (Unreleased)
+
+- [#193](https://github.com/awslabs/amazon-s3-find-and-forget/pull/193): Add
+  support for datasets with Pandas indexes. Pandas indexes will be preserved if
+  present.
+- [#194](https://github.com/awslabs/amazon-s3-find-and-forget/pull/194): Remove
+  debugging code from Fargate task
+
 ## v0.9
 
 ### Summary

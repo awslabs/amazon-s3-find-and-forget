@@ -49,7 +49,7 @@ def delete_from_table(table, to_delete, schema):
             df = df[~indexes]
     deleted_rows = initial_rows - get_row_count(df)
     table = pa.Table.from_pandas(
-        df, schema=schema, preserve_index=False
+        df, schema=schema, preserve_index=True
     ).replace_schema_metadata()
     return table, deleted_rows
 
