@@ -32,7 +32,7 @@ def delete_matches_from_json_file(input_file, to_delete, compressed=False):
             for column in to_delete:
                 record = parsed
                 for segment in column["Column"].split("."):
-                    if not segment in record:
+                    if not record or not segment in record:
                         record = None
                         break
                     record = record[segment]
