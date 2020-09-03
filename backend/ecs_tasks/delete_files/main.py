@@ -53,7 +53,6 @@ def handle_error(
         logger.error("Unable to emit failure event: %s", str(e))
 
     if change_msg_visibility:
-        print(sqs_msg.meta.client.exceptions.MessageNotInflight)
         try:
             sqs_msg.change_visibility(VisibilityTimeout=0)
         except (
