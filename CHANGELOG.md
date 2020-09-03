@@ -1,5 +1,11 @@
 # Change Log
 
+## v0.10 (Unreleased)
+
+- [#193](https://github.com/awslabs/amazon-s3-find-and-forget/pull/193): Add
+  support for datasets with Pandas indexes. Pandas indexes will be preserved if
+  present.
+
 ## v0.9
 
 ### Summary
