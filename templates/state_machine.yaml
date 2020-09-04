@@ -683,7 +683,7 @@ Resources:
     Type: AWS::SQS::Queue
     Properties:
       KmsMasterKeyId: alias/aws/sqs
-      VisibilityTimeout: 120
+      VisibilityTimeout: 1800
 
   # Tasks
   ParseStateMachineOutput:
