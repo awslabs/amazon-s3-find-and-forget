@@ -7,6 +7,8 @@
   present.
 - [#194](https://github.com/awslabs/amazon-s3-find-and-forget/pull/194): Remove
   debugging code from Fargate task
+- [#195](https://github.com/awslabs/amazon-s3-find-and-forget/pull/195): Fix
+  support for requester pays buckets
 - [#196](https://github.com/awslabs/amazon-s3-find-and-forget/pull/196): Upgrade
   backend dependencies
 
