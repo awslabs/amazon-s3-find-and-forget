@@ -5,7 +5,8 @@ export const glueSerializer = tables => {
 
   const PARQUET_SERDE =
     "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe";
-  const JSON_SERDE = "org.openx.data.jsonserde.JsonSerDe";
+  const JSON_OPENX_SERDE = "org.openx.data.jsonserde.JsonSerDe";
+  const JSON_HIVE_SERDE = "org.apache.hive.hcatalog.data.JsonSerDe";
 
   const ARRAYSTRUCT = "array<struct>";
   const ARRAYSTRUCTPREFIX = "array<struct<";
@@ -173,7 +174,7 @@ export const glueSerializer = tables => {
 
   tables.forEach(table => {
     const supportedTables = table.TableList.filter(x =>
-      [PARQUET_SERDE, JSON_SERDE].includes(
+      [JSON_HIVE_SERDE, JSON_OPENX_SERDE, PARQUET_SERDE].includes(
         x.StorageDescriptor.SerdeInfo.SerializationLibrary
       )
     );
@@ -185,9 +186,9 @@ export const glueSerializer = tables => {
           name: t.Name,
           columns: t.StorageDescriptor.Columns.map(columnMapper),
           format:
-            t.StorageDescriptor.SerdeInfo.SerializationLibrary === JSON_SERDE
-              ? "json"
-              : "parquet"
+            t.StorageDescriptor.SerdeInfo.SerializationLibrary === PARQUET_SERDE
+              ? "parquet"
+              : "json"
         }))
       });
   });
