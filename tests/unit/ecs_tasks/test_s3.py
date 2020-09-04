@@ -170,11 +170,9 @@ def test_it_handles_versions_for_get_info(mock_requester):
     )
 
 
-@patch("backend.ecs_tasks.delete_files.s3.get_requester_payment")
-def test_it_gets_tagging_args(mock_requester):
+def test_it_gets_tagging_args():
     get_object_tags.cache_clear()
     client = MagicMock()
-    mock_requester.return_value = {}, {}
     client.get_object_tagging.return_value = {
         "TagSet": [{"Key": "a", "Value": "b"}, {"Key": "c", "Value": "d"}]
     }
