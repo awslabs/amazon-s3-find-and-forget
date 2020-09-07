@@ -329,6 +329,38 @@ def test_it_rejects_json_with_dot_in_keys(
     )
 
 
+@patch("backend.lambdas.data_mappers.handlers.get_existing_s3_locations")
+@patch("backend.lambdas.data_mappers.handlers.get_glue_table_location")
+@patch("backend.lambdas.data_mappers.handlers.get_glue_table_format")
+@patch("backend.lambdas.data_mappers.handlers.get_table_details_from_mapper")
+def test_it_rejects_json_with_column_mapping(
+    mock_get_details, mock_get_format, mock_get_location, get_existing_s3_locations
+):
+    mock_get_details.return_value = get_table_stub({"Location": "s3://bucket/prefix/"})
+    get_existing_s3_locations.return_value = []
+    mock_get_location.return_value = "s3://bucket/prefix/"
+    mock_get_format.return_value = (
+        "org.openx.data.jsonserde.JsonSerDe",
+        {"case.insensitive": "FALSE", "mapping.userid": "userId"},
+    )
+    with pytest.raises(ValueError) as e:
+        handlers.validate_mapper(
+            {
+                "Columns": ["column"],
+                "QueryExecutor": "athena",
+                "QueryExecutorParameters": {
+                    "DataCatalogProvider": "glue",
+                    "Database": "test",
+                    "Table": "test",
+                },
+            }
+        )
+    assert (
+        e.value.args[0] == "Column mappings are not supported for "
+        "SerDe library org.openx.data.jsonserde.JsonSerDe"
+    )
+
+
 def test_it_detects_overlaps():
     assert handlers.is_overlap("s3://bucket/prefix/", "s3://bucket/prefix/subprefix/")
     assert handlers.is_overlap("s3://bucket/prefix/subprefix/", "s3://bucket/prefix/")

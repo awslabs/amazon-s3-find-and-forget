@@ -110,7 +110,6 @@ def validate_mapper(mapper):
                 "ignore.malformed.json": "TRUE",
                 "dots.in.keys": "TRUE",
             }
-
             for param, value in not_allowed_json_params.items():
                 if param in serde_params and serde_params[param] == value:
                     raise ValueError(
@@ -118,6 +117,12 @@ def validate_mapper(mapper):
                             param, value, JSON_OPENX_SERDE
                         )
                     )
+            if any([k for k, v in serde_params.items() if k.startswith("mapping.")]):
+                raise ValueError(
+                    "Column mappings are not supported for SerDe library {}".format(
+                        JSON_OPENX_SERDE
+                    )
+                )
 
 
 def get_existing_s3_locations():
