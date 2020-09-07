@@ -18,12 +18,27 @@ def initialize(input_file, out_stream, compressed):
     return input_file, writer
 
 
+def find_key(key, obj):
+    """
+    Athena openx SerDe is case insensitive, and converts by default each object's key
+    to a lowercase value: https://docs.aws.amazon.com/athena/latest/ug/json-serde.html
+
+    Here we convert the DataMapper value for the column identifier
+    (for instance, customerid) to the JSON's object key (for instance, customerId).
+    """
+    if not obj:
+        return None
+    for found_key in obj.keys():
+        if key.lower() == found_key.lower():
+            return found_key
+
+
 def delete_matches_from_json_file(input_file, to_delete, compressed=False):
     deleted_rows = 0
     with pa.BufferOutputStream() as out_stream:
         input_file, writer = initialize(input_file, out_stream, compressed)
         content = input_file.read().decode("utf-8")
-        lines = content.split("\n")[:-1]
+        lines = content.splitlines()
         total_rows = len(lines)
         for line in lines:
             parsed = json.loads(line)
@@ -31,10 +46,11 @@ def delete_matches_from_json_file(input_file, to_delete, compressed=False):
             for column in to_delete:
                 record = parsed
                 for segment in column["Column"].split("."):
-                    if not record or not segment in record:
+                    current_key = find_key(segment, record)
+                    if not current_key:
                         record = None
                         break
-                    record = record[segment]
+                    record = record[current_key]
                 if record and record in column["MatchIds"]:
                     should_delete = True
                     break

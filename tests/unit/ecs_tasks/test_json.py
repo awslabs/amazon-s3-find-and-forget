@@ -49,6 +49,25 @@ def test_it_handles_json_with_gzip_compression():
     )
 
 
+def test_delete_correct_rows_when_missing_newline_at_the_end():
+    # Arrange
+    to_delete = [{"Column": "customer_id", "MatchIds": ["23456"]}]
+    data = (
+        '{"customer_id": "12345", "x": 1.2, "d":"2001-01-01"}\n'
+        '{"customer_id": "23456", "x": 2.3, "d":"2001-01-03"}\n'
+        '{"customer_id": "34567", "x": 3.4, "d":"2001-01-05"}'
+    )
+    out_stream = to_json_file(data)
+    # Act
+    out, stats = delete_matches_from_json_file(out_stream, to_delete)
+    assert isinstance(out, pa.BufferOutputStream)
+    assert {"ProcessedRows": 3, "DeletedRows": 1} == stats
+    assert to_json_string(out) == (
+        '{"customer_id": "12345", "x": 1.2, "d":"2001-01-01"}\n'
+        '{"customer_id": "34567", "x": 3.4, "d":"2001-01-05"}\n'
+    )
+
+
 def test_delete_correct_rows_from_json_file_with_complex_types():
     # Arrange
     to_delete = [{"Column": "user.id", "MatchIds": ["23456"]}]
@@ -88,6 +107,25 @@ def test_delete_correct_rows_from_json_file_with_nullable_or_undefined_identifie
         '{"user": {"id": "34567", "name": "Mary"}}\n'
         '{"user": {"id": "45678", "name": "Mike"}, "parents": {}}\n'
         '{"user": {"id": "45678", "name": "Anna"}, "parents": null}\n'
+    )
+
+
+def test_delete_correct_rows_from_json_file_with_lower_cased_column_id():
+    # Arrange
+    to_delete = [{"Column": "userid", "MatchIds": ["23456"]}]
+    data = (
+        '{"userId": "12345", "fullName": "JohnDoe"}\n'
+        '{"userId": "23456", "fullName": "JaneDoe"}\n'
+        '{"userId": "34567", "fullName": "MaryMary"}\n'
+    )
+    out_stream = to_json_file(data)
+    # Act
+    out, stats = delete_matches_from_json_file(out_stream, to_delete)
+    assert isinstance(out, pa.BufferOutputStream)
+    assert {"ProcessedRows": 3, "DeletedRows": 1} == stats
+    assert to_json_string(out) == (
+        '{"userId": "12345", "fullName": "JohnDoe"}\n'
+        '{"userId": "34567", "fullName": "MaryMary"}\n'
     )
 
 
