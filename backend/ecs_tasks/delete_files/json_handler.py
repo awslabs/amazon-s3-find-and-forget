@@ -38,7 +38,9 @@ def delete_matches_from_json_file(input_file, to_delete, compressed=False):
     with pa.BufferOutputStream() as out_stream:
         input_file, writer = initialize(input_file, out_stream, compressed)
         content = input_file.read().decode("utf-8")
-        lines = content.splitlines()
+        lines = content.split("\n")
+        if lines[-1] == "":
+            lines.pop()
         total_rows = len(lines)
         for line in lines:
             parsed = json.loads(line)

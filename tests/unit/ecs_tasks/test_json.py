@@ -68,6 +68,26 @@ def test_delete_correct_rows_when_missing_newline_at_the_end():
     )
 
 
+def test_delete_correct_rows_containing_newlines_as_content():
+    # UNICODE_NEWLINE_SEP = '\u2028'
+    # Arrange
+    to_delete = [{"Column": "customer_id", "MatchIds": ["12345"]}]
+    data = (
+        '{"customer_id": "12345", "d": "foo"}\n'
+        '{"customer_id": "23456", "d": "foo\u2028\\nbar"}\n'
+        '{"customer_id": "34567", "d": "bar"}\n'
+    )
+    out_stream = to_json_file(data)
+    # Act
+    out, stats = delete_matches_from_json_file(out_stream, to_delete)
+    assert isinstance(out, pa.BufferOutputStream)
+    assert {"ProcessedRows": 3, "DeletedRows": 1} == stats
+    assert to_json_string(out) == (
+        '{"customer_id": "23456", "d": "foo\u2028\\nbar"}\n'
+        '{"customer_id": "34567", "d": "bar"}\n'
+    )
+
+
 def test_delete_correct_rows_from_json_file_with_complex_types():
     # Arrange
     to_delete = [{"Column": "user.id", "MatchIds": ["23456"]}]
