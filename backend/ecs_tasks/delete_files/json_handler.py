@@ -1,19 +1,16 @@
-import gzip
-import io
+from gzip import GzipFile
+from io import BytesIO
 import json
-import logging
 from collections import Counter
 
-import pyarrow as pa
-
-logger = logging.getLogger(__name__)
+from pyarrow import BufferOutputStream, CompressedOutputStream
 
 
 def initialize(input_file, out_stream, compressed):
     if compressed:
-        bytestream = io.BytesIO(input_file.read())
-        input_file = gzip.GzipFile(None, "rb", fileobj=bytestream)
-    gzip_stream = pa.CompressedOutputStream(out_stream, "gzip") if compressed else None
+        bytestream = BytesIO(input_file.read())
+        input_file = GzipFile(None, "rb", fileobj=bytestream)
+    gzip_stream = CompressedOutputStream(out_stream, "gzip") if compressed else None
     writer = gzip_stream if compressed else out_stream
     return input_file, writer
 
@@ -35,15 +32,22 @@ def find_key(key, obj):
 
 def delete_matches_from_json_file(input_file, to_delete, compressed=False):
     deleted_rows = 0
-    with pa.BufferOutputStream() as out_stream:
+    with BufferOutputStream() as out_stream:
         input_file, writer = initialize(input_file, out_stream, compressed)
         content = input_file.read().decode("utf-8")
         lines = content.split("\n")
         if lines[-1] == "":
             lines.pop()
         total_rows = len(lines)
-        for line in lines:
-            parsed = json.loads(line)
+        for i, line in enumerate(lines):
+            try:
+                parsed = json.loads(line)
+            except (json.JSONDecodeError) as e:
+                raise ValueError(
+                    "Serialization error when processing JSON object: {}".format(
+                        str(e).replace("line 1", "line {}".format(i + 1))
+                    )
+                )
             should_delete = False
             for column in to_delete:
                 record = parsed

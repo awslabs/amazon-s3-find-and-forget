@@ -104,7 +104,6 @@ export default ({ gateway, goToDataMappers }) => {
     if (isFormValid) {
       setFormState("loading");
       try {
-        const format = selectedTable.format;
         await gateway.putDataMapper(
           dataMapperId,
           glueDatabase,
@@ -112,7 +111,7 @@ export default ({ gateway, goToDataMappers }) => {
           columns,
           roleArn,
           deletePreviousVersions,
-          format
+          selectedTable.format
         );
         setFormState("saved");
       } catch (e) {

@@ -168,6 +168,24 @@ def test_delete_correct_rows_from_json_file_with_multiple_identifiers():
     assert to_json_string(out) == '{"user": {"id": "34567", "name": "Mary"}}\n'
 
 
+def test_it_throws_meaningful_error_for_serialization_issues():
+    # Arrange
+    to_delete = [{"Column": "customer_id", "MatchIds": ["23456"]}]
+    data = (
+        '{"customer_id": "12345", "x": 1.2, "d":"2001-01-01"}\n'
+        '{"customer_id": "23456", "x": 2.3, "d":"invalid\n'
+        '{"customer_id": "34567", "x": 3.4, "d":"2001-01-05"}\n'
+    )
+    out_stream = to_json_file(data)
+    # Act
+    with pytest.raises(ValueError) as e:
+        out, stats = delete_matches_from_json_file(out_stream, to_delete)
+    assert e.value.args[0] == (
+        "Serialization error when processing JSON object: "
+        "Unterminated string starting at: line 2 column 40 (char 39)"
+    )
+
+
 def to_json_file(data, compressed=False):
     mode = "wb" if compressed else "w+t"
     tmp = tempfile.NamedTemporaryFile(mode=mode)
