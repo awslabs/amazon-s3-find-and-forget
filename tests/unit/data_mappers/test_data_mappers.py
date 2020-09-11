@@ -212,11 +212,10 @@ def test_it_rejects_overlapping_s3_paths(
     get_existing_s3_locations.return_value = ["s3://bucket/prefix/"]
     mock_get_location.return_value = "s3://bucket/prefix/"
     mock_get_format.return_value = (
-        "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
-        "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
         "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
+        {"serialization.format": "1"},
     )
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError) as e:
         handlers.validate_mapper(
             {
                 "Columns": ["column"],
@@ -228,24 +227,26 @@ def test_it_rejects_overlapping_s3_paths(
                 },
             }
         )
+    assert (
+        e.value.args[0] == "A data mapper already exists which covers this S3 location"
+    )
 
 
 @patch("backend.lambdas.data_mappers.handlers.get_existing_s3_locations")
 @patch("backend.lambdas.data_mappers.handlers.get_glue_table_location")
 @patch("backend.lambdas.data_mappers.handlers.get_glue_table_format")
 @patch("backend.lambdas.data_mappers.handlers.get_table_details_from_mapper")
-def test_it_rejects_non_parquet_tables(
+def test_it_rejects_not_supported_tables(
     mock_get_details, mock_get_format, mock_get_location, get_existing_s3_locations
 ):
     mock_get_details.return_value = get_table_stub({"Location": "s3://bucket/prefix/"})
     get_existing_s3_locations.return_value = []
     mock_get_location.return_value = "s3://bucket/prefix/"
     mock_get_format.return_value = (
-        "org.apache.hadoop.mapred.TextInputFormat",
-        "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
-        "org.openx.data.jsonserde.JsonSerDe",
+        "org.apache.hadoop.hive.serde2.OpenCSVSerde",
+        {"field.delim": ","},
     )
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError) as e:
         handlers.validate_mapper(
             {
                 "Columns": ["column"],
@@ -257,6 +258,107 @@ def test_it_rejects_non_parquet_tables(
                 },
             }
         )
+    assert (
+        e.value.args[0] == "The format for the specified table is not supported. "
+        "The SerDe lib must be one of org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe,"
+        " org.apache.hive.hcatalog.data.JsonSerDe, org.openx.data.jsonserde.JsonSerDe"
+    )
+
+
+@patch("backend.lambdas.data_mappers.handlers.get_existing_s3_locations")
+@patch("backend.lambdas.data_mappers.handlers.get_glue_table_location")
+@patch("backend.lambdas.data_mappers.handlers.get_glue_table_format")
+@patch("backend.lambdas.data_mappers.handlers.get_table_details_from_mapper")
+def test_it_rejects_malformed_json(
+    mock_get_details, mock_get_format, mock_get_location, get_existing_s3_locations
+):
+    mock_get_details.return_value = get_table_stub({"Location": "s3://bucket/prefix/"})
+    get_existing_s3_locations.return_value = []
+    mock_get_location.return_value = "s3://bucket/prefix/"
+    mock_get_format.return_value = (
+        "org.openx.data.jsonserde.JsonSerDe",
+        {"ignore.malformed.json": "TRUE"},
+    )
+    with pytest.raises(ValueError) as e:
+        handlers.validate_mapper(
+            {
+                "Columns": ["column"],
+                "QueryExecutor": "athena",
+                "QueryExecutorParameters": {
+                    "DataCatalogProvider": "glue",
+                    "Database": "test",
+                    "Table": "test",
+                },
+            }
+        )
+    assert (
+        e.value.args[0] == "The parameter ignore.malformed.json cannot be TRUE for "
+        "SerDe library org.openx.data.jsonserde.JsonSerDe"
+    )
+
+
+@patch("backend.lambdas.data_mappers.handlers.get_existing_s3_locations")
+@patch("backend.lambdas.data_mappers.handlers.get_glue_table_location")
+@patch("backend.lambdas.data_mappers.handlers.get_glue_table_format")
+@patch("backend.lambdas.data_mappers.handlers.get_table_details_from_mapper")
+def test_it_rejects_json_with_dot_in_keys(
+    mock_get_details, mock_get_format, mock_get_location, get_existing_s3_locations
+):
+    mock_get_details.return_value = get_table_stub({"Location": "s3://bucket/prefix/"})
+    get_existing_s3_locations.return_value = []
+    mock_get_location.return_value = "s3://bucket/prefix/"
+    mock_get_format.return_value = (
+        "org.openx.data.jsonserde.JsonSerDe",
+        {"dots.in.keys": "TRUE"},
+    )
+    with pytest.raises(ValueError) as e:
+        handlers.validate_mapper(
+            {
+                "Columns": ["column"],
+                "QueryExecutor": "athena",
+                "QueryExecutorParameters": {
+                    "DataCatalogProvider": "glue",
+                    "Database": "test",
+                    "Table": "test",
+                },
+            }
+        )
+    assert (
+        e.value.args[0] == "The parameter dots.in.keys cannot be TRUE for "
+        "SerDe library org.openx.data.jsonserde.JsonSerDe"
+    )
+
+
+@patch("backend.lambdas.data_mappers.handlers.get_existing_s3_locations")
+@patch("backend.lambdas.data_mappers.handlers.get_glue_table_location")
+@patch("backend.lambdas.data_mappers.handlers.get_glue_table_format")
+@patch("backend.lambdas.data_mappers.handlers.get_table_details_from_mapper")
+def test_it_rejects_json_with_column_mapping(
+    mock_get_details, mock_get_format, mock_get_location, get_existing_s3_locations
+):
+    mock_get_details.return_value = get_table_stub({"Location": "s3://bucket/prefix/"})
+    get_existing_s3_locations.return_value = []
+    mock_get_location.return_value = "s3://bucket/prefix/"
+    mock_get_format.return_value = (
+        "org.openx.data.jsonserde.JsonSerDe",
+        {"case.insensitive": "FALSE", "mapping.userid": "userId"},
+    )
+    with pytest.raises(ValueError) as e:
+        handlers.validate_mapper(
+            {
+                "Columns": ["column"],
+                "QueryExecutor": "athena",
+                "QueryExecutorParameters": {
+                    "DataCatalogProvider": "glue",
+                    "Database": "test",
+                    "Table": "test",
+                },
+            }
+        )
+    assert (
+        e.value.args[0] == "Column mappings are not supported for "
+        "SerDe library org.openx.data.jsonserde.JsonSerDe"
+    )
 
 
 def test_it_detects_overlaps():
@@ -302,9 +404,8 @@ def test_it_gets_s3_location_for_glue_table():
 
 def test_it_gets_glue_table_format_info():
     assert (
-        "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
-        "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
         "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
+        {"serialization.format": "1"},
     ) == handlers.get_glue_table_format(get_table_stub())
 
 
@@ -329,7 +430,8 @@ def get_table_stub(storage_descriptor={}):
         "InputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
         "OutputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
         "SerdeInfo": {
-            "SerializationLibrary": "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"
+            "SerializationLibrary": "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
+            "Parameters": {"serialization.format": "1"},
         },
     }
     sd.update(storage_descriptor)

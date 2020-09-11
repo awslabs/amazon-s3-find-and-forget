@@ -1,5 +1,10 @@
 # Change Log
 
+## v0.11 (unreleased)
+
+- [#170](https://github.com/awslabs/amazon-s3-find-and-forget/pull/170): JSON
+  support
+
 ## v0.10
 
 - [#193](https://github.com/awslabs/amazon-s3-find-and-forget/pull/193): Add

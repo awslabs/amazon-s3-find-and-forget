@@ -39,6 +39,7 @@ def handler(event, context):
             "Columns": event["Columns"],
             "RoleArn": event.get("RoleArn", None),
             "DeleteOldVersions": event.get("DeleteOldVersions", True),
+            "Format": event.get("Format"),
         }
         messages.append({k: v for k, v in msg.items() if v is not None})
 

@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 import pyarrow as pa
+import pyarrow.json as pj
 import pyarrow.parquet as pq
 from cfn_flip import load
 
@@ -44,6 +45,11 @@ def generate_parquet_file(items, columns):
 
 def query_parquet_file(f, column, val):
     table = pq.read_table(f)
+    return [i for i in table.column(column) if i == val]
+
+
+def query_json_file(f, column, val):
+    table = pj.read_json(f)
     return [i for i in table.column(column) if i == val]
 
 

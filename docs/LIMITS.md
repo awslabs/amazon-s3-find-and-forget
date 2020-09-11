@@ -5,19 +5,29 @@ solution. We are actively working on adding additional features and supporting
 more data formats. For feature requests, please open an issue on our [Issue
 Tracker].
 
-#### Supported Data Formats
+## Supported Data Formats
 
 The following data formats are supported:
 
-| Data Format    | Compression on read                | Compression on write | Supported Types for Column Identifier                                                                                                                                        |
-| -------------- | ---------------------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Apache Parquet | Snappy, Brotli, Gzip, uncompressed | Snappy               | bigint, char, double, float, int, smallint, string, tinyint, varchar. Nested types (types whose parent is a struct, map, array) are only supported for **struct** type (\*). |
+#### Apache Parquet
 
-> (\*) When using a type nested in a struct as column identifier, use the
-> Athena's `AmazonAthenaPreviewFunctionality` Workgroup. For more information,
-> see [Managing Workgroups].
+|                                       |                                                                                                                                                                                                          |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Compression on Read                   | Snappy, Brotli, Gzip, uncompressed                                                                                                                                                                       |
+| Compression on Write                  | Snappy                                                                                                                                                                                                   |
+| Supported Types for Column Identifier | bigint, char, double, float, int, smallint, string, tinyint, varchar. Nested types (types whose parent is a struct, map, array) are only supported for **struct** type (\*).                             |
+| Notes                                 | (\*) When using a type nested in a struct as column identifier with Apache Parquet files, use the Athena's `AmazonAthenaPreviewFunctionality` Workgroup. For more information, see [Managing Workgroups] |
 
-#### Supported Query Providers
+#### JSON
+
+|                                       |                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Compression on Read                   | Gzip, uncompressed (\*\*)                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| Compression on Write                  | Gzip, uncompressed (\*\*)                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| Supported Types for Column Identifier | number, string. Nested types (types whose parent is a object, array) are only supported for **object** type.                                                                                                                                                                                                                                                                                                                                            |
+| Notes                                 | (\*\*) The compression type is determined from the file extension. If no file extension is present the solution treats the data as uncompressed. If the data is compressed make sure the file name includes the compression extension, such as `gz`.<br><br>When using OpenX JSON SerDe, `ignore.malformed.json` cannot be `TRUE`, `dots.in.keys` cannot be `TRUE`, and column mappings are not supported. For more information, see [OpenX JSON SerDe] |
+
+## Supported Query Providers
 
 The following data catalog provider and query executor combinations are
 supported:
@@ -26,7 +36,7 @@ supported:
 | ---------------- | -------------- |
 | AWS Glue         | Amazon Athena  |
 
-#### Concurrency Limits
+## Concurrency Limits
 
 | Catalog Provider        | Query Executor            |
 | ----------------------- | ------------------------- |
@@ -34,7 +44,7 @@ supported:
 | Max Athena Concurrency  | See account service quota |
 | Max Fargate Concurrency | See account service quota |
 
-#### Other Limitations
+## Other Limitations
 
 - Only buckets with versioning set to **Enabled** are supported
 - Decompressed individual object size must be less than the Fargate task memory
@@ -65,7 +75,7 @@ supported:
   after completion of the current one to delete any remaining items in the
   queue.
 
-#### Service Quotas
+## Service Quotas
 
 If you wish to increase the number of concurrent queries that can be by Athena
 and therefore speed up the Find phase, you will need to request a Service Quota
@@ -104,3 +114,5 @@ service in question:
 [deletion queue]: ARCHITECTURE.md#deletion-queue
 [managing workgroups]:
   https://docs.aws.amazon.com/athena/latest/ug/workgroups-create-update-delete.html
+[openx json serde]:
+  https://docs.aws.amazon.com/athena/latest/ug/json-serde.html#openx-json-serde

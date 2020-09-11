@@ -20,7 +20,10 @@ dynamodb_resource = boto3.resource("dynamodb")
 table = dynamodb_resource.Table(os.getenv("DataMapperTable"))
 glue_client = boto3.client("glue")
 
-SUPPORTED_SERDE_LIBS = ["org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"]
+PARQUET_HIVE_SERDE = "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"
+JSON_HIVE_SERDE = "org.apache.hive.hcatalog.data.JsonSerDe"
+JSON_OPENX_SERDE = "org.openx.data.jsonserde.JsonSerDe"
+SUPPORTED_SERDE_LIBS = [PARQUET_HIVE_SERDE, JSON_HIVE_SERDE, JSON_OPENX_SERDE]
 
 
 @with_logging
@@ -91,17 +94,35 @@ def validate_mapper(mapper):
     if mapper["QueryExecutorParameters"].get("DataCatalogProvider") == "glue":
         table_details = get_table_details_from_mapper(mapper)
         new_location = get_glue_table_location(table_details)
-        format_info = get_glue_table_format(table_details)
+        serde_lib, serde_params = get_glue_table_format(table_details)
         if any([is_overlap(new_location, e) for e in existing_s3_locations]):
             raise ValueError(
                 "A data mapper already exists which covers this S3 location"
             )
-        if format_info[2] not in SUPPORTED_SERDE_LIBS:
+        if serde_lib not in SUPPORTED_SERDE_LIBS:
             raise ValueError(
                 "The format for the specified table is not supported. The SerDe lib must be one of {}".format(
                     ", ".join(SUPPORTED_SERDE_LIBS)
                 )
             )
+        if serde_lib == JSON_OPENX_SERDE:
+            not_allowed_json_params = {
+                "ignore.malformed.json": "TRUE",
+                "dots.in.keys": "TRUE",
+            }
+            for param, value in not_allowed_json_params.items():
+                if param in serde_params and serde_params[param] == value:
+                    raise ValueError(
+                        "The parameter {} cannot be {} for SerDe library {}".format(
+                            param, value, JSON_OPENX_SERDE
+                        )
+                    )
+            if any([k for k, v in serde_params.items() if k.startswith("mapping.")]):
+                raise ValueError(
+                    "Column mappings are not supported for SerDe library {}".format(
+                        JSON_OPENX_SERDE
+                    )
+                )
 
 
 def get_existing_s3_locations():
@@ -126,9 +147,8 @@ def get_glue_table_location(t):
 
 def get_glue_table_format(t):
     return (
-        t["Table"]["StorageDescriptor"]["InputFormat"],
-        t["Table"]["StorageDescriptor"]["OutputFormat"],
         t["Table"]["StorageDescriptor"]["SerdeInfo"]["SerializationLibrary"],
+        t["Table"]["StorageDescriptor"]["SerdeInfo"]["Parameters"],
     )
 
 

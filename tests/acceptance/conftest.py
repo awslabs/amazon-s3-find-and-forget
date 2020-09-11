@@ -258,6 +258,21 @@ def glue_table_factory(dummy_lake, glue_client, glue_columns):
         partitions=[],
     ):
         glue_client.create_database(DatabaseInput={"Name": database})
+        input_format = (
+            "org.apache.hadoop.mapred.TextInputFormat"
+            if fmt == "json"
+            else "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat"
+        )
+        output_format = (
+            "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"
+            if fmt == "json"
+            else "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat"
+        )
+        ser_library = (
+            "org.openx.data.jsonserde.JsonSerDe"
+            if fmt == "json"
+            else "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"
+        )
         glue_client.create_table(
             DatabaseName=database,
             TableInput={
@@ -267,11 +282,11 @@ def glue_table_factory(dummy_lake, glue_client, glue_columns):
                     "Location": "s3://{bucket}/{prefix}/".format(
                         bucket=bucket_name, prefix=prefix
                     ),
-                    "InputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
-                    "OutputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
+                    "InputFormat": input_format,
+                    "OutputFormat": output_format,
                     "Compressed": False,
                     "SerdeInfo": {
-                        "SerializationLibrary": "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
+                        "SerializationLibrary": ser_library,
                         "Parameters": {"serialization.format": "1"},
                     },
                     "StoredAsSubDirectories": False,
@@ -296,10 +311,10 @@ def glue_table_factory(dummy_lake, glue_client, glue_columns):
                             prefix=prefix,
                             parts="/".join(p),
                         ),
-                        "InputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
-                        "OutputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
+                        "InputFormat": input_format,
+                        "OutputFormat": output_format,
                         "SerdeInfo": {
-                            "SerializationLibrary": "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
+                            "SerializationLibrary": ser_library,
                             "Parameters": {"serialization.format": "1"},
                         },
                     },
