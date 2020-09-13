@@ -104,7 +104,7 @@ def get_object_tags(client, bucket, key, version_id=None):
     GetObjectTagging call will be cached
     :returns tuple containing tagging formatted for ExtraArgs and the raw response
     """
-    kwargs = {"Bucket": bucket, "Key": key, **get_requester_payment(client, bucket)[0]}
+    kwargs = {"Bucket": bucket, "Key": key}
     if version_id:
         kwargs["VersionId"] = version_id
     tagging = client.get_object_tagging(**kwargs)

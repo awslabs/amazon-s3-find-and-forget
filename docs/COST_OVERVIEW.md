@@ -34,6 +34,7 @@ the solution.
   - [Scenario 2](#scenario-2)
   - [Scenario 3](#scenario-3)
   - [Scenario 4](#scenario-4)
+  - [Scenario 5](#scenario-5)
 
 ## Overview
 
@@ -41,8 +42,10 @@ The Amazon S3 Find and Forget solution uses a serverless computing architecture.
 This model minimises costs when you're not actively using the solution, and
 allows the solution to scale while only paying for what you use.
 
-For typical usage, the greatest proportion of what you pay will be for use of
-Amazon Athena, Amazon S3 and AWS Fargate.
+The sample VPC provided in this solution makes use of VPC Endpoints, which have
+an hourly cost as well as data transfer cost. All the other costs depend on the
+usage of the API, and for typical usage, the greatest proportion of what you pay
+will be for use of Amazon Athena, Amazon S3 and AWS Fargate.
 
 ### AWS Fargate
 
@@ -194,6 +197,14 @@ estimated cost to run a job with different Data Lake configurations in the
 Europe (Ireland) region is shown in the tables below. The estimates do not
 include VPC costs.
 
+| Summary                   |                      |
+| ------------------------- | -------------------- |
+| [Scenario 1](#scenario-1) | 100GB Snappy Parquet |
+| [Scenario 2](#scenario-2) | 750GB Snappy Parquet |
+| [Scenario 3](#scenario-3) | 10TB Snappy Parquet  |
+| [Scenario 4](#scenario-4) | 50TB Snappy Parquet  |
+| [Scenario 5](#scenario-5) | 100GB Gzip JSON      |
+
 ### Scenario 1
 
 This example shows how the charges would be calculated for a deletion job where:
@@ -214,6 +225,8 @@ This example shows how the charges would be calculated for a deletion job where:
 | Amazon S3      | \$0.01   | \$0.01 of requests and data retrieval. \$0 of data transfer |
 | Other services | \$0.05   | n/a                                                         |
 | Total          | \$0.98   | n/a                                                         |
+
+> Note: This estimate doesn't include the costs for Amazon VPC
 
 ### Scenario 2
 
@@ -236,6 +249,8 @@ This example shows how the charges would be calculated for a deletion job where:
 | Other services | \$0.01   | n/a                                                         |
 | Total          | \$11.14  | n/a                                                         |
 
+> Note: This estimate doesn't include the costs for Amazon VPC
+
 ### Scenario 3
 
 This example shows how the charges would be calculated for a deletion job where:
@@ -257,6 +272,8 @@ This example shows how the charges would be calculated for a deletion job where:
 | Other services | \$1      | n/a                                                         |
 | Total          | \$75.69  | n/a                                                         |
 
+> Note: This estimate doesn't include the costs for Amazon VPC
+
 ### Scenario 4
 
 This example shows how the charges would be calculated for a deletion job where:
@@ -277,6 +294,30 @@ This example shows how the charges would be calculated for a deletion job where:
 | Amazon S3      | \$0.49   | \$0.49 of requests and data retrieval. \$0 of data transfer |
 | Other services | \$3      | n/a                                                         |
 | Total          | \$316.80 | n/a                                                         |
+
+> Note: This estimate doesn't include the costs for Amazon VPC
+
+### Scenario 5
+
+This example shows how the charges would be calculated for a deletion job where:
+
+- Your dataset is 100GB of Gzip compressed JSON objects that are distributed
+  across 310 Partitions
+- The S3 bucket containing the objects is in the same region as the S3 Find and
+  Forget Solution
+- The Find phase returns 3500 objects which need to be modified
+- The Forget phase uses 50 Fargate tasks with 4 vCPUs and 30GB of memory each,
+  running concurrently for 22 minutes
+
+| Service        | Spending | Notes                                                       |
+| -------------- | -------- | ----------------------------------------------------------- |
+| Amazon Athena  | \$0.50   | 100GB of data scanned                                       |
+| AWS Fargate    | \$5.31   | 50 tasks x 4 vCPUs, 30GB memory x 0.36 hours                |
+| Amazon S3      | \$0.03   | \$0.03 of requests and data retrieval. \$0 of data transfer |
+| Other services | \$0.05   | n/a                                                         |
+| Total          | \$5.89   | n/a                                                         |
+
+> Note: This estimate doesn't include the costs for Amazon VPC
 
 [aws cloudformation]: https://aws.amazon.com/cloudformation/
 [aws codebuild]: https://aws.amazon.com/codebuild/pricing/

@@ -110,7 +110,8 @@ export default ({ gateway, goToDataMappers }) => {
           glueTable,
           columns,
           roleArn,
-          deletePreviousVersions
+          deletePreviousVersions,
+          selectedTable.format
         );
         setFormState("saved");
       } catch (e) {
@@ -243,7 +244,7 @@ export default ({ gateway, goToDataMappers }) => {
               <p>Query Executor Type</p>
               <div className="radio-card selected">
                 <Form.Check inline readOnly checked type="radio" />
-                <span>Athena + Glue</span>
+                <span>Athena</span>
                 <p>
                   Amazon Athena is responsible for the Find operation. AWS Glue
                   is used to catalog data in S3 and maintain metadata such as
@@ -296,6 +297,14 @@ export default ({ gateway, goToDataMappers }) => {
                     </option>
                   ))}
                 </Form.Control>
+              </Form.Group>
+              <Form.Group>
+                <Form.Label>Format</Form.Label>
+                <Form.Text className="text-muted">
+                  {isEmpty(columnsForSelectedTable)
+                    ? "No table selected"
+                    : selectedTable.format}
+                </Form.Text>
               </Form.Group>
               <Form.Group>
                 <Form.Label>Columns used to query for matches</Form.Label>

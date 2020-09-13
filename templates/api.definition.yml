@@ -409,6 +409,7 @@ components:
           type: "string"
           description: "The format of the dataset"
           enum:
+            - "json"
             - "parquet"
           default: "parquet"
         QueryExecutor:

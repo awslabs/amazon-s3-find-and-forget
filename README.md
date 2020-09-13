@@ -21,8 +21,8 @@ from data lakes stored on Amazon Simple Storage Service (Amazon S3). This
 solution can assist data lake operators to handle data erasure requests, for
 example, pursuant to the European General Data Protection Regulation (GDPR).
 
-The solution can be used with Parquet-format data stored in Amazon S3 buckets.
-Your data lake is connected to the solution via AWS Glue tables and by
+The solution can be used with Parquet and JSON format data stored in Amazon S3
+buckets. Your data lake is connected to the solution via AWS Glue tables and by
 specifying which columns in the tables need to be used to identify the data to
 be erased.
 
@@ -116,6 +116,7 @@ architecture.
 - [API Specification](docs/api/README.md)
 - [Local Development](docs/LOCAL_DEVELOPMENT.md)
 - [Change Log](CHANGELOG.md)
+- [Upgrade Guide](docs/UPGRADE_GUIDE.md)
 
 ## Contributing
 

@@ -16,7 +16,8 @@ from botocore.exceptions import ClientError
 from pyarrow.lib import ArrowException
 
 from events import sanitize_message, emit_failure_event, emit_deletion_event
-from parquet import load_parquet, delete_matches_from_file
+from json_handler import delete_matches_from_json_file
+from parquet_handler import delete_matches_from_parquet_file
 from s3 import (
     validate_bucket_versioning,
     save,
@@ -56,7 +57,6 @@ def handle_error(
         logger.error("Unable to emit failure event: %s", str(e))
 
     if change_msg_visibility:
-        print(sqs_msg.meta.client.exceptions.MessageNotInflight)
         try:
             sqs_msg.change_visibility(VisibilityTimeout=0)
         except (
@@ -81,6 +81,13 @@ def validate_message(message):
             raise ValueError("Malformed message. Missing key: %s", k)
 
 
+def delete_matches_from_file(input_file, to_delete, file_format, compressed=False):
+    logger.info("Generating new file without matches")
+    if file_format == "json":
+        return delete_matches_from_json_file(input_file, to_delete, compressed)
+    return delete_matches_from_parquet_file(input_file, to_delete)
+
+
 def execute(queue_url, message_body, receipt_handle):
     logger.info("Message received")
     queue = get_queue(queue_url)
@@ -91,7 +98,9 @@ def execute(queue_url, message_body, receipt_handle):
         body = json.loads(message_body)
         session = get_session(body.get("RoleArn"))
         client = session.client("s3")
-        query_bucket, query_key, object_path, job_id, all_files = itemgetter("QueryBucket", "QueryKey", "Object", "JobId", "AllFiles")(body)
+        query_bucket, query_key, object_path, job_id, file_format = itemgetter(
+            "QueryBucket", "QueryKey", "Object", "JobId", "Format"
+        )(body)
         obj = s3_client.Object(query_bucket, query_key)
         raw_data = obj.get()['Body'].read().decode('utf-8')
         data = json.loads(raw_data)
@@ -113,39 +122,34 @@ def execute(queue_url, message_body, receipt_handle):
         with s3.open(object_path, "rb") as f:
             source_version = f.version_id
             logger.info("Using object version %s as source", source_version)
-            infile = load_parquet(f)
             # Write new file in-memory
-            logger.info("Generating new parquet file without matches")
-            out_sink, stats = delete_matches_from_file(infile, cols)
+            compressed = object_path.endswith(".gz")
+            out_sink, stats = delete_matches_from_file(f, cols, file_format, compressed)
         if stats["DeletedRows"] == 0:
-            if all_files:
-                logger.info("The object {} was processed successfully but no rows required deletion".format(object_path))
-            else:
-                raise ValueError(
-                    "The object {} was processed successfully but no rows required deletion".format(
-                        object_path
-                    )
+            raise ValueError(
+                "The object {} was processed successfully but no rows required deletion".format(
+                    object_path
                 )
-        else:
-            with pa.BufferReader(out_sink.getvalue()) as output_buf:
-                new_version = save(
-                    s3, client, output_buf, input_bucket, input_key, source_version
+            )
+        with pa.BufferReader(out_sink.getvalue()) as output_buf:
+            new_version = save(
+                s3, client, output_buf, input_bucket, input_key, source_version
+            )
+        logger.info("New object version: %s", new_version)
+        verify_object_versions_integrity(
+            client, input_bucket, input_key, source_version, new_version
+        )
+        if body.get("DeleteOldVersions"):
+            logger.info(
+                "Deleting object {} versions older than version {}".format(
+                    input_key, new_version
                 )
-                logger.info("New object version: %s", new_version)
-                verify_object_versions_integrity(
-                    client, input_bucket, input_key, source_version, new_version
-                )
-            if body.get("DeleteOldVersions"):
-                logger.info(
-                    "Deleting object {} versions older than version {}".format(
-                        input_key, new_version
-                    )
-                )
-                delete_old_versions(client, input_bucket, input_key, new_version)
+            )
+            delete_old_versions(client, input_bucket, input_key, new_version)
         msg.delete()
         emit_deletion_event(body, stats)
     except (KeyError, ArrowException) as e:
-        err_message = "Parquet processing error: {}".format(str(e))
+        err_message = "Apache Arrow processing error: {}".format(str(e))
         handle_error(msg, message_body, err_message)
     except IOError as e:
         err_message = "Unable to retrieve object: {}".format(str(e))

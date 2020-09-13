@@ -42,6 +42,7 @@ def handler(event, context):
             "QueryKey": event["Key"],
             "RoleArn": event.get("RoleArn", None),
             "DeleteOldVersions": event.get("DeleteOldVersions", True),
+            "Format": event.get("Format"),
         }
         messages.append({k: v for k, v in msg.items() if v is not None})
     btached_msgs = [messages[i:i + NUM_OF_MESSAGES_IN_BATCH] for i in range(0, len(messages), NUM_OF_MESSAGES_IN_BATCH)]

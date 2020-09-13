@@ -49,17 +49,18 @@ def delete_from_table(table, to_delete, schema):
             df = df[~indexes]
     deleted_rows = initial_rows - get_row_count(df)
     table = pa.Table.from_pandas(
-        df, schema=schema, preserve_index=False
+        df, schema=schema, preserve_index=True
     ).replace_schema_metadata()
     return table, deleted_rows
 
 
-def delete_matches_from_file(parquet_file, to_delete):
+def delete_matches_from_parquet_file(input_file, to_delete):
     """
     Deletes matches from Parquet file where to_delete is a list of dicts where
     each dict contains a column to search and the MatchIds to search for in
     that particular column
     """
+    parquet_file = load_parquet(input_file)
     schema = parquet_file.metadata.schema.to_arrow_schema().remove_metadata()
     total_rows = parquet_file.metadata.num_rows
     stats = Counter({"ProcessedRows": total_rows, "DeletedRows": 0})

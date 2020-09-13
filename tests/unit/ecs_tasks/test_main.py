@@ -21,6 +21,7 @@ with patch.dict(
         get_queue,
         main,
         parse_args,
+        delete_matches_from_file,
     )
 
 pytestmark = [pytest.mark.unit, pytest.mark.ecs_tasks]
@@ -47,7 +48,6 @@ def get_list_object_versions_error():
 @patch("backend.ecs_tasks.delete_files.main.get_queue", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.verify_object_versions_integrity")
 @patch("backend.ecs_tasks.delete_files.main.get_session")
-@patch("backend.ecs_tasks.delete_files.main.load_parquet")
 @patch("backend.ecs_tasks.delete_files.main.s3fs")
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.emit_deletion_event")
@@ -57,19 +57,16 @@ def test_happy_path_when_queue_not_empty(
     mock_emit,
     mock_delete,
     mock_s3,
-    mock_load,
     mock_session,
     mock_verify_integrity,
     message_stub,
 ):
     mock_s3.S3FileSystem.return_value = mock_s3
     column = {"Column": "customer_id", "MatchIds": ["12345", "23456"]}
-    parquet_file = MagicMock()
-    parquet_file.num_row_groups = 1
+    mock_file = MagicMock(version_id="abc123")
     mock_save.return_value = "new_version123"
     mock_s3.open.return_value = mock_s3
-    mock_s3.__enter__.return_value = MagicMock(version_id="abc123")
-    mock_load.return_value = parquet_file
+    mock_s3.__enter__.return_value = mock_file
     mock_delete.return_value = pa.BufferOutputStream(), {"DeletedRows": 1}
     execute(
         "https://queue/url",
@@ -77,7 +74,7 @@ def test_happy_path_when_queue_not_empty(
         "receipt_handle",
     )
     mock_s3.open.assert_called_with("s3://bucket/path/basic.parquet", "rb")
-    mock_delete.assert_called_with(parquet_file, [column])
+    mock_delete.assert_called_with(mock_file, [column], "parquet", False)
     mock_save.assert_called_with(
         ANY, ANY, ANY, "bucket", "path/basic.parquet", "abc123"
     )
@@ -85,6 +82,55 @@ def test_happy_path_when_queue_not_empty(
     mock_session.assert_called_with(None)
     mock_verify_integrity.assert_called_with(
         ANY, "bucket", "path/basic.parquet", "abc123", "new_version123"
+    )
+    buf = mock_save.call_args[0][2]
+    assert buf.read
+    assert isinstance(buf, pa.BufferReader)  # must be BufferReader for zero-copy
+
+
+@patch.dict(os.environ, {"JobTable": "test"})
+@patch(
+    "backend.ecs_tasks.delete_files.main.validate_bucket_versioning",
+    MagicMock(return_value=True),
+)
+@patch("backend.ecs_tasks.delete_files.main.validate_message", MagicMock())
+@patch("backend.ecs_tasks.delete_files.main.get_queue", MagicMock())
+@patch("backend.ecs_tasks.delete_files.main.verify_object_versions_integrity")
+@patch("backend.ecs_tasks.delete_files.main.get_session")
+@patch("backend.ecs_tasks.delete_files.main.s3fs")
+@patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
+@patch("backend.ecs_tasks.delete_files.main.emit_deletion_event")
+@patch("backend.ecs_tasks.delete_files.main.save")
+def test_happy_path_when_queue_not_empty_for_compressed_json(
+    mock_save,
+    mock_emit,
+    mock_delete,
+    mock_s3,
+    mock_session,
+    mock_verify_integrity,
+    message_stub,
+):
+    mock_s3.S3FileSystem.return_value = mock_s3
+    column = {"Column": "customer_id", "MatchIds": ["12345", "23456"]}
+    mock_file = MagicMock(version_id="abc123")
+    mock_save.return_value = "new_version123"
+    mock_s3.open.return_value = mock_s3
+    mock_s3.__enter__.return_value = mock_file
+    mock_delete.return_value = pa.BufferOutputStream(), {"DeletedRows": 1}
+    execute(
+        "https://queue/url",
+        message_stub(Object="s3://bucket/path/basic.json.gz", Format="json"),
+        "receipt_handle",
+    )
+    mock_s3.open.assert_called_with("s3://bucket/path/basic.json.gz", "rb")
+    mock_delete.assert_called_with(mock_file, [column], "json", True)
+    mock_save.assert_called_with(
+        ANY, ANY, ANY, "bucket", "path/basic.json.gz", "abc123"
+    )
+    mock_emit.assert_called()
+    mock_session.assert_called_with(None)
+    mock_verify_integrity.assert_called_with(
+        ANY, "bucket", "path/basic.json.gz", "abc123", "new_version123"
     )
     buf = mock_save.call_args[0][2]
     assert buf.read
@@ -105,16 +151,12 @@ def test_happy_path_when_queue_not_empty(
 @patch("backend.ecs_tasks.delete_files.main.emit_deletion_event", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.save", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.get_session")
-@patch("backend.ecs_tasks.delete_files.main.load_parquet")
 @patch("backend.ecs_tasks.delete_files.main.s3fs")
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
-def test_it_assumes_role(mock_delete, mock_s3, mock_load, mock_session, message_stub):
+def test_it_assumes_role(mock_delete, mock_s3, mock_session, message_stub):
     mock_s3.S3FileSystem.return_value = mock_s3
-    parquet_file = MagicMock()
-    parquet_file.num_row_groups = 1
     mock_s3.open.return_value = mock_s3
     mock_s3.__enter__.return_value = MagicMock(version_id="abc123")
-    mock_load.return_value = parquet_file
     mock_delete.return_value = pa.BufferOutputStream(), {"DeletedRows": 1}
     execute(
         "https://queue/url",
@@ -142,19 +184,15 @@ def test_it_assumes_role(mock_delete, mock_s3, mock_load, mock_session, message_
 @patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.save")
 @patch("backend.ecs_tasks.delete_files.main.delete_old_versions")
-@patch("backend.ecs_tasks.delete_files.main.load_parquet")
 @patch("backend.ecs_tasks.delete_files.main.s3fs")
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 def test_it_removes_old_versions(
-    mock_delete, mock_s3, mock_load, mock_delete_versions, mock_save, message_stub
+    mock_delete, mock_s3, mock_delete_versions, mock_save, message_stub
 ):
     mock_s3.S3FileSystem.return_value = mock_s3
-    parquet_file = MagicMock()
-    parquet_file.num_row_groups = 1
     mock_s3.open.return_value = mock_s3
     mock_s3.__enter__.return_value = MagicMock(version_id="abc123")
     mock_save.return_value = "new_version123"
-    mock_load.return_value = parquet_file
     mock_delete.return_value = pa.BufferOutputStream(), {"DeletedRows": 1}
     execute(
         "https://queue/url",
@@ -183,26 +221,16 @@ def test_it_removes_old_versions(
 @patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.save")
 @patch("backend.ecs_tasks.delete_files.main.delete_old_versions")
-@patch("backend.ecs_tasks.delete_files.main.load_parquet")
 @patch("backend.ecs_tasks.delete_files.main.s3fs")
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
 def test_it_handles_old_version_delete_failures(
-    mock_handle,
-    mock_delete,
-    mock_s3,
-    mock_load,
-    mock_delete_versions,
-    mock_save,
-    message_stub,
+    mock_handle, mock_delete, mock_s3, mock_delete_versions, mock_save, message_stub,
 ):
     mock_s3.S3FileSystem.return_value = mock_s3
-    parquet_file = MagicMock()
-    parquet_file.num_row_groups = 1
     mock_s3.open.return_value = mock_s3
     mock_s3.__enter__.return_value = MagicMock(version_id="abc123")
     mock_save.return_value = "new_version123"
-    mock_load.return_value = parquet_file
     mock_delete.return_value = pa.BufferOutputStream(), {"DeletedRows": 1}
     mock_delete_versions.side_effect = DeleteOldVersionsError(errors=["access denied"])
     execute(
@@ -227,20 +255,16 @@ def test_it_handles_old_version_delete_failures(
 @patch("backend.ecs_tasks.delete_files.main.validate_message", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.get_queue", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
-@patch("backend.ecs_tasks.delete_files.main.load_parquet")
 @patch("backend.ecs_tasks.delete_files.main.s3fs")
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.emit_deletion_event")
 @patch("backend.ecs_tasks.delete_files.main.save")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
 def test_it_handles_no_deletions(
-    mock_handle, mock_save, mock_emit, mock_delete, mock_s3, mock_load, message_stub
+    mock_handle, mock_save, mock_emit, mock_delete, mock_s3, message_stub
 ):
     mock_s3.S3FileSystem.return_value = mock_s3
     column = {"Column": "customer_id", "MatchIds": ["12345", "23456"]}
-    parquet_file = MagicMock()
-    parquet_file.num_row_groups = 1
-    mock_load.return_value = parquet_file
     mock_delete.return_value = pa.BufferOutputStream(), {"DeletedRows": 0}
     execute(
         "https://queue/url",
@@ -248,7 +272,6 @@ def test_it_handles_no_deletions(
         "receipt_handle",
     )
     mock_s3.open.assert_called_with("s3://bucket/path/basic.parquet", "rb")
-    mock_delete.assert_called_with(parquet_file, [column])
     mock_save.assert_not_called()
     mock_emit.assert_not_called()
     mock_handle.assert_called_with(
@@ -268,21 +291,19 @@ def test_it_handles_no_deletions(
 @patch("backend.ecs_tasks.delete_files.main.validate_message", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.s3fs", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
-@patch("backend.ecs_tasks.delete_files.main.load_parquet")
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
 def test_it_handles_missing_col_exceptions(
-    mock_error_handler, mock_delete, mock_load, message_stub
+    mock_error_handler, mock_delete, message_stub
 ):
     # Arrange
-    parquet_file = MagicMock()
-    parquet_file.num_row_groups = 1
-    mock_load.return_value = parquet_file
     mock_delete.side_effect = KeyError("FAIL")
     # Act
     execute("https://queue/url", message_stub(), "receipt_handle")
     # Assert
-    mock_error_handler.assert_called_with(ANY, ANY, "Parquet processing error: 'FAIL'")
+    mock_error_handler.assert_called_with(
+        ANY, ANY, "Apache Arrow processing error: 'FAIL'"
+    )
 
 
 @patch.dict(os.environ, {"JobTable": "test"})
@@ -294,21 +315,17 @@ def test_it_handles_missing_col_exceptions(
 @patch("backend.ecs_tasks.delete_files.main.validate_message", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.s3fs", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
-@patch("backend.ecs_tasks.delete_files.main.load_parquet")
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
-def test_it_handles_arrow_exceptions(
-    mock_error_handler, mock_delete, mock_load, message_stub
-):
+def test_it_handles_arrow_exceptions(mock_error_handler, mock_delete, message_stub):
     # Arrange
-    parquet_file = MagicMock()
-    parquet_file.num_row_groups = 1
-    mock_load.return_value = parquet_file
     mock_delete.side_effect = ArrowException("FAIL")
     # Act
     execute("https://queue/url", message_stub(), "receipt_handle")
     # Assert
-    mock_error_handler.assert_called_with(ANY, ANY, "Parquet processing error: FAIL")
+    mock_error_handler.assert_called_with(
+        ANY, ANY, "Apache Arrow processing error: FAIL"
+    )
 
 
 @patch.dict(os.environ, {"JobTable": "test"})
@@ -448,16 +465,12 @@ def test_it_handles_unversioned_buckets(
 @patch("backend.ecs_tasks.delete_files.main.get_queue", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.s3fs", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
-@patch("backend.ecs_tasks.delete_files.main.load_parquet")
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
 @patch("backend.ecs_tasks.delete_files.main.save")
 def test_it_provides_logs_for_acl_fail(
-    mock_save, mock_error_handler, mock_delete, mock_load, message_stub
+    mock_save, mock_error_handler, mock_delete, message_stub
 ):
-    parquet_file = MagicMock()
-    parquet_file.num_row_groups = 1
-    mock_load.return_value = parquet_file
     mock_save.side_effect = ClientError({}, "PutObjectAcl")
     mock_delete.return_value = pa.BufferOutputStream(), {"DeletedRows": 1}
     execute("https://queue/url", message_stub(), "receipt_handle")
@@ -485,20 +498,11 @@ def test_it_provides_logs_for_acl_fail(
 @patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.rollback_object_version")
 @patch("backend.ecs_tasks.delete_files.main.verify_object_versions_integrity")
-@patch("backend.ecs_tasks.delete_files.main.load_parquet")
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
 def test_it_provides_logs_for_failed_version_integrity_check_and_performs_rollback(
-    mock_error_handler,
-    mock_delete,
-    mock_load,
-    mock_verify_integrity,
-    rollback_mock,
-    message_stub,
+    mock_error_handler, mock_delete, mock_verify_integrity, rollback_mock, message_stub,
 ):
-    parquet_file = MagicMock()
-    parquet_file.num_row_groups = 1
-    mock_load.return_value = parquet_file
     mock_verify_integrity.side_effect = IntegrityCheckFailedError(
         "Some error", MagicMock(), "bucket", "path/basic.parquet", "new_version"
     )
@@ -527,15 +531,11 @@ def test_it_provides_logs_for_failed_version_integrity_check_and_performs_rollba
 @patch("backend.ecs_tasks.delete_files.main.s3fs", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.verify_object_versions_integrity")
-@patch("backend.ecs_tasks.delete_files.main.load_parquet")
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
 def test_it_provides_logs_for_get_latest_version_fail(
-    mock_error_handler, mock_delete, mock_load, mock_verify_integrity, message_stub
+    mock_error_handler, mock_delete, mock_verify_integrity, message_stub
 ):
-    parquet_file = MagicMock()
-    parquet_file.num_row_groups = 1
-    mock_load.return_value = parquet_file
     mock_verify_integrity.side_effect = get_list_object_versions_error()
     mock_delete.return_value = pa.BufferOutputStream(), {"DeletedRows": 1}
     execute("https://queue/url", message_stub(), "receipt_handle")
@@ -562,15 +562,11 @@ def test_it_provides_logs_for_get_latest_version_fail(
 @patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.get_queue", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.verify_object_versions_integrity")
-@patch("backend.ecs_tasks.delete_files.main.load_parquet")
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
 def test_it_provides_logs_for_failed_rollback_client_error(
-    mock_error_handler, mock_delete, mock_load, mock_verify_integrity, message_stub
+    mock_error_handler, mock_delete, mock_verify_integrity, message_stub
 ):
-    parquet_file = MagicMock()
-    parquet_file.num_row_groups = 1
-    mock_load.return_value = parquet_file
     mock_s3 = MagicMock()
     mock_s3.delete_object.side_effect = ClientError({}, "DeleteObject")
     mock_verify_integrity.side_effect = IntegrityCheckFailedError(
@@ -605,15 +601,11 @@ def test_it_provides_logs_for_failed_rollback_client_error(
 @patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.get_queue", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.verify_object_versions_integrity")
-@patch("backend.ecs_tasks.delete_files.main.load_parquet")
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
 def test_it_provides_logs_for_failed_rollback_generic_error(
-    mock_error_handler, mock_delete, mock_load, mock_verify_integrity, message_stub
+    mock_error_handler, mock_delete, mock_verify_integrity, message_stub
 ):
-    parquet_file = MagicMock()
-    parquet_file.num_row_groups = 1
-    mock_load.return_value = parquet_file
     mock_s3 = MagicMock()
     mock_s3.delete_object.side_effect = Exception("error!!")
     mock_verify_integrity.side_effect = IntegrityCheckFailedError(
@@ -826,3 +818,23 @@ def test_it_sets_kill_handlers(mock_queue, mock_signal):
         main("https://queue/url", 1, 1, 1)
     assert mock_signal.SIGINT, ANY == mock_signal.signal.call_args_list[0][0]
     assert mock_signal.SIGTERM, ANY == mock_signal.signal.call_args_list[1][0]
+
+
+@patch("backend.ecs_tasks.delete_files.main.delete_matches_from_json_file")
+@patch("backend.ecs_tasks.delete_files.main.delete_matches_from_parquet_file")
+def test_it_deletes_from_json_file(mock_parquet, mock_json):
+    f = MagicMock()
+    cols = MagicMock()
+    delete_matches_from_file(f, cols, "json", False)
+    mock_json.assert_called_with(f, cols, False)
+    mock_parquet.assert_not_called()
+
+
+@patch("backend.ecs_tasks.delete_files.main.delete_matches_from_json_file")
+@patch("backend.ecs_tasks.delete_files.main.delete_matches_from_parquet_file")
+def test_it_deletes_from_parquet_file(mock_parquet, mock_json):
+    f = MagicMock()
+    cols = MagicMock()
+    delete_matches_from_file(f, cols, "parquet")
+    mock_parquet.assert_called_with(f, cols)
+    mock_json.assert_not_called()

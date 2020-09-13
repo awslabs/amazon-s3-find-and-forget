@@ -1,0 +1,294 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`it should serialize dbs and tables 1`] = `
+Object {
+  "databases": Array [
+    Object {
+      "name": "db2",
+      "tables": Array [
+        Object {
+          "columns": Array [
+            Object {
+              "canBeIdentifier": true,
+              "name": "customer_id",
+              "type": "string",
+            },
+          ],
+          "format": "parquet",
+          "name": "table1",
+        },
+        Object {
+          "columns": Array [
+            Object {
+              "canBeIdentifier": true,
+              "name": "author",
+              "type": "string",
+            },
+          ],
+          "format": "parquet",
+          "name": "table2",
+        },
+      ],
+    },
+    Object {
+      "name": "db3",
+      "tables": Array [
+        Object {
+          "columns": Array [
+            Object {
+              "canBeIdentifier": true,
+              "name": "customer_id",
+              "type": "string",
+            },
+          ],
+          "format": "parquet",
+          "name": "table5",
+        },
+        Object {
+          "columns": Array [
+            Object {
+              "canBeIdentifier": true,
+              "name": "id",
+              "type": "string",
+            },
+            Object {
+              "canBeIdentifier": true,
+              "name": "type",
+              "type": "string",
+            },
+            Object {
+              "canBeIdentifier": false,
+              "children": Array [
+                Object {
+                  "canBeIdentifier": true,
+                  "name": "id",
+                  "type": "int",
+                },
+                Object {
+                  "canBeIdentifier": true,
+                  "name": "name",
+                  "type": "string",
+                },
+                Object {
+                  "canBeIdentifier": true,
+                  "name": "url",
+                  "type": "string",
+                },
+              ],
+              "name": "repo",
+              "type": "struct",
+            },
+            Object {
+              "canBeIdentifier": false,
+              "name": "public",
+              "type": "boolean",
+            },
+            Object {
+              "canBeIdentifier": true,
+              "name": "created_at",
+              "type": "string",
+            },
+          ],
+          "format": "json",
+          "name": "table3",
+        },
+      ],
+    },
+    Object {
+      "name": "db4",
+      "tables": Array [
+        Object {
+          "columns": Array [
+            Object {
+              "canBeIdentifier": true,
+              "name": "id",
+              "type": "string",
+            },
+            Object {
+              "canBeIdentifier": true,
+              "name": "type",
+              "type": "string",
+            },
+            Object {
+              "canBeIdentifier": false,
+              "children": Array [
+                Object {
+                  "canBeIdentifier": true,
+                  "name": "id",
+                  "type": "int",
+                },
+                Object {
+                  "canBeIdentifier": true,
+                  "name": "name",
+                  "type": "string",
+                },
+                Object {
+                  "canBeIdentifier": true,
+                  "name": "url",
+                  "type": "string",
+                },
+              ],
+              "name": "repo",
+              "type": "struct",
+            },
+            Object {
+              "canBeIdentifier": false,
+              "name": "simplearr",
+              "type": "array<int>",
+            },
+            Object {
+              "canBeIdentifier": false,
+              "children": Array [
+                Object {
+                  "canBeIdentifier": false,
+                  "name": "field",
+                  "type": "int",
+                },
+                Object {
+                  "canBeIdentifier": false,
+                  "name": "n",
+                  "type": "string",
+                },
+              ],
+              "name": "arr",
+              "type": "array<struct>",
+            },
+            Object {
+              "canBeIdentifier": false,
+              "children": Array [
+                Object {
+                  "canBeIdentifier": true,
+                  "name": "a",
+                  "type": "int",
+                },
+                Object {
+                  "canBeIdentifier": true,
+                  "name": "b",
+                  "type": "string",
+                },
+                Object {
+                  "canBeIdentifier": false,
+                  "children": Array [
+                    Object {
+                      "canBeIdentifier": true,
+                      "name": "d",
+                      "type": "int",
+                    },
+                    Object {
+                      "canBeIdentifier": false,
+                      "children": Array [
+                        Object {
+                          "canBeIdentifier": true,
+                          "name": "f",
+                          "type": "int",
+                        },
+                      ],
+                      "name": "e",
+                      "type": "struct",
+                    },
+                  ],
+                  "name": "c",
+                  "type": "struct",
+                },
+                Object {
+                  "canBeIdentifier": false,
+                  "children": Array [
+                    Object {
+                      "canBeIdentifier": true,
+                      "name": "h",
+                      "type": "string",
+                    },
+                  ],
+                  "name": "g",
+                  "type": "struct",
+                },
+              ],
+              "name": "nestedstruct",
+              "type": "struct",
+            },
+            Object {
+              "canBeIdentifier": false,
+              "children": Array [
+                Object {
+                  "canBeIdentifier": true,
+                  "name": "a",
+                  "type": "int",
+                },
+                Object {
+                  "canBeIdentifier": true,
+                  "name": "b",
+                  "type": "string",
+                },
+                Object {
+                  "canBeIdentifier": false,
+                  "children": Array [
+                    Object {
+                      "canBeIdentifier": true,
+                      "name": "d",
+                      "type": "int",
+                    },
+                    Object {
+                      "canBeIdentifier": false,
+                      "children": Array [
+                        Object {
+                          "canBeIdentifier": true,
+                          "name": "f",
+                          "type": "int",
+                        },
+                      ],
+                      "name": "e",
+                      "type": "struct",
+                    },
+                  ],
+                  "name": "c",
+                  "type": "struct",
+                },
+                Object {
+                  "canBeIdentifier": false,
+                  "children": Array [
+                    Object {
+                      "canBeIdentifier": true,
+                      "name": "h",
+                      "type": "string",
+                    },
+                  ],
+                  "name": "g",
+                  "type": "struct",
+                },
+                Object {
+                  "canBeIdentifier": false,
+                  "children": Array [
+                    Object {
+                      "canBeIdentifier": false,
+                      "name": "l",
+                      "type": "int",
+                    },
+                    Object {
+                      "canBeIdentifier": false,
+                      "children": Array [
+                        Object {
+                          "canBeIdentifier": false,
+                          "name": "n",
+                          "type": "string",
+                        },
+                      ],
+                      "name": "m",
+                      "type": "struct",
+                    },
+                  ],
+                  "name": "i",
+                  "type": "array<struct>",
+                },
+              ],
+              "name": "structandarr",
+              "type": "struct",
+            },
+          ],
+          "format": "parquet",
+          "name": "complex",
+        },
+      ],
+    },
+  ],
+}
+`;
