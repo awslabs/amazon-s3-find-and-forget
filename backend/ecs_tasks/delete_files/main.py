@@ -66,13 +66,6 @@ def handle_error(
             logger.error("Unable to change message visibility: %s", str(e))
 
 
-def parse_msg_body_and_revert_last(message_body, client):
-    body = json.loads(message_body)
-    object_path = body.get("Object")
-    input_bucket, input_key = parse_s3_url(object_path)
-    revert_last(client, input_bucket, input_key)
-
-
 def validate_message(message):
     body = json.loads(message)
     mandatory_keys = ["JobId", "Object", "QueryBucket", "QueryKey", "AllFiles"]
