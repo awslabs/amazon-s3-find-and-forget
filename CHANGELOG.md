@@ -1,6 +1,6 @@
 # Change Log
 
-## v0.11 (unreleased)
+## v0.11
 
 - [#170](https://github.com/awslabs/amazon-s3-find-and-forget/pull/170): JSON
   support
