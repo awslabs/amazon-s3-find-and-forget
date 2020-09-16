@@ -50,3 +50,4 @@ API | Operation | HTTP request | Description
 - **API key parameter name**: Authorization
 - **Location**: HTTP header
 
+Consult the [User Guide](../USER_GUIDE.md#making-authenticated-api-requests) to make authenticated requests.

@@ -12,6 +12,9 @@ Forget solution.
   - [Provisioning Data Access IAM Roles](#provisioning-data-access-iam-roles)
 - [Deploying the Solution](#deploying-the-solution)
 - [Accessing the application](#accessing-the-application)
+  - [First access via UI](#first-access-via-ui)
+  - [Managing users](#managing-users)
+  - [Making authenticated API requests](#making-authenticated-api-requests)
 - [Configuring Data Mappers](#configuring-data-mappers)
 - [Granting Access to Data](#granting-access-to-data)
   - [Updating Your Bucket Policy](#updating-your-bucket-policy)
@@ -259,6 +262,8 @@ resources.
 The solution provides a web user interface and a REST API to allow you to
 integrate it in your own applications.
 
+### First access via UI
+
 1. Note the _WebUIUrl_ displayed in the _Outputs_ tab for the stack. This is
    used to access the application.
 2. When accessing the web user interface for the first time, you will be
@@ -270,6 +275,8 @@ integrate it in your own applications.
    select "Submit".
 4. Now you should be able to access all the functionalities.
 
+### Managing users
+
 To add more users to the application:
 
 1. Access the [Cognito Console] and choose "Manage User Pools".
@@ -279,9 +286,35 @@ To add more users to the application:
 4. Use this page to create or manage users. For more information, consult the
    [Managing Users in User Pools Guide].
 
-In order to use the API, you will need to authenticate the requests using the
-User Pool. For more information, consult the [Cognito REST API integration
-guide].
+### Making authenticated API requests
+
+If you need to use the API directly, you will need to authenticate the requests
+using the User Pool. After resetting the password via the UI, you can make
+authenticated requests using the AWS CLI:
+
+1. Note the _CognitoUserPoolId_ and _CognitoUserPoolClientId_ parameters
+   displayed in the _Outputs_ tab for the stack, and take note of cognito user
+   email and password.
+2. Generate a token by running this command:
+
+   ```sh
+   aws cognito-idp admin-initiate-auth \
+     --user-pool-id <user-pool-id> \
+     --client-id <user-pool-client-id> \
+     --auth-flow ADMIN_NO_SRP_AUTH \
+     --auth-parameters '{"USERNAME":"<user-email>","PASSWORD":"<your-password"}'
+   ```
+
+3. Take note of the `IdToken` from the previous command. Now you can run an
+   authenticated request to the API. Take note of the API base url from the
+   _ApiUrl_ in the _Outputs_ tab for the CloudFormation stack and use it to
+   build a url. For instance, this should show the Deletion queue:
+
+   ```sh
+   curl <api-url>/v1/queue -H "Authorization: Bearer <id-token>"
+   ```
+
+For more information, consult the [Cognito REST API integration guide].
 
 ## Configuring Data Mappers
 
