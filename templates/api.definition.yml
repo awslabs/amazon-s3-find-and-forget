@@ -79,7 +79,7 @@ paths:
       summary: Adds an item to the deletion queue
       tags:
         - DeletionQueue
-      operationId: "addToDeletionQueue"
+      operationId: "addItemToDeletionQueue"
       security:
         - CognitoAuthorizer: []
       responses:
@@ -106,7 +106,7 @@ paths:
         type: "aws_proxy"
   /v1/queue/matches:
     delete:
-      summary: Removes an item from the deletion queue
+      summary: Removes one or more items from the deletion queue
       tags:
         - DeletionQueue
       operationId: "deleteMatches"
@@ -141,6 +141,53 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CancelDeletion.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        type: "aws_proxy"
+    patch:
+      summary: Adds one or more items to the deletion queue
+      tags:
+        - DeletionQueue
+      operationId: "addItemsToDeletionQueue"
+      security:
+        - CognitoAuthorizer: []
+      responses:
+        '201':
+          description: "Created"
+          content:
+            application/json:
+              schema:
+                title: "ListOfDeletionQueueItem"
+                required:
+                  - "Matches"
+                type: "object"
+                properties:
+                  Matches:
+                    type: "array"
+                    description: "List of Deletion Queue Item objects"
+                    items:
+                      $ref: '#/components/schemas/DeletionQueueItem'
+        '422':
+          $ref: '#/components/responses/InvalidRequest'
+      requestBody:
+        description: "Request body containing details of the Matches to add to the Deletion Queue"
+        content:
+          application/json:
+            schema:
+              title: "ListOfCreateDeletionQueueItems"
+              required:
+                - "Matches"
+              type: "object"
+              properties:
+                Matches:
+                  type: "array"
+                  description: "List of Deletion Queue Items"
+                  items:
+                    $ref: '#/components/schemas/CreateDeletionQueueItem'
+        required: true
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${EnqueueDeletions.Arn}/invocations"
         passthroughBehavior: "when_no_match"
         httpMethod: "POST"
         type: "aws_proxy"

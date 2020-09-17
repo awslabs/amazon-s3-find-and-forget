@@ -161,6 +161,21 @@ Resources:
       Policies:
       - DynamoDBCrudPolicy:
           TableName: !Ref DeletionQueueTableName
+  EnqueueDeletions:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers.enqueue_batch_handler
+      CodeUri: ../backend/lambdas/queue/
+      Events:
+        Get:
+          Type: Api
+          Properties:
+            Path: /v1/queue/matches
+            Method: PATCH
+            RestApiId: !Ref Api
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref DeletionQueueTableName
   GetDeletionQueue:
     Type: AWS::Serverless::Function
     Properties:

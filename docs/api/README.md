@@ -10,8 +10,9 @@ API | Operation | HTTP request | Description
 *DataMapperApi* | [**CreateDataMapper**](./Apis/DataMapperApi.md#createdatamapper) | **PUT** /v1/data_mappers/{data_mapper_id} | Creates a data mapper
 *DataMapperApi* | [**DeleteDataMapper**](./Apis/DataMapperApi.md#deletedatamapper) | **DELETE** /v1/data_mappers/{data_mapper_id} | Removes a data mapper
 *DataMapperApi* | [**ListDataMappers**](./Apis/DataMapperApi.md#listdatamappers) | **GET** /v1/data_mappers | Lists data mappers
-*DeletionQueueApi* | [**AddToDeletionQueue**](./Apis/DeletionQueueApi.md#addtodeletionqueue) | **PATCH** /v1/queue | Adds an item to the deletion queue
-*DeletionQueueApi* | [**DeleteMatches**](./Apis/DeletionQueueApi.md#deletematches) | **DELETE** /v1/queue/matches | Removes an item from the deletion queue
+*DeletionQueueApi* | [**AddItemToDeletionQueue**](./Apis/DeletionQueueApi.md#additemtodeletionqueue) | **PATCH** /v1/queue | Adds an item to the deletion queue
+*DeletionQueueApi* | [**AddItemsToDeletionQueue**](./Apis/DeletionQueueApi.md#additemstodeletionqueue) | **PATCH** /v1/queue/matches | Adds one or more items to the deletion queue
+*DeletionQueueApi* | [**DeleteMatches**](./Apis/DeletionQueueApi.md#deletematches) | **DELETE** /v1/queue/matches | Removes one or more items from the deletion queue
 *DeletionQueueApi* | [**ListDeletionQueueMatches**](./Apis/DeletionQueueApi.md#listdeletionqueuematches) | **GET** /v1/queue | Lists deletion queue items
 *DeletionQueueApi* | [**StartDeletionJob**](./Apis/DeletionQueueApi.md#startdeletionjob) | **DELETE** /v1/queue | Starts a job for the items in the deletion queue
 *JobApi* | [**GetJob**](./Apis/JobApi.md#getjob) | **GET** /v1/jobs/{job_id} | Returns the details of a job
@@ -32,7 +33,9 @@ API | Operation | HTTP request | Description
  - [Job](./Models/Job.md)
  - [JobEvent](./Models/JobEvent.md)
  - [JobSummary](./Models/JobSummary.md)
+ - [ListOfCreateDeletionQueueItems](./Models/ListOfCreateDeletionQueueItems.md)
  - [ListOfDataMappers](./Models/ListOfDataMappers.md)
+ - [ListOfDeletionQueueItem](./Models/ListOfDeletionQueueItem.md)
  - [ListOfJobEvents](./Models/ListOfJobEvents.md)
  - [ListOfJobs](./Models/ListOfJobs.md)
  - [ListOfMatchDeletions](./Models/ListOfMatchDeletions.md)

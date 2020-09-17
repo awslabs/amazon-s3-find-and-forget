@@ -55,8 +55,34 @@ def enqueue_handler(event, context):
         "CreatedBy": get_user_info(event),
     }
     deletion_queue_table.put_item(Item=item)
-
     return {"statusCode": 201, "body": json.dumps(item, cls=DecimalEncoder)}
+
+
+@with_logging
+@add_cors_headers
+@json_body_loader
+@catch_errors
+def enqueue_batch_handler(event, context):
+    body = event["body"]
+    matches = body["Matches"]
+    items = []
+    with deletion_queue_table.batch_writer() as batch:
+        for match in matches:
+            match_id = match["MatchId"]
+            data_mappers = match.get("DataMappers", [])
+            item = {
+                "DeletionQueueItemId": str(uuid.uuid4()),
+                "MatchId": match_id,
+                "CreatedAt": utc_timestamp(),
+                "DataMappers": data_mappers,
+                "CreatedBy": get_user_info(event),
+            }
+            batch.put_item(Item=item)
+            items.append(item)
+    return {
+        "statusCode": 201,
+        "body": json.dumps({"Matches": items}, cls=DecimalEncoder),
+    }
 
 
 @with_logging
