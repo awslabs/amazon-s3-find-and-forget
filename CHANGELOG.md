@@ -3,7 +3,7 @@
 ## v0.11 (unreleased)
 
 - [#200](https://github.com/awslabs/amazon-s3-find-and-forget/pull/200): Add API
-  Endpoint for adding deletion queue items in batch
+  Endpoint for adding deletion queue items in batch - deprecates PATCH /v1/queue
 - [#170](https://github.com/awslabs/amazon-s3-find-and-forget/pull/170): JSON
   support
 

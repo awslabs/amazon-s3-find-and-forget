@@ -45,15 +45,8 @@ max_size_bytes = 375000
 @catch_errors
 def enqueue_handler(event, context):
     body = event["body"]
-    match_id = body["MatchId"]
-    data_mappers = body.get("DataMappers", [])
-    item = {
-        "DeletionQueueItemId": str(uuid.uuid4()),
-        "MatchId": match_id,
-        "CreatedAt": utc_timestamp(),
-        "DataMappers": data_mappers,
-        "CreatedBy": get_user_info(event),
-    }
+    user_info = get_user_info(event)
+    item = enqueue_items([body], user_info)[0]
     deletion_queue_table.put_item(Item=item)
     return {"statusCode": 201, "body": json.dumps(item, cls=DecimalEncoder)}
 
@@ -65,20 +58,8 @@ def enqueue_handler(event, context):
 def enqueue_batch_handler(event, context):
     body = event["body"]
     matches = body["Matches"]
-    items = []
-    with deletion_queue_table.batch_writer() as batch:
-        for match in matches:
-            match_id = match["MatchId"]
-            data_mappers = match.get("DataMappers", [])
-            item = {
-                "DeletionQueueItemId": str(uuid.uuid4()),
-                "MatchId": match_id,
-                "CreatedAt": utc_timestamp(),
-                "DataMappers": data_mappers,
-                "CreatedBy": get_user_info(event),
-            }
-            batch.put_item(Item=item)
-            items.append(item)
+    user_info = get_user_info(event)
+    items = enqueue_items(matches, user_info)
     return {
         "statusCode": 201,
         "body": json.dumps({"Matches": items}, cls=DecimalEncoder),
@@ -166,6 +147,24 @@ def process_handler(event, context):
     jobs_table.put_item(Item=item)
 
     return {"statusCode": 202, "body": json.dumps(item, cls=DecimalEncoder)}
+
+
+def enqueue_items(matches, user_info):
+    items = []
+    with deletion_queue_table.batch_writer() as batch:
+        for match in matches:
+            match_id = match["MatchId"]
+            data_mappers = match.get("DataMappers", [])
+            item = {
+                "DeletionQueueItemId": str(uuid.uuid4()),
+                "MatchId": match_id,
+                "CreatedAt": utc_timestamp(),
+                "DataMappers": data_mappers,
+                "CreatedBy": user_info,
+            }
+            batch.put_item(Item=item)
+            items.append(item)
+    return items
 
 
 def get_deletion_queue():

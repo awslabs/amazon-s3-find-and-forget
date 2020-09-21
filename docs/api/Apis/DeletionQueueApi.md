@@ -4,7 +4,7 @@ All URIs are relative to *https://your-apigw-id.execute-api.region.amazonaws.com
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**AddItemToDeletionQueue**](DeletionQueueApi.md#additemtodeletionqueue) | **PATCH** /v1/queue | Adds an item to the deletion queue
+[**AddItemToDeletionQueue**](DeletionQueueApi.md#additemtodeletionqueue) | **PATCH** /v1/queue | Adds an item to the deletion queue (Deprecated: use PATCH /v1/queue/matches)
 [**AddItemsToDeletionQueue**](DeletionQueueApi.md#additemstodeletionqueue) | **PATCH** /v1/queue/matches | Adds one or more items to the deletion queue
 [**DeleteMatches**](DeletionQueueApi.md#deletematches) | **DELETE** /v1/queue/matches | Removes one or more items from the deletion queue
 [**ListDeletionQueueMatches**](DeletionQueueApi.md#listdeletionqueuematches) | **GET** /v1/queue | Lists deletion queue items
@@ -14,7 +14,7 @@ Method | HTTP request | Description
 <a name="additemtodeletionqueue"></a>
 ## **AddItemToDeletionQueue**
 
-Adds an item to the deletion queue
+Adds an item to the deletion queue (Deprecated: use PATCH /v1/queue/matches)
 
 ### Parameters
 

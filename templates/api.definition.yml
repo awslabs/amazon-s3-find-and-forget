@@ -76,7 +76,8 @@ paths:
         httpMethod: "POST"
         type: "aws_proxy"
     patch:
-      summary: Adds an item to the deletion queue
+      summary: "Adds an item to the deletion queue (Deprecated: use PATCH /v1/queue/matches)"
+      deprecated: true
       tags:
         - DeletionQueue
       operationId: "addItemToDeletionQueue"
