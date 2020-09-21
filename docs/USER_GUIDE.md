@@ -12,7 +12,7 @@ Forget solution.
   - [Provisioning Data Access IAM Roles](#provisioning-data-access-iam-roles)
 - [Deploying the Solution](#deploying-the-solution)
 - [Accessing the application](#accessing-the-application)
-  - [First access via UI](#first-access-via-ui)
+  - [Logging in for the first time](#logging-in-for-the-first-time)
   - [Managing users](#managing-users)
   - [Making authenticated API requests](#making-authenticated-api-requests)
 - [Configuring Data Mappers](#configuring-data-mappers)
@@ -262,7 +262,7 @@ resources.
 The solution provides a web user interface and a REST API to allow you to
 integrate it in your own applications.
 
-### First access via UI
+### Logging in for the first time
 
 1. Note the _WebUIUrl_ displayed in the _Outputs_ tab for the stack. This is
    used to access the application.
@@ -288,21 +288,21 @@ To add more users to the application:
 
 ### Making authenticated API requests
 
-If you need to use the API directly, you will need to authenticate the requests
+To use the API directly, you will need to authenticate requests
 using the User Pool. After resetting the password via the UI, you can make
 authenticated requests using the AWS CLI:
 
 1. Note the _CognitoUserPoolId_ and _CognitoUserPoolClientId_ parameters
-   displayed in the _Outputs_ tab for the stack, and take note of cognito user
+   displayed in the _Outputs_ tab for the stack, and the Cognito user
    email and password.
-2. Generate a token by running this command:
+2. Generate a token by running this command with the values you noted in the previous step:
 
    ```sh
    aws cognito-idp admin-initiate-auth \
-     --user-pool-id <user-pool-id> \
-     --client-id <user-pool-client-id> \
+     --user-pool-id $COGNITO_USER_POOL_ID \
+     --client-id $COGNITO_USER_POOL_CLIENT_ID \
      --auth-flow ADMIN_NO_SRP_AUTH \
-     --auth-parameters '{"USERNAME":"<user-email>","PASSWORD":"<your-password"}'
+     --auth-parameters '{"USERNAME":"$USER_EMAIL_ADDRESS","PASSWORD":"$USER_PASSWORD"}'
    ```
 
 3. Take note of the `IdToken` from the previous command. Now you can run an
@@ -311,7 +311,7 @@ authenticated requests using the AWS CLI:
    build a url. For instance, this should show the Deletion queue:
 
    ```sh
-   curl <api-url>/v1/queue -H "Authorization: Bearer <id-token>"
+   curl $API_URL/v1/queue -H "Authorization: Bearer $ID_TOKEN"
    ```
 
 For more information, consult the [Cognito REST API integration guide].
