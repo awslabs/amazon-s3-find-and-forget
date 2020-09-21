@@ -77,7 +77,6 @@ def test_it_adds_to_queue(table):
         },
         SimpleNamespace(),
     )
-    print(response["body"])
     assert 201 == response["statusCode"]
     assert {
         "DeletionQueueItemId": ANY,
