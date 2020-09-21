@@ -232,6 +232,8 @@ def test_it_runs_for_parquet_happy_path(
         == job_table.get_item(Key={"Id": job_id, "Sk": job_id})["Item"]["JobStatus"]
     )
     assert 0 == len(query_parquet_file(tmp, "customer_id", "12345"))
+    assert 1 == len(query_parquet_file(tmp, "customer_id", "23456"))
+    assert 1 == len(query_parquet_file(tmp, "customer_id", "34567"))
     assert 2 == len(list(bucket.object_versions.filter(Prefix=object_key)))
     assert {"foo": "bar"} == bucket.Object(object_key).metadata
     assert "cache" == bucket.Object(object_key).cache_control
@@ -270,6 +272,8 @@ def test_it_runs_for_json_happy_path(
         == job_table.get_item(Key={"Id": job_id, "Sk": job_id})["Item"]["JobStatus"]
     )
     assert 0 == len(query_json_file(tmp.name, "customer_id", "12345"))
+    assert 1 == len(query_json_file(tmp.name, "customer_id", "23456"))
+    assert 1 == len(query_json_file(tmp.name, "customer_id", "34567"))
     assert 2 == len(list(bucket.object_versions.filter(Prefix=object_key)))
     assert {"foo": "bar"} == bucket.Object(object_key).metadata
     assert "cache" == bucket.Object(object_key).cache_control

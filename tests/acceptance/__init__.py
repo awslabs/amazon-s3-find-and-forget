@@ -50,7 +50,7 @@ def query_parquet_file(f, column, val):
 
 def query_json_file(f, column, val):
     table = pj.read_json(f)
-    return [i for i in table.column(column) if i == val]
+    return [i for i in table.column(column) if i.as_py() == val]
 
 
 def empty_table(table, pk, sk=None):
