@@ -1,5 +1,13 @@
 # Change Log
 
+## v0.12
+
+- [#TODO](https://github.com/awslabs/amazon-s3-find-and-forget/pull/TODO): Fix a
+  bug that was affecting Partitions with non-string types generating an error
+  during a
+  `SYNTAX_ERROR: line x:y: '=' cannot be applied to integer, varchar(4)`
+  exception during the Find Phase
+
 ## v0.11
 
 - [#200](https://github.com/awslabs/amazon-s3-find-and-forget/pull/200): Add API
