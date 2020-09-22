@@ -133,7 +133,7 @@ class TestAthenaQueries:
         partition_keys = ["year"]
         partitions = [["2010"]]
         get_table_mock.return_value = table_stub(
-            columns, partition_keys, partition_key_types="int"
+            columns, partition_keys, partition_keys_type="int"
         )
         get_partitions_mock.return_value = [
             partition_stub(p, columns) for p in partitions
@@ -739,7 +739,7 @@ def partition_stub(values, columns, table_name="test_table"):
 
 
 def table_stub(
-    columns, partition_keys, table_name="test_table", partition_key_types="string"
+    columns, partition_keys, table_name="test_table", partition_keys_type="string"
 ):
     return {
         "Name": table_name,
@@ -771,7 +771,7 @@ def table_stub(
             "StoredAsSubDirectories": False,
         },
         "PartitionKeys": [
-            {"Name": partition_key, "Type": partition_key_types}
+            {"Name": partition_key, "Type": partition_keys_type}
             for partition_key in partition_keys
         ],
         "TableType": "EXTERNAL_TABLE",
