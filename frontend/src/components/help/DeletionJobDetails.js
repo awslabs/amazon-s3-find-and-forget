@@ -10,7 +10,7 @@ const links = [
   },
   {
     title: "Understanding Deletion Job Events",
-    url: docsUrl("USER_GUIDE.md#deletion-job-events")
+    url: docsUrl("USER_GUIDE.md#deletion-job-event-types")
   },
   {
     title: "Troubleshooting",
