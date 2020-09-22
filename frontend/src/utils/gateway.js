@@ -35,9 +35,9 @@ export default {
   },
 
   enqueue(id, dataMappers) {
-    return apiGateway(`queue`, {
+    return apiGateway(`queue/matches`, {
       method: "patch",
-      data: { MatchId: id, DataMappers: dataMappers }
+      data: { Matches: [{ MatchId: id, DataMappers: dataMappers }] }
     });
   },
 

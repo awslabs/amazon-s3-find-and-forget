@@ -60,6 +60,62 @@ def test_it_adds_to_queue(api_client, queue_base_endpoint, queue_table, stack):
     assert expected == query_result["Item"]
 
 
+def test_it_adds_batch_to_queue(api_client, queue_base_endpoint, queue_table, stack):
+    # Arrange
+    items = {
+        "Matches": [
+            {"MatchId": "test", "DataMappers": ["a", "b"],},
+            {"MatchId": "test1", "DataMappers": ["a", "b"],},
+        ]
+    }
+    expected = {
+        "Matches": [
+            {
+                "DeletionQueueItemId": mock.ANY,
+                "MatchId": "test",
+                "CreatedAt": mock.ANY,
+                "DataMappers": ["a", "b"],
+                "CreatedBy": {
+                    "Username": "aws-uk-sa-builders@amazon.com",
+                    "Sub": mock.ANY,
+                },
+            },
+            {
+                "DeletionQueueItemId": mock.ANY,
+                "MatchId": "test1",
+                "CreatedAt": mock.ANY,
+                "DataMappers": ["a", "b"],
+                "CreatedBy": {
+                    "Username": "aws-uk-sa-builders@amazon.com",
+                    "Sub": mock.ANY,
+                },
+            },
+        ]
+    }
+    # Act
+    response = api_client.patch("{}/matches".format(queue_base_endpoint), json=items)
+    response_body = response.json()
+    # Assert
+    # Check the response is ok
+    assert 201 == response.status_code
+    assert expected == response_body
+    assert (
+        response.headers.get("Access-Control-Allow-Origin")
+        == stack["APIAccessControlAllowOriginHeader"]
+    )
+    # Check the items exists in the DDB Table
+    for i, match in enumerate(expected["Matches"]):
+        query_result = queue_table.get_item(
+            Key={
+                "DeletionQueueItemId": response_body["Matches"][i][
+                    "DeletionQueueItemId"
+                ]
+            }
+        )
+        assert query_result["Item"]
+        assert match == query_result["Item"]
+
+
 def test_it_rejects_invalid_add_to_queue(api_client, queue_base_endpoint, stack):
     response = api_client.patch(queue_base_endpoint, json={"INVALID": "PAYLOAD"})
     assert 422 == response.status_code

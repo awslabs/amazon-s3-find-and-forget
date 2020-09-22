@@ -69,7 +69,7 @@ def test_it_retrieves_all_items_with_size_and_pagination(table):
 
 
 @patch("backend.lambdas.queue.handlers.deletion_queue_table")
-def test_it_add_to_queue(table):
+def test_it_adds_to_queue(table):
     response = handlers.enqueue_handler(
         {
             "body": json.dumps({"MatchId": "test", "DataMappers": ["a"]}),
@@ -77,7 +77,6 @@ def test_it_add_to_queue(table):
         },
         SimpleNamespace(),
     )
-
     assert 201 == response["statusCode"]
     assert {
         "DeletionQueueItemId": ANY,
@@ -85,6 +84,44 @@ def test_it_add_to_queue(table):
         "CreatedAt": ANY,
         "DataMappers": ["a"],
         "CreatedBy": {"Username": "cognitoUsername", "Sub": "cognitoSub"},
+    } == json.loads(response["body"])
+
+
+@patch("backend.lambdas.queue.handlers.deletion_queue_table")
+def test_it_adds_batch_to_queue(table):
+    response = handlers.enqueue_batch_handler(
+        {
+            "body": json.dumps(
+                {
+                    "Matches": [
+                        {"MatchId": "test", "DataMappers": ["a"]},
+                        {"MatchId": "test2", "DataMappers": ["a"]},
+                    ]
+                }
+            ),
+            "requestContext": autorization_mock,
+        },
+        SimpleNamespace(),
+    )
+
+    assert 201 == response["statusCode"]
+    assert {
+        "Matches": [
+            {
+                "DeletionQueueItemId": ANY,
+                "MatchId": "test",
+                "CreatedAt": ANY,
+                "DataMappers": ["a"],
+                "CreatedBy": {"Username": "cognitoUsername", "Sub": "cognitoSub"},
+            },
+            {
+                "DeletionQueueItemId": ANY,
+                "MatchId": "test2",
+                "CreatedAt": ANY,
+                "DataMappers": ["a"],
+                "CreatedBy": {"Username": "cognitoUsername", "Sub": "cognitoSub"},
+            },
+        ]
     } == json.loads(response["body"])
 
 
