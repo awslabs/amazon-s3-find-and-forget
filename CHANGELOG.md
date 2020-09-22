@@ -4,6 +4,8 @@
 
 - [#202](https://github.com/awslabs/amazon-s3-find-and-forget/pull/202): Upgrade
   frontend dependencies
+- [#204](https://github.com/awslabs/amazon-s3-find-and-forget/pull/204): Improve
+  performance during Cleanup Phase
 
 ## v0.11
 
