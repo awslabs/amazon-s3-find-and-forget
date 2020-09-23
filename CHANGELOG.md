@@ -8,6 +8,8 @@
   exception during the Find Phase
 - [#203](https://github.com/awslabs/amazon-s3-find-and-forget/pull/203): Upgrade
   frontend dependencies
+- [#204](https://github.com/awslabs/amazon-s3-find-and-forget/pull/204): Improve
+  performance during Cleanup Phase
 
 ## v0.11
 
