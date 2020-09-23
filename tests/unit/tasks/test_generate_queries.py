@@ -10,11 +10,12 @@ with patch.dict(os.environ, {"QueryQueue": "test"}):
         handler,
         get_table,
         get_partitions,
-        convert_to_col_type,
+        cast_to_type,
         get_deletion_queue,
         generate_athena_queries,
         get_data_mappers,
         get_inner_children,
+        get_nested_children,
     )
 
 pytestmark = [pytest.mark.unit, pytest.mark.task]
@@ -121,6 +122,45 @@ class TestAthenaQueries:
                 "Table": "test_table",
                 "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
                 "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
+                "DeleteOldVersions": True,
+            }
+        ]
+
+    @patch("backend.lambdas.tasks.generate_queries.get_table")
+    @patch("backend.lambdas.tasks.generate_queries.get_partitions")
+    def test_it_handles_int_partitions(self, get_partitions_mock, get_table_mock):
+        columns = ["customer_id"]
+        partition_keys = ["year"]
+        partitions = [["2010"]]
+        get_table_mock.return_value = table_stub(
+            columns, partition_keys, partition_keys_type="int"
+        )
+        get_partitions_mock.return_value = [
+            partition_stub(p, columns) for p in partitions
+        ]
+        resp = generate_athena_queries(
+            {
+                "DataMapperId": "a",
+                "QueryExecutor": "athena",
+                "Columns": columns,
+                "Format": "parquet",
+                "QueryExecutorParameters": {
+                    "DataCatalogProvider": "glue",
+                    "Database": "test_db",
+                    "Table": "test_table",
+                },
+            },
+            [{"MatchId": "hi"}],
+        )
+        assert resp == [
+            {
+                "DataMapperId": "a",
+                "QueryExecutor": "athena",
+                "Format": "parquet",
+                "Database": "test_db",
+                "Table": "test_table",
+                "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
+                "PartitionKeys": [{"Key": "year", "Value": 2010}],
                 "DeleteOldVersions": True,
             }
         ]
@@ -537,7 +577,7 @@ class TestAthenaQueries:
             {"value": "2.23", "type": "double", "expected": 2.23},
             {"value": "2.23", "type": "float", "expected": 2.23},
         ]:
-            res = convert_to_col_type(
+            res = cast_to_type(
                 scenario["value"],
                 "test_col",
                 {
@@ -559,12 +599,12 @@ class TestAthenaQueries:
             {"value": "1234567890", "id": "user.info.user_id", "expected": 1234567890},
             {"value": "1", "id": "user.type", "expected": 1},
         ]:
-            res = convert_to_col_type(scenario["value"], scenario["id"], table)
+            res = cast_to_type(scenario["value"], scenario["id"], table)
             assert res == scenario["expected"]
 
     def test_it_throws_for_unknown_col(self):
         with pytest.raises(ValueError):
-            convert_to_col_type(
+            cast_to_type(
                 "mystr",
                 "doesnt_exist",
                 {
@@ -584,7 +624,7 @@ class TestAthenaQueries:
             "map<string,struct<x:int>>",
         ]:
             with pytest.raises(ValueError):
-                convert_to_col_type(
+                cast_to_type(
                     123,
                     "user.x",
                     {
@@ -596,7 +636,7 @@ class TestAthenaQueries:
 
     def test_it_throws_for_unsupported_col_types(self):
         with pytest.raises(ValueError) as e:
-            convert_to_col_type(
+            cast_to_type(
                 "2.56",
                 "test_col",
                 {
@@ -612,7 +652,7 @@ class TestAthenaQueries:
 
     def test_it_throws_for_unconvertable_matches(self):
         with pytest.raises(ValueError):
-            convert_to_col_type(
+            cast_to_type(
                 "mystr",
                 "test_col",
                 {
@@ -622,9 +662,17 @@ class TestAthenaQueries:
                 },
             )
 
-    def test_it_throws_for_invalid_schema(self):
-        with pytest.raises(ValueError):
+    def test_it_throws_for_invalid_schema_for_inner_children(self):
+        with pytest.raises(ValueError) as e:
             get_inner_children("struct<name:string", "struct<", ">")
+        assert e.value.args[0] == "Column schema is not valid"
+
+    def test_it_throws_for_invalid_schema_for_nested_children(self):
+        with pytest.raises(ValueError) as e:
+            get_nested_children(
+                "struct<name:string,age:int,s:struct<n:int>,b:string", "struct"
+            )
+        assert e.value.args[0] == "Column schema is not valid"
 
 
 @patch("backend.lambdas.tasks.generate_queries.jobs_table")
@@ -690,7 +738,9 @@ def partition_stub(values, columns, table_name="test_table"):
     }
 
 
-def table_stub(columns, partition_keys, table_name="test_table"):
+def table_stub(
+    columns, partition_keys, table_name="test_table", partition_keys_type="string"
+):
     return {
         "Name": table_name,
         "DatabaseName": "test",
@@ -721,7 +771,7 @@ def table_stub(columns, partition_keys, table_name="test_table"):
             "StoredAsSubDirectories": False,
         },
         "PartitionKeys": [
-            {"Name": partition_key, "Type": "string"}
+            {"Name": partition_key, "Type": partition_keys_type}
             for partition_key in partition_keys
         ],
         "TableType": "EXTERNAL_TABLE",
