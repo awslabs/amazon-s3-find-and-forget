@@ -125,6 +125,7 @@ def test_it_rejects_invalid_add_to_queue(api_client, queue_base_endpoint, stack)
     )
 
 
+@pytest.mark.only
 def test_it_gets_queue(api_client, queue_base_endpoint, del_queue_factory, stack):
     # Arrange
     del_queue_item = del_queue_factory()
@@ -139,6 +140,7 @@ def test_it_gets_queue(api_client, queue_base_endpoint, del_queue_factory, stack
         response.headers.get("Access-Control-Allow-Origin")
         == stack["APIAccessControlAllowOriginHeader"]
     )
+    assert response.headers.get("Access-Control-Expose-Headers") == "content-length"
 
 
 def test_it_rejects_invalid_deletion(
