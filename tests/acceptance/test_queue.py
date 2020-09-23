@@ -125,7 +125,6 @@ def test_it_rejects_invalid_add_to_queue(api_client, queue_base_endpoint, stack)
     )
 
 
-@pytest.mark.only
 def test_it_gets_queue(api_client, queue_base_endpoint, del_queue_factory, stack):
     # Arrange
     del_queue_item = del_queue_factory()
