@@ -82,7 +82,10 @@ def generate_athena_queries(data_mapper, deletion_items):
                 {
                     **msg,
                     "PartitionKeys": [
-                        {"Key": partition_keys[i], "Value": v}
+                        {
+                            "Key": partition_keys[i],
+                            "Value": cast_to_type(v, partition_keys[i], table, True),
+                        }
                         for i, v in enumerate(values)
                     ],
                 }
@@ -105,8 +108,7 @@ def generate_athena_queries(data_mapper, deletion_items):
                 {
                     "Column": c,
                     "MatchIds": [
-                        convert_to_col_type(mid, c, table)
-                        for mid in applicable_match_ids
+                        cast_to_type(mid, c, table) for mid in applicable_match_ids
                     ],
                 }
                 for c in queries[i]["Columns"]
@@ -292,8 +294,12 @@ def column_mapper(col):
     return result
 
 
-def get_column_info(col, table):
-    table_columns = table["StorageDescriptor"]["Columns"]
+def get_column_info(col, table, is_partition):
+    table_columns = (
+        table["PartitionKeys"]
+        if is_partition
+        else table["StorageDescriptor"]["Columns"]
+    )
     col_array = col.split(".")
     serialized_cols = list(map(column_mapper, table_columns))
     found = None
@@ -305,8 +311,8 @@ def get_column_info(col, table):
     return found["Type"], found["CanBeIdentifier"]
 
 
-def convert_to_col_type(val, col, table):
-    col_type, can_be_identifier = get_column_info(col, table)
+def cast_to_type(val, col, table, is_partition=False):
+    col_type, can_be_identifier = get_column_info(col, table, is_partition)
     if not col_type:
         raise ValueError("Column {} not found".format(col))
     elif not can_be_identifier:
