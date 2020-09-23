@@ -10,6 +10,9 @@
   frontend dependencies
 - [#204](https://github.com/awslabs/amazon-s3-find-and-forget/pull/204): Improve
   performance during Cleanup Phase
+- [#205](https://github.com/awslabs/amazon-s3-find-and-forget/pull/205): Fix a
+  UI issue affecting FireFox preventing to show the correct queue size due to a
+  missing CORS header
 
 ## v0.11
 

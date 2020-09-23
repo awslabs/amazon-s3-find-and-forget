@@ -89,6 +89,7 @@ def get_handler(event, context):
         "body": json.dumps(
             {"MatchIds": items, "NextStart": next_start}, cls=DecimalEncoder
         ),
+        "headers": {"Access-Control-Expose-Headers": "content-length"},
     }
 
 
