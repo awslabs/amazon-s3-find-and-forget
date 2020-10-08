@@ -1,6 +1,6 @@
 # Change Log
 
-## v0.12 (unreleased)
+## v0.12
 
 - [#202](https://github.com/awslabs/amazon-s3-find-and-forget/pull/202): Fix a
   bug that was affecting Partitions with non-string types generating a
