@@ -256,6 +256,7 @@ def glue_table_factory(dummy_lake, glue_client, glue_columns):
         prefix="prefix",
         partition_keys=[],
         partitions=[],
+        partition_key_types="string",
     ):
         glue_client.create_database(DatabaseInput={"Name": database})
         input_format = (
@@ -292,7 +293,7 @@ def glue_table_factory(dummy_lake, glue_client, glue_columns):
                     "StoredAsSubDirectories": False,
                 },
                 "PartitionKeys": [
-                    {"Name": pk, "Type": "string",} for pk in partition_keys
+                    {"Name": pk, "Type": partition_key_types} for pk in partition_keys
                 ],
                 "Parameters": {"EXTERNAL": "TRUE"},
             },
@@ -353,6 +354,7 @@ def glue_data_mapper_factory(
         role_arn=None,
         delete_old_versions=False,
         column_identifiers=["customer_id"],
+        partition_key_types="string",
     ):
         item = {
             "DataMapperId": data_mapper_id,
@@ -377,6 +379,7 @@ def glue_data_mapper_factory(
             table=table,
             partition_keys=partition_keys,
             partitions=partitions,
+            partition_key_types=partition_key_types,
         )
 
         items.append(item)

@@ -68,6 +68,42 @@ def test_it_generates_query_with_partition():
     )
 
 
+def test_it_generates_query_with_partition_and_int_column():
+    resp = make_query(
+        {
+            "Database": "amazonreviews",
+            "Table": "amazon_reviews_parquet",
+            "Columns": [{"Column": "customer_id", "MatchIds": [123456, 456789]}],
+            "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
+        }
+    )
+
+    assert (
+        escape_resp(resp) == 'SELECT DISTINCT "$path" '
+        'FROM "amazonreviews"."amazon_reviews_parquet" '
+        'WHERE ("customer_id" in (123456, 456789)) '
+        "AND \"product_category\" = 'Books'"
+    )
+
+
+def test_it_generates_query_with_int_partition():
+    resp = make_query(
+        {
+            "Database": "amazonreviews",
+            "Table": "amazon_reviews_parquet",
+            "Columns": [{"Column": "customer_id", "MatchIds": ["123456", "456789"]}],
+            "PartitionKeys": [{"Key": "year", "Value": 2010}],
+        }
+    )
+
+    assert (
+        escape_resp(resp) == 'SELECT DISTINCT "$path" '
+        'FROM "amazonreviews"."amazon_reviews_parquet" '
+        "WHERE (\"customer_id\" in ('123456', '456789')) "
+        'AND "year" = 2010'
+    )
+
+
 def test_it_generates_query_with_multiple_partitions():
     resp = make_query(
         {

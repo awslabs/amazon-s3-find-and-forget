@@ -139,6 +139,7 @@ def test_it_gets_queue(api_client, queue_base_endpoint, del_queue_factory, stack
         response.headers.get("Access-Control-Allow-Origin")
         == stack["APIAccessControlAllowOriginHeader"]
     )
+    assert response.headers.get("Access-Control-Expose-Headers") == "content-length"
 
 
 def test_it_rejects_invalid_deletion(

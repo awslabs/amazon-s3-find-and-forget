@@ -1,9 +1,18 @@
 # Change Log
 
-## v0.12 (unreleased)
+## v0.12
 
-- [#202](https://github.com/awslabs/amazon-s3-find-and-forget/pull/202): Upgrade
+- [#202](https://github.com/awslabs/amazon-s3-find-and-forget/pull/202): Fix a
+  bug that was affecting Partitions with non-string types generating a
+  `SYNTAX_ERROR: line x:y: '=' cannot be applied to integer, varchar(z)`
+  exception during the Find Phase
+- [#203](https://github.com/awslabs/amazon-s3-find-and-forget/pull/203): Upgrade
   frontend dependencies
+- [#204](https://github.com/awslabs/amazon-s3-find-and-forget/pull/204): Improve
+  performance during Cleanup Phase
+- [#205](https://github.com/awslabs/amazon-s3-find-and-forget/pull/205): Fix a
+  UI issue affecting FireFox preventing to show the correct queue size due to a
+  missing CORS header
 
 ## v0.11
 
