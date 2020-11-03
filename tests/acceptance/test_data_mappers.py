@@ -75,6 +75,49 @@ def test_it_creates_data_mapper(
     )
 
 
+def test_it_modifies_data_mapper(
+    api_client, data_mapper_base_endpoint, data_mapper_table, glue_table_factory, stack
+):
+    # Arrange
+    table = glue_table_factory()
+    key = "test"
+    data_mapper = {
+        "DataMapperId": key,
+        "Columns": ["a"],
+        "QueryExecutor": "athena",
+        "QueryExecutorParameters": {
+            "DataCatalogProvider": "glue",
+            "Database": table["Database"],
+            "Table": table["Table"],
+        },
+        "Format": "parquet",
+        "RoleArn": "arn:aws:iam::123456789012:role/S3F2DataAccessRole",
+        "DeleteOldVersions": False,
+    }
+    # Act
+    create_response = api_client.put(
+        "{}/{}".format(data_mapper_base_endpoint, key), json=data_mapper
+    )
+    data_mapper["Columns"] = ["b"]
+    response = api_client.put(
+        "{}/{}".format(data_mapper_base_endpoint, key), json=data_mapper
+    )
+    response_body = response.json()
+    # Assert
+    assert 201 == response.status_code
+    assert response_body["Columns"] == ["b"]
+    # Check the item exists in the DDB Table
+    query_result = data_mapper_table.query(
+        KeyConditionExpression=Key("DataMapperId").eq(key)
+    )
+    assert 1 == len(query_result["Items"])
+    assert query_result["Items"][0]["Columns"] == ["b"]
+    assert (
+        response.headers.get("Access-Control-Allow-Origin")
+        == stack["APIAccessControlAllowOriginHeader"]
+    )
+
+
 def test_it_creates_without_optionals(
     api_client, data_mapper_base_endpoint, data_mapper_table, glue_table_factory, stack
 ):

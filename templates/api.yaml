@@ -231,10 +231,10 @@ Resources:
             Effect: "Allow"
             Resource: !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${ConfigParameter}"
   # DataMappers
-  CreateDataMapper:
+  PutDataMapper:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: handlers.create_data_mapper_handler
+      Handler: handlers.put_data_mapper_handler
       CodeUri: ../backend/lambdas/data_mappers/
       Events:
         Put:

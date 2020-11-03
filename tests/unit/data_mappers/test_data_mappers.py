@@ -50,7 +50,7 @@ def test_it_retrieves_all_items_with_size_and_pagination(table):
 @patch("backend.lambdas.data_mappers.handlers.table")
 @patch("backend.lambdas.data_mappers.handlers.validate_mapper")
 def test_it_creates_data_mapper(validate_mapper, table):
-    response = handlers.create_data_mapper_handler(
+    response = handlers.put_data_mapper_handler(
         {
             "pathParameters": {"data_mapper_id": "test"},
             "body": json.dumps(
@@ -91,8 +91,62 @@ def test_it_creates_data_mapper(validate_mapper, table):
 
 @patch("backend.lambdas.data_mappers.handlers.table")
 @patch("backend.lambdas.data_mappers.handlers.validate_mapper")
+def test_it_modifies_data_mapper(validate_mapper, table):
+    def test_body(table_name):
+        return json.dumps(
+            {
+                "Columns": ["column"],
+                "QueryExecutor": "athena",
+                "QueryExecutorParameters": {
+                    "DataCatalogProvider": "glue",
+                    "Database": "test",
+                    "Table": table_name,
+                },
+                "Format": "parquet",
+                "RoleArn": "arn:aws:iam::accountid:role/S3F2DataAccessRole",
+                "DeleteOldVersions": False,
+            }
+        )
+
+    create_response = handlers.put_data_mapper_handler(
+        {
+            "pathParameters": {"data_mapper_id": "test"},
+            "body": test_body("test"),
+            "requestContext": autorization_mock,
+        },
+        SimpleNamespace(),
+    )
+
+    edit_response = handlers.put_data_mapper_handler(
+        {
+            "pathParameters": {"data_mapper_id": "test"},
+            "body": test_body("test1"),
+            "requestContext": autorization_mock,
+        },
+        SimpleNamespace(),
+    )
+
+    assert 201 == edit_response["statusCode"]
+    assert {
+        "DataMapperId": "test",
+        "Columns": ["column"],
+        "QueryExecutor": "athena",
+        "QueryExecutorParameters": {
+            "DataCatalogProvider": "glue",
+            "Database": "test",
+            "Table": "test1",
+        },
+        "Format": "parquet",
+        "CreatedBy": {"Username": "cognitoUsername", "Sub": "cognitoSub"},
+        "RoleArn": "arn:aws:iam::accountid:role/S3F2DataAccessRole",
+        "DeleteOldVersions": False,
+    } == json.loads(edit_response["body"])
+
+
+@patch("backend.lambdas.data_mappers.handlers.table")
+@patch("backend.lambdas.data_mappers.handlers.validate_mapper")
 def test_it_supports_optionals(validate_mapper, table):
-    response = handlers.create_data_mapper_handler(
+    response = handlers.put_data_mapper_handler(
         {
             "pathParameters": {"data_mapper_id": "test"},
             "body": json.dumps(
@@ -135,7 +189,7 @@ def test_it_rejects_where_glue_validation_fails(validate_mapper):
     validate_mapper.side_effect = ClientError(
         {"ResponseMetadata": {"HTTPStatusCode": 400}}, "get_table"
     )
-    response = handlers.create_data_mapper_handler(
+    response = handlers.put_data_mapper_handler(
         {
             "pathParameters": {"data_mapper_id": "test"},
             "body": json.dumps(
@@ -190,6 +244,7 @@ def test_it_rejects_non_existent_glue_tables(
     with pytest.raises(ClientError):
         handlers.validate_mapper(
             {
+                "DataMapperId": "1234",
                 "Columns": ["column"],
                 "QueryExecutor": "athena",
                 "QueryExecutorParameters": {
@@ -218,6 +273,7 @@ def test_it_rejects_overlapping_s3_paths(
     with pytest.raises(ValueError) as e:
         handlers.validate_mapper(
             {
+                "DataMapperId": "1234",
                 "Columns": ["column"],
                 "QueryExecutor": "athena",
                 "QueryExecutorParameters": {
@@ -249,6 +305,7 @@ def test_it_rejects_not_supported_tables(
     with pytest.raises(ValueError) as e:
         handlers.validate_mapper(
             {
+                "DataMapperId": "1234",
                 "Columns": ["column"],
                 "QueryExecutor": "athena",
                 "QueryExecutorParameters": {
@@ -282,6 +339,7 @@ def test_it_rejects_malformed_json(
     with pytest.raises(ValueError) as e:
         handlers.validate_mapper(
             {
+                "DataMapperId": "1234",
                 "Columns": ["column"],
                 "QueryExecutor": "athena",
                 "QueryExecutorParameters": {
@@ -314,6 +372,7 @@ def test_it_rejects_json_with_dot_in_keys(
     with pytest.raises(ValueError) as e:
         handlers.validate_mapper(
             {
+                "DataMapperId": "1234",
                 "Columns": ["column"],
                 "QueryExecutor": "athena",
                 "QueryExecutorParameters": {
@@ -346,6 +405,7 @@ def test_it_rejects_json_with_column_mapping(
     with pytest.raises(ValueError) as e:
         handlers.validate_mapper(
             {
+                "DataMapperId": "1234",
                 "Columns": ["column"],
                 "QueryExecutor": "athena",
                 "QueryExecutorParameters": {
@@ -383,18 +443,43 @@ def test_it_gets_existing_s3_locations(
     mock_dynamo.scan.return_value = {
         "Items": [
             {
+                "DataMapperId": "1234",
                 "QueryExecutorParameters": {
                     "DataCatalogProvider": "glue",
                     "Database": "db",
                     "Table": "table",
-                }
+                },
             }
         ]
     }
     mock_get_details.return_value = get_table_stub()
     mock_get_location.return_value = "s3://bucket/prefix/"
-    resp = handlers.get_existing_s3_locations()
+    resp = handlers.get_existing_s3_locations("2345")
     assert ["s3://bucket/prefix/"] == resp
+
+
+@patch("backend.lambdas.data_mappers.handlers.table")
+@patch("backend.lambdas.data_mappers.handlers.get_glue_table_location")
+@patch("backend.lambdas.data_mappers.handlers.get_table_details_from_mapper")
+def test_it_gets_existing_s3_locations_excluding_current_data_mapper_id(
+    mock_get_details, mock_get_location, mock_dynamo
+):
+    mock_dynamo.scan.return_value = {
+        "Items": [
+            {
+                "DataMapperId": "1234",
+                "QueryExecutorParameters": {
+                    "DataCatalogProvider": "glue",
+                    "Database": "db",
+                    "Table": "table",
+                },
+            }
+        ]
+    }
+    mock_get_details.return_value = get_table_stub()
+    mock_get_location.return_value = "s3://bucket/prefix/"
+    resp = handlers.get_existing_s3_locations("1234")
+    assert [] == resp
 
 
 def test_it_gets_s3_location_for_glue_table():

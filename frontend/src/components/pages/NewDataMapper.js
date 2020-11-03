@@ -63,6 +63,7 @@ export default ({ gateway, goToDataMappers }) => {
 
   const [dataMapperId, setDataMapperId] = useState(undefined);
   const [errorDetails, setErrorDetails] = useState(undefined);
+  const [existingDataMapperIds, setExistingDataMapperIds] = useState([]);
   const [formState, setFormState] = useState("loading");
   const [glueData, setGlueData] = useState(undefined);
   const [glueDatabase, setGlueDatabase] = useState(undefined);
@@ -74,7 +75,11 @@ export default ({ gateway, goToDataMappers }) => {
   const validationAttributes = (isValid) =>
     !submitClicked ? {} : isValid ? { isValid: true } : { isInvalid: true };
 
-  const isDataMapperIdValid = !isEmpty(dataMapperId) && isIdValid(dataMapperId);
+  const overlappingDataMappers = existingDataMapperIds.includes(dataMapperId);
+  const isDataMapperIdValid =
+    !isEmpty(dataMapperId) &&
+    !overlappingDataMappers &&
+    isIdValid(dataMapperId);
   const isGlueDatabaseValid = !isEmpty(glueDatabase) && glueDatabase !== "-1";
   const isGlueTableValid = !isEmpty(glueTable) && glueTable !== "-1";
   const isColumnsValid = !isEmpty(columns);
@@ -104,6 +109,12 @@ export default ({ gateway, goToDataMappers }) => {
     if (isFormValid) {
       setFormState("loading");
       try {
+        const dataMappers = await gateway.getDataMappers();
+        if (
+          dataMappers.DataMappers.find((x) => x.DataMapperId === dataMapperId)
+        ) {
+          throw new Error("A data mapper with this name already exists");
+        }
         await gateway.putDataMapper(
           dataMapperId,
           glueDatabase,
@@ -137,20 +148,24 @@ export default ({ gateway, goToDataMappers }) => {
   const noTables = !glueData || isEmpty(glueData.databases);
 
   useEffect(() => {
-    const fetchGlueTables = async () => {
+    const fetchInitialData = async () => {
       try {
+        const dataMappers = await gateway.getDataMappers();
         const databases = await gateway.getGlueDatabases();
         const tables = await Promise.all(
           databases.DatabaseList.map((x) => gateway.getGlueTables(x.Name))
         );
         setGlueData(glueSerializer(tables));
+        setExistingDataMapperIds(
+          dataMappers.DataMappers.map((x) => x.DataMapperId)
+        );
         setFormState("initial");
       } catch (e) {
         setFormState("error");
         setErrorDetails(formatErrorMessage(e));
       }
     };
-    fetchGlueTables();
+    fetchInitialData();
   }, [gateway]);
 
   return (
@@ -235,6 +250,11 @@ export default ({ gateway, goToDataMappers }) => {
                   onChange={(e) => setDataMapperId(e.target.value)}
                   {...validationAttributes(isDataMapperIdValid)}
                 />
+                {submitClicked && overlappingDataMappers && (
+                  <span className="form-error">
+                    A data mapper with this name already exists
+                  </span>
+                )}
               </Form.Group>
             </div>
           </div>

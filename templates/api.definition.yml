@@ -344,10 +344,10 @@ paths:
     parameters:
       - '$ref': '#/components/parameters/DataMapperId'
     put:
-      summary: Creates a data mapper
+      summary: Creates or modifies a data mapper
       tags:
         - DataMapper
-      operationId: "createDataMapper"
+      operationId: "putDataMapper"
       security:
         - CognitoAuthorizer: []
       responses:
@@ -358,7 +358,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/DataMapper'
       requestBody:
-        description: "Request body containing details of the Data Mapper to create"
+        description: "Request body containing details of the Data Mapper to create or modify"
         content:
           application/json:
             schema:
@@ -366,7 +366,7 @@ paths:
         required: true
       x-amazon-apigateway-integration:
         uri:
-          Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CreateDataMapper.Arn}/invocations"
+          Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${PutDataMapper.Arn}/invocations"
         passthroughBehavior: "when_no_match"
         httpMethod: "POST"
         type: "aws_proxy"

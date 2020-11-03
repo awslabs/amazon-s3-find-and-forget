@@ -57,7 +57,7 @@ def get_data_mappers_handler(event, context):
 @json_body_loader
 @request_validator(load_schema("create_data_mapper"))
 @catch_errors
-def create_data_mapper_handler(event, context):
+def put_data_mapper_handler(event, context):
     path_params = event["pathParameters"]
     body = event["body"]
     validate_mapper(body)
@@ -90,7 +90,7 @@ def delete_data_mapper_handler(event, context):
 
 
 def validate_mapper(mapper):
-    existing_s3_locations = get_existing_s3_locations()
+    existing_s3_locations = get_existing_s3_locations(mapper["DataMapperId"])
     if mapper["QueryExecutorParameters"].get("DataCatalogProvider") == "glue":
         table_details = get_table_details_from_mapper(mapper)
         new_location = get_glue_table_location(table_details)
@@ -125,12 +125,13 @@ def validate_mapper(mapper):
                 )
 
 
-def get_existing_s3_locations():
+def get_existing_s3_locations(current_data_mapper_id):
     items = table.scan()["Items"]
     glue_mappers = [
         get_table_details_from_mapper(mapper)
         for mapper in items
         if mapper["QueryExecutorParameters"].get("DataCatalogProvider") == "glue"
+        and mapper["DataMapperId"] != current_data_mapper_id
     ]
     return [get_glue_table_location(m) for m in glue_mappers]
 
