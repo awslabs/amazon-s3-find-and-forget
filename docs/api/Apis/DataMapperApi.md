@@ -4,35 +4,10 @@ All URIs are relative to *https://your-apigw-id.execute-api.region.amazonaws.com
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**CreateDataMapper**](DataMapperApi.md#createdatamapper) | **PUT** /v1/data_mappers/{data_mapper_id} | Creates a data mapper
 [**DeleteDataMapper**](DataMapperApi.md#deletedatamapper) | **DELETE** /v1/data_mappers/{data_mapper_id} | Removes a data mapper
 [**ListDataMappers**](DataMapperApi.md#listdatamappers) | **GET** /v1/data_mappers | Lists data mappers
+[**PutDataMapper**](DataMapperApi.md#putdatamapper) | **PUT** /v1/data_mappers/{data_mapper_id} | Creates or modifies a data mapper
 
-
-<a name="createdatamapper"></a>
-## **CreateDataMapper**
-
-Creates a data mapper
-
-### Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **DataMapperId** | **String**| Data Mapper ID path parameter | [default to null]
- **DataMapper** | [**DataMapper**](../Models/DataMapper.md)| Request body containing details of the Data Mapper to create |
-
-### Return type
-
-[**DataMapper**](../Models/DataMapper.md)
-
-### Authorization
-
-[CognitoAuthorizer](../README.md#CognitoAuthorizer)
-
-### HTTP request headers
-
-- **Content-Type**: application/json
-- **Accept**: application/json
 
 <a name="deletedatamapper"></a>
 ## **DeleteDataMapper**
@@ -81,5 +56,30 @@ Name | Type | Description  | Notes
 ### HTTP request headers
 
 - **Content-Type**: Not defined
+- **Accept**: application/json
+
+<a name="putdatamapper"></a>
+## **PutDataMapper**
+
+Creates or modifies a data mapper
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **DataMapperId** | **String**| Data Mapper ID path parameter | [default to null]
+ **DataMapper** | [**DataMapper**](../Models/DataMapper.md)| Request body containing details of the Data Mapper to create or modify |
+
+### Return type
+
+[**DataMapper**](../Models/DataMapper.md)
+
+### Authorization
+
+[CognitoAuthorizer](../README.md#CognitoAuthorizer)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
 - **Accept**: application/json
 

@@ -411,6 +411,10 @@ form .form-check-label {
   width: 100%;
 }
 
+.form-error {
+  color: #d13212;
+}
+
 /* MODAL */
 .modal-backdrop {
   background-color: hsla(180, 4%, 95%, 0.9);

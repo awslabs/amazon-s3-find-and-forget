@@ -7,9 +7,9 @@ All URIs are relative to *https://your-apigw-id.execute-api.region.amazonaws.com
 
 API | Operation | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
-*DataMapperApi* | [**CreateDataMapper**](./Apis/DataMapperApi.md#createdatamapper) | **PUT** /v1/data_mappers/{data_mapper_id} | Creates a data mapper
 *DataMapperApi* | [**DeleteDataMapper**](./Apis/DataMapperApi.md#deletedatamapper) | **DELETE** /v1/data_mappers/{data_mapper_id} | Removes a data mapper
 *DataMapperApi* | [**ListDataMappers**](./Apis/DataMapperApi.md#listdatamappers) | **GET** /v1/data_mappers | Lists data mappers
+*DataMapperApi* | [**PutDataMapper**](./Apis/DataMapperApi.md#putdatamapper) | **PUT** /v1/data_mappers/{data_mapper_id} | Creates or modifies a data mapper
 *DeletionQueueApi* | [**AddItemToDeletionQueue**](./Apis/DeletionQueueApi.md#additemtodeletionqueue) | **PATCH** /v1/queue | Adds an item to the deletion queue (Deprecated: use PATCH /v1/queue/matches)
 *DeletionQueueApi* | [**AddItemsToDeletionQueue**](./Apis/DeletionQueueApi.md#additemstodeletionqueue) | **PATCH** /v1/queue/matches | Adds one or more items to the deletion queue
 *DeletionQueueApi* | [**DeleteMatches**](./Apis/DeletionQueueApi.md#deletematches) | **DELETE** /v1/queue/matches | Removes one or more items from the deletion queue
