@@ -17,6 +17,13 @@ table = ddb.Table(getenv("JobTable", "S3F2_Jobs"))
 
 
 def update_stats(job_id, events):
+    """
+    Update the stats for a job.
+
+    Args:
+        job_id: (str): write your description
+        events: (todo): write your description
+    """
     stats = _aggregate_stats(events)
     job = _update_job(job_id, stats)
     logger.info("Updated Stats for Job ID %s: %s", job_id, stats)
@@ -24,6 +31,12 @@ def update_stats(job_id, events):
 
 
 def _aggregate_stats(events):
+    """
+    Aggregate stats
+
+    Args:
+        events: (todo): write your description
+    """
     stats = Counter({})
 
     for event in events:
@@ -68,6 +81,13 @@ def _aggregate_stats(events):
 
 
 def _update_job(job_id, stats):
+    """
+    Update a single job.
+
+    Args:
+        job_id: (str): write your description
+        stats: (dict): write your description
+    """
     try:
         return table.update_item(
             Key={"Id": job_id, "Sk": job_id,},

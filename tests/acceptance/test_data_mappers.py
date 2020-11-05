@@ -13,6 +13,13 @@ pytestmark = [
 
 @pytest.mark.auth
 def test_auth(api_client, data_mapper_base_endpoint):
+    """
+    Test the api token.
+
+    Args:
+        api_client: (todo): write your description
+        data_mapper_base_endpoint: (bool): write your description
+    """
     headers = {"Authorization": None}
     assert (
         401
@@ -32,6 +39,16 @@ def test_auth(api_client, data_mapper_base_endpoint):
 def test_it_creates_data_mapper(
     api_client, data_mapper_base_endpoint, data_mapper_table, glue_table_factory, stack
 ):
+    """
+    Test if a test data : return data table.
+
+    Args:
+        api_client: (todo): write your description
+        data_mapper_base_endpoint: (todo): write your description
+        data_mapper_table: (todo): write your description
+        glue_table_factory: (todo): write your description
+        stack: (todo): write your description
+    """
     # Arrange
     table = glue_table_factory()
     key = "test"
@@ -78,6 +95,16 @@ def test_it_creates_data_mapper(
 def test_it_modifies_data_mapper(
     api_client, data_mapper_base_endpoint, data_mapper_table, glue_table_factory, stack
 ):
+    """
+    Test if the modifies the mapper
+
+    Args:
+        api_client: (todo): write your description
+        data_mapper_base_endpoint: (todo): write your description
+        data_mapper_table: (todo): write your description
+        glue_table_factory: (str): write your description
+        stack: (todo): write your description
+    """
     # Arrange
     table = glue_table_factory()
     key = "test"
@@ -121,6 +148,16 @@ def test_it_modifies_data_mapper(
 def test_it_creates_without_optionals(
     api_client, data_mapper_base_endpoint, data_mapper_table, glue_table_factory, stack
 ):
+    """
+    Test the test test test test test for the test.
+
+    Args:
+        api_client: (todo): write your description
+        data_mapper_base_endpoint: (bool): write your description
+        data_mapper_table: (todo): write your description
+        glue_table_factory: (str): write your description
+        stack: (todo): write your description
+    """
     # Arrange
     table = glue_table_factory()
     key = "test"
@@ -166,6 +203,15 @@ def test_it_creates_without_optionals(
 def test_it_rejects_invalid_data_mapper(
     api_client, data_mapper_base_endpoint, glue_table_factory, stack
 ):
+    """
+    Rejects the test data tovalidate data table.
+
+    Args:
+        api_client: (todo): write your description
+        data_mapper_base_endpoint: (todo): write your description
+        glue_table_factory: (str): write your description
+        stack: (list): write your description
+    """
     # Arrange
     table = glue_table_factory()
     key = "test"
@@ -194,6 +240,14 @@ def test_it_rejects_invalid_data_mapper(
 
 
 def test_it_rejects_invalid_role(api_client, data_mapper_base_endpoint, stack):
+    """
+    Validate the test role.
+
+    Args:
+        api_client: (todo): write your description
+        data_mapper_base_endpoint: (todo): write your description
+        stack: (list): write your description
+    """
     key = "test"
     response = api_client.put(
         "{}/{}".format(data_mapper_base_endpoint, key), json={"INVALID": "PAYLOAD"}
@@ -206,6 +260,14 @@ def test_it_rejects_invalid_role(api_client, data_mapper_base_endpoint, stack):
 
 
 def test_it_rejects_invalid_data_source(api_client, data_mapper_base_endpoint, stack):
+    """
+    Reject test test test data invalids.
+
+    Args:
+        api_client: (todo): write your description
+        data_mapper_base_endpoint: (todo): write your description
+        stack: (todo): write your description
+    """
     key = "test"
     response = api_client.put(
         "{}/{}".format(data_mapper_base_endpoint, key),
@@ -226,6 +288,14 @@ def test_it_rejects_invalid_data_source(api_client, data_mapper_base_endpoint, s
 def test_it_rejects_invalid_data_catalog_provider(
     api_client, data_mapper_base_endpoint, stack
 ):
+    """
+    Reject invalids.
+
+    Args:
+        api_client: (todo): write your description
+        data_mapper_base_endpoint: (todo): write your description
+        stack: (list): write your description
+    """
     key = "test"
     response = api_client.put(
         "{}/{}".format(data_mapper_base_endpoint, key),
@@ -249,6 +319,14 @@ def test_it_rejects_invalid_data_catalog_provider(
 
 
 def test_it_rejects_missing_glue_catalog(api_client, data_mapper_base_endpoint, stack):
+    """
+    Reject missing missing missing missing missing missing missing missing missing missing missing files
+
+    Args:
+        api_client: (todo): write your description
+        data_mapper_base_endpoint: (todo): write your description
+        stack: (list): write your description
+    """
     key = "test"
     response = api_client.put(
         "{}/{}".format(data_mapper_base_endpoint, key),
@@ -274,6 +352,15 @@ def test_it_rejects_missing_glue_catalog(api_client, data_mapper_base_endpoint, 
 def test_it_gets_all_data_mappers(
     api_client, data_mapper_base_endpoint, glue_data_mapper_factory, stack
 ):
+    """
+    Test if all of all of the files in the cloud
+
+    Args:
+        api_client: (todo): write your description
+        data_mapper_base_endpoint: (todo): write your description
+        glue_data_mapper_factory: (todo): write your description
+        stack: (todo): write your description
+    """
     # Arrange
     item = glue_data_mapper_factory()
     # Act
@@ -296,6 +383,16 @@ def test_it_deletes_data_mapper(
     data_mapper_table,
     stack,
 ):
+    """
+    Test for the mapper.
+
+    Args:
+        api_client: (todo): write your description
+        glue_data_mapper_factory: (todo): write your description
+        data_mapper_base_endpoint: (todo): write your description
+        data_mapper_table: (todo): write your description
+        stack: (todo): write your description
+    """
     # Arrange
     item = glue_data_mapper_factory()
     key = item["DataMapperId"]

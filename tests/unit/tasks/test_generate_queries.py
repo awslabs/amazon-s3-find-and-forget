@@ -28,6 +28,15 @@ pytestmark = [pytest.mark.unit, pytest.mark.task]
 def test_it_invokes_athena_query_generator(
     gen_athena_queries, get_data_mappers, get_del_q, batch_sqs_msgs_mock
 ):
+    """
+    Generates a generator for athena query queries
+
+    Args:
+        gen_athena_queries: (str): write your description
+        get_data_mappers: (todo): write your description
+        get_del_q: (todo): write your description
+        batch_sqs_msgs_mock: (todo): write your description
+    """
     get_del_q.return_value = [{"MatchId": "hi"}]
     queries = [
         {
@@ -67,6 +76,14 @@ def test_it_invokes_athena_query_generator(
 def test_it_raises_for_unknown_query_executor(
     get_data_mappers, get_del_q, batch_sqs_msgs_mock
 ):
+    """
+    Test for bad test for sending a query.
+
+    Args:
+        get_data_mappers: (todo): write your description
+        get_del_q: (str): write your description
+        batch_sqs_msgs_mock: (todo): write your description
+    """
     get_del_q.return_value = [{"MatchId": "hi"}]
     get_data_mappers.return_value = iter(
         [
@@ -92,6 +109,14 @@ class TestAthenaQueries:
     @patch("backend.lambdas.tasks.generate_queries.get_table")
     @patch("backend.lambdas.tasks.generate_queries.get_partitions")
     def test_it_handles_single_columns(self, get_partitions_mock, get_table_mock):
+        """
+        Return a dictionary of all of the number of tests.
+
+        Args:
+            self: (todo): write your description
+            get_partitions_mock: (todo): write your description
+            get_table_mock: (bool): write your description
+        """
         columns = ["customer_id"]
         partition_keys = ["product_category"]
         partitions = [["Books"]]
@@ -129,6 +154,14 @@ class TestAthenaQueries:
     @patch("backend.lambdas.tasks.generate_queries.get_table")
     @patch("backend.lambdas.tasks.generate_queries.get_partitions")
     def test_it_handles_int_partitions(self, get_partitions_mock, get_table_mock):
+        """
+        Return the number of partitions exist.
+
+        Args:
+            self: (todo): write your description
+            get_partitions_mock: (str): write your description
+            get_table_mock: (todo): write your description
+        """
         columns = ["customer_id"]
         partition_keys = ["year"]
         partitions = [["2010"]]
@@ -168,6 +201,14 @@ class TestAthenaQueries:
     @patch("backend.lambdas.tasks.generate_queries.get_table")
     @patch("backend.lambdas.tasks.generate_queries.get_partitions")
     def test_it_handles_multiple_columns(self, get_partitions_mock, get_table_mock):
+        """
+        Return a dict with the number of multiple cases.
+
+        Args:
+            self: (todo): write your description
+            get_partitions_mock: (todo): write your description
+            get_table_mock: (todo): write your description
+        """
         columns = ["customer_id", "alt_customer_id"]
         partition_keys = ["product_category"]
         partitions = [["Books"]]
@@ -211,6 +252,14 @@ class TestAthenaQueries:
     def test_it_handles_multiple_partition_keys(
         self, get_partitions_mock, get_table_mock
     ):
+        """
+        Test if the partition keys.
+
+        Args:
+            self: (todo): write your description
+            get_partitions_mock: (todo): write your description
+            get_table_mock: (todo): write your description
+        """
         columns = ["customer_id"]
         partition_keys = ["year", "month"]
         partitions = [["2019", "01"]]
@@ -255,6 +304,14 @@ class TestAthenaQueries:
     def test_it_handles_multiple_partition_values(
         self, get_partitions_mock, get_table_mock
     ):
+        """
+        Return the number of - cases_ititions_multiple_partated.
+
+        Args:
+            self: (todo): write your description
+            get_partitions_mock: (todo): write your description
+            get_table_mock: (todo): write your description
+        """
         columns = ["customer_id"]
         partition_keys = ["year", "month"]
         partitions = [["2018", "12"], ["2019", "01"], ["2019", "02"]]
@@ -325,6 +382,14 @@ class TestAthenaQueries:
     def test_it_propagates_optional_properties(
         self, get_partitions_mock, get_table_mock
     ):
+        """
+        Return a list of the test properties.
+
+        Args:
+            self: (todo): write your description
+            get_partitions_mock: (todo): write your description
+            get_table_mock: (todo): write your description
+        """
         columns = ["customer_id"]
         partition_keys = ["year", "month"]
         partitions = [["2018", "12"], ["2019", "01"]]
@@ -386,6 +451,14 @@ class TestAthenaQueries:
     def test_it_filters_users_from_non_applicable_tables(
         self, get_partitions_mock, get_table_mock
     ):
+        """
+        Generate and returns value pairs of_applicable partitions.
+
+        Args:
+            self: (todo): write your description
+            get_partitions_mock: (todo): write your description
+            get_table_mock: (todo): write your description
+        """
         columns = ["customer_id"]
         partition_keys = ["product_category"]
         partitions = [["Books"]]
@@ -427,6 +500,14 @@ class TestAthenaQueries:
     @patch("backend.lambdas.tasks.generate_queries.get_table")
     @patch("backend.lambdas.tasks.generate_queries.get_partitions")
     def test_it_handles_unpartitioned_data(self, get_partitions_mock, get_table_mock):
+        """
+        Generate and return value is_itles and return data.
+
+        Args:
+            self: (todo): write your description
+            get_partitions_mock: (todo): write your description
+            get_table_mock: (todo): write your description
+        """
         columns = ["customer_id"]
         get_table_mock.return_value = table_stub(columns, [])
         get_partitions_mock.return_value = []
@@ -462,6 +543,14 @@ class TestAthenaQueries:
     def test_it_propagates_role_arn_for_unpartitioned_data(
         self, get_partitions_mock, get_table_mock
     ):
+        """
+        Generate a role is used by the role
+
+        Args:
+            self: (todo): write your description
+            get_partitions_mock: (todo): write your description
+            get_table_mock: (todo): write your description
+        """
         columns = ["customer_id"]
         get_table_mock.return_value = table_stub(columns, [])
         get_partitions_mock.return_value = []
@@ -499,6 +588,14 @@ class TestAthenaQueries:
     def test_it_removes_queries_with_no_applicable_matches(
         self, get_partitions_mock, get_table_mock
     ):
+        """
+        Generate a list of queries that can be executed.
+
+        Args:
+            self: (todo): write your description
+            get_partitions_mock: (todo): write your description
+            get_table_mock: (todo): write your description
+        """
         columns = ["customer_id"]
         get_table_mock.return_value = table_stub(columns, [])
         get_partitions_mock.return_value = []
@@ -523,6 +620,14 @@ class TestAthenaQueries:
     def test_it_removes_queries_with_no_applicable_matches_for_partitioned_data(
         self, get_partitions_mock, get_table_mock
     ):
+        """
+        Return a list of - dedicated_it_matches.
+
+        Args:
+            self: (todo): write your description
+            get_partitions_mock: (todo): write your description
+            get_table_mock: (todo): write your description
+        """
         columns = ["customer_id"]
         partition_keys = ["product_category"]
         partitions = [["Books"], ["Beauty"]]
@@ -548,6 +653,13 @@ class TestAthenaQueries:
 
     @patch("backend.lambdas.tasks.generate_queries.glue_client")
     def test_it_returns_table(self, client):
+        """
+        Gets the return value of a table.
+
+        Args:
+            self: (todo): write your description
+            client: (todo): write your description
+        """
         client.get_table.return_value = {"Table": {"Name": "test"}}
         result = get_table("test_db", "test_table")
         assert {"Name": "test"} == result
@@ -555,6 +667,13 @@ class TestAthenaQueries:
 
     @patch("backend.lambdas.tasks.generate_queries.paginate")
     def test_it_returns_all_partitions(self, paginate):
+        """
+        Return a list of the return result of - test results.
+
+        Args:
+            self: (todo): write your description
+            paginate: (todo): write your description
+        """
         paginate.return_value = iter(["blah"])
         result = list(get_partitions("test_db", "test_table"))
         assert ["blah"] == result
@@ -566,6 +685,12 @@ class TestAthenaQueries:
         )
 
     def test_it_converts_supported_types(self):
+        """
+        Determine the types of all supported types are supported.
+
+        Args:
+            self: (todo): write your description
+        """
         for scenario in [
             {"value": "m", "type": "char", "expected": "m"},
             {"value": "mystr", "type": "string", "expected": "mystr"},
@@ -590,6 +715,12 @@ class TestAthenaQueries:
             assert res == scenario["expected"]
 
     def test_it_converts_supported_types_when_nested_in_struct(self):
+        """
+        : return : { types
+
+        Args:
+            self: (todo): write your description
+        """
         column_type = "struct<type:int,x:map<string,struct<a:int>>,info:struct<user_id:int,name:string>>"
         table = {
             "StorageDescriptor": {"Columns": [{"Name": "user", "Type": column_type}]}
@@ -603,6 +734,12 @@ class TestAthenaQueries:
             assert res == scenario["expected"]
 
     def test_it_throws_for_unknown_col(self):
+        """
+        Determine the number of rows in the test.
+
+        Args:
+            self: (todo): write your description
+        """
         with pytest.raises(ValueError):
             cast_to_type(
                 "mystr",
@@ -615,6 +752,12 @@ class TestAthenaQueries:
             )
 
     def test_it_throws_for_unsupported_complex_nested_types(self):
+        """
+        Determine the threshold threshold.
+
+        Args:
+            self: (todo): write your description
+        """
         for scenario in [
             "array<x:int>",
             "array<struct<x:int>>",
@@ -635,6 +778,12 @@ class TestAthenaQueries:
                 )
 
     def test_it_throws_for_unsupported_col_types(self):
+        """
+        : return : attrtest_it_for_throws.
+
+        Args:
+            self: (todo): write your description
+        """
         with pytest.raises(ValueError) as e:
             cast_to_type(
                 "2.56",
@@ -651,6 +800,12 @@ class TestAthenaQueries:
         )
 
     def test_it_throws_for_unconvertable_matches(self):
+        """
+        Test for unconvertable versions of - unconvertable versions.
+
+        Args:
+            self: (todo): write your description
+        """
         with pytest.raises(ValueError):
             cast_to_type(
                 "mystr",
@@ -663,11 +818,23 @@ class TestAthenaQueries:
             )
 
     def test_it_throws_for_invalid_schema_for_inner_children(self):
+        """
+        Validate that all valid valid schema.
+
+        Args:
+            self: (todo): write your description
+        """
         with pytest.raises(ValueError) as e:
             get_inner_children("struct<name:string", "struct<", ">")
         assert e.value.args[0] == "Column schema is not valid"
 
     def test_it_throws_for_invalid_schema_for_nested_children(self):
+        """
+        Validate that all valid valid valid children.
+
+        Args:
+            self: (todo): write your description
+        """
         with pytest.raises(ValueError) as e:
             get_nested_children(
                 "struct<name:string,age:int,s:struct<n:int>,b:string", "struct"
@@ -677,6 +844,12 @@ class TestAthenaQueries:
 
 @patch("backend.lambdas.tasks.generate_queries.jobs_table")
 def test_it_fetches_deletion_queue_from_ddb(table_mock):
+    """
+    Test if the fetcher fetcher queue.
+
+    Args:
+        table_mock: (todo): write your description
+    """
     table_mock.get_item.return_value = {
         "Item": {"DeletionQueueItems": [{"DataMappers": [], "MatchId": "123"}]}
     }
@@ -689,6 +862,13 @@ def test_it_fetches_deletion_queue_from_ddb(table_mock):
 @patch("backend.lambdas.tasks.generate_queries.deserialize_item")
 @patch("backend.lambdas.tasks.generate_queries.paginate")
 def test_it_fetches_deserialized_data_mappers(paginate_mock, deserialize_mock):
+    """
+    Deserialize the fetches and fetcher.
+
+    Args:
+        paginate_mock: (todo): write your description
+        deserialize_mock: (todo): write your description
+    """
     dm = {
         "DataMapperId": "a",
         "QueryExecutor": "athena",
@@ -708,6 +888,14 @@ def test_it_fetches_deserialized_data_mappers(paginate_mock, deserialize_mock):
 
 
 def partition_stub(values, columns, table_name="test_table"):
+    """
+    Partition the partition table and dict.
+
+    Args:
+        values: (str): write your description
+        columns: (list): write your description
+        table_name: (str): write your description
+    """
     return {
         "Values": values,
         "DatabaseName": "test",
@@ -741,6 +929,15 @@ def partition_stub(values, columns, table_name="test_table"):
 def table_stub(
     columns, partition_keys, table_name="test_table", partition_keys_type="string"
 ):
+    """
+    Stub
+
+    Args:
+        columns: (list): write your description
+        partition_keys: (str): write your description
+        table_name: (str): write your description
+        partition_keys_type: (str): write your description
+    """
     return {
         "Name": table_name,
         "DatabaseName": "test",

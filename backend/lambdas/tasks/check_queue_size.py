@@ -9,11 +9,25 @@ sqs = boto3.resource("sqs")
 
 
 def get_attribute(q, attribute):
+    """
+    Returns the value of a given attribute.
+
+    Args:
+        q: (str): write your description
+        attribute: (todo): write your description
+    """
     return int(q.attributes[attribute])
 
 
 @with_logging
 def handler(event, context):
+    """
+    Returns the context.
+
+    Args:
+        event: (todo): write your description
+        context: (dict): write your description
+    """
     queue = sqs.Queue(event["QueueUrl"])
     visible = get_attribute(queue, "ApproximateNumberOfMessages")
     not_visible = get_attribute(queue, "ApproximateNumberOfMessagesNotVisible")

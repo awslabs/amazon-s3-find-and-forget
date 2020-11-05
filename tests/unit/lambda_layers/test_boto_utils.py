@@ -31,6 +31,11 @@ pytestmark = [pytest.mark.unit, pytest.mark.layers]
 
 
 def test_it_paginates():
+    """
+    Returns a json - json - rpc - oauth.
+
+    Args:
+    """
     client = MagicMock()
     client.get_paginator.return_value = client
     client.some_method.__name__ = "some_method"
@@ -41,6 +46,11 @@ def test_it_paginates():
 
 
 def test_it_supports_single_iter_key():
+    """
+    Test if a single iterable.
+
+    Args:
+    """
     client = MagicMock()
     client.get_paginator.return_value = client
     client.some_method.__name__ = "some_method"
@@ -51,6 +61,11 @@ def test_it_supports_single_iter_key():
 
 
 def test_it_supports_multiple_iter_keys():
+    """
+    Test for iterable keys of an iterable.
+
+    Args:
+    """
     client = MagicMock()
     client.get_paginator.return_value = client
     client.some_method.__name__ = "some_method"
@@ -63,6 +78,11 @@ def test_it_supports_multiple_iter_keys():
 
 
 def test_it_supports_multiple_iter_keys_of_varying_lengths():
+    """
+    Returns a generator of keys that can be used to iterate over multiple keys of the same.
+
+    Args:
+    """
     client = MagicMock()
     client.get_paginator.return_value = client
     client.some_method.__name__ = "some_method"
@@ -73,6 +93,11 @@ def test_it_supports_multiple_iter_keys_of_varying_lengths():
 
 
 def test_it_supports_nested_iter_keys():
+    """
+    Returns a copy of the keys of the keys of the iterable.
+
+    Args:
+    """
     client = MagicMock()
     client.get_paginator.return_value = client
     client.some_method.__name__ = "some_method"
@@ -85,6 +110,11 @@ def test_it_supports_nested_iter_keys():
 
 
 def test_it_batches_msgs():
+    """
+    Test for batches in - memory. batches of - batches.
+
+    Args:
+    """
     queue = MagicMock()
     queue.attributes = {}
     msgs = list(range(0, 15))
@@ -98,6 +128,11 @@ def test_it_batches_msgs():
 
 
 def test_it_passes_through_queue_args():
+    """
+    Test if the existence of - work queue to pass to_messages.
+
+    Args:
+    """
     queue = MagicMock()
     queue.attributes = {}
     msgs = [1]
@@ -108,6 +143,11 @@ def test_it_passes_through_queue_args():
 
 
 def test_it_sets_message_group_id_where_queue_is_fifo():
+    """
+    Test if the given message group was created.
+
+    Args:
+    """
     queue = MagicMock()
     queue.attributes = {"FifoQueue": True}
     msgs = [1]
@@ -119,6 +159,11 @@ def test_it_sets_message_group_id_where_queue_is_fifo():
 
 
 def test_it_truncates_received_messages_once_the_desired_amount_returned():
+    """
+    Receive a list of the number of indentation.
+
+    Args:
+    """
     queue = MagicMock()
     mock_list = [MagicMock() for i in range(0, 10)]
     queue.receive_messages.return_value = mock_list
@@ -128,6 +173,11 @@ def test_it_truncates_received_messages_once_the_desired_amount_returned():
 
 
 def test_it_handles_desired_number_of_msgs_greater_than_max_batch():
+    """
+    Receive number of messages that queue.
+
+    Args:
+    """
     queue = MagicMock()
     queue.receive_messages.side_effect = [list(range(0, 10)), list(range(0, 5))]
     read_queue(queue, 15)
@@ -141,6 +191,11 @@ def test_it_handles_desired_number_of_msgs_greater_than_max_batch():
 
 
 def test_it_handles_queue_with_less_msgs_than_desired():
+    """
+    Receive the queue messages in the queue.
+
+    Args:
+    """
     queue = MagicMock()
     queue.receive_messages.side_effect = [list(range(0, 2)), []]
     result = read_queue(queue, 10)
@@ -150,6 +205,12 @@ def test_it_handles_queue_with_less_msgs_than_desired():
 @patch("boto_utils.uuid.uuid4", MagicMock(return_value="1234"))
 @patch("boto_utils.table")
 def test_it_writes_events_to_ddb(mock_table):
+    """
+    Emits the event to test test files.
+
+    Args:
+        mock_table: (todo): write your description
+    """
     emit_event("job123", "event_name", "data", "emitter123", 123)
     mock_table.put_item.assert_called_with(
         Item={
@@ -168,6 +229,12 @@ def test_it_writes_events_to_ddb(mock_table):
 @patch("boto_utils.uuid.uuid4", MagicMock(return_value="1234"))
 @patch("boto_utils.table")
 def test_it_provides_defaults(mock_table):
+    """
+    Emits the mock configuration.
+
+    Args:
+        mock_table: (todo): write your description
+    """
     emit_event("job123", "event_name", "data")
     mock_table.put_item.assert_called_with(
         Item={
@@ -184,6 +251,11 @@ def test_it_provides_defaults(mock_table):
 
 
 def test_decimal_encoder():
+    """
+    Test for decimal decoder.
+
+    Args:
+    """
     res_a = json.dumps({"k": decimal.Decimal(1.1)}, cls=DecimalEncoder)
     res_b = json.dumps({"k": decimal.Decimal(1.5)}, cls=DecimalEncoder)
     assert res_a == '{"k": 1}'
@@ -191,6 +263,11 @@ def test_decimal_encoder():
 
 
 def test_it_converts_sfn_datetimes_to_epoch():
+    """
+    Convert the epoch to - epoch.
+
+    Args:
+    """
     assert convert_iso8601_to_epoch("2020-01-06T16:12:57.092Z") == 1578327177
     assert convert_iso8601_to_epoch("2020-01-06T16:12:57Z") == 1578327177
     assert convert_iso8601_to_epoch("2020-01-06T16:12:57+00:00") == 1578327177
@@ -207,6 +284,11 @@ def test_it_converts_sfn_datetimes_to_epoch():
 
 
 def test_it_normalises_date_like_fields():
+    """
+    Test for normalization fields for normalization.
+
+    Args:
+    """
     assert {
         "a": [{"a": 1578327177, "b": "string"}],
         "b": [1578327177],
@@ -227,6 +309,11 @@ def test_it_normalises_date_like_fields():
 
 
 def test_it_deserializes_items():
+    """
+    Deserializes items to test to json.
+
+    Args:
+    """
     result = deserialize_item(
         {"DataMappers": {"L": [{"S": "test"}]}, "MatchId": {"S": "test"}}
     )
@@ -236,6 +323,12 @@ def test_it_deserializes_items():
 
 @patch("boto_utils.table")
 def test_it_returns_true_where_jobs_running(mock_table):
+    """
+    Return the number of timeseries jobs that have been run.
+
+    Args:
+        mock_table: (todo): write your description
+    """
     mock_table.query.return_value = {"Items": [{}]}
     assert running_job_exists()
     mock_table.query.assert_called_with(
@@ -255,6 +348,12 @@ def test_it_returns_true_where_jobs_running(mock_table):
 
 @patch("boto_utils.table")
 def test_it_returns_true_where_jobs_not_running(mock_table):
+    """
+    Perform a test job return true if the return job was successful.
+
+    Args:
+        mock_table: (todo): write your description
+    """
     mock_table.query.return_value = {"Items": []}
     assert not running_job_exists()
     mock_table.query.assert_called_with(
@@ -274,6 +373,12 @@ def test_it_returns_true_where_jobs_not_running(mock_table):
 
 @patch("boto_utils.ssm")
 def test_it_retrieves_config(mock_client):
+    """
+    Retrieves the watch configuration of - config.
+
+    Args:
+        mock_client: (todo): write your description
+    """
     mock_client.get_parameter.return_value = {
         "Parameter": {
             "Value": json.dumps(
@@ -300,6 +405,12 @@ def test_it_retrieves_config(mock_client):
 
 @patch("boto_utils.ssm")
 def test_it_handles_invalid_config(mock_client):
+    """
+    Validate the test config.
+
+    Args:
+        mock_client: (todo): write your description
+    """
     mock_client.get_parameter.return_value = {"Parameter": {"Value": ""}}
     with pytest.raises(ValueError):
         get_config()
@@ -307,6 +418,12 @@ def test_it_handles_invalid_config(mock_client):
 
 @patch("boto_utils.ssm")
 def test_it_handles_config_not_found(mock_client):
+    """
+    Test if the client releases.
+
+    Args:
+        mock_client: (todo): write your description
+    """
     mock_client.get_parameter.side_effect = ClientError({}, "get_parameter")
     with pytest.raises(ClientError):
         get_config()
@@ -314,6 +431,12 @@ def test_it_handles_config_not_found(mock_client):
 
 @patch("boto_utils.ssm")
 def test_it_handles_other_config_errors(mock_client):
+    """
+    Test if any of the connection.
+
+    Args:
+        mock_client: (todo): write your description
+    """
     mock_client.get_parameter.side_effect = RuntimeError("oops!")
     with pytest.raises(RuntimeError):
         get_config()
@@ -321,6 +444,12 @@ def test_it_handles_other_config_errors(mock_client):
 
 @patch("boto_utils.datetime")
 def test_it_applies_time_delta(dt):
+    """
+    Test if a datetime is a datetime.
+
+    Args:
+        dt: (todo): write your description
+    """
     dt.now.return_value = datetime.datetime(
         2020, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc
     )
@@ -330,6 +459,12 @@ def test_it_applies_time_delta(dt):
 
 @patch("boto_utils.table")
 def test_it_gets_job_expiry(table):
+    """
+    Get jobs : py : func : jobs. table.
+
+    Args:
+        table: (str): write your description
+    """
     get_job_expiry.cache_clear()
     table.get_item.return_value = {"Item": {"Expires": 123456}}
     assert 123456 == get_job_expiry("123")
@@ -337,18 +472,34 @@ def test_it_gets_job_expiry(table):
 
 @patch("boto_utils.table")
 def test_it_returns_no_expiry(table):
+    """
+    Return the return value of a job.
+
+    Args:
+        table: (str): write your description
+    """
     get_job_expiry.cache_clear()
     table.get_item.return_value = {"Item": {}}
     assert not get_job_expiry("123")
 
 
 def test_it_parses_s3_url():
+    """
+    Parse s3 url. s3 url.
+
+    Args:
+    """
     assert ["bucket", "test/key"] == parse_s3_url("s3://bucket/test/key")
     assert ["bucket", "key"] == parse_s3_url("s3://bucket/key")
     assert ["bucket"] == parse_s3_url("s3://bucket")
 
 
 def test_it_throws_for_invalid_urls():
+    """
+    Validate the url for valid thumbnail.
+
+    Args:
+    """
     with pytest.raises(ValueError):
         parse_s3_url("not a url")
     with pytest.raises(ValueError):
@@ -356,6 +507,11 @@ def test_it_throws_for_invalid_urls():
 
 
 def test_it_fetches_userinfo_from_lambda_event():
+    """
+    Test if fetcher fetcher fetches and fetcher.
+
+    Args:
+    """
     result = get_user_info(
         {
             "requestContext": {
@@ -385,12 +541,23 @@ def test_it_fetches_userinfo_from_lambda_event():
 
 
 def test_it_fetches_userinfo_from_lambda_event_with_failover_in_place():
+    """
+    Set user fetcher fetches user fetches and fetcher.
+
+    Args:
+    """
     result = get_user_info({"requestContext": {}})
     assert result == {"Username": "N/A", "Sub": "N/A"}
 
 
 @patch("boto_utils.sts")
 def test_it_returns_default_session(mock_sts):
+    """
+    Return a : class :.
+
+    Args:
+        mock_sts: (todo): write your description
+    """
     resp = get_session()
     mock_sts.assume_role.assert_not_called()
     assert isinstance(resp, Session)
@@ -399,6 +566,13 @@ def test_it_returns_default_session(mock_sts):
 @patch("boto_utils.boto3")
 @patch("boto_utils.sts")
 def test_it_assumes_role_for_session_where_given(mock_sts, mock_boto):
+    """
+    : param mock_sts_boto_given_given_boto3.
+
+    Args:
+        mock_sts: (todo): write your description
+        mock_boto: (todo): write your description
+    """
     mock_sts.assume_role.return_value = {
         "Credentials": {
             "AccessKeyId": "a",

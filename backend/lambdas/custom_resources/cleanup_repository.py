@@ -13,12 +13,26 @@ ecr_client = boto3.client("ecr")
 @helper.create
 @helper.update
 def create(event, context):
+    """
+    Create a new event.
+
+    Args:
+        event: (todo): write your description
+        context: (str): write your description
+    """
     return None
 
 
 @with_logging
 @helper.delete
 def delete(event, context):
+    """
+    Delete image image.
+
+    Args:
+        event: (todo): write your description
+        context: (dict): write your description
+    """
     props = event["ResourceProperties"]
     repository = props["Repository"]
     images = list(
@@ -34,4 +48,11 @@ def delete(event, context):
 
 
 def handler(event, context):
+    """
+    Emit an event.
+
+    Args:
+        event: (todo): write your description
+        context: (dict): write your description
+    """
     helper(event, context)

@@ -12,6 +12,13 @@ pytestmark = [
 
 @pytest.mark.auth
 def test_auth(api_client, queue_base_endpoint):
+    """
+    Test if the given queue.
+
+    Args:
+        api_client: (todo): write your description
+        queue_base_endpoint: (str): write your description
+    """
     headers = {"Authorization": None}
     assert (
         401
@@ -28,6 +35,15 @@ def test_auth(api_client, queue_base_endpoint):
 
 
 def test_it_adds_to_queue(api_client, queue_base_endpoint, queue_table, stack):
+    """
+    Test if a queue to test.
+
+    Args:
+        api_client: (todo): write your description
+        queue_base_endpoint: (str): write your description
+        queue_table: (todo): write your description
+        stack: (todo): write your description
+    """
     # Arrange
     key = "test"
     item = {
@@ -61,6 +77,15 @@ def test_it_adds_to_queue(api_client, queue_base_endpoint, queue_table, stack):
 
 
 def test_it_adds_batch_to_queue(api_client, queue_base_endpoint, queue_table, stack):
+    """
+    Test to batch batch to batch.
+
+    Args:
+        api_client: (todo): write your description
+        queue_base_endpoint: (str): write your description
+        queue_table: (todo): write your description
+        stack: (todo): write your description
+    """
     # Arrange
     items = {
         "Matches": [
@@ -117,6 +142,14 @@ def test_it_adds_batch_to_queue(api_client, queue_base_endpoint, queue_table, st
 
 
 def test_it_rejects_invalid_add_to_queue(api_client, queue_base_endpoint, stack):
+    """
+    Test if the test jobs in the test queue.
+
+    Args:
+        api_client: (todo): write your description
+        queue_base_endpoint: (todo): write your description
+        stack: (list): write your description
+    """
     response = api_client.patch(queue_base_endpoint, json={"INVALID": "PAYLOAD"})
     assert 422 == response.status_code
     assert (
@@ -126,6 +159,15 @@ def test_it_rejects_invalid_add_to_queue(api_client, queue_base_endpoint, stack)
 
 
 def test_it_gets_queue(api_client, queue_base_endpoint, del_queue_factory, stack):
+    """
+    Test if the queue exists in a queue.
+
+    Args:
+        api_client: (todo): write your description
+        queue_base_endpoint: (str): write your description
+        del_queue_factory: (str): write your description
+        stack: (todo): write your description
+    """
     # Arrange
     del_queue_item = del_queue_factory()
     # Act
@@ -145,6 +187,16 @@ def test_it_gets_queue(api_client, queue_base_endpoint, del_queue_factory, stack
 def test_it_rejects_invalid_deletion(
     api_client, del_queue_factory, queue_base_endpoint, queue_table, stack
 ):
+    """
+    Reject the jobs in the queue.
+
+    Args:
+        api_client: (todo): write your description
+        del_queue_factory: (todo): write your description
+        queue_base_endpoint: (str): write your description
+        queue_table: (todo): write your description
+        stack: (todo): write your description
+    """
     # Arrange
     del_queue_item = del_queue_factory()
     match_id = del_queue_item["MatchId"]
@@ -164,6 +216,16 @@ def test_it_rejects_invalid_deletion(
 def test_it_cancels_deletion(
     api_client, del_queue_factory, queue_base_endpoint, queue_table, stack
 ):
+    """
+    Test if the queue has a test.
+
+    Args:
+        api_client: (todo): write your description
+        del_queue_factory: (str): write your description
+        queue_base_endpoint: (str): write your description
+        queue_table: (todo): write your description
+        stack: (list): write your description
+    """
     # Arrange
     del_queue_item = del_queue_factory()
     deletion_queue_item_id = del_queue_item["DeletionQueueItemId"]
@@ -188,6 +250,16 @@ def test_it_cancels_deletion(
 def test_it_handles_not_found(
     api_client, del_queue_factory, queue_base_endpoint, queue_table, stack
 ):
+    """
+    Test if the queue has been closed.
+
+    Args:
+        api_client: (todo): write your description
+        del_queue_factory: (todo): write your description
+        queue_base_endpoint: (str): write your description
+        queue_table: (todo): write your description
+        stack: (list): write your description
+    """
     # Arrange
     deletion_queue_item_id = "test"
     # Act
@@ -219,6 +291,20 @@ def test_it_disables_cancel_deletion_whilst_job_in_progress(
     del_queue_factory,
     stack,
 ):
+    """
+    Cancel all jobs that have been executed.
+
+    Args:
+        api_client: (todo): write your description
+        queue_base_endpoint: (str): write your description
+        sf_client: (todo): write your description
+        job_table: (todo): write your description
+        execution_exists_waiter: (todo): write your description
+        job_finished_waiter: (bool): write your description
+        queue_table: (todo): write your description
+        del_queue_factory: (todo): write your description
+        stack: (todo): write your description
+    """
     # Arrange
     del_queue_item = del_queue_factory()
     deletion_queue_item_id = del_queue_item["DeletionQueueItemId"]
@@ -258,6 +344,18 @@ def test_it_processes_queue(
     job_complete_waiter,
     config_mutator,
 ):
+    """
+    Test for jobs in the queue.
+
+    Args:
+        api_client: (todo): write your description
+        queue_base_endpoint: (str): write your description
+        sf_client: (todo): write your description
+        job_table: (todo): write your description
+        stack: (list): write your description
+        job_complete_waiter: (bool): write your description
+        config_mutator: (todo): write your description
+    """
     # Arrange
     config_mutator(JobDetailsRetentionDays=0)
     # Act
@@ -296,6 +394,18 @@ def test_it_sets_expiry(
     job_complete_waiter,
     config_mutator,
 ):
+    """
+    Test if the jobs in the batch.
+
+    Args:
+        api_client: (todo): write your description
+        queue_base_endpoint: (todo): write your description
+        sf_client: (todo): write your description
+        job_table: (todo): write your description
+        stack: (todo): write your description
+        job_complete_waiter: (bool): write your description
+        config_mutator: (todo): write your description
+    """
     # Arrange
     config_mutator(JobDetailsRetentionDays=1)
     # Act
@@ -327,6 +437,16 @@ def test_it_sets_expiry(
 def test_it_only_allows_one_concurrent_execution(
     api_client, queue_base_endpoint, sf_client, stack, execution_exists_waiter
 ):
+    """
+    Test if one job is in the same as the one.
+
+    Args:
+        api_client: (todo): write your description
+        queue_base_endpoint: (bool): write your description
+        sf_client: (todo): write your description
+        stack: (todo): write your description
+        execution_exists_waiter: (todo): write your description
+    """
     # Arrange
     # Start a job
     response = api_client.delete(queue_base_endpoint)

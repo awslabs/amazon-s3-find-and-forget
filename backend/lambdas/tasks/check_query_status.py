@@ -7,6 +7,13 @@ client = boto3.client("athena")
 
 @with_logging
 def handler(event, context):
+    """
+    The execution details.
+
+    Args:
+        event: (todo): write your description
+        context: (dict): write your description
+    """
     execution_details = client.get_query_execution(QueryExecutionId=event)[
         "QueryExecution"
     ]

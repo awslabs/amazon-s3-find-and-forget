@@ -43,6 +43,16 @@ def handle_error(
     event_name="ObjectUpdateFailed",
     change_msg_visibility=True,
 ):
+    """
+    Handle an error message.
+
+    Args:
+        sqs_msg: (todo): write your description
+        message_body: (todo): write your description
+        err_message: (str): write your description
+        event_name: (str): write your description
+        change_msg_visibility: (bool): write your description
+    """
     logger.error(sanitize_message(err_message, message_body))
     try:
         emit_failure_event(message_body, err_message, event_name)
@@ -64,6 +74,12 @@ def handle_error(
 
 
 def validate_message(message):
+    """
+    Validate a message.
+
+    Args:
+        message: (str): write your description
+    """
     body = json.loads(message)
     mandatory_keys = ["JobId", "Object", "Columns"]
     for k in mandatory_keys:
@@ -72,6 +88,15 @@ def validate_message(message):
 
 
 def delete_matches_from_file(input_file, to_delete, file_format, compressed=False):
+    """
+    Delete a matches from file
+
+    Args:
+        input_file: (str): write your description
+        to_delete: (str): write your description
+        file_format: (str): write your description
+        compressed: (bool): write your description
+    """
     logger.info("Generating new file without matches")
     if file_format == "json":
         return delete_matches_from_json_file(input_file, to_delete, compressed)
@@ -79,6 +104,14 @@ def delete_matches_from_file(input_file, to_delete, file_format, compressed=Fals
 
 
 def execute(queue_url, message_body, receipt_handle):
+    """
+    Execute a message.
+
+    Args:
+        queue_url: (str): write your description
+        message_body: (str): write your description
+        receipt_handle: (str): write your description
+    """
     logger.info("Message received")
     queue = get_queue(queue_url)
     msg = queue.Message(receipt_handle)
@@ -177,6 +210,13 @@ def execute(queue_url, message_body, receipt_handle):
 
 
 def kill_handler(msgs, process_pool):
+    """
+    Terminate the given the pool.
+
+    Args:
+        msgs: (str): write your description
+        process_pool: (todo): write your description
+    """
     logger.info("Received shutdown signal. Cleaning up %s messages", str(len(msgs)))
     process_pool.terminate()
     for msg in msgs:
@@ -188,6 +228,13 @@ def kill_handler(msgs, process_pool):
 
 
 def get_queue(queue_url, **resource_kwargs):
+    """
+    Return a queue.
+
+    Args:
+        queue_url: (str): write your description
+        resource_kwargs: (dict): write your description
+    """
     if not resource_kwargs.get("endpoint_url") and os.getenv("AWS_DEFAULT_REGION"):
         resource_kwargs["endpoint_url"] = "https://sqs.{}.amazonaws.com".format(
             os.getenv("AWS_DEFAULT_REGION")
@@ -197,6 +244,15 @@ def get_queue(queue_url, **resource_kwargs):
 
 
 def main(queue_url, max_messages, wait_time, sleep_time):
+    """
+    Main function.
+
+    Args:
+        queue_url: (str): write your description
+        max_messages: (int): write your description
+        wait_time: (int): write your description
+        sleep_time: (int): write your description
+    """
     logger.info("CPU count for system: %s", cpu_count())
     messages = []
     queue = get_queue(queue_url)
@@ -218,6 +274,11 @@ def main(queue_url, max_messages, wait_time, sleep_time):
 
 
 def parse_args(args):
+    """
+    Parse command line arguments.
+
+    Args:
+    """
     parser = argparse.ArgumentParser(
         description="Read and process new deletion tasks from a deletion queue"
     )

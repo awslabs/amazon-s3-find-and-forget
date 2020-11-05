@@ -147,6 +147,13 @@ def get_object_acl(client, bucket, key, version_id=None):
 
 
 def get_grantees(acl, grant_type):
+    """
+    Get grant grant
+
+    Args:
+        acl: (todo): write your description
+        grant_type: (str): write your description
+    """
     prop_map = {
         "CanonicalUser": ("ID", "id"),
         "AmazonCustomerByEmail": ("EmailAddress", "emailAddress"),
@@ -168,6 +175,13 @@ def get_grantees(acl, grant_type):
 
 @lru_cache()
 def validate_bucket_versioning(client, bucket):
+    """
+    Validate the versioning version.
+
+    Args:
+        client: (todo): write your description
+        bucket: (str): write your description
+    """
     resp = client.get_bucket_versioning(Bucket=bucket)
     versioning_enabled = resp.get("Status") == "Enabled"
     mfa_delete_enabled = resp.get("MFADelete") == "Enabled"
@@ -182,6 +196,15 @@ def validate_bucket_versioning(client, bucket):
 
 
 def delete_old_versions(client, input_bucket, input_key, new_version):
+    """
+    Delete all versions.
+
+    Args:
+        client: (todo): write your description
+        input_bucket: (todo): write your description
+        input_key: (str): write your description
+        new_version: (str): write your description
+    """
     try:
         resp = list(
             paginate(
@@ -229,7 +252,23 @@ def delete_old_versions(client, input_bucket, input_key, new_version):
 def verify_object_versions_integrity(
     client, bucket, key, from_version_id, to_version_id
 ):
+    """
+    Verify the versions of - versions of a given object.
+
+    Args:
+        client: (todo): write your description
+        bucket: (str): write your description
+        key: (str): write your description
+        from_version_id: (int): write your description
+        to_version_id: (str): write your description
+    """
     def raise_exception(msg):
+        """
+        Raise an exception with the exception.
+
+        Args:
+            msg: (str): write your description
+        """
         raise IntegrityCheckFailedError(msg, client, bucket, key, to_version_id)
 
     conflict_error_template = "A {} ({}) was detected for the given object between read and write operations ({} and {})."
@@ -287,12 +326,30 @@ def rollback_object_version(client, bucket, key, version, on_error):
 
 class DeleteOldVersionsError(Exception):
     def __init__(self, errors):
+        """
+        Initialize errors.
+
+        Args:
+            self: (todo): write your description
+            errors: (str): write your description
+        """
         super().__init__("\n".join(errors))
         self.errors = errors
 
 
 class IntegrityCheckFailedError(Exception):
     def __init__(self, message, client, bucket, key, version_id):
+        """
+        Initialize a new bucket.
+
+        Args:
+            self: (todo): write your description
+            message: (str): write your description
+            client: (todo): write your description
+            bucket: (str): write your description
+            key: (str): write your description
+            version_id: (str): write your description
+        """
         self.message = message
         self.client = client
         self.bucket = bucket

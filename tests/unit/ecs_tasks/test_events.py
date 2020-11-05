@@ -18,6 +18,14 @@ pytestmark = [pytest.mark.unit, pytest.mark.ecs_tasks]
 @patch("backend.ecs_tasks.delete_files.events.emit_event")
 @patch("backend.ecs_tasks.delete_files.events.get_emitter_id")
 def test_it_emits_deletions(mock_get_id, mock_emit, message_stub):
+    """
+    Get the number of commits for a mock.
+
+    Args:
+        mock_get_id: (str): write your description
+        mock_emit: (todo): write your description
+        message_stub: (str): write your description
+    """
     mock_get_id.return_value = "ECSTask_4567"
     stats_stub = {"Some": "stats"}
     msg = json.loads(message_stub())
@@ -33,6 +41,14 @@ def test_it_emits_deletions(mock_get_id, mock_emit, message_stub):
 @patch("backend.ecs_tasks.delete_files.events.emit_event")
 @patch("backend.ecs_tasks.delete_files.events.get_emitter_id")
 def test_it_emits_failed_deletions(mock_get_id, mock_emit, message_stub):
+    """
+    Return the number of a mock receivers.
+
+    Args:
+        mock_get_id: (str): write your description
+        mock_emit: (todo): write your description
+        message_stub: (str): write your description
+    """
     mock_get_id.return_value = "ECSTask_4567"
     msg = message_stub()
     emit_failure_event(msg, "Some error", "ObjectUpdateFailed")
@@ -47,6 +63,14 @@ def test_it_emits_failed_deletions(mock_get_id, mock_emit, message_stub):
 @patch("backend.ecs_tasks.delete_files.events.emit_event")
 @patch("backend.ecs_tasks.delete_files.events.get_emitter_id")
 def test_it_emits_failed_rollback(mock_get_id, mock_emit, message_stub):
+    """
+    Emits the mock back to rollback.
+
+    Args:
+        mock_get_id: (str): write your description
+        mock_emit: (todo): write your description
+        message_stub: (str): write your description
+    """
     mock_get_id.return_value = "ECSTask_4567"
     msg = message_stub()
     emit_failure_event(msg, "Some error", "ObjectRollbackFailed")
@@ -59,6 +83,11 @@ def test_it_emits_failed_rollback(mock_get_id, mock_emit, message_stub):
 
 
 def test_it_raises_for_missing_job_id():
+    """
+    Emits the test jobs in the test.
+
+    Args:
+    """
     with pytest.raises(ValueError):
         emit_failure_event("{}", "Some error", "deletion")
 
@@ -66,6 +95,12 @@ def test_it_raises_for_missing_job_id():
 @patch("os.getenv", MagicMock(return_value="http://metadatauri/path"))
 @patch("urllib.request.urlopen")
 def test_it_fetches_task_id_from_metadata_uri(url_open_mock):
+    """
+    Test if the fetcher fetched by the metadata.
+
+    Args:
+        url_open_mock: (todo): write your description
+    """
     get_emitter_id.cache_clear()
     res = MagicMock()
     url_open_mock.return_value = res
@@ -81,6 +116,13 @@ def test_it_fetches_task_id_from_metadata_uri(url_open_mock):
 @patch("urllib.request.urlopen")
 @patch("backend.ecs_tasks.delete_files.events.logger")
 def test_it_defaults_task_id_if_urlerror(logger_mock, url_open_mock):
+    """
+    Check if the task id if the default.
+
+    Args:
+        logger_mock: (todo): write your description
+        url_open_mock: (str): write your description
+    """
     get_emitter_id.cache_clear()
     res = MagicMock()
     url_open_mock.return_value = res
@@ -96,6 +138,13 @@ def test_it_defaults_task_id_if_urlerror(logger_mock, url_open_mock):
 @patch("urllib.request.urlopen")
 @patch("backend.ecs_tasks.delete_files.events.logger")
 def test_it_defaults_task_id_if_malformed_response(logger_mock, url_open_mock):
+    """
+    Returns the default error is not - opened configuration.
+
+    Args:
+        logger_mock: (todo): write your description
+        url_open_mock: (str): write your description
+    """
     get_emitter_id.cache_clear()
     res = MagicMock()
     url_open_mock.return_value = res
@@ -111,6 +160,13 @@ def test_it_defaults_task_id_if_malformed_response(logger_mock, url_open_mock):
 @patch("urllib.request.urlopen")
 @patch("backend.ecs_tasks.delete_files.events.logger")
 def test_it_defaults_task_id_if_generic_error(logger_mock, url_open_mock):
+    """
+    Return the default configuration of the default if_id of the mock.
+
+    Args:
+        logger_mock: (todo): write your description
+        url_open_mock: (str): write your description
+    """
     get_emitter_id.cache_clear()
     res = MagicMock()
     url_open_mock.return_value = res
@@ -126,6 +182,13 @@ def test_it_defaults_task_id_if_generic_error(logger_mock, url_open_mock):
 @patch("urllib.request.urlopen")
 @patch("backend.ecs_tasks.delete_files.events.logger")
 def test_it_defaults_task_id_if_env_variable_not_set(logger_mock, url_open_mock):
+    """
+    Determine if the mock environment variable is open.
+
+    Args:
+        logger_mock: (todo): write your description
+        url_open_mock: (todo): write your description
+    """
     get_emitter_id.cache_clear()
     resp = get_emitter_id()
     assert "ECSTask" == resp
@@ -134,6 +197,12 @@ def test_it_defaults_task_id_if_env_variable_not_set(logger_mock, url_open_mock)
 
 
 def test_it_sanitises_matches(message_stub):
+    """
+    Test if the test case.
+
+    Args:
+        message_stub: (todo): write your description
+    """
     assert (
         "This message contains ID *** MATCH ID *** and *** MATCH ID ***"
         == sanitize_message(
@@ -146,6 +215,12 @@ def test_it_sanitises_matches(message_stub):
 
 
 def test_it_sanitises_int_matches(message_stub):
+    """
+    Test whether the test case.
+
+    Args:
+        message_stub: (str): write your description
+    """
     assert (
         "This message contains ID *** MATCH ID *** and *** MATCH ID ***"
         == sanitize_message(
@@ -156,4 +231,9 @@ def test_it_sanitises_int_matches(message_stub):
 
 
 def test_sanitiser_handles_malformed_messages():
+    """
+    Sanity test test test test test.
+
+    Args:
+    """
     assert "an error message" == sanitize_message("an error message", "not json")

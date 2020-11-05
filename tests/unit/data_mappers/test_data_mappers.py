@@ -20,6 +20,12 @@ autorization_mock = {
 
 @patch("backend.lambdas.data_mappers.handlers.table")
 def test_it_retrieves_all_items(table):
+    """
+    Test for all items : dict
+
+    Args:
+        table: (todo): write your description
+    """
     table.scan.return_value = {"Items": []}
     response = handlers.get_data_mappers_handler({}, SimpleNamespace())
     assert {
@@ -32,6 +38,12 @@ def test_it_retrieves_all_items(table):
 
 @patch("backend.lambdas.data_mappers.handlers.table")
 def test_it_retrieves_all_items_with_size_and_pagination(table):
+    """
+    Test for pagination items in the pagination
+
+    Args:
+        table: (str): write your description
+    """
     table.scan.return_value = {"Items": [{"DataMapperId": "foo"}]}
     response = handlers.get_data_mappers_handler(
         {"queryStringParameters": {"page_size": "1", "start_at": "bar"}},
@@ -50,6 +62,13 @@ def test_it_retrieves_all_items_with_size_and_pagination(table):
 @patch("backend.lambdas.data_mappers.handlers.table")
 @patch("backend.lambdas.data_mappers.handlers.validate_mapper")
 def test_it_creates_data_mapper(validate_mapper, table):
+    """
+    Mapper : func : ~. json / mapper
+
+    Args:
+        validate_mapper: (todo): write your description
+        table: (str): write your description
+    """
     response = handlers.put_data_mapper_handler(
         {
             "pathParameters": {"data_mapper_id": "test"},
@@ -92,7 +111,20 @@ def test_it_creates_data_mapper(validate_mapper, table):
 @patch("backend.lambdas.data_mappers.handlers.table")
 @patch("backend.lambdas.data_mappers.handlers.validate_mapper")
 def test_it_modifies_data_mapper(validate_mapper, table):
+    """
+    Test if the mapper is valid
+
+    Args:
+        validate_mapper: (todo): write your description
+        table: (str): write your description
+    """
     def test_body(table_name):
+        """
+        Return the table as json.
+
+        Args:
+            table_name: (str): write your description
+        """
         return json.dumps(
             {
                 "Columns": ["column"],
@@ -146,6 +178,13 @@ def test_it_modifies_data_mapper(validate_mapper, table):
 @patch("backend.lambdas.data_mappers.handlers.table")
 @patch("backend.lambdas.data_mappers.handlers.validate_mapper")
 def test_it_supports_optionals(validate_mapper, table):
+    """
+    Test if the test test_option for the test.
+
+    Args:
+        validate_mapper: (todo): write your description
+        table: (str): write your description
+    """
     response = handlers.put_data_mapper_handler(
         {
             "pathParameters": {"data_mapper_id": "test"},
@@ -185,6 +224,12 @@ def test_it_supports_optionals(validate_mapper, table):
 
 @patch("backend.lambdas.data_mappers.handlers.validate_mapper")
 def test_it_rejects_where_glue_validation_fails(validate_mapper):
+    """
+    Test if all tests in - side side side side side side.
+
+    Args:
+        validate_mapper: (todo): write your description
+    """
     # Simulate raising an exception for table not existing
     validate_mapper.side_effect = ClientError(
         {"ResponseMetadata": {"HTTPStatusCode": 400}}, "get_table"
@@ -215,6 +260,12 @@ def test_it_rejects_where_glue_validation_fails(validate_mapper):
 )
 @patch("backend.lambdas.data_mappers.handlers.table")
 def test_it_deletes_data_mapper(table):
+    """
+    Test for the given database exists.
+
+    Args:
+        table: (str): write your description
+    """
     response = handlers.delete_data_mapper_handler(
         {"pathParameters": {"data_mapper_id": "test",}}, SimpleNamespace()
     )
@@ -225,6 +276,11 @@ def test_it_deletes_data_mapper(table):
     "backend.lambdas.data_mappers.handlers.running_job_exists", Mock(return_value=True)
 )
 def test_it_rejects_deletes_whilst_job_running():
+    """
+    Rejects the test_it_mapper.
+
+    Args:
+    """
     response = handlers.delete_data_mapper_handler(
         {"pathParameters": {"data_mapper_id": "test",}}, SimpleNamespace()
     )
@@ -236,6 +292,13 @@ def test_it_rejects_deletes_whilst_job_running():
 def test_it_rejects_non_existent_glue_tables(
     mock_get_details, get_existing_s3_locations
 ):
+    """
+    Test for non - non - non - exist.
+
+    Args:
+        mock_get_details: (todo): write your description
+        get_existing_s3_locations: (todo): write your description
+    """
     # Simulate raising an exception for table not existing
     get_existing_s3_locations.return_value = ["s3://bucket/prefix/"]
     mock_get_details.side_effect = ClientError(
@@ -263,6 +326,15 @@ def test_it_rejects_non_existent_glue_tables(
 def test_it_rejects_overlapping_s3_paths(
     mock_get_details, mock_get_format, mock_get_location, get_existing_s3_locations
 ):
+    """
+    Rejects path paths to mock paths
+
+    Args:
+        mock_get_details: (todo): write your description
+        mock_get_format: (todo): write your description
+        mock_get_location: (todo): write your description
+        get_existing_s3_locations: (todo): write your description
+    """
     mock_get_details.return_value = get_table_stub({"Location": "s3://bucket/prefix/"})
     get_existing_s3_locations.return_value = ["s3://bucket/prefix/"]
     mock_get_location.return_value = "s3://bucket/prefix/"
@@ -295,6 +367,15 @@ def test_it_rejects_overlapping_s3_paths(
 def test_it_rejects_not_supported_tables(
     mock_get_details, mock_get_format, mock_get_location, get_existing_s3_locations
 ):
+    """
+    Reject not_it configuration.
+
+    Args:
+        mock_get_details: (todo): write your description
+        mock_get_format: (todo): write your description
+        mock_get_location: (todo): write your description
+        get_existing_s3_locations: (todo): write your description
+    """
     mock_get_details.return_value = get_table_stub({"Location": "s3://bucket/prefix/"})
     get_existing_s3_locations.return_value = []
     mock_get_location.return_value = "s3://bucket/prefix/"
@@ -329,6 +410,15 @@ def test_it_rejects_not_supported_tables(
 def test_it_rejects_malformed_json(
     mock_get_details, mock_get_format, mock_get_location, get_existing_s3_locations
 ):
+    """
+    Rejects and_it_malformed_get_get_get_get_get_get_details
+
+    Args:
+        mock_get_details: (todo): write your description
+        mock_get_format: (todo): write your description
+        mock_get_location: (todo): write your description
+        get_existing_s3_locations: (todo): write your description
+    """
     mock_get_details.return_value = get_table_stub({"Location": "s3://bucket/prefix/"})
     get_existing_s3_locations.return_value = []
     mock_get_location.return_value = "s3://bucket/prefix/"
@@ -362,6 +452,15 @@ def test_it_rejects_malformed_json(
 def test_it_rejects_json_with_dot_in_keys(
     mock_get_details, mock_get_format, mock_get_location, get_existing_s3_locations
 ):
+    """
+    Reject dot dot dot_json_with_details.
+
+    Args:
+        mock_get_details: (todo): write your description
+        mock_get_format: (todo): write your description
+        mock_get_location: (todo): write your description
+        get_existing_s3_locations: (todo): write your description
+    """
     mock_get_details.return_value = get_table_stub({"Location": "s3://bucket/prefix/"})
     get_existing_s3_locations.return_value = []
     mock_get_location.return_value = "s3://bucket/prefix/"
@@ -395,6 +494,15 @@ def test_it_rejects_json_with_dot_in_keys(
 def test_it_rejects_json_with_column_mapping(
     mock_get_details, mock_get_format, mock_get_location, get_existing_s3_locations
 ):
+    """
+    Reject the mapping to json
+
+    Args:
+        mock_get_details: (todo): write your description
+        mock_get_format: (todo): write your description
+        mock_get_location: (todo): write your description
+        get_existing_s3_locations: (todo): write your description
+    """
     mock_get_details.return_value = get_table_stub({"Location": "s3://bucket/prefix/"})
     get_existing_s3_locations.return_value = []
     mock_get_location.return_value = "s3://bucket/prefix/"
@@ -422,15 +530,30 @@ def test_it_rejects_json_with_column_mapping(
 
 
 def test_it_detects_overlaps():
+    """
+    Detects overlap overlap overlap overlap overlap.
+
+    Args:
+    """
     assert handlers.is_overlap("s3://bucket/prefix/", "s3://bucket/prefix/subprefix/")
     assert handlers.is_overlap("s3://bucket/prefix/subprefix/", "s3://bucket/prefix/")
 
 
 def test_it_detects_non_overlaps():
+    """
+    Test if all of the non - overlap.
+
+    Args:
+    """
     assert not handlers.is_overlap("s3://bucket/prefix/", "s3://otherbucket/prefix/")
 
 
 def test_it_detects_non_overlapping_prefixes_in_same_bucket():
+    """
+    Test if any non - generated bucket meets meets any non - bucket.
+
+    Args:
+    """
     assert not handlers.is_overlap("s3://bucket/foo/bar", "s3://otherbucket/foo/baz")
 
 
@@ -440,6 +563,14 @@ def test_it_detects_non_overlapping_prefixes_in_same_bucket():
 def test_it_gets_existing_s3_locations(
     mock_get_details, mock_get_location, mock_dynamo
 ):
+    """
+    Get locations for locations that location.
+
+    Args:
+        mock_get_details: (todo): write your description
+        mock_get_location: (todo): write your description
+        mock_dynamo: (str): write your description
+    """
     mock_dynamo.scan.return_value = {
         "Items": [
             {
@@ -464,6 +595,14 @@ def test_it_gets_existing_s3_locations(
 def test_it_gets_existing_s3_locations_excluding_current_data_mapper_id(
     mock_get_details, mock_get_location, mock_dynamo
 ):
+    """
+    Test for existing locations that locations.
+
+    Args:
+        mock_get_details: (todo): write your description
+        mock_get_location: (todo): write your description
+        mock_dynamo: (str): write your description
+    """
     mock_dynamo.scan.return_value = {
         "Items": [
             {
@@ -483,11 +622,21 @@ def test_it_gets_existing_s3_locations_excluding_current_data_mapper_id(
 
 
 def test_it_gets_s3_location_for_glue_table():
+    """
+    Return the location of the location.
+
+    Args:
+    """
     resp = handlers.get_glue_table_location(get_table_stub())
     assert "s3://bucket/" == resp
 
 
 def test_it_gets_glue_table_format_info():
+    """
+    Displays the glob table format.
+
+    Args:
+    """
     assert (
         "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
         {"serialization.format": "1"},
@@ -496,6 +645,12 @@ def test_it_gets_glue_table_format_info():
 
 @patch("backend.lambdas.data_mappers.handlers.glue_client")
 def test_it_gets_details_for_table(mock_client):
+    """
+    Return the details of the details of the mock.
+
+    Args:
+        mock_client: (todo): write your description
+    """
     mock_client.get_table.return_value = get_table_stub()
     handlers.get_table_details_from_mapper(
         {
@@ -510,6 +665,12 @@ def test_it_gets_details_for_table(mock_client):
 
 
 def get_table_stub(storage_descriptor={}):
+    """
+    Returns the table statements.
+
+    Args:
+        storage_descriptor: (str): write your description
+    """
     sd = {
         "Location": "s3://bucket/",
         "InputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",

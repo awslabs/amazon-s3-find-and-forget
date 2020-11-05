@@ -31,6 +31,13 @@ SUPPORTED_SERDE_LIBS = [PARQUET_HIVE_SERDE, JSON_HIVE_SERDE, JSON_OPENX_SERDE]
 @request_validator(load_schema("list_data_mappers"))
 @catch_errors
 def get_data_mappers_handler(event, context):
+    """
+    Extracts event data.
+
+    Args:
+        event: (dict): write your description
+        context: (todo): write your description
+    """
     qs = event.get("queryStringParameters")
     if not qs:
         qs = {}
@@ -58,6 +65,13 @@ def get_data_mappers_handler(event, context):
 @request_validator(load_schema("create_data_mapper"))
 @catch_errors
 def put_data_mapper_handler(event, context):
+    """
+    Put mapper data.
+
+    Args:
+        event: (todo): write your description
+        context: (todo): write your description
+    """
     path_params = event["pathParameters"]
     body = event["body"]
     validate_mapper(body)
@@ -81,6 +95,13 @@ def put_data_mapper_handler(event, context):
 @request_validator(load_schema("delete_data_mapper"))
 @catch_errors
 def delete_data_mapper_handler(event, context):
+    """
+    Delete mapper mapper mapper.
+
+    Args:
+        event: (todo): write your description
+        context: (todo): write your description
+    """
     if running_job_exists():
         raise ValueError("Cannot delete Data Mappers whilst there is a job in progress")
     data_mapper_id = event["pathParameters"]["data_mapper_id"]
@@ -90,6 +111,12 @@ def delete_data_mapper_handler(event, context):
 
 
 def validate_mapper(mapper):
+    """
+    Validate mapper.
+
+    Args:
+        mapper: (todo): write your description
+    """
     existing_s3_locations = get_existing_s3_locations(mapper["DataMapperId"])
     if mapper["QueryExecutorParameters"].get("DataCatalogProvider") == "glue":
         table_details = get_table_details_from_mapper(mapper)
@@ -126,6 +153,12 @@ def validate_mapper(mapper):
 
 
 def get_existing_s3_locations(current_data_mapper_id):
+    """
+    Get location locations.
+
+    Args:
+        current_data_mapper_id: (str): write your description
+    """
     items = table.scan()["Items"]
     glue_mappers = [
         get_table_details_from_mapper(mapper)
@@ -137,16 +170,34 @@ def get_existing_s3_locations(current_data_mapper_id):
 
 
 def get_table_details_from_mapper(mapper):
+    """
+    Returns the mapper object
+
+    Args:
+        mapper: (str): write your description
+    """
     db = mapper["QueryExecutorParameters"]["Database"]
     table_name = mapper["QueryExecutorParameters"]["Table"]
     return glue_client.get_table(DatabaseName=db, Name=table_name)
 
 
 def get_glue_table_location(t):
+    """
+    Return the location of a table
+
+    Args:
+        t: (str): write your description
+    """
     return t["Table"]["StorageDescriptor"]["Location"]
 
 
 def get_glue_table_format(t):
+    """
+    Return the table format.
+
+    Args:
+        t: (str): write your description
+    """
     return (
         t["Table"]["StorageDescriptor"]["SerdeInfo"]["SerializationLibrary"],
         t["Table"]["StorageDescriptor"]["SerdeInfo"]["Parameters"],
@@ -154,4 +205,11 @@ def get_glue_table_format(t):
 
 
 def is_overlap(a, b):
+    """
+    Returns true if a and false otherwise.
+
+    Args:
+        a: (todo): write your description
+        b: (todo): write your description
+    """
     return a in b or b in a

@@ -38,6 +38,13 @@ ALLOWED_TYPES = [
 
 @with_logging
 def handler(event, context):
+    """
+    Main entry point.
+
+    Args:
+        event: (todo): write your description
+        context: (dict): write your description
+    """
     deletion_items = get_deletion_queue(event["ExecutionName"])
     for data_mapper in get_data_mappers():
         query_executor = data_mapper["QueryExecutor"]
@@ -52,6 +59,13 @@ def handler(event, context):
 
 
 def generate_athena_queries(data_mapper, deletion_items):
+    """
+    Generate queries for queries
+
+    Args:
+        data_mapper: (dict): write your description
+        deletion_items: (int): write your description
+    """
     queries = []
     db = data_mapper["QueryExecutorParameters"]["Database"]
     table_name = data_mapper["QueryExecutorParameters"]["Table"]
@@ -118,11 +132,22 @@ def generate_athena_queries(data_mapper, deletion_items):
 
 
 def get_deletion_queue(job_id):
+    """
+    Gets a queued queue.
+
+    Args:
+        job_id: (str): write your description
+    """
     resp = jobs_table.get_item(Key={"Id": job_id, "Sk": job_id})
     return resp.get("Item").get("DeletionQueueItems")
 
 
 def get_data_mappers():
+    """
+    Deserialize mappers.
+
+    Args:
+    """
     results = paginate(
         ddb_client, ddb_client.scan, "Items", TableName=data_mapper_table_name
     )
@@ -131,10 +156,24 @@ def get_data_mappers():
 
 
 def get_table(db, table_name):
+    """
+    Returns the database table.
+
+    Args:
+        db: (todo): write your description
+        table_name: (str): write your description
+    """
     return glue_client.get_table(DatabaseName=db, Name=table_name)["Table"]
 
 
 def get_partitions(db, table_name):
+    """
+    Retrieve the database.
+
+    Args:
+        db: (todo): write your description
+        table_name: (str): write your description
+    """
     return paginate(
         glue_client,
         glue_client.get_partitions,
@@ -295,6 +334,14 @@ def column_mapper(col):
 
 
 def get_column_info(col, table, is_partition):
+    """
+    Return the info about a particular column.
+
+    Args:
+        col: (str): write your description
+        table: (str): write your description
+        is_partition: (str): write your description
+    """
     table_columns = (
         table["PartitionKeys"]
         if is_partition
@@ -312,6 +359,15 @@ def get_column_info(col, table, is_partition):
 
 
 def cast_to_type(val, col, table, is_partition=False):
+    """
+    Cast a column to its corresponding type.
+
+    Args:
+        val: (str): write your description
+        col: (todo): write your description
+        table: (str): write your description
+        is_partition: (bool): write your description
+    """
     col_type, can_be_identifier = get_column_info(col, table, is_partition)
     if not col_type:
         raise ValueError("Column {} not found".format(col))

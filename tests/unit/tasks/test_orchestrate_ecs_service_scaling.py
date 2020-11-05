@@ -11,6 +11,12 @@ pytestmark = [pytest.mark.unit, pytest.mark.task]
 
 @patch("backend.lambdas.tasks.orchestrate_ecs_service_scaling.ecs")
 def test_it_sets_count_to_zero_if_queue_is_empty(mock_client):
+    """
+    Count the number of sets of the number of threads.
+
+    Args:
+        mock_client: (todo): write your description
+    """
     event = {
         "Cluster": "cluster_name",
         "DeleteService": "delete_service",
@@ -27,6 +33,12 @@ def test_it_sets_count_to_zero_if_queue_is_empty(mock_client):
 
 @patch("backend.lambdas.tasks.orchestrate_ecs_service_scaling.ecs")
 def test_it_sets_count_to_queue_size_if_less_than_max_tasks(mock_client):
+    """
+    Counts the number of the number of jobs in the given.
+
+    Args:
+        mock_client: (todo): write your description
+    """
 
     event = {
         "Cluster": "cluster_name",
@@ -44,6 +56,12 @@ def test_it_sets_count_to_queue_size_if_less_than_max_tasks(mock_client):
 
 @patch("backend.lambdas.tasks.orchestrate_ecs_service_scaling.ecs")
 def test_it_sets_count_to_max_tasks_if_more_than_max_tasks(mock_client):
+    """
+    Returns the number of sets that have been received.
+
+    Args:
+        mock_client: (todo): write your description
+    """
 
     event = {
         "Cluster": "cluster_name",

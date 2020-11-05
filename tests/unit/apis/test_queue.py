@@ -20,6 +20,12 @@ autorization_mock = {
 
 @patch("backend.lambdas.queue.handlers.deletion_queue_table")
 def test_it_retrieves_all_items(table):
+    """
+    Test for all items : dict : type table : dict
+
+    Args:
+        table: (todo): write your description
+    """
     table.scan.return_value = {"Items": []}
     response = handlers.get_handler({}, SimpleNamespace())
     assert {
@@ -32,6 +38,12 @@ def test_it_retrieves_all_items(table):
 
 @patch("backend.lambdas.queue.handlers.deletion_queue_table")
 def test_it_retrieves_all_items_with_size_and_pagination(table):
+    """
+    Test for pagination items.
+
+    Args:
+        table: (str): write your description
+    """
     table.scan.return_value = {
         "Items": [
             {
@@ -70,6 +82,12 @@ def test_it_retrieves_all_items_with_size_and_pagination(table):
 
 @patch("backend.lambdas.queue.handlers.deletion_queue_table")
 def test_it_adds_to_queue(table):
+    """
+    Enqueue test queue.
+
+    Args:
+        table: (str): write your description
+    """
     response = handlers.enqueue_handler(
         {
             "body": json.dumps({"MatchId": "test", "DataMappers": ["a"]}),
@@ -89,6 +107,12 @@ def test_it_adds_to_queue(table):
 
 @patch("backend.lambdas.queue.handlers.deletion_queue_table")
 def test_it_adds_batch_to_queue(table):
+    """
+    Adds a batch of batch items to batch.
+
+    Args:
+        table: (str): write your description
+    """
     response = handlers.enqueue_batch_handler(
         {
             "body": json.dumps(
@@ -127,6 +151,12 @@ def test_it_adds_batch_to_queue(table):
 
 @patch("backend.lambdas.queue.handlers.deletion_queue_table")
 def test_it_provides_default_data_mappers(table):
+    """
+    Test if the default prolog - proactor.
+
+    Args:
+        table: (str): write your description
+    """
     response = handlers.enqueue_handler(
         {"body": json.dumps({"MatchId": "test",}), "requestContext": autorization_mock},
         SimpleNamespace(),
@@ -145,6 +175,13 @@ def test_it_provides_default_data_mappers(table):
 @patch("backend.lambdas.queue.handlers.running_job_exists")
 @patch("backend.lambdas.queue.handlers.deletion_queue_table")
 def test_it_cancels_deletions(table, mock_running_job):
+    """
+    Cancels all jobs that have been received.
+
+    Args:
+        table: (str): write your description
+        mock_running_job: (todo): write your description
+    """
     mock_running_job.return_value = False
     response = handlers.cancel_handler(
         {"body": json.dumps({"Matches": [{"DeletionQueueItemId": "id123"}],})},
@@ -155,6 +192,12 @@ def test_it_cancels_deletions(table, mock_running_job):
 
 @patch("backend.lambdas.queue.handlers.running_job_exists")
 def test_it_prevents_cancelling_whilst_running_jobs(mock_running_job):
+    """
+    Cancel jobs running jobs in the jobs.
+
+    Args:
+        mock_running_job: (todo): write your description
+    """
     mock_running_job.return_value = True
     response = handlers.cancel_handler(
         {
@@ -176,6 +219,16 @@ def test_it_prevents_cancelling_whilst_running_jobs(mock_running_job):
 @patch("backend.lambdas.queue.handlers.running_job_exists")
 @patch("backend.lambdas.queue.handlers.get_config")
 def test_it_process_queue(mock_config, mock_running_job, job_table, uuid, paginate):
+    """
+    Test for jobs in a multiprocessing
+
+    Args:
+        mock_config: (todo): write your description
+        mock_running_job: (todo): write your description
+        job_table: (todo): write your description
+        uuid: (todo): write your description
+        paginate: (str): write your description
+    """
     mock_running_job.return_value = False
     mock_config.return_value = {
         "AthenaConcurrencyLimit": 15,
@@ -235,6 +288,16 @@ def test_it_process_queue(mock_config, mock_running_job, job_table, uuid, pagina
 @patch("backend.lambdas.queue.handlers.running_job_exists")
 @patch("backend.lambdas.queue.handlers.get_config")
 def test_it_partitions_queue(mock_config, mock_running_job, job_table, uuid, paginate):
+    """
+    Queue the number of the job_config.
+
+    Args:
+        mock_config: (todo): write your description
+        mock_running_job: (todo): write your description
+        job_table: (todo): write your description
+        uuid: (str): write your description
+        paginate: (str): write your description
+    """
     mock_running_job.return_value = False
     mock_config.return_value = {}
 
@@ -300,6 +363,17 @@ def test_it_partitions_queue(mock_config, mock_running_job, job_table, uuid, pag
 def test_it_applies_expiry(
     mock_utc, mock_config, mock_running_job, job_table, uuid, paginate
 ):
+    """
+    Test for jobs in the jobs running.
+
+    Args:
+        mock_utc: (todo): write your description
+        mock_config: (todo): write your description
+        mock_running_job: (todo): write your description
+        job_table: (todo): write your description
+        uuid: (str): write your description
+        paginate: (str): write your description
+    """
     mock_running_job.return_value = False
     mock_utc.return_value = 12346789
     mock_config.return_value = {
@@ -340,6 +414,12 @@ def test_it_applies_expiry(
 
 @patch("backend.lambdas.queue.handlers.running_job_exists")
 def test_it_prevents_concurrent_running_jobs(mock_running_job):
+    """
+    Get the number of jobs that have been running.
+
+    Args:
+        mock_running_job: (todo): write your description
+    """
     mock_running_job.return_value = True
     response = handlers.process_handler(
         {"body": "", "requestContext": autorization_mock}, SimpleNamespace()
@@ -350,6 +430,11 @@ def test_it_prevents_concurrent_running_jobs(mock_running_job):
 
 
 def test_it_calculates_ddb_item_size():
+    """
+    Calculate test test test test test for test.
+
+    Args:
+    """
     scenarios = [
         [None, 0],
         [{"string": "test"}, 10],

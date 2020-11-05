@@ -12,6 +12,13 @@ logger = logging.getLogger(__name__)
 
 
 def emit_deletion_event(message_body, stats):
+    """
+    Emition event.
+
+    Args:
+        message_body: (str): write your description
+        stats: (todo): write your description
+    """
     job_id = message_body["JobId"]
     event_data = {
         "Statistics": stats,
@@ -21,6 +28,14 @@ def emit_deletion_event(message_body, stats):
 
 
 def emit_failure_event(message_body, err_message, event_name):
+    """
+    Emit an event.
+
+    Args:
+        message_body: (str): write your description
+        err_message: (str): write your description
+        event_name: (str): write your description
+    """
     json_body = json.loads(message_body)
     job_id = json_body.get("JobId")
     if not job_id:
@@ -56,6 +71,11 @@ def sanitize_message(err_message, message_body):
 
 @lru_cache()
 def get_emitter_id():
+    """
+    Get the emitter id from the environment.
+
+    Args:
+    """
     metadata_endpoint = os.getenv("ECS_CONTAINER_METADATA_URI")
     if metadata_endpoint:
         res = ""

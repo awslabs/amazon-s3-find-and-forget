@@ -9,6 +9,11 @@ pytestmark = [pytest.mark.unit, pytest.mark.ecs_tasks]
 
 
 def get_list_object_versions_error():
+    """
+    Get versions of versions versions.
+
+    Args:
+    """
     return ClientError(
         {
             "Error": {
@@ -22,6 +27,12 @@ def get_list_object_versions_error():
 
 @patch("time.sleep")
 def test_it_doesnt_retry_success_fn(sleep_mock):
+    """
+    Test if retry for retry.
+
+    Args:
+        sleep_mock: (todo): write your description
+    """
     fn = MagicMock()
     fn.side_effect = [31, 32]
     result = retry_wrapper(fn, retry_wait_seconds=1, retry_factor=3)(25)
@@ -33,6 +44,12 @@ def test_it_doesnt_retry_success_fn(sleep_mock):
 
 @patch("time.sleep")
 def test_it_retries_retriable_fn(sleep_mock):
+    """
+    Decorator for retrized retrized retries.
+
+    Args:
+        sleep_mock: (todo): write your description
+    """
     fn = MagicMock()
     e = get_list_object_versions_error()
     fn.side_effect = [e, e, 32]
@@ -45,6 +62,12 @@ def test_it_retries_retriable_fn(sleep_mock):
 
 @patch("time.sleep")
 def test_it_doesnt_retry_non_retriable_fn(sleep_mock):
+    """
+    Test if retry_retry_retry_retry_non_retry_retry.
+
+    Args:
+        sleep_mock: (todo): write your description
+    """
     fn = MagicMock()
     fn.side_effect = NameError("fail!")
 
@@ -58,6 +81,12 @@ def test_it_doesnt_retry_non_retriable_fn(sleep_mock):
 
 @patch("time.sleep")
 def test_it_retries_and_gives_up_fn(sleep_mock):
+    """
+    Decorator for gives and retries_and_fn.
+
+    Args:
+        sleep_mock: (todo): write your description
+    """
     fn = MagicMock()
     fn.side_effect = get_list_object_versions_error()
 
@@ -73,4 +102,9 @@ def test_it_retries_and_gives_up_fn(sleep_mock):
 
 
 def test_it_removes_empty_keys():
+    """
+    Remove empty keys. empty. test.
+
+    Args:
+    """
     assert {"test": "value"} == remove_none({"test": "value", "none": None})

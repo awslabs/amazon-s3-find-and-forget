@@ -15,6 +15,13 @@ s3_client = boto3.resource("s3")
 @helper.update
 @helper.delete
 def create(event, context):
+    """
+    Create a new event.
+
+    Args:
+        event: (todo): write your description
+        context: (str): write your description
+    """
     return None
 
 
@@ -22,6 +29,13 @@ def create(event, context):
 @helper.poll_create
 @helper.poll_update
 def poll(event, context):
+    """
+    Poll image image.
+
+    Args:
+        event: (dict): write your description
+        context: (dict): write your description
+    """
     props = event.get("ResourceProperties", None)
     bucket = props.get("CodeBuildArtefactBucket")
     key = props.get("ArtefactName")
@@ -33,10 +47,23 @@ def poll(event, context):
 
 
 def handler(event, context):
+    """
+    Emit an event.
+
+    Args:
+        event: (todo): write your description
+        context: (dict): write your description
+    """
     helper(event, context)
 
 
 def get_latest_image_push(repository):
+    """
+    Gets the image repository that the repository is enabled.
+
+    Args:
+        repository: (str): write your description
+    """
     try:
         images = ecr_client.describe_images(
             repositoryName=repository, imageIds=[{"imageTag": "latest"}]

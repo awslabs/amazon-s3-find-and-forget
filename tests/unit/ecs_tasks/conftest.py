@@ -5,7 +5,17 @@ import pytest
 
 @pytest.fixture
 def message_stub():
+    """
+    Return a json formatted message.
+
+    Args:
+    """
     def make_message(**kwargs):
+        """
+        Make a message object.
+
+        Args:
+        """
         return json.dumps(
             {
                 "JobId": "1234",

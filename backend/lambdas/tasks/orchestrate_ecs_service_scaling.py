@@ -10,6 +10,13 @@ ecs = boto3.client("ecs")
 
 @with_logging
 def handler(event, context):
+    """
+    Returns a new cluster.
+
+    Args:
+        event: (todo): write your description
+        context: (dict): write your description
+    """
     cluster = event["Cluster"]
     max_tasks = event["DeletionTasksMaxNumber"]
     queue_size = event["QueueSize"]

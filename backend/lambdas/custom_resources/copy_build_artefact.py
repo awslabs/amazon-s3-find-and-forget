@@ -12,6 +12,13 @@ s3_client = boto3.client("s3")
 @helper.create
 @helper.update
 def create(event, context):
+    """
+    Create s3 bucket.
+
+    Args:
+        event: (dict): write your description
+        context: (str): write your description
+    """
     props = event.get("ResourceProperties", None)
     version = props.get("Version")
     destination_artefact = props.get("ArtefactName")
@@ -31,8 +38,22 @@ def create(event, context):
 @with_logging
 @helper.delete
 def delete(event, context):
+    """
+    Deletes an event.
+
+    Args:
+        event: (todo): write your description
+        context: (dict): write your description
+    """
     return None
 
 
 def handler(event, context):
+    """
+    Emit an event.
+
+    Args:
+        event: (todo): write your description
+        context: (dict): write your description
+    """
     helper(event, context)

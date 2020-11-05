@@ -24,6 +24,13 @@ q_table = ddb.Table(getenv("DeletionQueueTable"))
 
 @with_logging
 def handler(event, context):
+    """
+    Historical handler.
+
+    Args:
+        event: (todo): write your description
+        context: (dict): write your description
+    """
     records = event["Records"]
     new_jobs = [
         deserialize_item(r["dynamodb"]["NewImage"])
@@ -66,6 +73,12 @@ def handler(event, context):
 
 
 def process_job(job):
+    """
+    Process a single job
+
+    Args:
+        job: (todo): write your description
+    """
     job_id = job["Id"]
     state = {
         k: job[k]
@@ -100,6 +113,12 @@ def process_job(job):
 
 
 def clear_deletion_queue(job):
+    """
+    Clear all the jobs in the queue
+
+    Args:
+        job: (dict): write your description
+    """
     logger.info("Clearing successfully deleted matches")
     with q_table.batch_writer() as batch:
         for item in job.get("DeletionQueueItems", []):
@@ -107,10 +126,24 @@ def clear_deletion_queue(job):
 
 
 def is_operation(record, operation):
+    """
+    Determine if the operation.
+
+    Args:
+        record: (todo): write your description
+        operation: (str): write your description
+    """
     return record.get("eventName") == operation
 
 
 def is_record_type(record, record_type):
+    """
+    Check if a record is a record.
+
+    Args:
+        record: (todo): write your description
+        record_type: (str): write your description
+    """
     new_image = record["dynamodb"].get("NewImage")
     if not new_image:
         return False

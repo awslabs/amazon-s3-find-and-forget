@@ -26,6 +26,12 @@ def with_logging(handler):
 
     @functools.wraps(handler)
     def wrapper(event, *args, **kwargs):
+        """
+        Wraps a handler for the appropriate handler.
+
+        Args:
+            event: (todo): write your description
+        """
         logger.debug("## HANDLER: %s", handler.__name__)
         logger.debug("## ENVIRONMENT VARIABLES")
         logger.debug(json.dumps(os.environ.copy()))
@@ -43,6 +49,13 @@ def json_body_loader(handler):
 
     @functools.wraps(handler)
     def wrapper(event, context):
+        """
+        Return an event handler
+
+        Args:
+            event: (dict): write your description
+            context: (dict): write your description
+        """
         if isinstance(event.get("body"), str):
             event["body"] = json.loads(event["body"])
 
@@ -57,8 +70,20 @@ def request_validator(request_schema):
     """
 
     def wrapper_wrapper(handler):
+        """
+        Decorator for validators.
+
+        Args:
+            handler: (todo): write your description
+        """
         @functools.wraps(handler)
         def wrapper(to_validate, *args, **kwargs):
+            """
+            Decorator to validate a request.
+
+            Args:
+                to_validate: (todo): write your description
+            """
             try:
                 jsonschema.validate(to_validate, request_schema)
             except (KeyError, jsonschema.exceptions.SchemaError) as e:
@@ -91,6 +116,13 @@ def catch_errors(handler):
 
     @functools.wraps(handler)
     def wrapper(event, context):
+        """
+        This is a json - serialize an event.
+
+        Args:
+            event: (todo): write your description
+            context: (dict): write your description
+        """
         try:
             return handler(event, context)
         except ClientError as e:
@@ -115,6 +147,13 @@ def catch_errors(handler):
 
 
 def load_schema(schema_name, schema_dir=None):
+    """
+    Load a schema from given schema.
+
+    Args:
+        schema_name: (str): write your description
+        schema_dir: (str): write your description
+    """
     if not schema_dir:
         caller_dir = os.path.dirname(os.path.abspath((inspect.stack()[1])[1]))
         schema_dir = os.path.join(caller_dir, "schemas")
@@ -130,6 +169,13 @@ def add_cors_headers(handler):
 
     @functools.wraps(handler)
     def wrapper(event, context):
+        """
+        Decor function that will render a json - rpc server.
+
+        Args:
+            event: (todo): write your description
+            context: (dict): write your description
+        """
         resp = handler(event, context)
         resp["headers"] = {
             "Content-Type": "application/json",
@@ -158,18 +204,36 @@ def s3_state_store(
         bucket = os.getenv("StateBucket")
 
     def _load_value(value):
+        """
+        Loads a value from a json string.
+
+        Args:
+            value: (str): write your description
+        """
         parsed_bucket, parsed_key = parse_s3_url(value)
         logger.info("Loading data from S3 key %s", parsed_key)
         obj = s3.Object(parsed_bucket, parsed_key).get()["Body"].read()
         return json.loads(obj)
 
     def _offload_value(value):
+        """
+        Offload off off off off of the bucket.
+
+        Args:
+            value: (str): write your description
+        """
         key = "{}{}".format(prefix, uuid4())
         logger.info("Offloading data to S3 key %s", key)
         s3.Object(bucket, key).put(Body=json.dumps(value, cls=DecimalEncoder))
         return "s3://{}/{}".format(bucket, key)
 
     def load(d):
+        """
+        Recursively loads dictionary
+
+        Args:
+            d: (dict): write your description
+        """
         loaded = {}
 
         for k, v in d.items():
@@ -186,6 +250,12 @@ def s3_state_store(
         return loaded
 
     def offload(d):
+        """
+        Load off off off off of the off of the off of - off
+
+        Args:
+            d: (dict): write your description
+        """
         offloaded = {}
 
         for k, v in d.items():
@@ -201,8 +271,21 @@ def s3_state_store(
         return offloaded
 
     def wrapper_wrapper(handler):
+        """
+        Decorator to wrap an event handler.
+
+        Args:
+            handler: (todo): write your description
+        """
         @functools.wraps(handler)
         def wrapper(event, context):
+            """
+            Decorator to wrap an event.
+
+            Args:
+                event: (todo): write your description
+                context: (dict): write your description
+            """
             if should_load and isinstance(event, dict):
                 event = load(event)
 
@@ -218,6 +301,11 @@ def s3_state_store(
 
 
 def sanitize_args(args):
+    """
+    Sanitize args.
+
+    Args:
+    """
     args = deepcopy(args)
     disallowed_keys = ["match"]
     if isinstance(args, dict):
@@ -244,5 +332,11 @@ def sanitize_args(args):
 
 class LogRecord(logging.LogRecord):
     def getMessage(self):
+        """
+        Return the arguments.
+
+        Args:
+            self: (todo): write your description
+        """
         self.args = sanitize_args(self.args)
         return super().getMessage()

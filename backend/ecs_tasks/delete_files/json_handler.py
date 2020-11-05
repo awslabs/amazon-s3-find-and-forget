@@ -7,6 +7,14 @@ from pyarrow import BufferOutputStream, CompressedOutputStream
 
 
 def initialize(input_file, out_stream, compressed):
+    """
+    Initialize a gzip file.
+
+    Args:
+        input_file: (str): write your description
+        out_stream: (str): write your description
+        compressed: (bool): write your description
+    """
     if compressed:
         bytestream = BytesIO(input_file.read())
         input_file = GzipFile(None, "rb", fileobj=bytestream)
@@ -31,6 +39,14 @@ def find_key(key, obj):
 
 
 def delete_matches_from_json_file(input_file, to_delete, compressed=False):
+    """
+    Parses a json file.
+
+    Args:
+        input_file: (str): write your description
+        to_delete: (str): write your description
+        compressed: (bool): write your description
+    """
     deleted_rows = 0
     with BufferOutputStream() as out_stream:
         input_file, writer = initialize(input_file, out_stream, compressed)

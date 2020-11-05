@@ -12,6 +12,11 @@ pytestmark = [pytest.mark.unit, pytest.mark.ecs_tasks]
 
 
 def test_it_generates_new_json_file_without_matches():
+    """
+    Test if the json file json - formatted as json.
+
+    Args:
+    """
     # Arrange
     to_delete = [{"Column": "customer_id", "MatchIds": ["23456"]}]
     data = (
@@ -31,6 +36,11 @@ def test_it_generates_new_json_file_without_matches():
 
 
 def test_it_handles_json_with_gzip_compression():
+    """
+    Test if a gzip.
+
+    Args:
+    """
     # Arrange
     to_delete = [{"Column": "customer_id", "MatchIds": ["23456"]}]
     data = (
@@ -50,6 +60,11 @@ def test_it_handles_json_with_gzip_compression():
 
 
 def test_delete_correct_rows_when_missing_newline_at_the_end():
+    """
+    Delete missing missing missing missing missing missing missing missing missing missing missing missing missing missing missing missing missing rows.
+
+    Args:
+    """
     # Arrange
     to_delete = [{"Column": "customer_id", "MatchIds": ["23456"]}]
     data = (
@@ -69,6 +84,11 @@ def test_delete_correct_rows_when_missing_newline_at_the_end():
 
 
 def test_delete_correct_rows_containing_newlines_as_content():
+    """
+    Delete all rows to_correct test test results.
+
+    Args:
+    """
     # UNICODE_NEWLINE_SEP = '\u2028'
     # Arrange
     to_delete = [{"Column": "customer_id", "MatchIds": ["12345"]}]
@@ -89,6 +109,11 @@ def test_delete_correct_rows_containing_newlines_as_content():
 
 
 def test_delete_correct_rows_from_json_file_with_complex_types():
+    """
+    Delete rows from json output file.
+
+    Args:
+    """
     # Arrange
     to_delete = [{"Column": "user.id", "MatchIds": ["23456"]}]
     data = (
@@ -108,6 +133,11 @@ def test_delete_correct_rows_from_json_file_with_complex_types():
 
 
 def test_delete_correct_rows_from_json_file_with_nullable_or_undefined_identifiers():
+    """
+    Delete rows from a json_with_file.
+
+    Args:
+    """
     # Arrange
     to_delete = [{"Column": "parents.mother", "MatchIds": ["23456"]}]
     data = (
@@ -131,6 +161,11 @@ def test_delete_correct_rows_from_json_file_with_nullable_or_undefined_identifie
 
 
 def test_delete_correct_rows_from_json_file_with_lower_cased_column_id():
+    """
+    Delete rows from json file.
+
+    Args:
+    """
     # Arrange
     to_delete = [{"Column": "userid", "MatchIds": ["23456"]}]
     data = (
@@ -150,6 +185,11 @@ def test_delete_correct_rows_from_json_file_with_lower_cased_column_id():
 
 
 def test_delete_correct_rows_from_json_file_with_multiple_identifiers():
+    """
+    Delete rows from json json file.
+
+    Args:
+    """
     # Arrange
     to_delete = [
         {"Column": "user.id", "MatchIds": ["23456"]},
@@ -169,6 +209,11 @@ def test_delete_correct_rows_from_json_file_with_multiple_identifiers():
 
 
 def test_it_throws_meaningful_error_for_serialization_issues():
+    """
+    Print out the error status of all throws.
+
+    Args:
+    """
     # Arrange
     to_delete = [{"Column": "customer_id", "MatchIds": ["23456"]}]
     data = (
@@ -187,6 +232,13 @@ def test_it_throws_meaningful_error_for_serialization_issues():
 
 
 def to_json_file(data, compressed=False):
+    """
+    Write data to a json.
+
+    Args:
+        data: (str): write your description
+        compressed: (bool): write your description
+    """
     mode = "wb" if compressed else "w+t"
     tmp = tempfile.NamedTemporaryFile(mode=mode)
     tmp.write(data)
@@ -195,10 +247,23 @@ def to_json_file(data, compressed=False):
 
 
 def to_compressed_json_file(data):
+    """
+    Compress a compressed compressed compressed compressed compressed file. gzip file.
+
+    Args:
+        data: (str): write your description
+    """
     return to_json_file(gzip.compress(bytes(data, "utf-8")), True)
 
 
 def to_json_string(buf, compressed=False):
+    """
+    Serialize a string to a string.
+
+    Args:
+        buf: (todo): write your description
+        compressed: (bool): write your description
+    """
     tmp = tempfile.NamedTemporaryFile(mode="wb")
     tmp.write(buf.getvalue())
     tmp.flush()
@@ -208,4 +273,10 @@ def to_json_string(buf, compressed=False):
 
 
 def to_decompressed_json_string(buf):
+    """
+    Decompress a string to a compressed string.
+
+    Args:
+        buf: (todo): write your description
+    """
     return gzip.decompress(to_json_string(buf, True)).decode("utf-8")

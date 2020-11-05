@@ -72,6 +72,13 @@ def paginate(client, method, iter_keys, **kwargs):
 
 
 def read_queue(queue, number_to_read=10):
+    """
+    Read a number of messages from the queue.
+
+    Args:
+        queue: (todo): write your description
+        number_to_read: (int): write your description
+    """
     msgs = []
     while len(msgs) < number_to_read:
         received = queue.receive_messages(
@@ -89,6 +96,13 @@ def read_queue(queue, number_to_read=10):
 
 
 def batch_sqs_msgs(queue, messages, **kwargs):
+    """
+    Batch batch of a batch of messages to a batch.
+
+    Args:
+        queue: (todo): write your description
+        messages: (str): write your description
+    """
     chunks = [messages[x : x + batch_size] for x in range(0, len(messages), batch_size)]
     for chunk in chunks:
         entries = [
@@ -108,6 +122,16 @@ def batch_sqs_msgs(queue, messages, **kwargs):
 
 
 def emit_event(job_id, event_name, event_data, emitter_id=None, created_at=None):
+    """
+    Emits an event.
+
+    Args:
+        job_id: (str): write your description
+        event_name: (str): write your description
+        event_data: (dict): write your description
+        emitter_id: (str): write your description
+        created_at: (bool): write your description
+    """
     if not emitter_id:
         emitter_id = str(uuid.uuid4())
     if not created_at:
@@ -129,10 +153,21 @@ def emit_event(job_id, event_name, event_data, emitter_id=None, created_at=None)
 
 @lru_cache()
 def get_job_expiry(job_id):
+    """
+    Get the job jobs for a job_id.
+
+    Args:
+        job_id: (str): write your description
+    """
     return table.get_item(Key={"Id": job_id, "Sk": job_id})["Item"].get("Expires", None)
 
 
 def running_job_exists():
+    """
+    Checks if a job exists.
+
+    Args:
+    """
     jobs = []
     for gsi_bucket in range(0, bucket_count):
         response = table.query(
@@ -154,6 +189,11 @@ def running_job_exists():
 
 
 def get_config():
+    """
+    Get env configuration.
+
+    Args:
+    """
     try:
         param_name = os.getenv("ConfigParam", "S3F2-Configuration")
         return json.loads(
@@ -174,16 +214,35 @@ def get_config():
 
 class DecimalEncoder(json.JSONEncoder):
     def default(self, o):
+        """
+        Convert an object as a decimal.
+
+        Args:
+            self: (todo): write your description
+            o: (todo): write your description
+        """
         if isinstance(o, decimal.Decimal):
             return round(o)
         return super(DecimalEncoder, self).default(o)
 
 
 def utc_timestamp(**delta_kwargs):
+    """
+    Returns a datetime.
+
+    Args:
+        delta_kwargs: (dict): write your description
+    """
     return round((datetime.now(timezone.utc) + timedelta(**delta_kwargs)).timestamp())
 
 
 def convert_iso8601_to_epoch(iso_time: str):
+    """
+    Convert iso8601 timestamp to - formatted string.
+
+    Args:
+        iso_time: (str): write your description
+    """
     normalised = iso_time.strip().replace(" ", "T")
     with_ms = "." in normalised
     regex = "%Y-%m-%dT%H:%M:%S.%f%z" if with_ms else "%Y-%m-%dT%H:%M:%S%z"
@@ -193,6 +252,12 @@ def convert_iso8601_to_epoch(iso_time: str):
 
 
 def normalise_dates(data):
+    """
+    Normalise dates.
+
+    Args:
+        data: (dict): write your description
+    """
     if isinstance(data, str):
         try:
             return convert_iso8601_to_epoch(data)
@@ -206,16 +271,34 @@ def normalise_dates(data):
 
 
 def deserialize_item(item):
+    """
+    Deserializes a dictionary.
+
+    Args:
+        item: (dict): write your description
+    """
     return {k: deserializer.deserialize(v) for k, v in item.items()}
 
 
 def parse_s3_url(s3_url):
+    """
+    Parse s3 s3 url.
+
+    Args:
+        s3_url: (str): write your description
+    """
     if not (isinstance(s3_url, str) and s3_url.startswith("s3://")):
         raise ValueError("Invalid S3 URL")
     return s3_url.replace("s3://", "").split("/", 1)
 
 
 def get_user_info(event):
+    """
+    Return user information.
+
+    Args:
+        event: (dict): write your description
+    """
     req = event.get("requestContext", {})
     auth = req.get("authorizer", {})
     claims = auth.get("claims", {})
@@ -226,6 +309,13 @@ def get_user_info(event):
 
 
 def get_session(assume_role_arn=None, role_session_name="s3f2"):
+    """
+    Return the role object.
+
+    Args:
+        assume_role_arn: (str): write your description
+        role_session_name: (str): write your description
+    """
     if assume_role_arn:
         response = sts.assume_role(
             RoleArn=assume_role_arn, RoleSessionName=role_session_name

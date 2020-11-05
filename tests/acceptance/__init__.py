@@ -12,12 +12,25 @@ logger = logging.getLogger()
 
 
 def load_template(template_name):
+    """
+    Loads the template from the specified in template_name.
+
+    Args:
+        template_name: (str): write your description
+    """
     project_root = Path(__file__).parent.parent.absolute()
     with open(project_root.joinpath("templates", template_name)) as f:
         return load(f.read())[0]
 
 
 def get_resources_from_template(template, resource_type=None):
+    """
+    Returns a list of a given template.
+
+    Args:
+        template: (str): write your description
+        resource_type: (str): write your description
+    """
     resources = template["Resources"]
     if not resource_type:
         return resources
@@ -26,6 +39,13 @@ def get_resources_from_template(template, resource_type=None):
 
 
 def get_schema_from_template(ddb_template, logical_identifier):
+    """
+    Retrieves a schema from the database.
+
+    Args:
+        ddb_template: (str): write your description
+        logical_identifier: (str): write your description
+    """
     resource = ddb_template["Resources"].get(logical_identifier)
     if not resource:
         raise KeyError("Unable to find resource with identifier %s", logical_identifier)
@@ -36,6 +56,13 @@ def get_schema_from_template(ddb_template, logical_identifier):
 
 
 def generate_parquet_file(items, columns):
+    """
+    Generate a parquet table.
+
+    Args:
+        items: (str): write your description
+        columns: (str): write your description
+    """
     df = pd.DataFrame(items, columns=columns)
     table = pa.Table.from_pandas(df)
     tmp = tempfile.TemporaryFile()
@@ -44,16 +71,40 @@ def generate_parquet_file(items, columns):
 
 
 def query_parquet_file(f, column, val):
+    """
+    Return a query as a column
+
+    Args:
+        f: (str): write your description
+        column: (str): write your description
+        val: (str): write your description
+    """
     table = pq.read_table(f)
     return [i for i in table.column(column) if i.as_py() == val]
 
 
 def query_json_file(f, column, val):
+    """
+    Query the table as a json file.
+
+    Args:
+        f: (str): write your description
+        column: (str): write your description
+        val: (str): write your description
+    """
     table = pj.read_json(f)
     return [i for i in table.column(column) if i.as_py() == val]
 
 
 def empty_table(table, pk, sk=None):
+    """
+    Perform a table.
+
+    Args:
+        table: (todo): write your description
+        pk: (todo): write your description
+        sk: (todo): write your description
+    """
     items = table.scan()["Items"]
     with table.batch_writer() as batch:
         for item in items:

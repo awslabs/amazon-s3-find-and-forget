@@ -15,6 +15,13 @@ queue = sqs.Queue(os.getenv("QueueUrl"))
 
 @with_logging
 def handler(event, context):
+    """
+    The main handler.
+
+    Args:
+        event: (dict): write your description
+        context: (dict): write your description
+    """
     query_id = event["QueryId"]
     results = paginate(
         athena, athena.get_query_results, ["ResultSet.Rows"], QueryExecutionId=query_id

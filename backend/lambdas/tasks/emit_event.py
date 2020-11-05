@@ -9,6 +9,13 @@ from decorators import with_logging
 
 @with_logging
 def handler(event, context):
+    """
+    Handle an event handler.
+
+    Args:
+        event: (dict): write your description
+        context: (dict): write your description
+    """
     job_id = event["JobId"]
     event_name = event["EventName"]
     event_data = event["EventData"]

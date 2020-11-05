@@ -17,6 +17,13 @@ pytestmark = [
 @pytest.mark.auth
 @pytest.mark.api
 def test_auth(api_client, jobs_endpoint):
+    """
+    Authenticate for a request to an api.
+
+    Args:
+        api_client: (dict): write your description
+        jobs_endpoint: (str): write your description
+    """
     headers = {"Authorization": None}
     assert (
         401
@@ -37,6 +44,17 @@ def test_auth(api_client, jobs_endpoint):
 def test_it_gets_jobs(
     api_client, jobs_endpoint, job_factory, stack, job_table, job_exists_waiter
 ):
+    """
+    : param api_client : the jobs.
+
+    Args:
+        api_client: (todo): write your description
+        jobs_endpoint: (str): write your description
+        job_factory: (todo): write your description
+        stack: (todo): write your description
+        job_table: (todo): write your description
+        job_exists_waiter: (todo): write your description
+    """
     # Arrange
     job_id = job_factory()["Id"]
     job_exists_waiter.wait(
@@ -70,6 +88,14 @@ def test_it_gets_jobs(
 
 @pytest.mark.api
 def test_it_handles_unknown_jobs(api_client, jobs_endpoint, stack):
+    """
+    Test if the job hasproto.
+
+    Args:
+        api_client: (todo): write your description
+        jobs_endpoint: (str): write your description
+        stack: (list): write your description
+    """
     # Arrange
     job_id = "invalid"
     # Act
@@ -86,6 +112,17 @@ def test_it_handles_unknown_jobs(api_client, jobs_endpoint, stack):
 def test_it_lists_jobs_by_date(
     api_client, jobs_endpoint, job_factory, stack, job_table, job_exists_waiter
 ):
+    """
+    Test if jobs in the jobs.
+
+    Args:
+        api_client: (todo): write your description
+        jobs_endpoint: (todo): write your description
+        job_factory: (todo): write your description
+        stack: (list): write your description
+        job_table: (todo): write your description
+        job_exists_waiter: (todo): write your description
+    """
     # Arrange
     job_id_1 = job_factory(job_id=str(uuid.uuid4()), created_at=1576861489)["Id"]
     job_id_2 = job_factory(job_id=str(uuid.uuid4()), created_at=1576861490)["Id"]
@@ -113,6 +150,16 @@ def test_it_lists_jobs_by_date(
 def test_it_returns_summary_fields_in_list(
     api_client, jobs_endpoint, job_factory, job_table, job_finished_waiter
 ):
+    """
+    Test for summary of the return summary of a job.
+
+    Args:
+        api_client: (dict): write your description
+        jobs_endpoint: (str): write your description
+        job_factory: (todo): write your description
+        job_table: (todo): write your description
+        job_finished_waiter: (bool): write your description
+    """
     # Arrange
     job_id = job_factory(job_id=str(uuid.uuid4()), created_at=1576861489)["Id"]
     job_finished_waiter.wait(
@@ -149,6 +196,17 @@ def test_it_returns_summary_fields_in_list(
 def test_it_lists_job_events_by_date(
     api_client, jobs_endpoint, job_factory, stack, job_table, job_finished_waiter
 ):
+    """
+    This function for jobs.
+
+    Args:
+        api_client: (todo): write your description
+        jobs_endpoint: (todo): write your description
+        job_factory: (todo): write your description
+        stack: (todo): write your description
+        job_table: (todo): write your description
+        job_finished_waiter: (bool): write your description
+    """
     # Arrange
     job_id = str(uuid.uuid4())
     job_id = job_factory(job_id=job_id, created_at=1576861489)["Id"]
@@ -176,6 +234,17 @@ def test_it_lists_job_events_by_date(
 def test_it_filters_job_events_by_event_name(
     api_client, jobs_endpoint, job_factory, stack, job_table, job_finished_waiter
 ):
+    """
+    Test for jobs in a job events.
+
+    Args:
+        api_client: (todo): write your description
+        jobs_endpoint: (str): write your description
+        job_factory: (todo): write your description
+        stack: (list): write your description
+        job_table: (todo): write your description
+        job_finished_waiter: (todo): write your description
+    """
     # Arrange
     job_id = str(uuid.uuid4())
     job_id = job_factory(job_id=job_id, created_at=1576861489)["Id"]
@@ -207,6 +276,18 @@ def test_it_runs_for_parquet_happy_path(
     job_complete_waiter,
     job_table,
 ):
+    """
+    Downloads a set of jobs in parallel.
+
+    Args:
+        del_queue_factory: (todo): write your description
+        job_factory: (todo): write your description
+        dummy_lake: (todo): write your description
+        glue_data_mapper_factory: (todo): write your description
+        data_loader: (todo): write your description
+        job_complete_waiter: (bool): write your description
+        job_table: (todo): write your description
+    """
     # Arrange
     glue_data_mapper_factory(
         "test",
@@ -248,6 +329,18 @@ def test_it_runs_for_json_happy_path(
     job_complete_waiter,
     job_table,
 ):
+    """
+    Downloads a test jobs in the jobs queue.
+
+    Args:
+        del_queue_factory: (todo): write your description
+        job_factory: (todo): write your description
+        dummy_lake: (todo): write your description
+        glue_data_mapper_factory: (todo): write your description
+        data_loader: (todo): write your description
+        job_complete_waiter: (bool): write your description
+        job_table: (todo): write your description
+    """
     # Arrange
     glue_data_mapper_factory(
         "test",
@@ -288,6 +381,18 @@ def test_it_runs_for_unpartitioned_data(
     job_complete_waiter,
     job_table,
 ):
+    """
+    Downloads the test jobs in the database.
+
+    Args:
+        del_queue_factory: (todo): write your description
+        job_factory: (todo): write your description
+        dummy_lake: (todo): write your description
+        glue_data_mapper_factory: (todo): write your description
+        data_loader: (todo): write your description
+        job_complete_waiter: (bool): write your description
+        job_table: (todo): write your description
+    """
     # Arrange
     glue_data_mapper_factory("test")
     item = del_queue_factory("12345")
@@ -322,6 +427,18 @@ def test_it_runs_for_complex_types(
     job_complete_waiter,
     job_table,
 ):
+    """
+    Test for jobs in the s3 bucket.
+
+    Args:
+        del_queue_factory: (todo): write your description
+        job_factory: (todo): write your description
+        dummy_lake: (str): write your description
+        glue_data_mapper_factory: (todo): write your description
+        data_loader: (todo): write your description
+        job_complete_waiter: (bool): write your description
+        job_table: (todo): write your description
+    """
     # Arrange
     glue_data_mapper_factory("test", column_identifiers=["user_info.name"])
     item = del_queue_factory("matteo")
@@ -357,6 +474,18 @@ def test_it_runs_for_partitioned_data_with_non_string_partitions(
     job_complete_waiter,
     job_table,
 ):
+    """
+    Downloads all jobs in the multiprocessing.
+
+    Args:
+        del_queue_factory: (todo): write your description
+        job_factory: (todo): write your description
+        dummy_lake: (todo): write your description
+        glue_data_mapper_factory: (todo): write your description
+        data_loader: (todo): write your description
+        job_complete_waiter: (todo): write your description
+        job_table: (todo): write your description
+    """
     # Arrange
     glue_data_mapper_factory(
         "test",
@@ -400,6 +529,19 @@ def test_it_does_not_permit_unversioned_buckets(
     job_table,
     s3_resource,
 ):
+    """
+    Test if the s3 s3 bucket.
+
+    Args:
+        del_queue_factory: (str): write your description
+        job_factory: (todo): write your description
+        dummy_lake: (todo): write your description
+        glue_data_mapper_factory: (todo): write your description
+        data_loader: (todo): write your description
+        job_finished_waiter: (todo): write your description
+        job_table: (todo): write your description
+        s3_resource: (todo): write your description
+    """
     try:
         # Arrange
         s3_resource.BucketVersioning(dummy_lake["bucket_name"]).suspend()
@@ -434,6 +576,14 @@ def test_it_does_not_permit_unversioned_buckets(
 def test_it_executes_successfully_for_empty_queue(
     job_factory, job_finished_waiter, job_table
 ):
+    """
+    Synchronously runs in a queue.
+
+    Args:
+        job_factory: (todo): write your description
+        job_finished_waiter: (todo): write your description
+        job_table: (todo): write your description
+    """
     # Arrange
     job_id = job_factory()["Id"]
     # Act
@@ -457,6 +607,19 @@ def test_it_supports_data_access_roles(
     job_table,
     data_access_role,
 ):
+    """
+    Initiate_it_data_data_mapper.
+
+    Args:
+        del_queue_factory: (todo): write your description
+        job_factory: (todo): write your description
+        dummy_lake: (todo): write your description
+        glue_data_mapper_factory: (todo): write your description
+        data_loader: (todo): write your description
+        job_complete_waiter: (bool): write your description
+        job_table: (todo): write your description
+        data_access_role: (todo): write your description
+    """
     # Arrange
     glue_data_mapper_factory(
         "test",
@@ -494,6 +657,19 @@ def test_it_deletes_old_versions(
     job_table,
     data_access_role,
 ):
+    """
+    The old versions of the old old_factory.
+
+    Args:
+        del_queue_factory: (todo): write your description
+        job_factory: (todo): write your description
+        dummy_lake: (str): write your description
+        glue_data_mapper_factory: (todo): write your description
+        data_loader: (todo): write your description
+        job_complete_waiter: (bool): write your description
+        job_table: (todo): write your description
+        data_access_role: (todo): write your description
+    """
     # Arrange
     glue_data_mapper_factory(
         "test",
@@ -536,6 +712,20 @@ def test_it_handles_find_permission_issues(
     policy_changer,
     stack,
 ):
+    """
+    Finds all of the queues for the given bucket.
+
+    Args:
+        del_queue_factory: (todo): write your description
+        job_factory: (float): write your description
+        dummy_lake: (todo): write your description
+        glue_data_mapper_factory: (todo): write your description
+        data_loader: (todo): write your description
+        job_finished_waiter: (todo): write your description
+        job_table: (todo): write your description
+        policy_changer: (todo): write your description
+        stack: (todo): write your description
+    """
     # Arrange
     glue_data_mapper_factory(
         "test",
@@ -587,6 +777,20 @@ def test_it_handles_forget_permission_issues(
     policy_changer,
     stack,
 ):
+    """
+    Test for the queues of the given bucket.
+
+    Args:
+        del_queue_factory: (str): write your description
+        job_factory: (todo): write your description
+        dummy_lake: (str): write your description
+        glue_data_mapper_factory: (str): write your description
+        data_loader: (todo): write your description
+        job_finished_waiter: (str): write your description
+        job_table: (todo): write your description
+        policy_changer: (str): write your description
+        stack: (todo): write your description
+    """
     # Arrange
     glue_data_mapper_factory(
         "test",
@@ -633,6 +837,18 @@ def test_it_handles_forget_invalid_role(
     job_finished_waiter,
     job_table,
 ):
+    """
+    This is the last run of the last_it - consumer_factory.
+
+    Args:
+        del_queue_factory: (todo): write your description
+        job_factory: (todo): write your description
+        dummy_lake: (str): write your description
+        glue_data_mapper_factory: (todo): write your description
+        data_loader: (str): write your description
+        job_finished_waiter: (todo): write your description
+        job_table: (todo): write your description
+    """
     # Arrange
     glue_data_mapper_factory(
         "test",

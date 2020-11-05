@@ -28,6 +28,11 @@ pytestmark = [pytest.mark.unit, pytest.mark.ecs_tasks]
 
 
 def get_list_object_versions_error():
+    """
+    Get versions of versions versions.
+
+    Args:
+    """
     return ClientError(
         {
             "Error": {
@@ -61,6 +66,18 @@ def test_happy_path_when_queue_not_empty(
     mock_verify_integrity,
     message_stub,
 ):
+    """
+    Return a mock path to a mock path of the mock
+
+    Args:
+        mock_save: (todo): write your description
+        mock_emit: (todo): write your description
+        mock_delete: (todo): write your description
+        mock_s3: (todo): write your description
+        mock_session: (todo): write your description
+        mock_verify_integrity: (todo): write your description
+        message_stub: (str): write your description
+    """
     mock_s3.S3FileSystem.return_value = mock_s3
     column = {"Column": "customer_id", "MatchIds": ["12345", "23456"]}
     mock_file = MagicMock(version_id="abc123")
@@ -110,6 +127,18 @@ def test_happy_path_when_queue_not_empty_for_compressed_json(
     mock_verify_integrity,
     message_stub,
 ):
+    """
+    Get the path to the mock path to mock.
+
+    Args:
+        mock_save: (todo): write your description
+        mock_emit: (todo): write your description
+        mock_delete: (todo): write your description
+        mock_s3: (todo): write your description
+        mock_session: (todo): write your description
+        mock_verify_integrity: (todo): write your description
+        message_stub: (todo): write your description
+    """
     mock_s3.S3FileSystem.return_value = mock_s3
     column = {"Column": "customer_id", "MatchIds": ["12345", "23456"]}
     mock_file = MagicMock(version_id="abc123")
@@ -154,6 +183,15 @@ def test_happy_path_when_queue_not_empty_for_compressed_json(
 @patch("backend.ecs_tasks.delete_files.main.s3fs")
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 def test_it_assumes_role(mock_delete, mock_s3, mock_session, message_stub):
+    """
+    Get an amazon sagemaker mock role.
+
+    Args:
+        mock_delete: (todo): write your description
+        mock_s3: (todo): write your description
+        mock_session: (todo): write your description
+        message_stub: (str): write your description
+    """
     mock_s3.S3FileSystem.return_value = mock_s3
     mock_s3.open.return_value = mock_s3
     mock_s3.__enter__.return_value = MagicMock(version_id="abc123")
@@ -189,6 +227,16 @@ def test_it_assumes_role(mock_delete, mock_s3, mock_session, message_stub):
 def test_it_removes_old_versions(
     mock_delete, mock_s3, mock_delete_versions, mock_save, message_stub
 ):
+    """
+    Delete versions of the mock versions exist.
+
+    Args:
+        mock_delete: (todo): write your description
+        mock_s3: (todo): write your description
+        mock_delete_versions: (todo): write your description
+        mock_save: (todo): write your description
+        message_stub: (todo): write your description
+    """
     mock_s3.S3FileSystem.return_value = mock_s3
     mock_s3.open.return_value = mock_s3
     mock_s3.__enter__.return_value = MagicMock(version_id="abc123")
@@ -227,6 +275,17 @@ def test_it_removes_old_versions(
 def test_it_handles_old_version_delete_failures(
     mock_handle, mock_delete, mock_s3, mock_delete_versions, mock_save, message_stub,
 ):
+    """
+    Delete the mock version of the mock.
+
+    Args:
+        mock_handle: (todo): write your description
+        mock_delete: (todo): write your description
+        mock_s3: (todo): write your description
+        mock_delete_versions: (todo): write your description
+        mock_save: (todo): write your description
+        message_stub: (todo): write your description
+    """
     mock_s3.S3FileSystem.return_value = mock_s3
     mock_s3.open.return_value = mock_s3
     mock_s3.__enter__.return_value = MagicMock(version_id="abc123")
@@ -263,6 +322,17 @@ def test_it_handles_old_version_delete_failures(
 def test_it_handles_no_deletions(
     mock_handle, mock_save, mock_emit, mock_delete, mock_s3, message_stub
 ):
+    """
+    Test for mock mock and mock.
+
+    Args:
+        mock_handle: (todo): write your description
+        mock_save: (todo): write your description
+        mock_emit: (todo): write your description
+        mock_delete: (todo): write your description
+        mock_s3: (todo): write your description
+        message_stub: (str): write your description
+    """
     mock_s3.S3FileSystem.return_value = mock_s3
     column = {"Column": "customer_id", "MatchIds": ["12345", "23456"]}
     mock_delete.return_value = pa.BufferOutputStream(), {"DeletedRows": 0}
@@ -296,6 +366,14 @@ def test_it_handles_no_deletions(
 def test_it_handles_missing_col_exceptions(
     mock_error_handler, mock_delete, message_stub
 ):
+    """
+    Delete missing missing missing missing missing missing missing missing missing missing missing missing missing missing missing missing missing missing missing missing missing missing missing missing missing missing missing missing missing
+
+    Args:
+        mock_error_handler: (todo): write your description
+        mock_delete: (todo): write your description
+        message_stub: (str): write your description
+    """
     # Arrange
     mock_delete.side_effect = KeyError("FAIL")
     # Act
@@ -318,6 +396,14 @@ def test_it_handles_missing_col_exceptions(
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
 def test_it_handles_arrow_exceptions(mock_error_handler, mock_delete, message_stub):
+    """
+    Test for the side of the side side side of the side.
+
+    Args:
+        mock_error_handler: (todo): write your description
+        mock_delete: (todo): write your description
+        message_stub: (str): write your description
+    """
     # Arrange
     mock_delete.side_effect = ArrowException("FAIL")
     # Act
@@ -336,6 +422,12 @@ def test_it_handles_arrow_exceptions(mock_error_handler, mock_delete, message_st
 )
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
 def test_it_validates_messages_with_missing_keys(mock_error_handler):
+    """
+    Validate that all valid test test keys.
+
+    Args:
+        mock_error_handler: (todo): write your description
+    """
     # Act
     execute("https://queue/url", "{}", "receipt_handle")
     # Assert
@@ -350,6 +442,12 @@ def test_it_validates_messages_with_missing_keys(mock_error_handler):
 )
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
 def test_it_validates_messages_with_invalid_body(mock_error_handler):
+    """
+    Validate the testerror occurs.
+
+    Args:
+        mock_error_handler: (todo): write your description
+    """
     # Act
     execute("https://queue/url", "NOT JSON", "receipt_handle")
     mock_error_handler.assert_called()
@@ -365,6 +463,14 @@ def test_it_validates_messages_with_invalid_body(mock_error_handler):
 @patch("backend.ecs_tasks.delete_files.main.s3fs")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
 def test_it_handles_s3_permission_issues(mock_error_handler, mock_s3, message_stub):
+    """
+    Test if the mock issues for the mock.
+
+    Args:
+        mock_error_handler: (todo): write your description
+        mock_s3: (todo): write your description
+        message_stub: (str): write your description
+    """
     mock_s3.S3FileSystem.return_value = mock_s3
     mock_s3.open.side_effect = ClientError({}, "GetObject")
     # Act
@@ -384,6 +490,14 @@ def test_it_handles_s3_permission_issues(mock_error_handler, mock_s3, message_st
 @patch("backend.ecs_tasks.delete_files.main.s3fs")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
 def test_it_handles_io_errors(mock_error_handler, mock_s3, message_stub):
+    """
+    Return a mock error message for the given socket.
+
+    Args:
+        mock_error_handler: (todo): write your description
+        mock_s3: (todo): write your description
+        message_stub: (str): write your description
+    """
     # Arrange
     mock_s3.S3FileSystem.return_value = mock_s3
     mock_s3.open.side_effect = IOError("an error")
@@ -405,6 +519,14 @@ def test_it_handles_io_errors(mock_error_handler, mock_s3, message_stub):
 @patch("backend.ecs_tasks.delete_files.main.s3fs")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
 def test_it_handles_file_too_big(mock_error_handler, mock_s3, message_stub):
+    """
+    Test if the mock.
+
+    Args:
+        mock_error_handler: (todo): write your description
+        mock_s3: (todo): write your description
+        message_stub: (str): write your description
+    """
     # Arrange
     mock_s3.S3FileSystem.return_value = mock_s3
     mock_s3.open.side_effect = MemoryError("Too big")
@@ -426,6 +548,14 @@ def test_it_handles_file_too_big(mock_error_handler, mock_s3, message_stub):
 @patch("backend.ecs_tasks.delete_files.main.s3fs")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
 def test_it_handles_generic_error(mock_error_handler, mock_s3, message_stub):
+    """
+    Return a mock error message for the mock.
+
+    Args:
+        mock_error_handler: (todo): write your description
+        mock_s3: (todo): write your description
+        message_stub: (todo): write your description
+    """
     # Arrange
     mock_s3.S3FileSystem.return_value = mock_s3
     mock_s3.open.side_effect = RuntimeError("Some Error")
@@ -444,6 +574,15 @@ def test_it_handles_generic_error(mock_error_handler, mock_s3, message_stub):
 def test_it_handles_unversioned_buckets(
     mock_error_handler, mock_s3, mock_versioning, message_stub
 ):
+    """
+    Test for unversioned unversion object.
+
+    Args:
+        mock_error_handler: (todo): write your description
+        mock_s3: (todo): write your description
+        mock_versioning: (todo): write your description
+        message_stub: (str): write your description
+    """
     # Arrange
     mock_s3.S3FileSystem.return_value = mock_s3
     mock_versioning.side_effect = ValueError("Versioning validation Error")
@@ -471,6 +610,15 @@ def test_it_handles_unversioned_buckets(
 def test_it_provides_logs_for_acl_fail(
     mock_save, mock_error_handler, mock_delete, message_stub
 ):
+    """
+    Test for mock logs for a mock.
+
+    Args:
+        mock_save: (todo): write your description
+        mock_error_handler: (todo): write your description
+        mock_delete: (todo): write your description
+        message_stub: (str): write your description
+    """
     mock_save.side_effect = ClientError({}, "PutObjectAcl")
     mock_delete.return_value = pa.BufferOutputStream(), {"DeletedRows": 1}
     execute("https://queue/url", message_stub(), "receipt_handle")
@@ -503,6 +651,16 @@ def test_it_provides_logs_for_acl_fail(
 def test_it_provides_logs_for_failed_version_integrity_check_and_performs_rollback(
     mock_error_handler, mock_delete, mock_verify_integrity, rollback_mock, message_stub,
 ):
+    """
+    Rollback mock logs on the mock mock.
+
+    Args:
+        mock_error_handler: (todo): write your description
+        mock_delete: (todo): write your description
+        mock_verify_integrity: (todo): write your description
+        rollback_mock: (todo): write your description
+        message_stub: (str): write your description
+    """
     mock_verify_integrity.side_effect = IntegrityCheckFailedError(
         "Some error", MagicMock(), "bucket", "path/basic.parquet", "new_version"
     )
@@ -536,6 +694,15 @@ def test_it_provides_logs_for_failed_version_integrity_check_and_performs_rollba
 def test_it_provides_logs_for_get_latest_version_fail(
     mock_error_handler, mock_delete, mock_verify_integrity, message_stub
 ):
+    """
+    Test for mock logs to be sent to mock.
+
+    Args:
+        mock_error_handler: (todo): write your description
+        mock_delete: (todo): write your description
+        mock_verify_integrity: (todo): write your description
+        message_stub: (todo): write your description
+    """
     mock_verify_integrity.side_effect = get_list_object_versions_error()
     mock_delete.return_value = pa.BufferOutputStream(), {"DeletedRows": 1}
     execute("https://queue/url", message_stub(), "receipt_handle")
@@ -567,6 +734,15 @@ def test_it_provides_logs_for_get_latest_version_fail(
 def test_it_provides_logs_for_failed_rollback_client_error(
     mock_error_handler, mock_delete, mock_verify_integrity, message_stub
 ):
+    """
+    Test if the mock logs that were sent.
+
+    Args:
+        mock_error_handler: (todo): write your description
+        mock_delete: (todo): write your description
+        mock_verify_integrity: (todo): write your description
+        message_stub: (todo): write your description
+    """
     mock_s3 = MagicMock()
     mock_s3.delete_object.side_effect = ClientError({}, "DeleteObject")
     mock_verify_integrity.side_effect = IntegrityCheckFailedError(
@@ -606,6 +782,15 @@ def test_it_provides_logs_for_failed_rollback_client_error(
 def test_it_provides_logs_for_failed_rollback_generic_error(
     mock_error_handler, mock_delete, mock_verify_integrity, message_stub
 ):
+    """
+    Test for rollback logs.
+
+    Args:
+        mock_error_handler: (todo): write your description
+        mock_delete: (todo): write your description
+        mock_verify_integrity: (todo): write your description
+        message_stub: (str): write your description
+    """
     mock_s3 = MagicMock()
     mock_s3.delete_object.side_effect = Exception("error!!")
     mock_verify_integrity.side_effect = IntegrityCheckFailedError(
@@ -629,6 +814,13 @@ def test_it_provides_logs_for_failed_rollback_generic_error(
 @patch("backend.ecs_tasks.delete_files.main.sanitize_message")
 @patch("backend.ecs_tasks.delete_files.main.emit_failure_event")
 def test_it_gracefully_handles_invalid_message_bodies(mock_emit, mock_sanitize):
+    """
+    Emits the mock mock mock.
+
+    Args:
+        mock_emit: (todo): write your description
+        mock_sanitize: (todo): write your description
+    """
     sqs_message = MagicMock()
     mock_emit.side_effect = ValueError("Bad message")
     handle_error(sqs_message, "{}", "Some error")
@@ -642,6 +834,13 @@ def test_it_gracefully_handles_invalid_message_bodies(mock_emit, mock_sanitize):
 @patch("backend.ecs_tasks.delete_files.main.sanitize_message")
 @patch("backend.ecs_tasks.delete_files.main.emit_failure_event")
 def test_it_gracefully_handles_invalid_job_id(mock_emit, mock_sanitize):
+    """
+    Emits mock_emitfully.
+
+    Args:
+        mock_emit: (todo): write your description
+        mock_sanitize: (todo): write your description
+    """
     sqs_message = MagicMock()
     mock_emit.side_effect = KeyError("Invalid Job ID")
     handle_error(sqs_message, "{}", "Some error")
@@ -655,6 +854,13 @@ def test_it_gracefully_handles_invalid_job_id(mock_emit, mock_sanitize):
 @patch("backend.ecs_tasks.delete_files.main.sanitize_message")
 @patch("backend.ecs_tasks.delete_files.main.emit_failure_event")
 def test_it_gracefully_handles_client_errors(mock_emit, mock_sanitize):
+    """
+    Test if the mock client.
+
+    Args:
+        mock_emit: (todo): write your description
+        mock_sanitize: (todo): write your description
+    """
     sqs_message = MagicMock()
     mock_emit.side_effect = ClientError({}, "PutItem")
     handle_error(sqs_message, "{}", "Some error")
@@ -670,6 +876,13 @@ def test_it_gracefully_handles_client_errors(mock_emit, mock_sanitize):
 def test_it_doesnt_change_message_visibility_when_rollback_fails(
     mock_emit, mock_sanitize
 ):
+    """
+    Emits the mock_emitchange_roll.
+
+    Args:
+        mock_emit: (todo): write your description
+        mock_sanitize: (todo): write your description
+    """
     sqs_message = MagicMock()
     mock_emit.side_effect = ClientError({}, "DeleteObjectVersion")
     handle_error(sqs_message, "{}", "Some error", "ObjectRollbackFailed", False)
@@ -682,6 +895,12 @@ def test_it_doesnt_change_message_visibility_when_rollback_fails(
 
 @patch("backend.ecs_tasks.delete_files.main.emit_failure_event")
 def test_it_gracefully_handles_change_message_visibility_failure(mock_emit):
+    """
+    Context manager to be called with a mock changes.
+
+    Args:
+        mock_emit: (todo): write your description
+    """
     sqs_message = MagicMock()
     e = boto3.client("sqs").exceptions.ReceiptHandleIsInvalid
     sqs_message.meta.client.exceptions.MessageNotInflight = e
@@ -695,6 +914,12 @@ def test_it_gracefully_handles_change_message_visibility_failure(mock_emit):
 
 @patch("backend.ecs_tasks.delete_files.main.emit_failure_event")
 def test_error_handler(mock_emit):
+    """
+    Emit the mock error handler.
+
+    Args:
+        mock_emit: (todo): write your description
+    """
     msg = MagicMock()
     handle_error(msg, "{}", "Test Error")
     mock_emit.assert_called_with("{}", "Test Error", "ObjectUpdateFailed")
@@ -703,6 +928,12 @@ def test_error_handler(mock_emit):
 
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
 def test_kill_handler_cleans_up(mock_error_handler):
+    """
+    Kill the error handler for the given mock.
+
+    Args:
+        mock_error_handler: (todo): write your description
+    """
     with pytest.raises(SystemExit) as e:
         mock_pool = MagicMock()
         mock_msg = MagicMock()
@@ -714,6 +945,12 @@ def test_kill_handler_cleans_up(mock_error_handler):
 
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
 def test_kill_handler_exits_successfully_when_done(mock_error_handler):
+    """
+    Kill the error handler that is closed.
+
+    Args:
+        mock_error_handler: (todo): write your description
+    """
     with pytest.raises(SystemExit) as e:
         mock_pool = MagicMock()
         kill_handler([], mock_pool)
@@ -724,6 +961,12 @@ def test_kill_handler_exits_successfully_when_done(mock_error_handler):
 
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
 def test_it_gracefully_handles_cleanup_issues(mock_error_handler):
+    """
+    Terminates the mock issues.
+
+    Args:
+        mock_error_handler: (todo): write your description
+    """
     with pytest.raises(SystemExit):
         mock_pool = MagicMock()
         mock_msg = MagicMock()
@@ -735,6 +978,11 @@ def test_it_gracefully_handles_cleanup_issues(mock_error_handler):
 
 @patch.dict(os.environ, {"DELETE_OBJECTS_QUEUE": "https://queue/url"})
 def test_it_inits_arg_parser_with_defaults():
+    """
+    Returns a list of the test test test test test test runs.
+
+    Args:
+    """
     res = parse_args([])
     assert isinstance(res, Namespace)
     assert all(
@@ -752,6 +1000,12 @@ def test_it_inits_arg_parser_with_defaults():
 @patch("backend.ecs_tasks.delete_files.main.boto3")
 @patch.dict(os.environ, {"AWS_DEFAULT_REGION": "eu-west-2"})
 def test_it_inits_queue_with_regional_url(mock_boto):
+    """
+    Determine the test queue is in the test queue.
+
+    Args:
+        mock_boto: (todo): write your description
+    """
     get_queue("https://queue/rule")
     mock_boto.resource.assert_called_with(
         "sqs", endpoint_url="https://sqs.eu-west-2.amazonaws.com"
@@ -761,12 +1015,24 @@ def test_it_inits_queue_with_regional_url(mock_boto):
 @patch("backend.ecs_tasks.delete_files.main.boto3")
 @patch("os.getenv", MagicMock(return_value=None))
 def test_it_uses_default_if_region_not_in_env(mock_boto):
+    """
+    Test if the environment supports the default.
+
+    Args:
+        mock_boto: (todo): write your description
+    """
     get_queue("https://queue/rule")
     mock_boto.resource.assert_called_with("sqs")
 
 
 @patch("backend.ecs_tasks.delete_files.main.boto3")
 def test_it_does_not_override_user_supplied_endpoint_url(mock_boto):
+    """
+    Determine if the user is not be logged in - memory endpoint.
+
+    Args:
+        mock_boto: (todo): write your description
+    """
     get_queue("https://queue/rule", endpoint_url="https://my/url")
     mock_boto.resource.assert_called_with("sqs", endpoint_url="https://my/url")
 
@@ -775,6 +1041,13 @@ def test_it_does_not_override_user_supplied_endpoint_url(mock_boto):
 @patch("backend.ecs_tasks.delete_files.main.Pool")
 @patch("backend.ecs_tasks.delete_files.main.get_queue")
 def test_it_starts_subprocesses(mock_queue, mock_pool):
+    """
+    Receive a subprocesses in a subprocess.
+
+    Args:
+        mock_queue: (todo): write your description
+        mock_pool: (todo): write your description
+    """
     mock_queue.return_value = mock_queue
     mock_message = MagicMock()
     mock_queue.receive_messages.return_value = [mock_message]
@@ -798,6 +1071,13 @@ def test_it_starts_subprocesses(mock_queue, mock_pool):
 @patch("backend.ecs_tasks.delete_files.main.get_queue")
 @patch("backend.ecs_tasks.delete_files.main.time")
 def test_it_sleeps_where_no_messages(mock_time, mock_queue):
+    """
+    Test if the number of retry.
+
+    Args:
+        mock_time: (todo): write your description
+        mock_queue: (todo): write your description
+    """
     mock_queue.return_value = mock_queue
     mock_queue.receive_messages.return_value = []
     # Break out of while loop
@@ -811,6 +1091,13 @@ def test_it_sleeps_where_no_messages(mock_time, mock_queue):
 @patch("backend.ecs_tasks.delete_files.main.signal")
 @patch("backend.ecs_tasks.delete_files.main.get_queue")
 def test_it_sets_kill_handlers(mock_queue, mock_signal):
+    """
+    Kill the number of jobs that were closed.
+
+    Args:
+        mock_queue: (todo): write your description
+        mock_signal: (todo): write your description
+    """
     mock_queue.return_value = mock_queue
     # Break out of while loop
     mock_queue.receive_messages.side_effect = RuntimeError("Break Loop")
@@ -823,6 +1110,13 @@ def test_it_sets_kill_handlers(mock_queue, mock_signal):
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_json_file")
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_parquet_file")
 def test_it_deletes_from_json_file(mock_parquet, mock_json):
+    """
+    Test if the mock file exists.
+
+    Args:
+        mock_parquet: (todo): write your description
+        mock_json: (todo): write your description
+    """
     f = MagicMock()
     cols = MagicMock()
     delete_matches_from_file(f, cols, "json", False)
@@ -833,6 +1127,13 @@ def test_it_deletes_from_json_file(mock_parquet, mock_json):
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_json_file")
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_parquet_file")
 def test_it_deletes_from_parquet_file(mock_parquet, mock_json):
+    """
+    Test if a mock has been deleted.
+
+    Args:
+        mock_parquet: (todo): write your description
+        mock_json: (todo): write your description
+    """
     f = MagicMock()
     cols = MagicMock()
     delete_matches_from_file(f, cols, "parquet")

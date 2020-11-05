@@ -11,6 +11,12 @@ pytestmark = [pytest.mark.unit, pytest.mark.task]
 
 @patch("backend.lambdas.tasks.check_query_status.client")
 def test_it_returns_query_status(mock_client):
+    """
+    Test the return status of the return.
+
+    Args:
+        mock_client: (todo): write your description
+    """
     mock_client.get_query_execution.return_value = {
         "QueryExecution": {
             "Status": {
@@ -32,6 +38,12 @@ def test_it_returns_query_status(mock_client):
 
 @patch("backend.lambdas.tasks.check_query_status.client")
 def test_it_provides_reason_where_supplied(mock_client):
+    """
+    Returns a dictionary of reason that have been placed on the provider.
+
+    Args:
+        mock_client: (todo): write your description
+    """
     mock_client.get_query_execution.return_value = {
         "QueryExecution": {
             "Status": {

@@ -9,6 +9,13 @@ client = boto3.client("athena")
 
 @with_logging
 def handler(event, context):
+    """
+    Main handler.
+
+    Args:
+        event: (todo): write your description
+        context: (dict): write your description
+    """
     response = client.start_query_execution(
         QueryString=make_query(event["QueryData"]),
         ResultConfiguration={
@@ -64,10 +71,22 @@ def make_query(query_data):
 
 
 def escape_column(item):
+    """
+    Escape special characters.
+
+    Args:
+        item: (str): write your description
+    """
     return '"{}"'.format(item.replace('"', '""').replace(".", '"."'))
 
 
 def escape_item(item):
+    """
+    Escape the given item.
+
+    Args:
+        item: (todo): write your description
+    """
     if item is None:
         return "NULL"
     elif isinstance(item, (int, float)):
@@ -79,8 +98,20 @@ def escape_item(item):
 
 
 def escape_number(item):
+    """
+    Return the number of the given item.
+
+    Args:
+        item: (todo): write your description
+    """
     return item
 
 
 def escape_string(item):
+    """
+    Escape special characters in a string.
+
+    Args:
+        item: (str): write your description
+    """
     return "'{}'".format(item.replace("'", "''"))

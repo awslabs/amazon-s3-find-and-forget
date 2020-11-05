@@ -25,6 +25,14 @@ pytestmark = [pytest.mark.unit, pytest.mark.task]
 @patch("backend.lambdas.tasks.work_query_queue.sqs")
 @patch("backend.lambdas.tasks.work_query_queue.load_execution")
 def test_it_skips_with_no_remaining_capacity(mock_load, sqs_mock, read_queue_mock):
+    """
+    Returns a dictionary of skips workflows_load_with_no_with_no_with_no_with_no_with_no
+
+    Args:
+        mock_load: (todo): write your description
+        sqs_mock: (todo): write your description
+        read_queue_mock: (todo): write your description
+    """
     sqs_mock.Queue.return_value = sqs_mock
     mock_load.return_value = execution_stub(status="RUNNING", ReceiptHandle="handle")
 
@@ -46,6 +54,14 @@ def test_it_skips_with_no_remaining_capacity(mock_load, sqs_mock, read_queue_moc
 @patch("backend.lambdas.tasks.work_query_queue.read_queue")
 @patch("backend.lambdas.tasks.work_query_queue.sqs")
 def test_it_starts_machine_as_expected(sqs_mock, read_queue_mock, sf_client_mock):
+    """
+    : paramiko_queue_machine.
+
+    Args:
+        sqs_mock: (todo): write your description
+        read_queue_mock: (todo): write your description
+        sf_client_mock: (todo): write your description
+    """
     sqs_mock.Queue.return_value = sqs_mock
     sf_client_mock.start_execution.return_value = execution_stub()
 
@@ -86,6 +102,14 @@ def test_it_starts_machine_as_expected(sqs_mock, read_queue_mock, sf_client_mock
 @patch("backend.lambdas.tasks.work_query_queue.read_queue")
 @patch("backend.lambdas.tasks.work_query_queue.sqs")
 def test_it_defaults_wait_duration(sqs_mock, read_queue_mock, sf_client_mock):
+    """
+    Execute the duration of a mock.
+
+    Args:
+        sqs_mock: (todo): write your description
+        read_queue_mock: (bool): write your description
+        sf_client_mock: (todo): write your description
+    """
     sqs_mock.Queue.return_value = sqs_mock
     sf_client_mock.start_execution.return_value = execution_stub()
 
@@ -116,6 +140,14 @@ def test_it_defaults_wait_duration(sqs_mock, read_queue_mock, sf_client_mock):
 @patch("backend.lambdas.tasks.work_query_queue.read_queue")
 @patch("backend.lambdas.tasks.work_query_queue.sqs")
 def test_it_starts_state_machine_per_message(sqs_mock, read_queue_mock, sf_client_mock):
+    """
+    Get the state machine state machine state.
+
+    Args:
+        sqs_mock: (todo): write your description
+        read_queue_mock: (todo): write your description
+        sf_client_mock: (todo): write your description
+    """
     sqs_mock.Queue.return_value = sqs_mock
     sf_client_mock.start_execution.return_value = execution_stub()
     read_queue_mock.return_value = [
@@ -140,6 +172,14 @@ def test_it_starts_state_machine_per_message(sqs_mock, read_queue_mock, sf_clien
 @patch("backend.lambdas.tasks.work_query_queue.read_queue")
 @patch("backend.lambdas.tasks.work_query_queue.sqs")
 def test_limits_calls_to_capacity(sqs_mock, read_queue_mock, sf_client_mock):
+    """
+    Get the logged in user - in ensembl.
+
+    Args:
+        sqs_mock: (todo): write your description
+        read_queue_mock: (todo): write your description
+        sf_client_mock: (todo): write your description
+    """
     sqs_mock.Queue.return_value = sqs_mock
     sf_client_mock.start_execution.return_value = execution_stub()
     read_queue_mock.return_value = [
@@ -165,6 +205,16 @@ def test_limits_calls_to_capacity(sqs_mock, read_queue_mock, sf_client_mock):
 def test_it_recognises_completed_executions(
     clear_mock, load_mock, sqs_mock, read_queue_mock, sf_client_mock
 ):
+    """
+    Executes the mock of the mock.
+
+    Args:
+        clear_mock: (todo): write your description
+        load_mock: (todo): write your description
+        sqs_mock: (todo): write your description
+        read_queue_mock: (todo): write your description
+        sf_client_mock: (todo): write your description
+    """
     sqs_mock.Queue.return_value = sqs_mock
     sf_client_mock.start_execution.return_value = execution_stub()
     read_queue_mock.return_value = []
@@ -193,6 +243,13 @@ def test_it_recognises_completed_executions(
 def test_it_abandons_when_any_query_fails_and_no_running_in_current_loop(
     mock_abandon, mock_load
 ):
+    """
+    Test if any of the mock_it_query.
+
+    Args:
+        mock_abandon: (todo): write your description
+        mock_load: (todo): write your description
+    """
     mock_load.return_value = execution_stub(status="FAILED")
     mock_abandon.side_effect = RuntimeError
     with pytest.raises(RuntimeError):
@@ -212,6 +269,14 @@ def test_it_abandons_when_any_query_fails_and_no_running_in_current_loop(
 def test_it_abandons_when_previous_loop_found_failure(
     mock_clear, mock_abandon, mock_load
 ):
+    """
+    Test if mock_clear_fail.
+
+    Args:
+        mock_clear: (todo): write your description
+        mock_abandon: (todo): write your description
+        mock_load: (todo): write your description
+    """
     mock_load.return_value = execution_stub(status="SUCCEEDED", ReceiptHandle="handle")
     mock_abandon.side_effect = RuntimeError
     with pytest.raises(RuntimeError):
@@ -229,6 +294,14 @@ def test_it_abandons_when_previous_loop_found_failure(
 @patch("backend.lambdas.tasks.work_query_queue.read_queue")
 @patch("backend.lambdas.tasks.work_query_queue.sqs")
 def test_raises_error_for_invalid_executor(sqs_mock, read_queue_mock, sf_client_mock):
+    """
+    Test if an error is sentry.
+
+    Args:
+        sqs_mock: (todo): write your description
+        read_queue_mock: (bool): write your description
+        sf_client_mock: (todo): write your description
+    """
     sqs_mock.Queue.return_value = sqs_mock
     sf_client_mock.start_execution.return_value = execution_stub()
 
@@ -248,6 +321,14 @@ def test_raises_error_for_invalid_executor(sqs_mock, read_queue_mock, sf_client_
 def test_it_waits_for_running_executions_before_abandoning(
     mock_sf, mock_abandon, mock_load
 ):
+    """
+    Test if the mock status of the mock jobs.
+
+    Args:
+        mock_sf: (todo): write your description
+        mock_abandon: (todo): write your description
+        mock_load: (todo): write your description
+    """
     mock_load.side_effect = [
         execution_stub(status="FAILED", ReceiptHandle="handle1"),
         execution_stub(status="RUNNING", ReceiptHandle="handle2"),
@@ -268,12 +349,23 @@ def test_it_waits_for_running_executions_before_abandoning(
 
 
 def test_it_throws_to_abandon():
+    """
+    Convert the thumbnail of the thumbnail.
+
+    Args:
+    """
     with pytest.raises(RuntimeError):
         abandon_execution([execution_stub(status="FAILED")])
 
 
 @patch("backend.lambdas.tasks.work_query_queue.sf_client")
 def test_it_loads_execution_from_state(sf_mock):
+    """
+    .. version of execution_it_from_state.
+
+    Args:
+        sf_mock: (todo): write your description
+    """
     sf_mock.describe_execution.return_value = execution_stub()
     resp = load_execution({"ExecutionArn": "arn", "ReceiptHandle": "handle"})
     assert {**execution_stub(), "ReceiptHandle": "handle"} == resp
@@ -282,6 +374,13 @@ def test_it_loads_execution_from_state(sf_mock):
 @patch("backend.lambdas.tasks.work_query_queue.sqs")
 @patch("backend.lambdas.tasks.work_query_queue.queue")
 def test_it_clears_completed_from_sqs(mock_queue, mock_sqs):
+    """
+    Test if the mock_queue_completed_completed.
+
+    Args:
+        mock_queue: (todo): write your description
+        mock_sqs: (todo): write your description
+    """
     mock_message = MagicMock()
     mock_queue.url = "someurl"
     mock_sqs.Message.return_value = mock_message
@@ -292,6 +391,11 @@ def test_it_clears_completed_from_sqs(mock_queue, mock_sqs):
 
 
 def execution_stub(**kwargs):
+    """
+    Stub
+
+    Args:
+    """
     return {
         "executionArn": "arn:aws:states:eu-west-1:123456789012:execution:S3F2-StateMachine:59923759-3016-82d8-bbc0",
         "stateMachineArn": "arn:aws:states:eu-west-1:123456789012:stateMachine:S3F2-StateMachine",

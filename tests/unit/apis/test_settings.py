@@ -11,6 +11,12 @@ pytestmark = [pytest.mark.unit, pytest.mark.api, pytest.mark.settings]
 
 @patch("backend.lambdas.settings.handlers.get_config")
 def test_it_process_queue(mock_config):
+    """
+    Test if the process is running in - process.
+
+    Args:
+        mock_config: (todo): write your description
+    """
     mock_config.return_value = {
         "AthenaConcurrencyLimit": 15,
         "DeletionTasksMaxNumber": 50,

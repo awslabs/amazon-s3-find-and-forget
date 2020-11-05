@@ -20,6 +20,13 @@ pytestmark = [pytest.mark.unit, pytest.mark.ecs_tasks]
 @patch("backend.ecs_tasks.delete_files.parquet_handler.load_parquet")
 @patch("backend.ecs_tasks.delete_files.parquet_handler.delete_from_table")
 def test_it_generates_new_parquet_file_without_matches(mock_delete, mock_load_parquet):
+    """
+    Test if a load is a mock.
+
+    Args:
+        mock_delete: (todo): write your description
+        mock_load_parquet: (todo): write your description
+    """
     # Arrange
     column = {"Column": "customer_id", "MatchIds": ["12345", "23456"]}
     data = [{"customer_id": "12345"}, {"customer_id": "34567"}]
@@ -44,6 +51,12 @@ def test_it_generates_new_parquet_file_without_matches(mock_delete, mock_load_pa
 def test_it_handles_files_with_multiple_row_groups_and_pandas_indexes(
     mock_load_parquet,
 ):
+    """
+    Test for multiple files in multiple files.
+
+    Args:
+        mock_load_parquet: (todo): write your description
+    """
     # Arrange
     data = [
         {"customer_id": "12345"},
@@ -71,6 +84,11 @@ def test_it_handles_files_with_multiple_row_groups_and_pandas_indexes(
 
 
 def test_delete_correct_rows_from_table():
+    """
+    Delete rows from a test table.
+
+    Args:
+    """
     data = [
         {"customer_id": "12345"},
         {"customer_id": "23456"},
@@ -88,6 +106,11 @@ def test_delete_correct_rows_from_table():
 
 
 def test_it_handles_data_with_pandas_indexes():
+    """
+    : param indexes : dataframe with test.
+
+    Args:
+    """
     data = [
         {"customer_id": "12345"},
         {"customer_id": "23456"},
@@ -105,6 +128,11 @@ def test_it_handles_data_with_pandas_indexes():
 
 
 def test_delete_correct_rows_from_parquet_table_with_complex_types():
+    """
+    Delete rows from parquet table.
+
+    Args:
+    """
     data = {
         "customer_id": [12345, 23456, 34567],
         "user_info": [
@@ -127,6 +155,11 @@ def test_delete_correct_rows_from_parquet_table_with_complex_types():
 
 
 def test_it_gets_row_count():
+    """
+    Count the number of test test test results.
+
+    Args:
+    """
     data = [
         {"customer_id": "12345"},
         {"customer_id": "23456"},
@@ -137,6 +170,11 @@ def test_it_gets_row_count():
 
 
 def test_it_loads_parquet_files():
+    """
+    Load test files. test files.
+
+    Args:
+    """
     data = [{"customer_id": "12345"}, {"customer_id": "23456"}]
     df = pd.DataFrame(data)
     buf = BytesIO()

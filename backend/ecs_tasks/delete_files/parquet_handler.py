@@ -8,10 +8,22 @@ logger = logging.getLogger(__name__)
 
 
 def load_parquet(f):
+    """
+    Load a parquet file.
+
+    Args:
+        f: (str): write your description
+    """
     return pq.ParquetFile(f, memory_map=False)
 
 
 def get_row_count(df):
+    """
+    Returns the number of rows in a dataframe
+
+    Args:
+        df: (todo): write your description
+    """
     return len(df.index)
 
 

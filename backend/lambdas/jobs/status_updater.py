@@ -47,6 +47,13 @@ time_statuses = {
 
 
 def update_status(job_id, events):
+    """
+    Updates the status of the given job_id.
+
+    Args:
+        job_id: (str): write your description
+        events: (todo): write your description
+    """
     attr_updates = {}
     for event in events:
         # Ignore non status events
@@ -74,6 +81,13 @@ def update_status(job_id, events):
 
 
 def determine_status(job_id, event_name):
+    """
+    Determine the status of a job.
+
+    Args:
+        job_id: (str): write your description
+        event_name: (str): write your description
+    """
     new_status = status_map[event_name]
     if event_name == "ForgetPhaseEnded" and job_has_errors(job_id):
         return "FORGET_PARTIALLY_FAILED"
@@ -82,6 +96,12 @@ def determine_status(job_id, event_name):
 
 
 def job_has_errors(job_id):
+    """
+    Checks if the job has a job.
+
+    Args:
+        job_id: (str): write your description
+    """
     item = table.get_item(Key={"Id": job_id, "Sk": job_id,}, ConsistentRead=True)[
         "Item"
     ]
@@ -92,6 +112,13 @@ def job_has_errors(job_id):
 
 
 def _update_item(job_id, attr_updates):
+    """
+    Update an existing item.
+
+    Args:
+        job_id: (str): write your description
+        attr_updates: (dict): write your description
+    """
     try:
         update_expression = "set " + ", ".join(
             ["#{k} = :{k}".format(k=k) for k, v in attr_updates.items()]

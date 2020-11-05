@@ -15,6 +15,13 @@ sf_client = boto3.client("stepfunctions")
 @with_logging
 @s3_state_store(offload_keys=["Data"])
 def handler(event, context):
+    """
+    Main function.
+
+    Args:
+        event: (dict): write your description
+        context: (dict): write your description
+    """
     concurrency_limit = int(event.get("AthenaConcurrencyLimit", 15))
     wait_duration = int(event.get("QueryExecutionWaitSeconds", 15))
     execution_id = event["ExecutionId"]
@@ -73,18 +80,36 @@ def handler(event, context):
 
 
 def load_execution(execution):
+    """
+    Load the execution of execution
+
+    Args:
+        execution: (str): write your description
+    """
     resp = sf_client.describe_execution(executionArn=execution["ExecutionArn"])
     resp["ReceiptHandle"] = execution["ReceiptHandle"]
     return resp
 
 
 def clear_completed(executions):
+    """
+    Clears all workers in the queue.
+
+    Args:
+        executions: (todo): write your description
+    """
     for e in executions:
         message = sqs.Message(queue.url, e["ReceiptHandle"])
         message.delete()
 
 
 def abandon_execution(failed):
+    """
+    Abandon execution.
+
+    Args:
+        failed: (str): write your description
+    """
     raise RuntimeError(
         "Abandoning execution because one or more queries failed. {}".format(
             ", ".join([f["executionArn"] for f in failed])

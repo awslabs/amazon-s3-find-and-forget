@@ -44,6 +44,13 @@ max_size_bytes = 375000
 @json_body_loader
 @catch_errors
 def enqueue_handler(event, context):
+    """
+    Enqueue the given item.
+
+    Args:
+        event: (todo): write your description
+        context: (todo): write your description
+    """
     body = event["body"]
     user_info = get_user_info(event)
     item = enqueue_items([body], user_info)[0]
@@ -56,6 +63,13 @@ def enqueue_handler(event, context):
 @json_body_loader
 @catch_errors
 def enqueue_batch_handler(event, context):
+    """
+    Enqueue a batch handler.
+
+    Args:
+        event: (todo): write your description
+        context: (todo): write your description
+    """
     body = event["body"]
     matches = body["Matches"]
     user_info = get_user_info(event)
@@ -71,6 +85,13 @@ def enqueue_batch_handler(event, context):
 @request_validator(load_schema("list_queue_items"))
 @catch_errors
 def get_handler(event, context):
+    """
+    Returns a json - compatible with the given event.
+
+    Args:
+        event: (dict): write your description
+        context: (todo): write your description
+    """
     qs = event.get("queryStringParameters")
     if not qs:
         qs = {}
@@ -98,6 +119,13 @@ def get_handler(event, context):
 @json_body_loader
 @catch_errors
 def cancel_handler(event, context):
+    """
+    Cancel a job.
+
+    Args:
+        event: (todo): write your description
+        context: (todo): write your description
+    """
     if running_job_exists():
         raise ValueError("Cannot delete matches whilst there is a job in progress")
     body = event["body"]
@@ -113,6 +141,13 @@ def cancel_handler(event, context):
 @add_cors_headers
 @catch_errors
 def process_handler(event, context):
+    """
+    Process a job.
+
+    Args:
+        event: (todo): write your description
+        context: (dict): write your description
+    """
     if running_job_exists():
         raise ValueError("There is already a job in progress")
 
@@ -151,6 +186,13 @@ def process_handler(event, context):
 
 
 def enqueue_items(matches, user_info):
+    """
+    Enqueue a batch of items.
+
+    Args:
+        matches: (todo): write your description
+        user_info: (todo): write your description
+    """
     items = []
     with deletion_queue_table.batch_writer() as batch:
         for match in matches:
@@ -169,6 +211,11 @@ def enqueue_items(matches, user_info):
 
 
 def get_deletion_queue():
+    """
+    Yield a queue from the queue.
+
+    Args:
+    """
     results = paginate(
         ddb_client, ddb_client.scan, "Items", TableName=deletion_queue_table_name
     )
@@ -192,6 +239,12 @@ def calculate_ddb_item_bytes(item):
 
 
 def calculate_attribute_size_bytes(attr):
+    """
+    Calculate the size of an object.
+
+    Args:
+        attr: (todo): write your description
+    """
     attr_size = 0
     if attr == None or isinstance(attr, bool):
         attr_size += 1

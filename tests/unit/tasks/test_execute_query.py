@@ -11,12 +11,25 @@ pytestmark = [pytest.mark.unit, pytest.mark.task]
 
 
 def escape_resp(resp):
+    """
+    Escape the given string.
+
+    Args:
+        resp: (str): write your description
+    """
     return re.sub("[\x00-\x20]+", " ", resp.strip())
 
 
 @patch("backend.lambdas.tasks.execute_query.client")
 @patch("backend.lambdas.tasks.execute_query.make_query")
 def test_it_executes_queries(query_mock, client_mock):
+    """
+    Test for queries that have a mock.
+
+    Args:
+        query_mock: (todo): write your description
+        client_mock: (todo): write your description
+    """
     client_mock.start_query_execution.return_value = {"QueryExecutionId": "123"}
     query_mock.return_value = "test"
 
@@ -35,6 +48,13 @@ def test_it_executes_queries(query_mock, client_mock):
 @patch("backend.lambdas.tasks.execute_query.client")
 @patch("backend.lambdas.tasks.execute_query.make_query")
 def test_it_permits_custom_workgroups(query_mock, client_mock):
+    """
+    Get custom custom custom permits for a mock.
+
+    Args:
+        query_mock: (str): write your description
+        client_mock: (todo): write your description
+    """
     client_mock.start_query_execution.return_value = {"QueryExecutionId": "123"}
     query_mock.return_value = "test"
     with patch.dict(os.environ, {"WorkGroup": "custom"}):
@@ -51,6 +71,11 @@ def test_it_permits_custom_workgroups(query_mock, client_mock):
 
 
 def test_it_generates_query_with_partition():
+    """
+    Test if the query : param partition :
+
+    Args:
+    """
     resp = make_query(
         {
             "Database": "amazonreviews",
@@ -69,6 +94,11 @@ def test_it_generates_query_with_partition():
 
 
 def test_it_generates_query_with_partition_and_int_column():
+    """
+    : param int partition_it_query_column_int_int - query_part_column_column_column_query_column - test
+
+    Args:
+    """
     resp = make_query(
         {
             "Database": "amazonreviews",
@@ -87,6 +117,11 @@ def test_it_generates_query_with_partition_and_int_column():
 
 
 def test_it_generates_query_with_int_partition():
+    """
+    Test if the query :
+
+    Args:
+    """
     resp = make_query(
         {
             "Database": "amazonreviews",
@@ -105,6 +140,11 @@ def test_it_generates_query_with_int_partition():
 
 
 def test_it_generates_query_with_multiple_partitions():
+    """
+    Test if the query part_it_query.
+
+    Args:
+    """
     resp = make_query(
         {
             "Database": "amazonreviews",
@@ -127,6 +167,11 @@ def test_it_generates_query_with_multiple_partitions():
 
 
 def test_it_generates_query_without_partition():
+    """
+    Test if the query_without query :
+
+    Args:
+    """
     resp = make_query(
         {
             "Database": "amazonreviews",
@@ -143,6 +188,11 @@ def test_it_generates_query_without_partition():
 
 
 def test_it_generates_query_with_multiple_columns():
+    """
+    : param query_it_query_it_query
+
+    Args:
+    """
     resp = make_query(
         {
             "Database": "amazonreviews",
@@ -162,6 +212,11 @@ def test_it_generates_query_with_multiple_columns():
 
 
 def test_it_generates_query_with_columns_of_complex_type():
+    """
+    : return a_query_it_query_query_query.
+
+    Args:
+    """
     resp = make_query(
         {
             "Database": "amazonreviews",
@@ -178,21 +233,46 @@ def test_it_generates_query_with_columns_of_complex_type():
 
 
 def test_it_escapes_strings():
+    """
+    Escape a string : param string : : return :
+
+    Args:
+    """
     assert "''' OR 1=1'" == escape_item("' OR 1=1")
 
 
 def test_it_escapes_ints():
+    """
+    Eval : attr.
+
+    Args:
+    """
     assert 2 == escape_item(2)
 
 
 def test_it_escapes_floats():
+    """
+    Test if any number of digits.
+
+    Args:
+    """
     assert float(2) == escape_item(float(2))
 
 
 def test_it_escapes_none():
+    """
+    Evaluate a string.
+
+    Args:
+    """
     assert "NULL" == escape_item(None)
 
 
 def test_it_raises_for_unsupported_type():
+    """
+    Determine whether the test types.
+
+    Args:
+    """
     with pytest.raises(ValueError):
         escape_item(["val"])

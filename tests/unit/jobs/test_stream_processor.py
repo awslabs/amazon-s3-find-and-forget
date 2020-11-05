@@ -23,11 +23,21 @@ pytestmark = [pytest.mark.unit, pytest.mark.jobs]
 
 
 def test_it_processes_matches_events():
+    """
+    : return :
+
+    Args:
+    """
     assert is_operation({"eventName": "INSERT"}, "INSERT")
     assert is_operation({"eventName": "MODIFY"}, "MODIFY")
 
 
 def test_it_recognises_jobs():
+    """
+    Test if the test jobs.
+
+    Args:
+    """
     assert is_record_type(
         {
             "dynamodb": {
@@ -56,6 +66,11 @@ def test_it_recognises_jobs():
 
 
 def test_it_recognises_job_events():
+    """
+    : return : func :
+
+    Args:
+    """
     assert is_record_type(
         {
             "dynamodb": {
@@ -87,6 +102,14 @@ def test_it_recognises_job_events():
 @patch("backend.lambdas.jobs.stream_processor.process_job")
 @patch("backend.lambdas.jobs.stream_processor.deserialize_item")
 def test_it_handles_job_records(mock_deserializer, mock_process, mock_is_record):
+    """
+    Deserialized job_desles.
+
+    Args:
+        mock_deserializer: (todo): write your description
+        mock_process: (todo): write your description
+        mock_is_record: (bool): write your description
+    """
     mock_deserializer.return_value = {
         "Id": "job123",
         "Sk": "job123",
@@ -123,6 +146,15 @@ def test_it_handles_job_records(mock_deserializer, mock_process, mock_is_record)
 def test_it_handles_job_event_records(
     mock_deserializer, mock_stats, mock_status, mock_is_record
 ):
+    """
+    Test if the mock events.
+
+    Args:
+        mock_deserializer: (todo): write your description
+        mock_stats: (todo): write your description
+        mock_status: (todo): write your description
+        mock_is_record: (bool): write your description
+    """
     mock_deserializer.return_value = {
         "Id": "job123",
         "Sk": "123456",
@@ -164,6 +196,15 @@ def test_it_handles_job_event_records(
 def test_it_does_not_update_status_if_stats_fails(
     mock_deserializer, mock_stats, mock_status, mock_is_record
 ):
+    """
+    Return the test status of the mock.
+
+    Args:
+        mock_deserializer: (todo): write your description
+        mock_stats: (todo): write your description
+        mock_status: (todo): write your description
+        mock_is_record: (todo): write your description
+    """
     mock_deserializer.return_value = {
         "Id": "job123",
         "Sk": "123456",
@@ -197,6 +238,12 @@ def test_it_does_not_update_status_if_stats_fails(
 @patch("backend.lambdas.jobs.stream_processor.is_operation", Mock(return_value=True))
 @patch("backend.lambdas.jobs.stream_processor.client")
 def test_it_starts_state_machine(mock_client):
+    """
+    Test if the state machine.
+
+    Args:
+        mock_client: (todo): write your description
+    """
     process_job(
         {
             "Id": "job123",
@@ -230,6 +277,13 @@ def test_it_starts_state_machine(mock_client):
 @patch("backend.lambdas.jobs.stream_processor.is_record_type")
 @patch("backend.lambdas.jobs.stream_processor.client")
 def test_it_handles_already_existing_executions(mock_client, mock_is_record):
+    """
+    Test if the alignment of the environment.
+
+    Args:
+        mock_client: (todo): write your description
+        mock_is_record: (bool): write your description
+    """
     e = boto3.client("stepfunctions").exceptions.ExecutionAlreadyExists
     mock_client.exceptions.ExecutionAlreadyExists = e
     mock_client.start_execution.side_effect = e({}, "ExecutionAlreadyExists")
@@ -253,6 +307,13 @@ def test_it_handles_already_existing_executions(mock_client, mock_is_record):
 @patch("backend.lambdas.jobs.stream_processor.client")
 @patch("backend.lambdas.jobs.stream_processor.emit_event")
 def test_it_handles_execution_failure(mock_emit, mock_client):
+    """
+    Test for the mock was run_iture.
+
+    Args:
+        mock_emit: (todo): write your description
+        mock_client: (todo): write your description
+    """
     mock_client.start_execution.side_effect = ClientError({}, "start_execution")
     mock_client.exceptions.ExecutionAlreadyExists = boto3.client(
         "stepfunctions"
@@ -292,6 +353,16 @@ def test_it_handles_execution_failure(mock_emit, mock_client):
 def test_it_cleans_up_on_forget_complete(
     mock_deserializer, mock_emit, mock_clear, mock_status, mock_is_record
 ):
+    """
+    Emits the mock.
+
+    Args:
+        mock_deserializer: (todo): write your description
+        mock_emit: (todo): write your description
+        mock_clear: (todo): write your description
+        mock_status: (todo): write your description
+        mock_is_record: (todo): write your description
+    """
     mock_is_record.side_effect = [False, True]
     mock_deserializer.return_value = {
         "Id": "job123",
@@ -339,6 +410,16 @@ def test_it_cleans_up_on_forget_complete(
 def test_it_emits_skipped_event_for_failures(
     mock_deserializer, mock_emit, mock_clear, mock_status, mock_is_record
 ):
+    """
+    Emits mock events.
+
+    Args:
+        mock_deserializer: (todo): write your description
+        mock_emit: (todo): write your description
+        mock_clear: (todo): write your description
+        mock_status: (todo): write your description
+        mock_is_record: (todo): write your description
+    """
     mock_deserializer.return_value = {
         "Id": "job123",
         "Sk": "event123",
@@ -390,6 +471,16 @@ def test_it_emits_skipped_event_for_failures(
 def test_it_does_not_emit_skipped_event_for_non_failures(
     mock_deserializer, mock_emit, mock_clear, mock_status, mock_is_record
 ):
+    """
+    Emits mock mock mock_deserializer.
+
+    Args:
+        mock_deserializer: (todo): write your description
+        mock_emit: (todo): write your description
+        mock_clear: (todo): write your description
+        mock_status: (todo): write your description
+        mock_is_record: (todo): write your description
+    """
     mock_deserializer.return_value = {
         "Id": "job123",
         "Sk": "event123",
@@ -442,6 +533,16 @@ def test_it_does_not_emit_skipped_event_for_non_failures(
 def test_it_emits_event_for_cleanup_error(
     mock_deserializer, mock_emit, mock_clear, mock_status, mock_is_record
 ):
+    """
+    Emits the mock events.
+
+    Args:
+        mock_deserializer: (todo): write your description
+        mock_emit: (todo): write your description
+        mock_clear: (todo): write your description
+        mock_status: (todo): write your description
+        mock_is_record: (todo): write your description
+    """
     mock_is_record.side_effect = [False, True]
     mock_deserializer.return_value = {
         "Id": "job123",
@@ -481,6 +582,12 @@ def test_it_emits_event_for_cleanup_error(
 
 @patch("backend.lambdas.jobs.stream_processor.q_table.batch_writer")
 def test_it_clears_queue(mock_writer):
+    """
+    Clearses the given mock.
+
+    Args:
+        mock_writer: (todo): write your description
+    """
     mock_writer.return_value.__enter__.return_value = mock_writer
     clear_deletion_queue(
         {

@@ -13,6 +13,13 @@ pytestmark = [pytest.mark.unit, pytest.mark.task]
 @patch("backend.lambdas.tasks.submit_query_results.batch_sqs_msgs")
 @patch("backend.lambdas.tasks.submit_query_results.paginate")
 def test_it_returns_only_paths(paginate_mock, batch_sqs_msgs_mock):
+    """
+    Test for return return return_its_paths
+
+    Args:
+        paginate_mock: (todo): write your description
+        batch_sqs_msgs_mock: (todo): write your description
+    """
     paginate_mock.return_value = iter(
         [
             {"Data": [{"VarCharValue": "$path"},]},
@@ -37,6 +44,13 @@ def test_it_returns_only_paths(paginate_mock, batch_sqs_msgs_mock):
 @patch("backend.lambdas.tasks.submit_query_results.batch_sqs_msgs")
 @patch("backend.lambdas.tasks.submit_query_results.paginate")
 def test_it_submits_results_to_be_batched(paginate_mock, batch_sqs_msgs_mock):
+    """
+    Test for batches of submissions to be run results to solrpc results.
+
+    Args:
+        paginate_mock: (todo): write your description
+        batch_sqs_msgs_mock: (todo): write your description
+    """
     paginate_mock.return_value = iter(
         [
             {"Data": [{"VarCharValue": "$path"},]},
@@ -69,6 +83,13 @@ def test_it_submits_results_to_be_batched(paginate_mock, batch_sqs_msgs_mock):
 @patch("backend.lambdas.tasks.submit_query_results.batch_sqs_msgs")
 @patch("backend.lambdas.tasks.submit_query_results.paginate")
 def test_it_propagates_optional_properties(paginate_mock, batch_sqs_msgs_mock):
+    """
+    Test for properties that can be used for the given properties.
+
+    Args:
+        paginate_mock: (str): write your description
+        batch_sqs_msgs_mock: (todo): write your description
+    """
     paginate_mock.return_value = iter(
         [
             {"Data": [{"VarCharValue": "$path"},]},

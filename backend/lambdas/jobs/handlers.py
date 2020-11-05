@@ -52,6 +52,13 @@ job_summary_attributes = [
 @request_validator(load_schema("get_job"))
 @catch_errors
 def get_job_handler(event, context):
+    """
+    Get a job handler.
+
+    Args:
+        event: (str): write your description
+        context: (todo): write your description
+    """
     job_id = event["pathParameters"]["job_id"]
     resp = table.get_item(Key={"Id": job_id, "Sk": job_id,})
     item = resp.get("Item")
@@ -66,6 +73,13 @@ def get_job_handler(event, context):
 @request_validator(load_schema("list_jobs"))
 @catch_errors
 def list_jobs_handler(event, context):
+    """
+    List jobs.
+
+    Args:
+        event: (dict): write your description
+        context: (todo): write your description
+    """
     qs = event.get("queryStringParameters")
     if not qs:
         qs = {}
@@ -102,6 +116,13 @@ def list_jobs_handler(event, context):
 @request_validator(load_schema("list_job_events"))
 @catch_errors
 def list_job_events_handler(event, context):
+    """
+    List jobs.
+
+    Args:
+        event: (dict): write your description
+        context: (todo): write your description
+    """
     # Input parsing
     job_id = event["pathParameters"]["job_id"]
     qs = event.get("queryStringParameters")

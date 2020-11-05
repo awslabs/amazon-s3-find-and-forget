@@ -13,6 +13,13 @@ deserializer = TypeDeserializer()
 
 @with_logging
 def handler(event, context):
+    """
+    Main handler.
+
+    Args:
+        event: (todo): write your description
+        context: (dict): write your description
+    """
     results = paginate(
         ddb_client, ddb_client.scan, "Items", TableName=event["TableName"]
     )

@@ -3,6 +3,12 @@ from botocore.exceptions import ClientError
 
 
 def remove_none(d: dict):
+    """
+    Remove none values from dict.
+
+    Args:
+        d: (dict): write your description
+    """
     return {k: v for k, v in d.items() if v is not None and v is not ""}
 
 
@@ -10,6 +16,11 @@ def retry_wrapper(fn, retry_wait_seconds=2, retry_factor=2, max_retries=5):
     """ Exponential back-off retry wrapper for ClientError exceptions """
 
     def wrapper(*args, **kwargs):
+        """
+        Wrap a function to retry. retry.
+
+        Args:
+        """
         retry_current = 0
         last_error = None
 

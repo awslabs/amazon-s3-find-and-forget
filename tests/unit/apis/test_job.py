@@ -16,6 +16,13 @@ pytestmark = [pytest.mark.unit, pytest.mark.api, pytest.mark.jobs]
 class TestGetJob:
     @patch("backend.lambdas.jobs.handlers.table")
     def test_it_retrieves_job(self, table):
+        """
+        Test for jobs that have_retrieves information is a job.
+
+        Args:
+            self: (todo): write your description
+            table: (str): write your description
+        """
         mock_job = {"Id": "test"}
         table.get_item.return_value = {"Item": mock_job}
         response = handlers.get_job_handler(
@@ -28,6 +35,13 @@ class TestGetJob:
 
     @patch("backend.lambdas.jobs.handlers.table")
     def test_it_returns_404_for_job_not_found(self, table):
+        """
+        Test if_it_it_job.
+
+        Args:
+            self: (todo): write your description
+            table: (str): write your description
+        """
         table.get_item.side_effect = ClientError(
             {"ResponseMetadata": {"HTTPStatusCode": 404}}, "get_item"
         )
@@ -42,6 +56,13 @@ class TestGetJob:
 class TestListJobs:
     @patch("backend.lambdas.jobs.handlers.table")
     def test_it_lists_jobs(self, table):
+        """
+        Test for a table.
+
+        Args:
+            self: (todo): write your description
+            table: (str): write your description
+        """
         stub = job_stub()
         table.query.return_value = {"Items": [stub]}
         response = handlers.list_jobs_handler(
@@ -55,6 +76,13 @@ class TestListJobs:
     @patch("backend.lambdas.jobs.handlers.bucket_count", 3)
     @patch("backend.lambdas.jobs.handlers.table")
     def test_it_queries_all_gsi_buckets(self, table):
+        """
+        Respons of all queries in a test table.
+
+        Args:
+            self: (todo): write your description
+            table: (str): write your description
+        """
         stub = job_stub()
         table.query.return_value = {"Items": [stub]}
         handlers.list_jobs_handler({"queryStringParameters": None}, SimpleNamespace())
@@ -63,6 +91,14 @@ class TestListJobs:
     @patch("backend.lambdas.jobs.handlers.Key")
     @patch("backend.lambdas.jobs.handlers.table")
     def test_it_handles_list_job_start_at_qs(self, table, k):
+        """
+        Perform at_it job_job.
+
+        Args:
+            self: (todo): write your description
+            table: (str): write your description
+            k: (todo): write your description
+        """
         stub = job_stub()
         table.query.return_value = {"Items": [stub]}
         handlers.list_jobs_handler(
@@ -73,6 +109,13 @@ class TestListJobs:
 
     @patch("backend.lambdas.jobs.handlers.table")
     def test_it_returns_requested_page_size_for_jobs(self, table):
+        """
+        Test for all return return information was received returns.
+
+        Args:
+            self: (todo): write your description
+            table: (str): write your description
+        """
         stub = job_stub()
         table.query.return_value = {"Items": [stub for _ in range(0, 3)]}
         handlers.list_jobs_handler(
@@ -91,6 +134,13 @@ class TestListJobs:
     def test_it_returns_requested_page_size_for_jobs_with_multiple_gsi_buckets(
         self, table
     ):
+        """
+        Issues a request return return return information about all return return - size return return return - only return values.
+
+        Args:
+            self: (todo): write your description
+            table: (str): write your description
+        """
         table.query.return_value = {"Items": [job_stub() for _ in range(0, 5)]}
         resp = handlers.list_jobs_handler(
             {"queryStringParameters": {"page_size": "5"}}, SimpleNamespace()
@@ -99,6 +149,12 @@ class TestListJobs:
         assert 5 == len(json.loads(resp["body"])["Jobs"])
 
     def test_it_rejects_invalid_page_size_for_list_jobs(self):
+        """
+        Rejects all jobs that have been built.
+
+        Args:
+            self: (todo): write your description
+        """
         response = handlers.list_jobs_handler(
             {"queryStringParameters": {"page_size": "NaN"}}, SimpleNamespace()
         )
@@ -113,6 +169,12 @@ class TestListJobs:
         assert 422 == response["statusCode"]
 
     def test_it_rejects_invalid_start_at_for_list_jobs(self):
+        """
+        Reject jobs that start at start_it jobs.
+
+        Args:
+            self: (todo): write your description
+        """
         response = handlers.list_jobs_handler(
             {"queryStringParameters": {"start_at": "badformat"}}, SimpleNamespace()
         )
@@ -120,6 +182,13 @@ class TestListJobs:
 
     @patch("backend.lambdas.jobs.handlers.table")
     def test_it_rejects_invalid_start_at_for_list_jobs(self, table):
+        """
+        Reject all jobs in a test job.
+
+        Args:
+            self: (todo): write your description
+            table: (str): write your description
+        """
         stub = job_stub()
         table.query.return_value = {"Items": [stub for _ in range(0, 3)]}
         response = handlers.list_jobs_handler(
@@ -131,6 +200,13 @@ class TestListJobs:
 class TestListJobEvents:
     @patch("backend.lambdas.jobs.handlers.table")
     def test_it_lists_jobs_events(self, table):
+        """
+        Test for jobs table. job.
+
+        Args:
+            self: (todo): write your description
+            table: (str): write your description
+        """
         stub = job_event_stub()
         table.get_item.return_value = {"Item": job_stub()}
         table.query.return_value = {"Items": [stub]}
@@ -149,6 +225,13 @@ class TestListJobEvents:
 
     @patch("backend.lambdas.jobs.handlers.table")
     def test_it_errors_if_job_not_found(self, table):
+        """
+        Test if the job has failed.
+
+        Args:
+            self: (todo): write your description
+            table: (str): write your description
+        """
         table.get_item.side_effect = ClientError(
             {"ResponseMetadata": {"HTTPStatusCode": 404}}, "get_item"
         )
@@ -164,6 +247,13 @@ class TestListJobEvents:
 
     @patch("backend.lambdas.jobs.handlers.table")
     def test_it_returns_requested_page_size_for_jobs_events(self, table):
+        """
+        Return a generator return return information about the number of jobs
+
+        Args:
+            self: (todo): write your description
+            table: (str): write your description
+        """
         table.get_item.return_value = {"Item": job_stub()}
         table.query.return_value = {
             "Items": [job_event_stub(job_id="job123", sk=str(i)) for i in range(1, 5)],
@@ -192,6 +282,13 @@ class TestListJobEvents:
 
     @patch("backend.lambdas.jobs.handlers.table")
     def test_it_starts_at_earliest_by_default(self, table):
+        """
+        Perform a job is at least one job.
+
+        Args:
+            self: (todo): write your description
+            table: (str): write your description
+        """
         stub = job_event_stub()
         table.get_item.return_value = {"Item": job_stub()}
         table.query.return_value = {"Items": [stub]}
@@ -214,6 +311,13 @@ class TestListJobEvents:
 
     @patch("backend.lambdas.jobs.handlers.table")
     def test_it_accepts_start_at_earliest_watermark(self, table):
+        """
+        Test for at least one at at least one at a time.
+
+        Args:
+            self: (todo): write your description
+            table: (str): write your description
+        """
         stub = job_event_stub()
         table.get_item.return_value = {"Item": job_stub()}
         table.query.return_value = {
@@ -241,6 +345,13 @@ class TestListJobEvents:
 
     @patch("backend.lambdas.jobs.handlers.table")
     def test_it_starts_at_watermark(self, table):
+        """
+        Test for jobs at which a job.
+
+        Args:
+            self: (todo): write your description
+            table: (str): write your description
+        """
         stub = job_event_stub()
         table.get_item.return_value = {"Item": job_stub()}
         table.query.return_value = {
@@ -268,6 +379,13 @@ class TestListJobEvents:
 
     @patch("backend.lambdas.jobs.handlers.table")
     def test_it_handles_watermark_with_microseconds_in_same_second(self, table):
+        """
+        Test if_itseconds. table.
+
+        Args:
+            self: (todo): write your description
+            table: (str): write your description
+        """
         stub = job_event_stub()
         table.get_item.return_value = {"Item": job_stub(JobFinishTime=12345)}
         table.query.return_value = {"Items": [stub]}
@@ -292,6 +410,13 @@ class TestListJobEvents:
 
     @patch("backend.lambdas.jobs.handlers.table")
     def test_it_returns_page_size_where_job_item_in_initial_query_response(self, table):
+        """
+        Test for return return return return return return information.
+
+        Args:
+            self: (todo): write your description
+            table: (str): write your description
+        """
         job = job_stub(JobFinishTime=12345, JobStatus="COMPLETED")
         table.get_item.return_value = {"Item": job}
         table.query.side_effect = [
@@ -318,6 +443,13 @@ class TestListJobEvents:
     # Running jobs
     @patch("backend.lambdas.jobs.handlers.table")
     def test_it_returns_last_item_watermark_for_incomplete_job(self, table):
+        """
+        Test for last return return job return job.
+
+        Args:
+            self: (todo): write your description
+            table: (str): write your description
+        """
         stub = job_event_stub()
         table.get_item.return_value = {"Item": job_stub(JobStatus="RUNNING")}
         table.query.return_value = {"Items": [stub]}
@@ -332,6 +464,13 @@ class TestListJobEvents:
     def test_it_returns_last_item_watermark_for_incomplete_job_where_page_size_is_fulfilled(
         self, table
     ):
+        """
+        Test for last return return return return job return result.
+
+        Args:
+            self: (todo): write your description
+            table: (str): write your description
+        """
         stub = job_event_stub()
         table.get_item.return_value = {"Item": job_stub(JobStatus="RUNNING")}
         table.query.return_value = {"Items": [stub]}
@@ -351,6 +490,13 @@ class TestListJobEvents:
     def test_it_returns_provided_watermark_for_no_events_for_incomplete_job(
         self, table
     ):
+        """
+        Test for return return job return job.
+
+        Args:
+            self: (todo): write your description
+            table: (str): write your description
+        """
         table.get_item.return_value = {"Item": job_stub(JobStatus="RUNNING")}
         table.query.return_value = {"Items": []}
         response = handlers.list_job_events_handler(
@@ -372,6 +518,13 @@ class TestListJobEvents:
     def test_it_returns_last_item_watermark_where_not_last_page_and_job_complete(
         self, table
     ):
+        """
+        Test for retry job return information about a job.
+
+        Args:
+            self: (todo): write your description
+            table: (todo): write your description
+        """
         job = job_stub(JobFinishTime=12345, JobStatus="COMPLETED")
         table.get_item.return_value = {"Item": job}
         table.query.return_value = {
@@ -394,6 +547,13 @@ class TestListJobEvents:
     def test_it_does_not_return_watermark_if_last_page_reached_on_complete_job(
         self, table
     ):
+        """
+        Test if a job return table.
+
+        Args:
+            self: (todo): write your description
+            table: (str): write your description
+        """
         events = [
             "COMPLETED_CLEANUP_FAILED",
             "COMPLETED",
@@ -423,6 +583,13 @@ class TestListJobEvents:
     def test_it_returns_error_if_invalid_watermark_supplied_for_completed_job(
         self, table
     ):
+        """
+        Test for retvalidator for a dictionary.
+
+        Args:
+            self: (todo): write your description
+            table: (str): write your description
+        """
         stub = job_event_stub()
         table.get_item.return_value = {"Item": job_stub(JobFinishTime=12345)}
         table.query.return_value = {"Items": [stub]}
@@ -440,6 +607,13 @@ class TestListJobEvents:
     def test_it_returns_error_if_invalid_watermark_supplied_for_running_job(
         self, table
     ):
+        """
+        Test for retry return value for retry.
+
+        Args:
+            self: (todo): write your description
+            table: (str): write your description
+        """
         table.get_item.return_value = {"Item": job_stub()}
         response = handlers.list_job_events_handler(
             {
@@ -452,6 +626,12 @@ class TestListJobEvents:
         assert 400 == response["statusCode"]
 
     def test_it_rejects_invalid_page_size_for_list_job_events(self):
+        """
+        Rejectspace.
+
+        Args:
+            self: (todo): write your description
+        """
         response = handlers.list_job_events_handler(
             {"queryStringParameters": {"page_size": "NaN"}}, SimpleNamespace()
         )
@@ -469,6 +649,13 @@ class TestListJobEvents:
 class TestListJobEventFilters:
     @patch("backend.lambdas.jobs.handlers.table")
     def test_it_applies_filters(self, table):
+        """
+        Test for jobs in the database.
+
+        Args:
+            self: (todo): write your description
+            table: (str): write your description
+        """
         stub = job_event_stub()
         table.get_item.return_value = {"Item": job_stub()}
         table.query.return_value = {"Items": [stub]}
@@ -505,6 +692,13 @@ class TestListJobEventFilters:
     def test_it_returns_ddb_watermark_where_ddb_response_is_less_than_page_size(
         self, table
     ):
+        """
+        Perform a single return return returns returns.
+
+        Args:
+            self: (todo): write your description
+            table: (str): write your description
+        """
         job = job_stub(JobStatus="RUNNING")
         table.get_item.return_value = {"Item": job}
         # LastEvaluatedKey is determined before the Filter Expression is applied
@@ -534,6 +728,13 @@ class TestListJobEventFilters:
     def test_it_returns_last_item_watermark_where_ddb_response_is_greater_than_page_size(
         self, table
     ):
+        """
+        Test for retrieve returns of retrive job.
+
+        Args:
+            self: (todo): write your description
+            table: (str): write your description
+        """
         job = job_stub(JobStatus="RUNNING")
         table.get_item.return_value = {"Item": job}
         # LastEvaluatedKey is determined before the Filter Expression is applied
@@ -560,6 +761,13 @@ class TestListJobEventFilters:
     def test_it_returns_last_item_watermark_where_not_last_page_and_job_complete(
         self, table
     ):
+        """
+        Test for retry job return information.
+
+        Args:
+            self: (todo): write your description
+            table: (todo): write your description
+        """
         job = job_stub(JobFinishTime=12345, JobStatus="COMPLETED")
         table.get_item.return_value = {"Item": job}
         table.query.return_value = {
@@ -584,6 +792,13 @@ class TestListJobEventFilters:
     def test_it_does_not_return_watermark_if_last_page_reached_on_complete_job(
         self, table
     ):
+        """
+        Test if the last watermark events exist.
+
+        Args:
+            self: (todo): write your description
+            table: (str): write your description
+        """
         events = [
             "COMPLETED_CLEANUP_FAILED",
             "COMPLETED",
@@ -612,6 +827,12 @@ class TestListJobEventFilters:
 
     # Errors
     def test_it_rejects_invalid_filters(self):
+        """
+        Test that all jobs that filter.
+
+        Args:
+            self: (todo): write your description
+        """
         response = handlers.list_job_events_handler(
             {
                 "pathParameters": {"job_id": "test"},
@@ -626,6 +847,18 @@ class TestListJobEventFilters:
 def job_stub(
     job_id="test", created_at=round(datetime.datetime.utcnow().timestamp()), **kwargs
 ):
+    """
+    Stub
+
+    Args:
+        job_id: (str): write your description
+        created_at: (bool): write your description
+        round: (todo): write your description
+        datetime: (todo): write your description
+        datetime: (todo): write your description
+        utcnow: (int): write your description
+        timestamp: (int): write your description
+    """
     return {
         "Id": job_id,
         "Sk": job_id,
@@ -637,6 +870,13 @@ def job_stub(
 
 
 def job_event_stub(job_id="test", sk=None, **kwargs):
+    """
+    Stub
+
+    Args:
+        job_id: (str): write your description
+        sk: (todo): write your description
+    """
     now = round(datetime.datetime.utcnow().timestamp())
     if not sk:
         sk = "{}#{}".format(str(now), "12345")

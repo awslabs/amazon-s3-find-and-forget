@@ -9,6 +9,12 @@ pytestmark = [pytest.mark.unit, pytest.mark.jobs]
 
 @patch("backend.lambdas.jobs.stats_updater.table")
 def test_it_handles_successful_queries(table):
+    """
+    Test if queries queries to be added queries.
+
+    Args:
+        table: (str): write your description
+    """
     resp = update_stats(
         "job123",
         [
@@ -69,6 +75,12 @@ def test_it_handles_successful_queries(table):
 
 @patch("backend.lambdas.jobs.stats_updater.table")
 def test_it_handles_failed_queries(table):
+    """
+    Test for failed failed queries table.
+
+    Args:
+        table: (str): write your description
+    """
     resp = update_stats(
         "job123",
         [
@@ -124,6 +136,12 @@ def test_it_handles_failed_queries(table):
 
 @patch("backend.lambdas.jobs.stats_updater.table")
 def test_it_handles_successful_updates(table):
+    """
+    Test for updates the updates
+
+    Args:
+        table: (todo): write your description
+    """
     resp = update_stats(
         "job123",
         [
@@ -179,6 +197,12 @@ def test_it_handles_successful_updates(table):
 
 @patch("backend.lambdas.jobs.stats_updater.table")
 def test_it_handles_failed_updates(table):
+    """
+    Test for updates that updates in the updates table.
+
+    Args:
+        table: (str): write your description
+    """
     resp = update_stats(
         "job123",
         [
@@ -234,6 +258,12 @@ def test_it_handles_failed_updates(table):
 
 @patch("backend.lambdas.jobs.stats_updater.table")
 def test_it_handles_failed_rollbacks(table):
+    """
+    Test for rollbacks
+
+    Args:
+        table: (str): write your description
+    """
     resp = update_stats(
         "job123",
         [
@@ -289,6 +319,12 @@ def test_it_handles_failed_rollbacks(table):
 
 @patch("backend.lambdas.jobs.stats_updater.table")
 def test_it_handles_multiple_events(table):
+    """
+    Test for cross - section stats.
+
+    Args:
+        table: (str): write your description
+    """
     resp = update_stats(
         "job123",
         [
@@ -358,6 +394,13 @@ def test_it_handles_multiple_events(table):
 @patch("backend.lambdas.jobs.stats_updater.ddb")
 @patch("backend.lambdas.jobs.stats_updater.table")
 def test_it_handles_already_failed_jobs(table, ddb):
+    """
+    Test for failed jobs failed.
+
+    Args:
+        table: (str): write your description
+        ddb: (todo): write your description
+    """
     e = boto3.client("dynamodb").exceptions.ConditionalCheckFailedException
     ddb.meta.client.exceptions.ConditionalCheckFailedException = e
     table.update_item.side_effect = e({}, "ConditionalCheckFailedException")

@@ -12,6 +12,13 @@ client = boto3.client("ecs")
 
 @with_logging
 def handler(event, context):
+    """
+    Return a single event.
+
+    Args:
+        event: (todo): write your description
+        context: (dict): write your description
+    """
     try:
         service = client.describe_services(
             cluster=event["Cluster"], services=[event["ServiceName"],],

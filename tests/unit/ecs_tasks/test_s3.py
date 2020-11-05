@@ -27,6 +27,11 @@ pytestmark = [pytest.mark.unit, pytest.mark.ecs_tasks]
 
 
 def get_list_object_versions_error():
+    """
+    Get versions of versions versions.
+
+    Args:
+    """
     return ClientError(
         {
             "Error": {
@@ -39,6 +44,11 @@ def get_list_object_versions_error():
 
 
 def test_it_validates_bucket_versioning():
+    """
+    Returns true if valid valid bucket is valid.
+
+    Args:
+    """
     validate_bucket_versioning.cache_clear()
     client = MagicMock()
     client.get_bucket_versioning.return_value = {"Status": "Enabled"}
@@ -46,6 +56,11 @@ def test_it_validates_bucket_versioning():
 
 
 def test_it_throws_when_versioning_disabled():
+    """
+    Return a boolean indicating whether the thumbnail.
+
+    Args:
+    """
     validate_bucket_versioning.cache_clear()
     client = MagicMock()
     client.get_bucket_versioning.return_value = {}
@@ -57,6 +72,11 @@ def test_it_throws_when_versioning_disabled():
 
 
 def test_it_throws_when_versioning_suspended():
+    """
+    Return true if_itended version of the valid version.
+
+    Args:
+    """
     validate_bucket_versioning.cache_clear()
     client = MagicMock()
     client.get_bucket_versioning.return_value = {"Status": "Suspended"}
@@ -68,6 +88,11 @@ def test_it_throws_when_versioning_suspended():
 
 
 def test_it_throws_when_mfa_delete_enabled():
+    """
+    Return true if the bucket is enabled.
+
+    Args:
+    """
     validate_bucket_versioning.cache_clear()
     client = MagicMock()
     client.get_bucket_versioning.return_value = {
@@ -82,6 +107,11 @@ def test_it_throws_when_mfa_delete_enabled():
 
 
 def test_it_returns_requester_pays():
+    """
+    Determine the return return return requests.
+
+    Args:
+    """
     get_requester_payment.cache_clear()
     client = MagicMock()
     client.get_bucket_request_payment.return_value = {"Payer": "Requester"}
@@ -92,6 +122,11 @@ def test_it_returns_requester_pays():
 
 
 def test_it_returns_empty_for_non_requester_pays():
+    """
+    Returns a list of the return : dict of : attr : return :
+
+    Args:
+    """
     get_requester_payment.cache_clear()
     client = MagicMock()
     client.get_bucket_request_payment.return_value = {"Payer": "Owner"}
@@ -100,6 +135,12 @@ def test_it_returns_empty_for_non_requester_pays():
 
 @patch("backend.ecs_tasks.delete_files.s3.get_requester_payment")
 def test_it_returns_standard_info(mock_requester):
+    """
+    Return standard return info for a dictionary
+
+    Args:
+        mock_requester: (todo): write your description
+    """
     get_object_info.cache_clear()
     client = MagicMock()
     mock_requester.return_value = {}, {}
@@ -123,6 +164,12 @@ def test_it_returns_standard_info(mock_requester):
 
 @patch("backend.ecs_tasks.delete_files.s3.get_requester_payment")
 def test_it_strips_empty_standard_info(mock_requester):
+    """
+    Returns a dictionary with_it_requester
+
+    Args:
+        mock_requester: (todo): write your description
+    """
     get_object_info.cache_clear()
     client = MagicMock()
     mock_requester.return_value = {}, {}
@@ -158,6 +205,12 @@ def test_it_strips_empty_standard_info(mock_requester):
 
 @patch("backend.ecs_tasks.delete_files.s3.get_requester_payment")
 def test_it_handles_versions_for_get_info(mock_requester):
+    """
+    Get versions of versions of versions.
+
+    Args:
+        mock_requester: (todo): write your description
+    """
     get_object_info.cache_clear()
     client = MagicMock()
     mock_requester.return_value = {}, {}
@@ -171,6 +224,11 @@ def test_it_handles_versions_for_get_info(mock_requester):
 
 
 def test_it_gets_tagging_args():
+    """
+    Returns the arguments for testing.
+
+    Args:
+    """
     get_object_tags.cache_clear()
     client = MagicMock()
     client.get_object_tagging.return_value = {
@@ -181,6 +239,12 @@ def test_it_gets_tagging_args():
 
 @patch("backend.ecs_tasks.delete_files.s3.get_requester_payment")
 def test_it_handles_versions_for_get_tagging(mock_requester):
+    """
+    Get versions of versions versions versions of the versions.
+
+    Args:
+        mock_requester: (todo): write your description
+    """
     get_object_info.cache_clear()
     client = MagicMock()
     mock_requester.return_value = {}, {}
@@ -195,6 +259,12 @@ def test_it_handles_versions_for_get_tagging(mock_requester):
 
 @patch("backend.ecs_tasks.delete_files.s3.get_requester_payment")
 def test_it_gets_acl_args(mock_requester):
+    """
+    Return args for acluster args
+
+    Args:
+        mock_requester: (todo): write your description
+    """
     get_object_acl.cache_clear()
     client = MagicMock()
     mock_requester.return_value = {}, {}
@@ -214,6 +284,12 @@ def test_it_gets_acl_args(mock_requester):
 
 @patch("backend.ecs_tasks.delete_files.s3.get_requester_payment")
 def test_it_handles_versions_for_get_acl(mock_requester):
+    """
+    Returns a list of acl versions for versions.
+
+    Args:
+        mock_requester: (todo): write your description
+    """
     get_object_info.cache_clear()
     client = MagicMock()
     mock_requester.return_value = {}, {}
@@ -233,6 +309,11 @@ def test_it_handles_versions_for_get_acl(mock_requester):
 
 
 def test_it_gets_grantees_by_type():
+    """
+    Grantgrant for acl
+
+    Args:
+    """
     acl = {
         "Owner": {"ID": "owner_id"},
         "Grants": [
@@ -277,6 +358,16 @@ def test_it_gets_grantees_by_type():
 def test_it_applies_settings_when_saving(
     mock_grantees, mock_acl, mock_tagging, mock_standard, mock_requester
 ):
+    """
+    .. versionadded :: 2016. 3. 0
+
+    Args:
+        mock_grantees: (todo): write your description
+        mock_acl: (todo): write your description
+        mock_tagging: (todo): write your description
+        mock_standard: (todo): write your description
+        mock_requester: (todo): write your description
+    """
     mock_s3 = MagicMock()
     mock_s3.S3FileSystem.return_value = mock_s3
     mock_client = MagicMock()
@@ -321,6 +412,16 @@ def test_it_applies_settings_when_saving(
 def test_it_passes_through_version(
     mock_grantees, mock_acl, mock_tagging, mock_standard, mock_requester
 ):
+    """
+    Test for passes a passes a mock.
+
+    Args:
+        mock_grantees: (todo): write your description
+        mock_acl: (todo): write your description
+        mock_tagging: (todo): write your description
+        mock_standard: (todo): write your description
+        mock_requester: (todo): write your description
+    """
     mock_s3 = MagicMock()
     mock_client = MagicMock()
     mock_requester.return_value = {}, {}
@@ -343,6 +444,16 @@ def test_it_passes_through_version(
 def test_it_restores_write_permissions(
     mock_grantees, mock_acl, mock_tagging, mock_standard, mock_requester
 ):
+    """
+    Encode permissions for permissions for acls permissions
+
+    Args:
+        mock_grantees: (todo): write your description
+        mock_acl: (todo): write your description
+        mock_tagging: (todo): write your description
+        mock_standard: (todo): write your description
+        mock_requester: (todo): write your description
+    """
     mock_s3 = MagicMock()
     mock_s3.S3FileSystem.return_value = mock_s3
     mock_client = MagicMock()
@@ -380,6 +491,11 @@ def test_it_restores_write_permissions(
 
 
 def test_it_verifies_integrity_happy_path():
+    """
+    Return a mock_it_it_path.
+
+    Args:
+    """
     s3_mock = MagicMock()
     s3_mock.list_object_versions.return_value = {
         "VersionIdMarker": "v7",
@@ -400,6 +516,11 @@ def test_it_verifies_integrity_happy_path():
 
 
 def test_it_fails_integrity_when_delete_marker_between():
+    """
+    .. version of fails
+
+    Args:
+    """
     s3_mock = MagicMock()
     s3_mock.list_object_versions.return_value = {
         "VersionIdMarker": "v7",
@@ -421,6 +542,11 @@ def test_it_fails_integrity_when_delete_marker_between():
 
 
 def test_it_fails_integrity_when_other_version_between():
+    """
+    Return the number of versions of versions
+
+    Args:
+    """
     s3_mock = MagicMock()
     s3_mock.list_object_versions.return_value = {
         "VersionIdMarker": "v7",
@@ -442,6 +568,11 @@ def test_it_fails_integrity_when_other_version_between():
 
 
 def test_it_fails_integrity_when_no_other_version_before():
+    """
+    Return the number
+
+    Args:
+    """
     s3_mock = MagicMock()
     s3_mock.list_object_versions.return_value = {
         "VersionIdMarker": "v7",
@@ -464,6 +595,12 @@ def test_it_fails_integrity_when_no_other_version_before():
 
 @patch("time.sleep")
 def test_it_errors_when_version_to_not_found_after_retries(sleep_mock):
+    """
+    Test if the mock version number of a mock.
+
+    Args:
+        sleep_mock: (todo): write your description
+    """
     s3_mock = MagicMock()
     s3_mock.list_object_versions.side_effect = get_list_object_versions_error()
 
@@ -481,6 +618,12 @@ def test_it_errors_when_version_to_not_found_after_retries(sleep_mock):
 
 @patch("backend.ecs_tasks.delete_files.s3.paginate")
 def test_it_deletes_old_versions(paginate_mock):
+    """
+    Delete versions of the old versions.
+
+    Args:
+        paginate_mock: (todo): write your description
+    """
     s3_mock = MagicMock()
     paginate_mock.return_value = iter(
         [
@@ -532,6 +675,12 @@ def test_it_deletes_old_versions(paginate_mock):
 
 @patch("backend.ecs_tasks.delete_files.s3.paginate")
 def test_it_handles_high_old_version_count(paginate_mock):
+    """
+    Test for the number of high - release is running. caller.
+
+    Args:
+        paginate_mock: (todo): write your description
+    """
     s3_mock = MagicMock()
     paginate_mock.return_value = iter(
         [
@@ -580,6 +729,12 @@ def test_it_handles_high_old_version_count(paginate_mock):
 
 @patch("backend.ecs_tasks.delete_files.s3.paginate")
 def test_it_raises_for_deletion_errors(paginate_mock):
+    """
+    Test for versions of versions of versions of the given inlet.
+
+    Args:
+        paginate_mock: (todo): write your description
+    """
     s3_mock = MagicMock()
     paginate_mock.return_value = iter(
         [
@@ -614,6 +769,12 @@ def test_it_raises_for_deletion_errors(paginate_mock):
 
 @patch("backend.ecs_tasks.delete_files.s3.paginate")
 def test_it_handles_client_errors_as_deletion_errors(paginate_mock):
+    """
+    Test if client versions.
+
+    Args:
+        paginate_mock: (str): write your description
+    """
     s3_mock = MagicMock()
     paginate_mock.side_effect = get_list_object_versions_error()
     with pytest.raises(DeleteOldVersionsError):
@@ -621,6 +782,11 @@ def test_it_handles_client_errors_as_deletion_errors(paginate_mock):
 
 
 def test_it_deletes_new_version_during_rollback():
+    """
+    Return a new rollback version of the rollback.
+
+    Args:
+    """
     s3_mock = MagicMock()
     s3_mock.delete_object.return_value = "result"
     mock_callback = MagicMock()
@@ -635,6 +801,11 @@ def test_it_deletes_new_version_during_rollback():
 
 
 def test_it_handles_error_for_client_error():
+    """
+    Handles the mock.
+
+    Args:
+    """
     s3_mock = MagicMock()
     s3_mock.delete_object.side_effect = ClientError({}, "DeleteObject")
     mock_callback = MagicMock()
@@ -649,6 +820,11 @@ def test_it_handles_error_for_client_error():
 
 
 def test_it_handles_error_for_generic_errors():
+    """
+    Test if the mock error.
+
+    Args:
+    """
     s3_mock = MagicMock()
     s3_mock.delete_object.side_effect = RuntimeError("Some issue")
     mock_callback = MagicMock()
