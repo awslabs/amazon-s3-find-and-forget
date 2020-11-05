@@ -66,6 +66,9 @@ supported:
   operations and attempt to rollback any changes if an inconsistency is
   detected. If the rollback fails, you will need to manually reconcile the
   object versions to avoid data inconsistency or loss
+- We recommend that you avoid running a Deletion Job in parallel to a workload
+  that reads from the data lake unless it has been designed to handle temporary
+  inconsistencies between objects
 - Buckets with MFA Delete enabled are not supported
 - An individual [Deletion Job] can process max 375KB of items from the [Deletion
   Queue]. When the queue is too large, the Job will automatically try to process

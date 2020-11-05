@@ -1,5 +1,11 @@
 # Change Log
 
+## v0.14 (unreleased)
+
+- [#208](https://github.com/awslabs/amazon-s3-find-and-forget/pull/208): Fix bug
+  preventing PUT DataMapper to edit existing datamapper with same location, fix
+  Front-end DataMapper creation to prevent editing an existing one.
+
 ## v0.13
 
 - [#207](https://github.com/awslabs/amazon-s3-find-and-forget/pull/207): Upgrade

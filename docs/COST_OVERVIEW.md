@@ -104,7 +104,9 @@ regarding supported data and compression formats.
 
 The [Amazon Athena Pricing] page contains an overview of prices and provides a
 calculator to estimate the Athena query cost for each deletion job run based on
-the Data Lake size.
+the Data Lake size. See [Using Workgroups to Control Query Access and Costs] for
+more information on using workgroups to set limits on the amount of data each
+query or the entire workgroup can process, and to track costs.
 
 ### Amazon CloudFront
 
@@ -340,6 +342,8 @@ This example shows how the charges would be calculated for a deletion job where:
 [amazon vpc pricing]: https://aws.amazon.com/vpc/pricing/
 [deletion job workflow]: ARCHITECTURE.md#deletion-job-workflow
 [solution persistence layer]: ARCHITECTURE.md#persistence-layer
+[using workgroups to control query access and costs]:
+  https://docs.aws.amazon.com/athena/latest/ug/manage-queries-control-costs-with-workgroups.html
 [vpc configuration]:
   USER_GUIDE.md#pre-requisite-Configuring-a-vpc-for-the-solution
 
