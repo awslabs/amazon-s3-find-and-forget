@@ -7,7 +7,7 @@
 </h1>
 
 > Warning: Consult the
-> [Production Readiness guidlines](docs/PRODUCTION_READINESS_GUIDELINES) prior
+> [Production Readiness guidelines](docs/PRODUCTION_READINESS_GUIDELINES) prior
 > to using the solution with production data
 
 Amazon S3 Find and Forget is a solution to the need to selectively erase records
