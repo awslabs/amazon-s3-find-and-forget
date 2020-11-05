@@ -19,11 +19,13 @@ of the cost of deletion.
 
 We recommend starting to evaluate the solution by deploying it in a test account
 with a sample of your dataset. After configuring the solution, identify a set of
-queries to run on your dataset before and after [running a Deletion Job].
+queries to run against your dataset before and after [running a Deletion Job].
 
 > **Note:** You don't need to have a full copy of each dataset, but we recommend
 > to have at least the same schema in order to make sure the test queries are as
 > close to production as possible.
+
+## 4. Run your test queries
 
 These are examples of test queries:
 
@@ -50,6 +52,15 @@ This guidelines are provided as suggested steps to identify your own acceptance
 criteria, but they are not intended to be a comprehensive list. Please identify
 any other extra step before moving to production. If you have any question
 please [open an issue]. We appreciate your feedback.
+
+## 5. Deploy the solution in production
+
+In order to have some extra confidence, it could be a good idea to repeat the
+test queries in production before/after a deletion job. If you would prefer some
+extra safety, you can configure your data mappers to **not** delete the previous
+versions of objects after write, so that if anything goes wrong you can manually
+recover corrupted objects; but make sure to turn the setting back on after you
+finish testing, and in case, perform a manual deletion of the previous versions.
 
 [cost overview guide]: COST_OVERVIEW.md
 [existing issues]: https://github.com/awslabs/amazon-s3-find-and-forget/issues
