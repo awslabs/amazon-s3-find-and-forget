@@ -191,6 +191,12 @@ When the Queue is empty, a Lambda sets the instances back to 0 in order to
 optimise cost. The number of Fargate tasks is configurable when deploying the
 solution.
 
+Note that during the Forget phase, affected S3 objects are replaced at the time
+they are processed and are subject to the [Amazon S3 data consistency model]. We
+recommend that you avoid running a Deletion Job in parallel to a workload that
+reads from the data lake unless it has been designed to handle temporary
+inconsistencies between objects.
+
 ![Architecture](images/stepfunctions_graph_deletion.png)
 
 ## See Also
@@ -200,6 +206,8 @@ solution.
 - [Limits]
 - [Monitoring guide]
 
+[amazon s3 data consistency model]:
+  https://docs.aws.amazon.com/AmazonS3/latest/dev/Introduction.html#ConsistencyModel
 [api specification]: ./api/README.md
 [cost overview guide]: COST_OVERVIEW.md
 [limits]: LIMITS.md
