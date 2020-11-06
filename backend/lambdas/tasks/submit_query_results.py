@@ -45,4 +45,4 @@ def handler(event, context):
 
     batch_sqs_msgs(queue, messages)
 
-    return paths
+    return len(paths)

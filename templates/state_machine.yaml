@@ -224,9 +224,7 @@ Resources:
               "Next": "Query Succeeded",
               "Retry": [{
                  "ErrorEquals": [ "States.ALL" ],
-                 "IntervalSeconds": 5,
-                 "BackoffRate": 2.5,
-                 "MaxAttempts": 1
+                 "MaxAttempts": 0
               }],
               "Catch": [{
                  "ErrorEquals": ["States.ALL"],
