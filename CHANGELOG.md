@@ -1,7 +1,11 @@
 # Change Log
 
-## v0.14 (unreleased)
+## v0.14
 
+- [#213](https://github.com/awslabs/amazon-s3-find-and-forget/pull/213): Fix for
+  a bug causing a FIND_FAILED error related to a States.DataLimitExceed
+  exception triggered by Step Function's Athena workflow when executing the
+  SubmitQueryResults lambda
 - [#208](https://github.com/awslabs/amazon-s3-find-and-forget/pull/208): Fix bug
   preventing PUT DataMapper to edit existing datamapper with same location, fix
   Front-end DataMapper creation to prevent editing an existing one.
