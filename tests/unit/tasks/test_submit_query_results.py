@@ -31,7 +31,7 @@ def test_it_returns_only_paths(paginate_mock, batch_sqs_msgs_mock):
         },
         SimpleNamespace(),
     )
-    assert ["s3://mybucket/mykey1", "s3://mybucket/mykey2",] == resp
+    assert 2 == resp
 
 
 @patch("backend.lambdas.tasks.submit_query_results.batch_sqs_msgs")
