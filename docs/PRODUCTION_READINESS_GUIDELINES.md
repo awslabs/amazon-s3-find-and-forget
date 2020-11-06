@@ -1,29 +1,31 @@
 # Production Readiness Guidelines
 
-Conducting your own testing prior to operating in production is important for
-various reasons, including gaining extra confidence against unwanted data loss
-due to misconfiguration and uncontrolled spending.
+It is important to conduct your own testing prior to using this solution with
+production data. The following guidelines provide steps you can follow to
+mitigate against unexpected behaviours such as unwanted data loss, or unexpected
+high spend that could arise by using the solution in an incompatible
+configuration.
 
 ## 1. Review the Solution Limits
 
-Before starting, consult the [Limits] documentation to ensure your datasets are
-in a supported format and your buckets' configuration is compatible with the
-solution requirements.
+Consult the [Limits] guide to check your datasets are in a supported format and
+your S3 bucket configuration is compatible with the solution requirements.
 
 ## 2. Learn about costs
 
-Consult the [Cost Overview guide] to learn about cost and start having an idea
-of the cost of deletion.
+Consult the [Cost Overview guide] to learn about the costs of running the
+solution, and ways to set spend limits.
 
 ## 3. Deploy the solution in a test environment
 
-We recommend starting to evaluate the solution by deploying it in a test account
-with a sample of your dataset. After configuring the solution, identify a set of
-queries to run against your dataset before and after [running a Deletion Job].
+We recommend first evaluating the solution by deploying it in an AWS account
+you use for testing, with a sample of your dataset. After configuring the
+solution, identify a set of queries to run against your dataset before and after
+[running a Deletion Job].
 
 > **Note:** You don't need to have a full copy of each dataset, but we recommend
-> to have at least the same schema in order to make sure the test queries are as
-> close to production as possible.
+> to have at least the same schema to make sure the test queries are as close to
+> production as possible.
 
 ## 4. Run your test queries
 
@@ -42,25 +44,27 @@ After running a deletion job:
   affecting their schema (for instance, there is no unwanted type coercion
   against `date` or `number` types): C<sub>1</sub>=C<sub>0</sub>
 
-If any error occurs or data doesn't match, please review the [troubleshooting
-guide] or check for [existing issues]. If you cannot find a resolution, feel
-free to [open an issue].
+If any error occurs or data doesn't match, review the [troubleshooting guide] or
+check for [existing issues]. If you cannot find a resolution, feel free to [open
+an issue].
 
 ## 4. Identify your own extra requirements
 
-This guidelines are provided as suggested steps to identify your own acceptance
-criteria, but they are not intended to be a comprehensive list. Please identify
-any other extra step before moving to production. If you have any question
-please [open an issue]. We appreciate your feedback.
+These guidelines are provided as suggested steps to identify your own acceptance
+criteria, but they are not intended to be an exhaustive list. You should
+consider testing any other factors that may apply to your workload before moving
+to production. If you have any question please [open an issue]. We appreciate
+your feedback.
 
 ## 5. Deploy the solution in production
 
-In order to have some extra confidence, it could be a good idea to repeat the
-test queries in production before/after a deletion job. If you would prefer some
-extra safety, you can configure your data mappers to **not** delete the previous
-versions of objects after write, so that if anything goes wrong you can manually
-recover corrupted objects; but make sure to turn the setting back on after you
-finish testing, and in case, perform a manual deletion of the previous versions.
+For greater confidence, it could be a good idea to repeat the test queries in
+production before/after a deletion job. If you would prefer some extra safety,
+you can configure your data mappers to **not** delete the previous versions of
+objects after write, so that if anything goes wrong you can manually recover
+older versions of the objects; but remember to turn the setting back on after
+you finish testing, and in case, perform a manual deletion of the previous
+versions if so desired.
 
 [cost overview guide]: COST_OVERVIEW.md
 [existing issues]: https://github.com/awslabs/amazon-s3-find-and-forget/issues
