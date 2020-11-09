@@ -18,10 +18,10 @@ solution, and ways to set spend limits.
 
 ## 3. Deploy the solution in a test environment
 
-We recommend first evaluating the solution by deploying it in an AWS account
-you use for testing, with a sample of your dataset. After configuring the
-solution, identify a set of queries to run against your dataset before and after
-[running a Deletion Job].
+We recommend first evaluating the solution by deploying it in an AWS account you
+use for testing, with a sample of your dataset. After configuring the solution,
+identify a set of queries to run against your dataset before and after [running
+a Deletion Job].
 
 > **Note:** You don't need to have a full copy of each dataset, but we recommend
 > to have at least the same schema to make sure the test queries are as close to

@@ -7,8 +7,8 @@
 </h1>
 
 > Warning: Consult the
-> [Production Readiness guidelines](docs/PRODUCTION_READINESS_GUIDELINES) prior
-> to using the solution with production data
+> [Production Readiness guidelines](docs/PRODUCTION_READINESS_GUIDELINES.md)
+> prior to using the solution with production data
 
 Amazon S3 Find and Forget is a solution to the need to selectively erase records
 from data lakes stored on Amazon Simple Storage Service (Amazon S3). This
@@ -109,6 +109,7 @@ architecture.
 - [Limits](docs/LIMITS.md)
 - [API Specification](docs/api/README.md)
 - [Local Development](docs/LOCAL_DEVELOPMENT.md)
+- [Production Readiness guidelines](docs/PRODUCTION_READINESS_GUIDELINES.md)
 - [Change Log](CHANGELOG.md)
 - [Upgrade Guide](docs/UPGRADE_GUIDE.md)
 
