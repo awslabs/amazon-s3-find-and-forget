@@ -748,6 +748,7 @@ Resources:
           Resource: !Sub "arn:${AWS::Partition}:athena:${AWS::Region}:${AWS::AccountId}:workgroup/${AthenaWorkGroup}"
         - Action:
           - "s3:GetObject*"
+          - "lakeformation:GetDataAccess"
           Effect: "Allow"
           Resource: "*"
           Condition:
@@ -962,6 +963,8 @@ Outputs:
     Value: !GetAtt ExecuteQueryRole.Arn
   AthenaStateMachineArn:
     Value: !Ref AthenaStateMachine
+  GenerateQueriesRole:
+    Value: !Ref GenerateQueriesRole
   QueryQueueUrl:
     Value: !Ref QueryQueue
   StateMachineArn:

@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
-Description: Amazon S3 Find and Forget (uksb-1q2j8beb0) (version:v0.14)
+Description: Amazon S3 Find and Forget (uksb-1q2j8beb0) (version:v0.15)
 
 Parameters:
   AccessControlAllowOriginOverride:
@@ -135,7 +135,7 @@ Conditions:
 Mappings:
   Solution:
     Constants:
-      Version: 'v0.14'
+      Version: 'v0.15'
 
 Resources:
   TempBucket:
@@ -368,8 +368,12 @@ Outputs:
     Value: !GetAtt DelStack.Outputs.DLQUrl
   ECRRepository:
     Value: !GetAtt DelStack.Outputs.ECRRepository
+  GenerateQueriesRole:
+    Value: !GetAtt StateMachineStack.Outputs.GenerateQueriesRole
   JobTable:
     Value: !GetAtt DDBStack.Outputs.JobTable
+  PutDataMapperRole:
+    Value: !GetAtt APIStack.Outputs.PutDataMapperRole
   QueryQueueUrl:
     Value: !GetAtt StateMachineStack.Outputs.QueryQueueUrl
   SolutionVersion:
@@ -382,6 +386,8 @@ Outputs:
     Value: !Ref TempBucket
   WebUIBucket:
     Value: !GetAtt WebUIStack.Outputs.WebUIBucket
+  WebUIRole:
+    Value: !GetAtt AuthStack.Outputs.ServiceInvokeRole    
   WebUIUrl:
     Value: !GetAtt WebUIStack.Outputs.Url
 
