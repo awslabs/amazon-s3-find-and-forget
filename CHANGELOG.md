@@ -1,5 +1,10 @@
 # Change Log
 
+## v0.15
+
+- [#215](https://github.com/awslabs/amazon-s3-find-and-forget/pull/215): Support
+  for data registered with AWS Lake Formation
+
 ## v0.14
 
 - [#213](https://github.com/awslabs/amazon-s3-find-and-forget/pull/213): Fix for

@@ -334,7 +334,7 @@ Data Catalog in the same region and account as the S3 Find and Forget solution.
 
 If your data is registered With AWS Lake Formation, you will need to perform the
 following steps prior to creating your data mappers, otherwise you can skip to
-[Data Mapper creation](#data-mapper-creation)
+[Data Mapper creation](#data-mapper-creation).
 
 1. Fetch the **WebUIRole** value displayed in the _Outputs_ tab for the stack.
    Use the [AWS Lake Formation Data Permissions Console] to grant `Describe`
