@@ -110,3 +110,6 @@ Outputs:
   CognitoUserPoolClientId:
     Description: Cognito User Pool Client Id
     Value: !Ref CognitoUserPoolClient
+  ServiceInvokeRole:
+    Description: Role used by the Web UI
+    Value: !Ref ServiceInvokeRole
