@@ -16,6 +16,8 @@ Forget solution.
   - [Managing users](#managing-users)
   - [Making authenticated API requests](#making-authenticated-api-requests)
 - [Configuring Data Mappers](#configuring-data-mappers)
+  - [AWS Lake Formation Configuration](#aws-lake-formation-configuration)
+  - [Data Mapper Creation](#data-mapper-creation)
 - [Granting Access to Data](#granting-access-to-data)
   - [Updating Your Bucket Policy](#updating-your-bucket-policy)
   - [Data Encrypted with Customer Managed CMKs](#data-encrypted-with-a-customer-managed-cmk)
@@ -327,6 +329,32 @@ created) are known to the Data Catalog. Currently AWS Glue is the only supported
 data catalog provider. For more information on defining your data in the Glue
 Data Catalog, see [Defining Glue Tables]. You must define your Table in the Glue
 Data Catalog in the same region and account as the S3 Find and Forget solution.
+
+### AWS Lake Formation Configuration
+
+If your data is registered With AWS Lake Formation, you will need to perform the
+following steps prior to creating your data mappers, otherwise you can skip to
+[Data Mapper creation](#data-mapper-creation)
+
+1. Fetch the **WebUIRole** value displayed in the _Outputs_ tab for the stack.
+   Use the [AWS Lake Formation Data Permissions Console] to grant `Describe`
+   permission to that role for all the Glue Databases that need to be integrated
+   to the solution. Then grant `Describe` and `Select` to that role for all the
+   Glue Tables that need to be integrated to the solution. This permissions
+   allow the Web UI to discover the Glue Tables for the current account for
+   allowing the data mapper creation.
+2. Fetch the **PutDataMapperRole** value displayed in the _Outputs_ tab for the
+   stack. Use the [AWS Lake Formation Data Permissions Console] to grant
+   `Describe` and `Select` to that role for all the Glue Tables that need to be
+   integrated to the solution. This permissions allow the solution to access
+   Table metadata when creating a Data Mapper.
+3. Fetch the **AthenaExecutionRole** and **GenerateQueriesRole** values
+   displayed in the _Outputs_ tab for the stack. Use the [AWS Lake Formation
+   Data Permissions Console] to grant `Describe` and `Select` to these roles for
+   all the tables that need to be integrated to the solution. This permissions
+   allow the solution to plan and execute Athena queries during the Find Phase.
+
+### Data Mapper Creation
 
 1. Access the application UI via the **WebUIUrl** displayed in the _Outputs_ tab
    for the stack.
@@ -773,3 +801,5 @@ To delete a stack via the AWS CLI
   https://docs.aws.amazon.com/cognito/latest/developerguide/managing-users.html
 [cognito rest api integration guide]:
   https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-invoke-api-integrated-with-cognito-user-pool.html
+[aws lake formation data permissions console]:
+  https://ap-northeast-1.console.aws.amazon.com/lakeformation/home?#access-control

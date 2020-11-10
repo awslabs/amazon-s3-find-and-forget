@@ -368,4 +368,6 @@ Outputs:
   ApiUrl:
     Description: API endpoint URL for Prod environment
     Value: !Sub https://${Api}.execute-api.${AWS::Region}.amazonaws.com/Prod/
-  
+  PutDataMapperRole:
+    Description: Role used by the PutDataMapper API
+    Value: !Ref PutDataMapperRole

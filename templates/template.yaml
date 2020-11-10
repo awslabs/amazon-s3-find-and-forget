@@ -368,8 +368,12 @@ Outputs:
     Value: !GetAtt DelStack.Outputs.DLQUrl
   ECRRepository:
     Value: !GetAtt DelStack.Outputs.ECRRepository
+  GenerateQueriesRole:
+    Value: !GetAtt StateMachineStack.Outputs.GenerateQueriesRole
   JobTable:
     Value: !GetAtt DDBStack.Outputs.JobTable
+  PutDataMapperRole:
+    Value: !GetAtt APIStack.Outputs.PutDataMapperRole
   QueryQueueUrl:
     Value: !GetAtt StateMachineStack.Outputs.QueryQueueUrl
   SolutionVersion:
@@ -382,6 +386,8 @@ Outputs:
     Value: !Ref TempBucket
   WebUIBucket:
     Value: !GetAtt WebUIStack.Outputs.WebUIBucket
+  WebUIRole:
+    Value: !GetAtt AuthStack.Outputs.ServiceInvokeRole    
   WebUIUrl:
     Value: !GetAtt WebUIStack.Outputs.Url
 
