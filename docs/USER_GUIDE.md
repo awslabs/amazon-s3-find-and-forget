@@ -340,18 +340,18 @@ following steps prior to creating your data mappers, otherwise you can skip to
    Use the [AWS Lake Formation Data Permissions Console] to grant `Describe`
    permission to that role for all the Glue Databases that need to be integrated
    to the solution. Then grant `Describe` and `Select` to that role for all the
-   Glue Tables that need to be integrated to the solution. This permissions
+   Glue Tables that need to be integrated to the solution. These permissions
    allow the Web UI to discover the Glue Tables for the current account for
    allowing the data mapper creation.
 2. Fetch the **PutDataMapperRole** value displayed in the _Outputs_ tab for the
    stack. Use the [AWS Lake Formation Data Permissions Console] to grant
    `Describe` and `Select` to that role for all the Glue Tables that need to be
-   integrated to the solution. This permissions allow the solution to access
+   integrated to the solution. These permissions allow the solution to access
    Table metadata when creating a Data Mapper.
 3. Fetch the **AthenaExecutionRole** and **GenerateQueriesRole** values
    displayed in the _Outputs_ tab for the stack. Use the [AWS Lake Formation
    Data Permissions Console] to grant `Describe` and `Select` to these roles for
-   all the tables that need to be integrated to the solution. This permissions
+   all the tables that need to be integrated to the solution. These permissions
    allow the solution to plan and execute Athena queries during the Find Phase.
 
 ### Data Mapper Creation
