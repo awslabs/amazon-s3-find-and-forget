@@ -323,7 +323,9 @@ def test_it_runs_for_complex_types(
     job_table,
 ):
     # Arrange
-    glue_data_mapper_factory("test", column_identifiers=["user_info.name"])
+    glue_data_mapper_factory(
+        "test", column_identifiers=["user_info.personal_information.name"]
+    )
     item = del_queue_factory("matteo")
     object_key = "test/test.parquet"
     data_loader(
@@ -343,7 +345,6 @@ def test_it_runs_for_complex_types(
         == job_table.get_item(Key={"Id": job_id, "Sk": job_id})["Item"]["JobStatus"]
     )
     assert 0 == len(query_parquet_file(tmp, "customer_id", "12345"))
-    print(query_parquet_file(tmp, "customer_id", "23456"))
     assert {"foo": "bar"} == bucket.Object(object_key).metadata
     assert "cache" == bucket.Object(object_key).cache_control
 

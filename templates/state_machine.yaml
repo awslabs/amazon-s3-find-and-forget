@@ -726,7 +726,7 @@ Resources:
       CodeUri: ../backend/lambdas/tasks/
       Environment:
         Variables:
-          AthenaWorkGroup: !Ref AthenaWorkGroup
+          WorkGroup: !Ref AthenaWorkGroup
       Policies:
       - S3CrudPolicy:
           BucketName: !Ref ResultBucket
