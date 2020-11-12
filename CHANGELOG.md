@@ -1,6 +1,6 @@
 # Change Log
 
-## v0.16 (unreleased)
+## v0.16
 
 - [#216](https://github.com/awslabs/amazon-s3-find-and-forget/pull/216): Fix for
   a bug affecting Parquet files with complex data types as column identifier
