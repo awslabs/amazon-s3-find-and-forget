@@ -1,5 +1,16 @@
 # Change Log
 
+## v0.16 (unreleased)
+
+- [#216](https://github.com/awslabs/amazon-s3-find-and-forget/pull/216): Fix for
+  a bug affecting Parquet files with complex data types as column identifier
+  generating a
+  `Apache Arrow processing error: Mix of struct and list types not yet supported`
+  exception during the Forget phase
+- [#216](https://github.com/awslabs/amazon-s3-find-and-forget/pull/216): Fix for
+  a bug affecting workgroups other than `primary` generating a permission error
+  exception during the Find phase
+
 ## v0.15
 
 - [#215](https://github.com/awslabs/amazon-s3-find-and-forget/pull/215): Support

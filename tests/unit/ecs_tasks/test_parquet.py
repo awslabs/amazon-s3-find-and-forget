@@ -11,7 +11,6 @@ from backend.ecs_tasks.delete_files.parquet_handler import (
     delete_matches_from_parquet_file,
     delete_from_table,
     load_parquet,
-    get_row_count,
 )
 
 pytestmark = [pytest.mark.unit, pytest.mark.ecs_tasks]
@@ -79,8 +78,7 @@ def test_delete_correct_rows_from_table():
     columns = [{"Column": "customer_id", "MatchIds": ["12345", "23456"]}]
     df = pd.DataFrame(data)
     table = pa.Table.from_pandas(df)
-    schema = pa.Schema.from_pandas(df)
-    table, deleted_rows = delete_from_table(table, columns, schema)
+    table, deleted_rows = delete_from_table(table, columns)
     res = table.to_pandas()
     assert len(res) == 1
     assert deleted_rows == 2
@@ -96,8 +94,7 @@ def test_it_handles_data_with_pandas_indexes():
     columns = [{"Column": "customer_id", "MatchIds": ["12345", "23456"]}]
     df = pd.DataFrame(data, list("abc"))
     table = pa.Table.from_pandas(df)
-    schema = pa.Schema.from_pandas(df)
-    table, deleted_rows = delete_from_table(table, columns, schema)
+    table, deleted_rows = delete_from_table(table, columns)
     res = table.to_pandas()
     assert len(res) == 1
     assert deleted_rows == 2
@@ -108,32 +105,28 @@ def test_delete_correct_rows_from_parquet_table_with_complex_types():
     data = {
         "customer_id": [12345, 23456, 34567],
         "user_info": [
-            {"name": "matteo", "email": "12345@test.com"},
-            {"name": "nick", "email": "23456@test.com"},
-            {"name": "chris", "email": "34567@test.com"},
+            {"personal_information": {"name": "matteo", "email": "12345@test.com"}},
+            {"personal_information": {"name": "nick", "email": "23456@test.com"}},
+            {"personal_information": {"name": "chris", "email": "34567@test.com"}},
         ],
     }
-    columns = [{"Column": "user_info.name", "MatchIds": ["matteo", "chris"]}]
+    columns = [
+        {
+            "Column": "user_info.personal_information.name",
+            "MatchIds": ["matteo", "chris"],
+        }
+    ]
     df = pd.DataFrame(data)
     table = pa.Table.from_pandas(df)
-    schema = pa.Schema.from_pandas(df)
-    table, deleted_rows = delete_from_table(table, columns, schema)
+    table, deleted_rows = delete_from_table(table, columns)
     res = table.to_pandas()
     assert len(res) == 1
     assert deleted_rows == 2
     assert res["customer_id"].values[0] == 23456
-    # user_info is saved unflattened preserving original schema:
-    assert res["user_info"].values[0] == {"name": "nick", "email": "23456@test.com"}
-
-
-def test_it_gets_row_count():
-    data = [
-        {"customer_id": "12345"},
-        {"customer_id": "23456"},
-        {"customer_id": "34567"},
-    ]
-    df = pd.DataFrame(data)
-    assert 3 == get_row_count(df)
+    # user_info is saved preserving original schema:
+    assert res["user_info"].values[0] == {
+        "personal_information": {"name": "nick", "email": "23456@test.com"}
+    }
 
 
 def test_it_loads_parquet_files():

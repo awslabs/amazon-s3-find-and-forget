@@ -12,9 +12,9 @@ df = pd.DataFrame(
     {
         "customer_id": ["12345", "23456", "34567"],
         "user_info": [
-            {"email": "12345@test.com", "name": "matteo"},
-            {"email": "23456@test.com", "name": "nick"},
-            {"email": "34567@test.com", "name": "chris"},
+            {"personal_information": {"email": "12345@test.com", "name": "matteo"}},
+            {"personal_information": {"email": "23456@test.com", "name": "nick"}},
+            {"personal_information": {"email": "34567@test.com", "name": "chris"}},
         ],
         "days_off": [
             ["2020-01-01", "2020-01-02"],
