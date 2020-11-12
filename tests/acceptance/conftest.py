@@ -211,9 +211,9 @@ def queue_table(ddb_resource, stack):
 def del_queue_factory(queue_table):
     def factory(
         match_id="testId",
+        deletion_queue_item_id="id123",
         created_at=round(datetime.datetime.now(datetime.timezone.utc).timestamp()),
         data_mappers=[],
-        deletion_queue_item_id="id123",
     ):
         item = {
             "DeletionQueueItemId": deletion_queue_item_id,

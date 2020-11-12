@@ -1,5 +1,6 @@
 import logging
 import tempfile
+from uuid import uuid4
 
 import pytest
 from boto3.dynamodb.conditions import Key, Attr
@@ -30,9 +31,6 @@ def test_it_handles_injection_attacks(
         "test",
         partition_keys=["year", "month", "day"],
         partitions=[["2019", "08", "20"]],
-    )
-    glue_data_mapper_factory(
-        "test2", database="acceptancetest2", table="acceptancetest2"
     )
     legit_match_id = "12345"
     object_key = "test/2019/08/20/test.parquet"
@@ -71,7 +69,7 @@ def test_it_handles_injection_attacks(
         *commenting,
         *new_lines,
     ]:
-        del_queue_items.append(del_queue_factory(i))
+        del_queue_items.append(del_queue_factory(i, str(uuid4())))
     job_id = job_factory(del_queue_items=del_queue_items)["Id"]
     # Act
     job_complete_waiter.wait(
