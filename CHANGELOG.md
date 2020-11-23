@@ -1,5 +1,14 @@
 # Change Log
 
+## v0.17
+
+- [#TODO](https://github.com/awslabs/amazon-s3-find-and-forget/pull/TODO): Fix
+  for a bug affecting Parquet files with lower-cased column identifiers
+  generating a
+  `Apache Arrow processing error: 'Field "customerid" does not exist in table schema`
+  exception during the Forget phase (for example `customerId` in parquet file
+  being mapped to lower-case `customerid` in glue table)
+
 ## v0.16
 
 - [#216](https://github.com/awslabs/amazon-s3-find-and-forget/pull/216): Fix for

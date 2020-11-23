@@ -120,6 +120,7 @@ def iam_client():
 def glue_columns():
     return [
         {"Name": "customer_id", "Type": "string"},
+        {"Name": "customerId", "Type": "int"},
         {
             "Name": "user_info",
             "Type": "struct<personal_information:struct<email:string,name:string>>",

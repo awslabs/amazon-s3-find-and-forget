@@ -11,6 +11,7 @@ filename = "basic.parquet"
 df = pd.DataFrame(
     {
         "customer_id": ["12345", "23456", "34567"],
+        "customerId": [12345, 23456, 34567],
         "user_info": [
             {"personal_information": {"email": "12345@test.com", "name": "matteo"}},
             {"personal_information": {"email": "23456@test.com", "name": "nick"}},
