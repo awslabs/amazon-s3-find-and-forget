@@ -6,14 +6,26 @@ import Icon from "../Icon";
 import TablePagination from "../TablePagination";
 
 import {
+  formatDateTime,
   formatErrorMessage,
+  isArray,
   isEmpty,
   isUndefined,
   sortBy,
-  formatDateTime,
 } from "../../utils";
 
 const PAGE_SIZE = 10;
+
+const MatchId = ({ matchId }) =>
+  isArray(matchId)
+    ? matchId
+        .map((m, i) => (
+          <span key={`m-${i}`}>
+            {m.Column}: <b>{m.Value}</b>
+          </span>
+        ))
+        .reduce((a, b) => [a, ", ", b])
+    : matchId;
 
 export default ({ gateway, onPageChange }) => {
   const [currentPage, setCurrentPage] = useState(0);
@@ -112,13 +124,12 @@ export default ({ gateway, onPageChange }) => {
           onHide={() => setDeleting(false)}
         >
           <Modal.Header closeButton>
-            <Modal.Title>
-              Remove {queue[selectedRow].MatchId} from the Deletion Queue
-            </Modal.Title>
+            <Modal.Title>Remove MatchId from the Deletion Queue</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            Are you sure you want to remove <i>{queue[selectedRow].MatchId}</i>{" "}
-            from the Deletion Queue?
+            Are you sure you want to remove{" "}
+            <MatchId matchId={queue[selectedRow].MatchId} /> from the Deletion
+            Queue?
           </Modal.Body>
           <Modal.Footer>
             <Button
@@ -139,6 +150,7 @@ export default ({ gateway, onPageChange }) => {
             <tr>
               <td></td>
               <td>Match Id</td>
+              <td>Type</td>
               <td>Date Added</td>
               <td>Data Mappers</td>
             </tr>
@@ -161,7 +173,10 @@ export default ({ gateway, onPageChange }) => {
                           onClick={() => selectRow(index)}
                         />
                       </td>
-                      <td>{queueMatch.MatchId}</td>
+                      <td>
+                        <MatchId matchId={queueMatch.MatchId} />
+                      </td>
+                      <td>{queueMatch.Type}</td>
                       <td>{formatDateTime(queueMatch.CreatedAt)}</td>
                       <td>{queueMatch.DataMappers.join(", ") || "*"}</td>
                     </tr>

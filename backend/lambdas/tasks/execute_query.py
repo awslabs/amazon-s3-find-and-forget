@@ -46,6 +46,7 @@ def make_query(query_data):
     db = query_data["Database"]
     table = query_data["Table"]
     columns = query_data["Columns"]
+    composite_columns = query_data["CompositeColumns"]
     partitions = query_data.get("PartitionKeys", [])
 
     column_filters = ""
@@ -54,6 +55,13 @@ def make_query(query_data):
             column_filters = column_filters + " OR "
         column_filters = column_filters + "{} in ({})".format(
             escape_column(col["Column"]),
+            ", ".join("{0}".format(escape_item(m)) for m in col["MatchIds"]),
+        )
+    for i, col in enumerate(composite_columns):
+        if i > 0 or len(columns) > 0:
+            column_filters = column_filters + " OR "
+        column_filters = column_filters + "concat({}) in ({})".format(
+            ", '____', ".join("{0}".format(escape_column(c)) for c in col["Columns"]),
             ", ".join("{0}".format(escape_item(m)) for m in col["MatchIds"]),
         )
     for partition in partitions:

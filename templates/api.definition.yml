@@ -502,6 +502,7 @@ components:
       type: "object"
       required:
         - "DeletionQueueItemId"
+        - "Type"
         - "MatchId"
         - "CreatedAt"
         - "DataMappers"
@@ -509,8 +510,26 @@ components:
         DeletionQueueItemId:
           type: "string"
           description: "The Deletion Queue Item unique identifier"
-        MatchId:
+        Type:
           type: "string"
+          description: "MatchId Type"
+          default: "Simple"
+          enum:
+            - "Simple"
+            - "Composite"
+        MatchId:
+          oneOf:
+            - type: "string"
+            - type: "array"
+              items:
+                type: "object"
+                properties:
+                  Column:
+                    type: "string"
+                    description: "Column Identifier"
+                  Value:
+                    type: "string"
+                    description: "Value for the given column"
           description: "The Match ID to remove from the deletion queue"
         CreatedAt:
           type: "integer"
@@ -526,8 +545,26 @@ components:
         - "MatchId"
       type: "object"
       properties:
-        MatchId:
+        Type:
           type: "string"
+          description: "MatchId Type"
+          enum:
+            - "Simple"
+            - "Composite"
+          default: "Simple"
+        MatchId:
+          oneOf:
+            - type: "string"
+            - type: "array"
+              items:
+                type: "object"
+                properties:
+                  Column:
+                    type: "string"
+                    description: "Column Identifier"
+                  Value:
+                    type: "string"
+                    description: "Value for the given column"
           description: "The Match ID to remove from the deletion queue"
         DataMappers:
           type: "array"

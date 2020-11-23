@@ -34,10 +34,30 @@ export default {
     });
   },
 
-  enqueue(id, dataMappers) {
+  enqueueSimple(id, dataMappers) {
     return apiGateway(`queue/matches`, {
       method: "patch",
-      data: { Matches: [{ MatchId: id, DataMappers: dataMappers }] }
+      data: {
+        Matches: [{ Type: "Simple", MatchId: id, DataMappers: dataMappers }]
+      }
+    });
+  },
+
+  enqueueComposite(id, dataMapper) {
+    return apiGateway(`queue/matches`, {
+      method: "patch",
+      data: {
+        Matches: [
+          {
+            Type: "Composite",
+            MatchId: Object.keys(id).map(column => ({
+              Column: column,
+              Value: id[column]
+            })),
+            DataMappers: [dataMapper]
+          }
+        ]
+      }
     });
   },
 

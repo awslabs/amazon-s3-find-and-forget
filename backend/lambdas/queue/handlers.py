@@ -45,6 +45,7 @@ max_size_bytes = 375000
 @catch_errors
 def enqueue_handler(event, context):
     body = event["body"]
+    validate_queue_items([body])
     user_info = get_user_info(event)
     item = enqueue_items([body], user_info)[0]
     deletion_queue_table.put_item(Item=item)
@@ -58,6 +59,7 @@ def enqueue_handler(event, context):
 def enqueue_batch_handler(event, context):
     body = event["body"]
     matches = body["Matches"]
+    validate_queue_items(matches)
     user_info = get_user_info(event)
     items = enqueue_items(matches, user_info)
     return {
@@ -150,6 +152,26 @@ def process_handler(event, context):
     return {"statusCode": 202, "body": json.dumps(item, cls=DecimalEncoder)}
 
 
+def validate_queue_items(items):
+    for item in items:
+        if item["Type"] == "Composite":
+            is_array = isinstance(item["MatchId"], list)
+            enough_columns = is_array and len(item["MatchId"]) > 0
+            just_one_mapper = len(item["DataMappers"]) == 1
+            if not is_array:
+                raise ValueError(
+                    "MatchIds of Composite type need to be specified as array"
+                )
+            if not enough_columns:
+                raise ValueError(
+                    "MatchIds of Composite type need to have a value for at least one column"
+                )
+            if not just_one_mapper:
+                raise ValueError(
+                    "MatchIds of Composite type need to be associated to exactly one Data Mapper"
+                )
+
+
 def enqueue_items(matches, user_info):
     items = []
     with deletion_queue_table.batch_writer() as batch:
@@ -158,6 +180,7 @@ def enqueue_items(matches, user_info):
             data_mappers = match.get("DataMappers", [])
             item = {
                 "DeletionQueueItemId": str(uuid.uuid4()),
+                "Type": match.get("Type", "Simple"),
                 "MatchId": match_id,
                 "CreatedAt": utc_timestamp(),
                 "DataMappers": data_mappers,

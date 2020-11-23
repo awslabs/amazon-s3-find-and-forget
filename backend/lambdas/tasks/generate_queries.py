@@ -104,15 +104,45 @@ def generate_athena_queries(data_mapper, deletion_items):
         if len(applicable_match_ids) == 0:
             continue
         else:
-            query["Columns"] = [
-                {
-                    "Column": c,
-                    "MatchIds": [
-                        cast_to_type(mid, c, table) for mid in applicable_match_ids
-                    ],
-                }
-                for c in queries[i]["Columns"]
+            simple_applicable_match_ids = [
+                item for item in applicable_match_ids if isinstance(item, str)
             ]
+            query["Columns"] = (
+                [
+                    {
+                        "Column": c,
+                        "MatchIds": [
+                            cast_to_type(mid, c, table)
+                            for mid in simple_applicable_match_ids
+                        ],
+                    }
+                    for c in queries[i]["Columns"]
+                ]
+                if len(simple_applicable_match_ids) > 0
+                else []
+            )
+            composite_applicable_match_ids = [
+                item for item in applicable_match_ids if isinstance(item, list)
+            ]
+            query["CompositeColumns"] = []
+            for mid in composite_applicable_match_ids:
+                sorted_mid = sorted(mid, key=lambda x: x["Column"])
+                cols = list(map(lambda x: x["Column"], sorted_mid))
+                composite_column = next(
+                    iter(
+                        [x for x in query["CompositeColumns"] if x["Columns"] == cols]
+                    ),
+                    None,
+                )
+                composite_match = "____".join(
+                    map(lambda x: str(x["Value"]), sorted_mid)
+                )
+                if composite_column:
+                    composite_column["MatchIds"].append(composite_match)
+                else:
+                    query["CompositeColumns"].append(
+                        {"Columns": cols, "MatchIds": [composite_match]}
+                    )
             filtered.append(query)
     return filtered
 
