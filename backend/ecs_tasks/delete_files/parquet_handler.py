@@ -12,6 +12,18 @@ def load_parquet(f):
     return pq.ParquetFile(f, memory_map=False)
 
 
+def case_insensitive_getter(from_array, value):
+    """
+    When creating a Glue Table (either manually or via crawler) columns
+    are automatically lower cased. If the column identifier is saved in
+    the data mapper consistently to the glue table, the getter may not
+    work when accessing the key directly inside the Parquet object. To
+    prevent this to happen, we use this case insensitive getter to iterate
+    over columns.
+    """
+    return next(x for x in from_array if value.lower() == x.lower())
+
+
 def get_row_indexes_to_delete(table, identifier, to_delete):
     """
     Iterates over the values of a particular column and returns a
@@ -20,10 +32,12 @@ def get_row_indexes_to_delete(table, identifier, to_delete):
     """
     indexes = []
     segments = identifier.split(".")
-    for obj in table.column(segments[0]).to_pylist():
+    column_identifier = case_insensitive_getter(table.column_names, segments[0])
+    for obj in table.column(column_identifier).to_pylist():
         current = obj
         for i in range(1, len(segments)):
-            current = current[segments[i]]
+            next_segment = case_insensitive_getter(list(current.keys()), segments[i])
+            current = current[next_segment]
         indexes.append(current in to_delete)
     return np.array(indexes)
 
