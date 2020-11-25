@@ -383,3 +383,85 @@ def test_it_calculates_ddb_item_size():
 
     for scenario, result in scenarios:
         assert handlers.calculate_ddb_item_bytes(scenario) == result
+
+
+def test_it_validates_composite_queue_item_for_matchid_not_array():
+    items = [
+        {
+            "Type": "Composite",
+            "MatchId": "Test",
+            "Columns": ["column"],
+            "DataMappers": [],
+        }
+    ]
+
+    with pytest.raises(ValueError) as e:
+        handlers.validate_queue_items(items)
+    assert e.value.args[0] == "MatchIds of Composite type need to be specified as array"
+
+
+def test_it_validates_composite_queue_item_for_matchid_empty_array():
+    items = [
+        {"Type": "Composite", "MatchId": [], "Columns": ["column"], "DataMappers": [],}
+    ]
+
+    with pytest.raises(ValueError) as e:
+        handlers.validate_queue_items(items)
+    assert (
+        e.value.args[0]
+        == "MatchIds of Composite type need to have a value for at least one column"
+    )
+
+
+def test_it_validates_composite_queue_item_for_data_mapper_empty():
+    items = [
+        {
+            "Type": "Composite",
+            "MatchId": ["Test"],
+            "Columns": ["column"],
+            "DataMappers": [],
+        }
+    ]
+
+    with pytest.raises(ValueError) as e:
+        handlers.validate_queue_items(items)
+    assert (
+        e.value.args[0]
+        == "MatchIds of Composite type need to be associated to exactly one Data Mapper"
+    )
+
+
+def test_it_validates_composite_queue_item_for_too_many_data_mappers():
+    items = [
+        {
+            "Type": "Composite",
+            "MatchId": ["Test"],
+            "Columns": ["column"],
+            "DataMappers": ["foo", "bar"],
+        }
+    ]
+
+    with pytest.raises(ValueError) as e:
+        handlers.validate_queue_items(items)
+    assert (
+        e.value.args[0]
+        == "MatchIds of Composite type need to be associated to exactly one Data Mapper"
+    )
+
+
+def test_it_validates_composite_queue_matches_not_mapping_to_columns():
+    items = [
+        {
+            "Type": "Composite",
+            "MatchId": ["Test1"],
+            "Columns": ["column1", "column2"],
+            "DataMappers": ["foo"],
+        }
+    ]
+
+    with pytest.raises(ValueError) as e:
+        handlers.validate_queue_items(items)
+    assert (
+        e.value.args[0]
+        == "MatchIds of Composite type need to have an equal number of column and match id values"
+    )

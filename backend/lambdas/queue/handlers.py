@@ -157,6 +157,9 @@ def validate_queue_items(items):
         if item.get("Type", "Simple") == "Composite":
             is_array = isinstance(item["MatchId"], list)
             enough_columns = is_array and len(item["MatchId"]) > 0
+            correct_number_of_matches_and_columns = len(item["MatchId"]) == len(
+                item["Columns"]
+            )
             just_one_mapper = len(item["DataMappers"]) == 1
             if not is_array:
                 raise ValueError(
@@ -169,6 +172,10 @@ def validate_queue_items(items):
             if not just_one_mapper:
                 raise ValueError(
                     "MatchIds of Composite type need to be associated to exactly one Data Mapper"
+                )
+            if not correct_number_of_matches_and_columns:
+                raise ValueError(
+                    "MatchIds of Composite type need to have an equal number of column and match id values"
                 )
 
 
