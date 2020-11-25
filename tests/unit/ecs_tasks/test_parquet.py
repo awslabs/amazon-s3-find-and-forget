@@ -85,6 +85,22 @@ def test_delete_correct_rows_from_table():
     assert table.to_pydict() == {"customer_id": ["34567"]}
 
 
+def test_handles_lower_cased_column_names():
+    data = [
+        {"userData": {"customerId": "12345"}},
+        {"userData": {"customerId": "23456"}},
+        {"userData": {"customerId": "34567"}},
+    ]
+    columns = [{"Column": "userdata.customerid", "MatchIds": ["12345", "23456"]}]
+    df = pd.DataFrame(data)
+    table = pa.Table.from_pandas(df)
+    table, deleted_rows = delete_from_table(table, columns)
+    res = table.to_pandas()
+    assert len(res) == 1
+    assert deleted_rows == 2
+    assert table.to_pydict() == {"userData": [{"customerId": "34567"}]}
+
+
 def test_it_handles_data_with_pandas_indexes():
     data = [
         {"customer_id": "12345"},

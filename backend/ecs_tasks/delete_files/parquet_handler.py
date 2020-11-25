@@ -12,23 +12,43 @@ def load_parquet(f):
     return pq.ParquetFile(f, memory_map=False)
 
 
+def case_insensitive_getter(from_array, value):
+    """
+    When creating a Glue Table (either manually or via crawler) columns
+    are automatically lower cased. If the column identifier is saved in
+    the data mapper consistently to the glue table, the getter may not
+    work when accessing the key directly inside the Parquet object. To
+    prevent this to happen, we use this case insensitive getter to iterate
+    over columns.
+    """
+    return next(x for x in from_array if value.lower() == x.lower())
+
+
 def get_row_indexes_to_delete_for_composite(table, identifiers, to_delete):
     """
-    TODO
+    Iterates over the values of a particular group of columns and returns a
+    numpy mask identifying the rows to delete. The column identifier is a
+    list of simple or complex identifiers, like ["user_first_name", "user.last_name"]
     """
     indexes = []
     data = {}
     for identifier in identifiers:
-        column_first_level = identifier.split(".")[0]  # a.b.c => a
+        column_first_level = identifier.split(".")[0].lower()
         if not column_first_level in data:
-            data[column_first_level] = table.column(column_first_level).to_pylist()
+            column_identifier = case_insensitive_getter(
+                table.column_names, column_first_level
+            )
+            data[column_first_level] = table.column(column_identifier).to_pylist()
     for i in range(table.num_rows):
         values_array = []
         for identifier in identifiers:
             segments = identifier.split(".")
-            current = data[segments[0]][i]
+            current = data[segments[0].lower()][i]
             for j in range(1, len(segments)):
-                current = current[segments[j]]
+                next_segment = case_insensitive_getter(
+                    list(current.keys()), segments[j]
+                )
+                current = current[next_segment]
             values_array.append(str(current))
         composite_values = "____".join(values_array)
         indexes.append(composite_values in to_delete)
@@ -43,15 +63,17 @@ def get_row_indexes_to_delete(table, identifier, to_delete):
     """
     indexes = []
     segments = identifier.split(".")
-    for obj in table.column(segments[0]).to_pylist():
+    column_identifier = case_insensitive_getter(table.column_names, segments[0])
+    for obj in table.column(column_identifier).to_pylist():
         current = obj
         for i in range(1, len(segments)):
-            current = current[segments[i]]
+            next_segment = case_insensitive_getter(list(current.keys()), segments[i])
+            current = current[next_segment]
         indexes.append(current in to_delete)
     return np.array(indexes)
 
 
-def delete_from_table(table, to_delete, composite_to_delete):
+def delete_from_table(table, to_delete=[], composite_to_delete=[]):
     """
     Deletes rows from a Arrow Table where any of the MatchIds is found as
     value in any of the columns

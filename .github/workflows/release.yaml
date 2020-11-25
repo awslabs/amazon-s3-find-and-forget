@@ -33,9 +33,9 @@ jobs:
         id: version
         run: |
           function version { echo "$@" | awk -F. '{ printf("%d%03d%03d%03d\n", $1,$2,$3,$4); }'; }
-          echo ::set-env name=THIS_VERSION::$(make version | sed s/^v//)
-          echo ::set-env name=THIS_VERSION_COMPARABLE::$(version $(make version | sed s/^v//))
-          echo ::set-env name=LATEST_VERSION_COMPARABLE::$(version $(git describe --tags $(git rev-list --tags --max-count=1) | sed s/^v// 2> /dev/null || echo '0'))
+          echo "THIS_VERSION=$(make version | sed s/^v//)" >> $GITHUB_ENV
+          echo "THIS_VERSION_COMPARABLE=$(version $(make version | sed s/^v//))" >> $GITHUB_ENV
+          echo "LATEST_VERSION_COMPARABLE=$(version $(git describe --tags $(git rev-list --tags --max-count=1) | sed s/^v// 2> /dev/null || echo '0'))" >> $GITHUB_ENV
       - name: Create Release
         id: create_release
         uses: actions/create-release@latest
