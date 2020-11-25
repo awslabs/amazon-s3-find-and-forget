@@ -121,6 +121,7 @@ class TestAthenaQueries:
                 "Database": "test_db",
                 "Table": "test_table",
                 "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
+                "CompositeColumns": [],
                 "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
                 "DeleteOldVersions": True,
             }
@@ -160,6 +161,7 @@ class TestAthenaQueries:
                 "Database": "test_db",
                 "Table": "test_table",
                 "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
+                "CompositeColumns": [],
                 "PartitionKeys": [{"Key": "year", "Value": 2010}],
                 "DeleteOldVersions": True,
             }
@@ -201,6 +203,7 @@ class TestAthenaQueries:
                     {"Column": "customer_id", "MatchIds": ["hi"]},
                     {"Column": "alt_customer_id", "MatchIds": ["hi"]},
                 ],
+                "CompositeColumns": [],
                 "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
                 "DeleteOldVersions": True,
             }
@@ -242,6 +245,7 @@ class TestAthenaQueries:
                 "Database": "test_db",
                 "Table": "test_table",
                 "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
+                "CompositeColumns": [],
                 "PartitionKeys": [
                     {"Key": "year", "Value": "2019"},
                     {"Key": "month", "Value": "01"},
@@ -286,6 +290,7 @@ class TestAthenaQueries:
                 "QueryExecutor": "athena",
                 "Format": "parquet",
                 "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
+                "CompositeColumns": [],
                 "PartitionKeys": [
                     {"Key": "year", "Value": "2018"},
                     {"Key": "month", "Value": "12"},
@@ -299,6 +304,7 @@ class TestAthenaQueries:
                 "QueryExecutor": "athena",
                 "Format": "parquet",
                 "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
+                "CompositeColumns": [],
                 "PartitionKeys": [
                     {"Key": "year", "Value": "2019"},
                     {"Key": "month", "Value": "01"},
@@ -312,6 +318,7 @@ class TestAthenaQueries:
                 "QueryExecutor": "athena",
                 "Format": "parquet",
                 "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
+                "CompositeColumns": [],
                 "PartitionKeys": [
                     {"Key": "year", "Value": "2019"},
                     {"Key": "month", "Value": "02"},
@@ -358,6 +365,7 @@ class TestAthenaQueries:
                 "QueryExecutor": "athena",
                 "Format": "parquet",
                 "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
+                "CompositeColumns": [],
                 "PartitionKeys": [
                     {"Key": "year", "Value": "2018"},
                     {"Key": "month", "Value": "12"},
@@ -372,6 +380,7 @@ class TestAthenaQueries:
                 "QueryExecutor": "athena",
                 "Format": "parquet",
                 "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
+                "CompositeColumns": [],
                 "PartitionKeys": [
                     {"Key": "year", "Value": "2019"},
                     {"Key": "month", "Value": "01"},
@@ -419,6 +428,7 @@ class TestAthenaQueries:
                 "QueryExecutor": "athena",
                 "Format": "parquet",
                 "Columns": [{"Column": "customer_id", "MatchIds": ["456"]}],
+                "CompositeColumns": [],
                 "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
                 "DeleteOldVersions": True,
             }
@@ -452,6 +462,7 @@ class TestAthenaQueries:
                 "QueryExecutor": "athena",
                 "Format": "parquet",
                 "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
+                "CompositeColumns": [],
                 "PartitionKeys": [],
                 "DeleteOldVersions": True,
             }
@@ -488,6 +499,7 @@ class TestAthenaQueries:
                 "QueryExecutor": "athena",
                 "Format": "parquet",
                 "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
+                "CompositeColumns": [],
                 "PartitionKeys": [],
                 "RoleArn": "arn:aws:iam::accountid:role/rolename",
                 "DeleteOldVersions": True,

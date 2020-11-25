@@ -20,13 +20,16 @@ def test_it_returns_only_paths(paginate_mock, batch_sqs_msgs_mock):
             {"Data": [{"VarCharValue": "s3://mybucket/mykey2"},]},
         ]
     )
-    columns = [{"Column": "customer_id", "MatchIds": ["2732559"]}]
+    columns = [
+        {"Column": "customer_id", "CompositeColumns": [], "MatchIds": ["2732559"]}
+    ]
 
     resp = handler(
         {
             "JobId": "1234",
             "QueryId": "123",
             "Columns": columns,
+            "CompositeColumns": [],
             "DeleteOldVersions": False,
         },
         SimpleNamespace(),
@@ -46,19 +49,29 @@ def test_it_submits_results_to_be_batched(paginate_mock, batch_sqs_msgs_mock):
     )
     columns = [{"Column": "customer_id", "MatchIds": ["2732559"]}]
 
-    handler({"JobId": "1234", "QueryId": "123", "Columns": columns}, SimpleNamespace())
+    handler(
+        {
+            "JobId": "1234",
+            "QueryId": "123",
+            "Columns": columns,
+            "CompositeColumns": [],
+        },
+        SimpleNamespace(),
+    )
     batch_sqs_msgs_mock.assert_called_with(
         ANY,
         [
             {
                 "JobId": "1234",
                 "Columns": columns,
+                "CompositeColumns": [],
                 "Object": "s3://mybucket/mykey1",
                 "DeleteOldVersions": True,
             },
             {
                 "JobId": "1234",
                 "Columns": columns,
+                "CompositeColumns": [],
                 "Object": "s3://mybucket/mykey2",
                 "DeleteOldVersions": True,
             },
@@ -84,6 +97,7 @@ def test_it_propagates_optional_properties(paginate_mock, batch_sqs_msgs_mock):
             "JobId": "1234",
             "QueryId": "123",
             "Columns": columns,
+            "CompositeColumns": [],
         },
         SimpleNamespace(),
     )
@@ -93,6 +107,7 @@ def test_it_propagates_optional_properties(paginate_mock, batch_sqs_msgs_mock):
             {
                 "JobId": "1234",
                 "Columns": columns,
+                "CompositeColumns": [],
                 "Object": "s3://mybucket/mykey1",
                 "RoleArn": "arn:aws:iam:accountid:role/rolename",
                 "DeleteOldVersions": False,

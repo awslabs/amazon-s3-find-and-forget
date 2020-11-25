@@ -56,6 +56,7 @@ def test_it_generates_query_with_partition():
             "Database": "amazonreviews",
             "Table": "amazon_reviews_parquet",
             "Columns": [{"Column": "customer_id", "MatchIds": ["123456", "456789"]}],
+            "CompositeColumns": [],
             "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
         }
     )
@@ -74,6 +75,7 @@ def test_it_generates_query_with_partition_and_int_column():
             "Database": "amazonreviews",
             "Table": "amazon_reviews_parquet",
             "Columns": [{"Column": "customer_id", "MatchIds": [123456, 456789]}],
+            "CompositeColumns": [],
             "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
         }
     )
@@ -92,6 +94,7 @@ def test_it_generates_query_with_int_partition():
             "Database": "amazonreviews",
             "Table": "amazon_reviews_parquet",
             "Columns": [{"Column": "customer_id", "MatchIds": ["123456", "456789"]}],
+            "CompositeColumns": [],
             "PartitionKeys": [{"Key": "year", "Value": 2010}],
         }
     )
@@ -110,6 +113,7 @@ def test_it_generates_query_with_multiple_partitions():
             "Database": "amazonreviews",
             "Table": "amazon_reviews_parquet",
             "Columns": [{"Column": "customer_id", "MatchIds": ["123456", "456789"]}],
+            "CompositeColumns": [],
             "PartitionKeys": [
                 {"Key": "product_category", "Value": "Books"},
                 {"Key": "published", "Value": "2019"},
@@ -131,6 +135,7 @@ def test_it_generates_query_without_partition():
         {
             "Database": "amazonreviews",
             "Table": "amazon_reviews_parquet",
+            "CompositeColumns": [],
             "Columns": [{"Column": "customer_id", "MatchIds": ["123456", "456789"]}],
         }
     )
@@ -147,6 +152,7 @@ def test_it_generates_query_with_multiple_columns():
         {
             "Database": "amazonreviews",
             "Table": "amazon_reviews_parquet",
+            "CompositeColumns": [],
             "Columns": [
                 {"Column": "a", "MatchIds": ["a123456", "b123456"]},
                 {"Column": "b", "MatchIds": ["a456789", "b456789"]},
@@ -166,6 +172,7 @@ def test_it_generates_query_with_columns_of_complex_type():
         {
             "Database": "amazonreviews",
             "Table": "amazon_reviews_parquet",
+            "CompositeColumns": [],
             "Columns": [{"Column": "a.b.c", "MatchIds": ["a123456", "b123456"]}],
         }
     )
