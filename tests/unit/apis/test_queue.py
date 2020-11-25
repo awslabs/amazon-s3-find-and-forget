@@ -81,6 +81,7 @@ def test_it_adds_to_queue(table):
     assert {
         "DeletionQueueItemId": ANY,
         "MatchId": "test",
+        "Type": "Simple",
         "CreatedAt": ANY,
         "DataMappers": ["a"],
         "CreatedBy": {"Username": "cognitoUsername", "Sub": "cognitoSub"},
@@ -110,6 +111,7 @@ def test_it_adds_batch_to_queue(table):
             {
                 "DeletionQueueItemId": ANY,
                 "MatchId": "test",
+                "Type": "Simple",
                 "CreatedAt": ANY,
                 "DataMappers": ["a"],
                 "CreatedBy": {"Username": "cognitoUsername", "Sub": "cognitoSub"},
@@ -117,6 +119,7 @@ def test_it_adds_batch_to_queue(table):
             {
                 "DeletionQueueItemId": ANY,
                 "MatchId": "test2",
+                "Type": "Simple",
                 "CreatedAt": ANY,
                 "DataMappers": ["a"],
                 "CreatedBy": {"Username": "cognitoUsername", "Sub": "cognitoSub"},
@@ -136,6 +139,7 @@ def test_it_provides_default_data_mappers(table):
     assert {
         "DeletionQueueItemId": ANY,
         "MatchId": "test",
+        "Type": "Simple",
         "CreatedAt": ANY,
         "DataMappers": [],
         "CreatedBy": {"Username": "cognitoUsername", "Sub": "cognitoSub"},

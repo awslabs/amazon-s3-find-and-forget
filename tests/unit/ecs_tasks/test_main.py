@@ -123,7 +123,7 @@ def test_happy_path_when_queue_not_empty_for_compressed_json(
         "receipt_handle",
     )
     mock_s3.open.assert_called_with("s3://bucket/path/basic.json.gz", "rb")
-    mock_delete.assert_called_with(mock_file, [column], "json", True)
+    mock_delete.assert_called_with(mock_file, [column], [], "json", True)
     mock_save.assert_called_with(
         ANY, ANY, ANY, "bucket", "path/basic.json.gz", "abc123"
     )

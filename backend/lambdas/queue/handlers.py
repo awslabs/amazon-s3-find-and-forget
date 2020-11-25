@@ -154,7 +154,7 @@ def process_handler(event, context):
 
 def validate_queue_items(items):
     for item in items:
-        if item["Type"] == "Composite":
+        if item.get("Type", "Simple") == "Composite":
             is_array = isinstance(item["MatchId"], list)
             enough_columns = is_array and len(item["MatchId"]) > 0
             just_one_mapper = len(item["DataMappers"]) == 1
