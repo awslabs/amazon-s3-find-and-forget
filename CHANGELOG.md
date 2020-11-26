@@ -1,5 +1,14 @@
 # Change Log
 
+## v0.18
+
+- [#223](https://github.com/awslabs/amazon-s3-find-and-forget/pull/223): This
+  release fixes
+  [an issue (#222)](https://github.com/awslabs/amazon-s3-find-and-forget/issues/222)
+  where new deployments of the solution could fail due to unavailability of a
+  third-party dependency. Container base images are now retrieved and bundled
+  with each release.
+
 ## v0.17
 
 - [#220](https://github.com/awslabs/amazon-s3-find-and-forget/pull/220): Fix for
