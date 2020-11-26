@@ -147,6 +147,7 @@ Resources:
                 - IMAGE_URI="${REPOSITORY_URI}"
             build:
               commands:
+                - docker load -i backend/ecs_tasks/python_3.7-slim.tar
                 - docker build --tag "$IMAGE_URI" -f backend/ecs_tasks/delete_files/Dockerfile .
             post_build:
               commands:

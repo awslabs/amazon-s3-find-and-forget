@@ -83,15 +83,25 @@ lint-cfn:
 
 package:
 	make package-artefacts
-	zip -r packaged.zip templates backend cfn-publish.config build.zip -x **/__pycache* -x *settings.js
+	zip -r packaged.zip \
+		backend/lambda_layers \
+		backend/lambdas \
+		build.zip \
+		cfn-publish.config \
+		templates \
+		-x '**/__pycache*' '*settings.js' @
 
-package-artefacts:
+package-artefacts: backend/ecs_tasks/python_3.7-slim.tar
 	make build-frontend
 	zip -r build.zip \
-		backend/ecs_tasks/delete_files/ \
+		backend/ecs_tasks/ \
 		backend/lambda_layers/boto_utils/ \
 		frontend/build \
-		-x 'backend/ecs_tasks/delete_files/__pycache*' '*settings.js' @
+		-x '**/__pycache*' '*settings.js' @
+
+backend/ecs_tasks/python_3.7-slim.tar:
+	docker pull python:3.7-slim
+	docker save python:3.7-slim -o "$@"
 
 redeploy-containers:
 	$(eval ACCOUNT_ID := $(shell aws sts get-caller-identity --query Account --output text))
