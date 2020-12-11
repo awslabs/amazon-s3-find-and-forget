@@ -184,6 +184,61 @@ def test_it_generates_query_with_columns_of_complex_type():
     )
 
 
+def test_it_generates_query_with_composite_matches():
+    resp = make_query(
+        {
+            "Database": "amazonreviews",
+            "Table": "amazon_reviews_parquet",
+            "CompositeColumns": [
+                {
+                    "Columns": ["user.first_name", "user.last_name"],
+                    "MatchIds": [["John", "Doe"], ["Jane", "Doe"]],
+                },
+                {
+                    "Columns": ["user.age", "user.last_name"],
+                    "MatchIds": [[28, "Smith"]],
+                },
+                {"Columns": ["user.userid"], "MatchIds": [["123456"]],},
+            ],
+            "Columns": [],
+        }
+    )
+
+    assert (
+        escape_resp(resp) == 'SELECT DISTINCT "$path" '
+        'FROM "amazonreviews"."amazon_reviews_parquet" '
+        'WHERE (concat("user"."first_name", \'____\', "user"."last_name") '
+        "in ('John____Doe', 'Jane____Doe') OR "
+        'concat("user"."age", \'____\', "user"."last_name") '
+        "in ('28____Smith') OR "
+        '"user"."userid" in (\'123456\'))'
+    )
+
+
+def test_it_generates_query_with_simple_and_composite_matches():
+    resp = make_query(
+        {
+            "Database": "amazonreviews",
+            "Table": "amazon_reviews_parquet",
+            "CompositeColumns": [
+                {
+                    "Columns": ["user.first_name", "user.last_name"],
+                    "MatchIds": [["John", "Doe"], ["Jane", "Doe"]],
+                }
+            ],
+            "Columns": [{"Column": "a.b.c", "MatchIds": ["a123456", "b123456"]}],
+        }
+    )
+
+    assert (
+        escape_resp(resp) == 'SELECT DISTINCT "$path" '
+        'FROM "amazonreviews"."amazon_reviews_parquet" '
+        'WHERE ("a"."b"."c" in (\'a123456\', \'b123456\') '
+        'OR concat("user"."first_name", \'____\', "user"."last_name") '
+        "in ('John____Doe', 'Jane____Doe'))"
+    )
+
+
 def test_it_escapes_strings():
     assert "''' OR 1=1'" == escape_item("' OR 1=1")
 

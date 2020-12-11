@@ -134,8 +134,11 @@ def generate_athena_queries(data_mapper, deletion_items):
                     ),
                     None,
                 )
-                composite_match = "____".join(
-                    map(lambda x: str(x["Value"]), sorted_mid)
+                composite_match = list(
+                    map(
+                        lambda x: cast_to_type(x["Value"], x["Column"], table),
+                        sorted_mid,
+                    )
                 )
                 if composite_column:
                     composite_column["MatchIds"].append(composite_match)
