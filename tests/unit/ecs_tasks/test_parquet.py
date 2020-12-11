@@ -145,7 +145,7 @@ def test_delete_correct_rows_from_parquet_table_with_complex_types():
     }
 
 
-def test_delete_correct_rows_from_parquet_table_with_composite_types():
+def test_delete_correct_rows_from_parquet_table_with_composite_types_tuple_col():
     data = {
         "customer_id": [12345, 23456, 34567],
         "first_name": ["john", "jane", "matteo"],
@@ -154,7 +154,7 @@ def test_delete_correct_rows_from_parquet_table_with_composite_types():
     columns = [
         {
             "Columns": ["first_name", "last_name"],
-            "MatchIds": ["john____doe", "jane____doe", "matteo____doe"],
+            "MatchIds": [["john", "doe"], ["jane", "doe"], ["matteo", "doe"]],
         }
     ]
     df = pd.DataFrame(data)
@@ -164,6 +164,40 @@ def test_delete_correct_rows_from_parquet_table_with_composite_types():
     assert len(res) == 1
     assert deleted_rows == 2
     assert res["customer_id"].values[0] == 34567
+
+
+def test_delete_correct_rows_from_parquet_table_with_composite_types_single_col():
+    data = {
+        "customer_id": [12345, 23456, 34567],
+        "first_name": ["john", "jane", "matteo"],
+        "last_name": ["doe", "doe", "hey"],
+    }
+    columns = [{"Columns": ["last_name"], "MatchIds": [["doe"]]}]
+    df = pd.DataFrame(data)
+    table = pa.Table.from_pandas(df)
+    table, deleted_rows = delete_from_table(table, [], columns)
+    res = table.to_pandas()
+    assert len(res) == 1
+    assert deleted_rows == 2
+    assert res["customer_id"].values[0] == 34567
+
+
+def test_delete_correct_rows_from_parquet_table_with_composite_types_multiple_types():
+    data = {
+        "age": [11, 12, 12],
+        "customer_id": [12345, 23456, 34567],
+        "first_name": ["john", "jane", "matteo"],
+        "last_name": ["doe", "doe", "hey"],
+    }
+    columns = [{"Columns": ["age", "last_name"], "MatchIds": [[12, "doe"]]}]
+    df = pd.DataFrame(data)
+    table = pa.Table.from_pandas(df)
+    table, deleted_rows = delete_from_table(table, [], columns)
+    res = table.to_pandas()
+    assert len(res) == 2
+    assert deleted_rows == 1
+    assert res["customer_id"].values[0] == 12345
+    assert res["customer_id"].values[1] == 34567
 
 
 def test_delete_correct_rows_from_parquet_table_with_complex_composite_types():
@@ -178,7 +212,7 @@ def test_delete_correct_rows_from_parquet_table_with_complex_composite_types():
     columns = [
         {
             "Columns": ["details.first_name", "details.last_name"],
-            "MatchIds": ["John____Doe", "Jane____Doe", "Matteo____Doe"],
+            "MatchIds": [["John", "Doe"], ["Jane", "Doe"], ["Matteo", "Doe"]],
         }
     ]
     df = pd.DataFrame(data)
@@ -198,7 +232,7 @@ def test_delete_correct_rows_from_parquet_table_with_both_simple_and_composite_t
     }
     columns = [{"Column": "customer_id", "MatchIds": [12345]}]
     composite_columns = [
-        {"Columns": ["first_name", "last_name"], "MatchIds": ["jane____doe"],}
+        {"Columns": ["first_name", "last_name"], "MatchIds": [["jane", "doe"]],}
     ]
     df = pd.DataFrame(data)
     table = pa.Table.from_pandas(df)

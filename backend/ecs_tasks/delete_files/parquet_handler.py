@@ -49,9 +49,8 @@ def get_row_indexes_to_delete_for_composite(table, identifiers, to_delete):
                     list(current.keys()), segments[j]
                 )
                 current = current[next_segment]
-            values_array.append(str(current))
-        composite_values = "____".join(values_array)
-        indexes.append(composite_values in to_delete)
+            values_array.append(current)
+        indexes.append(values_array in to_delete)
     return np.array(indexes)
 
 
