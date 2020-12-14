@@ -89,6 +89,29 @@ def test_it_adds_to_queue(table):
 
 
 @patch("backend.lambdas.queue.handlers.deletion_queue_table")
+def test_it_adds_composite_to_queue(table):
+    mid = [{"Column": "first_name", "Value": "test"}]
+    response = handlers.enqueue_handler(
+        {
+            "body": json.dumps(
+                {"MatchId": mid, "Type": "Composite", "DataMappers": ["a"],}
+            ),
+            "requestContext": autorization_mock,
+        },
+        SimpleNamespace(),
+    )
+    assert 201 == response["statusCode"]
+    assert {
+        "DeletionQueueItemId": ANY,
+        "MatchId": mid,
+        "Type": "Composite",
+        "CreatedAt": ANY,
+        "DataMappers": ["a"],
+        "CreatedBy": {"Username": "cognitoUsername", "Sub": "cognitoSub"},
+    } == json.loads(response["body"])
+
+
+@patch("backend.lambdas.queue.handlers.deletion_queue_table")
 def test_it_adds_batch_to_queue(table):
     response = handlers.enqueue_batch_handler(
         {
@@ -402,7 +425,7 @@ def test_it_validates_composite_queue_item_for_matchid_not_array():
 
 def test_it_validates_composite_queue_item_for_matchid_empty_array():
     items = [
-        {"Type": "Composite", "MatchId": [], "Columns": ["column"], "DataMappers": [],}
+        {"Type": "Composite", "MatchId": [], "Columns": ["column"], "DataMappers": []}
     ]
 
     with pytest.raises(ValueError) as e:
@@ -417,7 +440,7 @@ def test_it_validates_composite_queue_item_for_data_mapper_empty():
     items = [
         {
             "Type": "Composite",
-            "MatchId": ["Test"],
+            "MatchId": [{"Column": "first_name", "Value": "Test"}],
             "Columns": ["column"],
             "DataMappers": [],
         }
@@ -435,7 +458,7 @@ def test_it_validates_composite_queue_item_for_too_many_data_mappers():
     items = [
         {
             "Type": "Composite",
-            "MatchId": ["Test"],
+            "MatchId": [{"Column": "first_name", "Value": "Test"}],
             "Columns": ["column"],
             "DataMappers": ["foo", "bar"],
         }
@@ -446,22 +469,4 @@ def test_it_validates_composite_queue_item_for_too_many_data_mappers():
     assert (
         e.value.args[0]
         == "MatchIds of Composite type need to be associated to exactly one Data Mapper"
-    )
-
-
-def test_it_validates_composite_queue_matches_not_mapping_to_columns():
-    items = [
-        {
-            "Type": "Composite",
-            "MatchId": ["Test1"],
-            "Columns": ["column1", "column2"],
-            "DataMappers": ["foo"],
-        }
-    ]
-
-    with pytest.raises(ValueError) as e:
-        handlers.validate_queue_items(items)
-    assert (
-        e.value.args[0]
-        == "MatchIds of Composite type need to have an equal number of column and match id values"
     )

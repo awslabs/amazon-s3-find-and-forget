@@ -523,6 +523,9 @@ components:
             - type: "array"
               items:
                 type: "object"
+                required:
+                  - "Column"
+                  - "Value"
                 properties:
                   Column:
                     type: "string"
@@ -558,6 +561,9 @@ components:
             - type: "array"
               items:
                 type: "object"
+                required:
+                  - "Column"
+                  - "Value"
                 properties:
                   Column:
                     type: "string"

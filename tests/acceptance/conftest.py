@@ -221,6 +221,7 @@ def del_queue_factory(queue_table):
             "MatchId": match_id,
             "CreatedAt": created_at,
             "DataMappers": data_mappers,
+            "Type": "Simple",
         }
         queue_table.put_item(Item=item)
         return item
