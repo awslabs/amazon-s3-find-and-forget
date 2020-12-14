@@ -30,7 +30,26 @@ def find_key(key, obj):
             return found_key
 
 
-def delete_matches_from_json_file(input_file, to_delete, compressed=False):
+def get_value(key, obj):
+    """
+    Method to find a value given a nested key in an object. Example:
+    key="user.Id"
+    obj='{"user":{"id": 1234}}'
+    result=1234
+    """
+    record = obj
+    for segment in key.split("."):
+        current_key = find_key(segment, record)
+        if not current_key:
+            record = None
+            break
+        record = record[current_key]
+    return record
+
+
+def delete_matches_from_json_file(
+    input_file, to_delete, composite_to_delete, compressed=False
+):
     deleted_rows = 0
     with BufferOutputStream() as out_stream:
         input_file, writer = initialize(input_file, out_stream, compressed)
@@ -50,16 +69,20 @@ def delete_matches_from_json_file(input_file, to_delete, compressed=False):
                 )
             should_delete = False
             for column in to_delete:
-                record = parsed
-                for segment in column["Column"].split("."):
-                    current_key = find_key(segment, record)
-                    if not current_key:
-                        record = None
-                        break
-                    record = record[current_key]
+                record = get_value(column["Column"], parsed)
                 if record and record in column["MatchIds"]:
                     should_delete = True
                     break
+            if not should_delete:
+                for batch in composite_to_delete:
+                    matched = []
+                    for column in batch["Columns"]:
+                        record = get_value(column, parsed)
+                        if record:
+                            matched.append(record)
+                    if matched in batch["MatchIds"]:
+                        should_delete = True
+                        break
             if should_delete:
                 deleted_rows += 1
             else:

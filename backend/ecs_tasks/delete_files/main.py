@@ -77,8 +77,8 @@ def delete_matches_from_file(
     logger.info("Generating new file without matches")
     if file_format == "json":
         return delete_matches_from_json_file(
-            input_file, to_delete, compressed
-        )  # TODO Composite
+            input_file, to_delete, composite_to_delete, compressed
+        )
     return delete_matches_from_parquet_file(input_file, to_delete, composite_to_delete)
 
 

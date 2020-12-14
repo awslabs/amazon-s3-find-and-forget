@@ -21,7 +21,7 @@ def test_it_generates_new_json_file_without_matches():
     )
     out_stream = to_json_file(data)
     # Act
-    out, stats = delete_matches_from_json_file(out_stream, to_delete)
+    out, stats = delete_matches_from_json_file(out_stream, to_delete, [])
     assert isinstance(out, pa.BufferOutputStream)
     assert {"ProcessedRows": 3, "DeletedRows": 1} == stats
     assert to_json_string(out) == (
@@ -40,7 +40,7 @@ def test_it_handles_json_with_gzip_compression():
     )
     out_stream = to_compressed_json_file(data)
     # Act
-    out, stats = delete_matches_from_json_file(out_stream, to_delete, True)
+    out, stats = delete_matches_from_json_file(out_stream, to_delete, [], True)
     assert isinstance(out, pa.BufferOutputStream)
     assert {"ProcessedRows": 3, "DeletedRows": 1} == stats
     assert to_decompressed_json_string(out) == (
@@ -59,7 +59,7 @@ def test_delete_correct_rows_when_missing_newline_at_the_end():
     )
     out_stream = to_json_file(data)
     # Act
-    out, stats = delete_matches_from_json_file(out_stream, to_delete)
+    out, stats = delete_matches_from_json_file(out_stream, to_delete, [])
     assert isinstance(out, pa.BufferOutputStream)
     assert {"ProcessedRows": 3, "DeletedRows": 1} == stats
     assert to_json_string(out) == (
@@ -79,7 +79,7 @@ def test_delete_correct_rows_containing_newlines_as_content():
     )
     out_stream = to_json_file(data)
     # Act
-    out, stats = delete_matches_from_json_file(out_stream, to_delete)
+    out, stats = delete_matches_from_json_file(out_stream, to_delete, [])
     assert isinstance(out, pa.BufferOutputStream)
     assert {"ProcessedRows": 3, "DeletedRows": 1} == stats
     assert to_json_string(out) == (
@@ -98,12 +98,120 @@ def test_delete_correct_rows_from_json_file_with_complex_types():
     )
     out_stream = to_json_file(data)
     # Act
-    out, stats = delete_matches_from_json_file(out_stream, to_delete)
+    out, stats = delete_matches_from_json_file(out_stream, to_delete, [])
     assert isinstance(out, pa.BufferOutputStream)
     assert {"ProcessedRows": 3, "DeletedRows": 1} == stats
     assert to_json_string(out) == (
         '{"user": {"id": "12345", "name": "John"}, "d":["2001-01-01"]}\n'
         '{"user": {"id": "34567", "name": "Mary"}, "d":["2001-01-08"]}\n'
+    )
+
+
+def test_delete_correct_rows_from_json_file_with_composite_types_tuple_col():
+    # Arrange
+    to_delete = [
+        {
+            "Columns": ["first_name", "last_name"],
+            "MatchIds": [["John", "Doe"], ["Jane", "Doe"], ["Mary", "Doe"]],
+        }
+    ]
+    data = (
+        '{"customer_id": 12345, "first_name": "John", "last_name": "Doe"}\n'
+        '{"customer_id": 23456, "first_name": "Jane", "last_name": "Doe"}\n'
+        '{"customer_id": 34567, "first_name": "Mary", "last_name": "Hey"}\n'
+    )
+    out_stream = to_json_file(data)
+    # Act
+    out, stats = delete_matches_from_json_file(out_stream, [], to_delete)
+    assert isinstance(out, pa.BufferOutputStream)
+    assert {"ProcessedRows": 3, "DeletedRows": 2} == stats
+    assert to_json_string(out) == (
+        '{"customer_id": 34567, "first_name": "Mary", "last_name": "Hey"}\n'
+    )
+
+
+def test_delete_correct_rows_from_json_file_with_composite_types_single_col():
+    # Arrange
+    to_delete = [{"Columns": ["last_name"], "MatchIds": [["Doe"]],}]
+    data = (
+        '{"customer_id": 12345, "first_name": "John", "last_name": "Doe"}\n'
+        '{"customer_id": 23456, "first_name": "Jane", "last_name": "Doe"}\n'
+        '{"customer_id": 34567, "first_name": "Mary", "last_name": "Hey"}\n'
+    )
+    out_stream = to_json_file(data)
+    # Act
+    out, stats = delete_matches_from_json_file(out_stream, [], to_delete)
+    assert isinstance(out, pa.BufferOutputStream)
+    assert {"ProcessedRows": 3, "DeletedRows": 2} == stats
+    assert to_json_string(out) == (
+        '{"customer_id": 34567, "first_name": "Mary", "last_name": "Hey"}\n'
+    )
+
+
+def test_delete_correct_rows_from_json_file_with_composite_types_with_nullable_or_undefined_identifiers():
+    # Arrange
+    to_delete = [
+        {"Columns": ["user.name", "parents.mother"], "MatchIds": [["John", "23456"]],}
+    ]
+    data = (
+        '{"user": {"id": "12345", "name": "John"}, "parents": {"mother": "23456"}}\n'
+        '{"user": {"id": "23456", "name": "John"}, "parents": {"mother": null}}\n'
+        '{"user": {"id": "34567", "name": "John"}}\n'
+        '{"user": {"id": "45678", "name": "John"}, "parents": {}}\n'
+        '{"user": {"id": "45678", "name": "John"}, "parents": null}\n'
+    )
+    out_stream = to_json_file(data)
+    # Act
+    out, stats = delete_matches_from_json_file(out_stream, [], to_delete)
+    assert isinstance(out, pa.BufferOutputStream)
+    assert {"ProcessedRows": 5, "DeletedRows": 1} == stats
+    assert to_json_string(out) == (
+        '{"user": {"id": "23456", "name": "John"}, "parents": {"mother": null}}\n'
+        '{"user": {"id": "34567", "name": "John"}}\n'
+        '{"user": {"id": "45678", "name": "John"}, "parents": {}}\n'
+        '{"user": {"id": "45678", "name": "John"}, "parents": null}\n'
+    )
+
+
+def test_delete_correct_rows_from_json_file_with_composite_types_multiple_types():
+    # Arrange
+    to_delete = [{"Columns": ["age", "last_name"], "MatchIds": [[12, "Doe"]],}]
+    data = (
+        '{"customer_id": 12345, "first_name": "John", "last_name": "Doe", "age": 11}\n'
+        '{"customer_id": 23456, "first_name": "Jane", "last_name": "Doe", "age": 12}\n'
+        '{"customer_id": 34567, "first_name": "Mary", "last_name": "Hey", "age": 12}\n'
+    )
+    out_stream = to_json_file(data)
+    # Act
+    out, stats = delete_matches_from_json_file(out_stream, [], to_delete)
+    assert isinstance(out, pa.BufferOutputStream)
+    assert {"ProcessedRows": 3, "DeletedRows": 1} == stats
+    assert to_json_string(out) == (
+        '{"customer_id": 12345, "first_name": "John", "last_name": "Doe", "age": 11}\n'
+        '{"customer_id": 34567, "first_name": "Mary", "last_name": "Hey", "age": 12}\n'
+    )
+
+
+def test_delete_correct_rows_from_json_file_with_both_simple_and_composite_types():
+    # Arrange
+    to_delete_simple = [{"Column": "customer_id", "MatchIds": [12345],}]
+    to_delete_composite = [
+        {"Columns": ["first_name", "last_name"], "MatchIds": [["Jane", "Doe"]],}
+    ]
+    data = (
+        '{"customer_id": 12345, "first_name": "John", "last_name": "Doe"}\n'
+        '{"customer_id": 23456, "first_name": "Jane", "last_name": "Doe"}\n'
+        '{"customer_id": 34567, "first_name": "Mary", "last_name": "Hey"}\n'
+    )
+    out_stream = to_json_file(data)
+    # Act
+    out, stats = delete_matches_from_json_file(
+        out_stream, to_delete_simple, to_delete_composite
+    )
+    assert isinstance(out, pa.BufferOutputStream)
+    assert {"ProcessedRows": 3, "DeletedRows": 2} == stats
+    assert to_json_string(out) == (
+        '{"customer_id": 34567, "first_name": "Mary", "last_name": "Hey"}\n'
     )
 
 
@@ -119,7 +227,7 @@ def test_delete_correct_rows_from_json_file_with_nullable_or_undefined_identifie
     )
     out_stream = to_json_file(data)
     # Act
-    out, stats = delete_matches_from_json_file(out_stream, to_delete)
+    out, stats = delete_matches_from_json_file(out_stream, to_delete, [])
     assert isinstance(out, pa.BufferOutputStream)
     assert {"ProcessedRows": 5, "DeletedRows": 1} == stats
     assert to_json_string(out) == (
@@ -140,7 +248,7 @@ def test_delete_correct_rows_from_json_file_with_lower_cased_column_id():
     )
     out_stream = to_json_file(data)
     # Act
-    out, stats = delete_matches_from_json_file(out_stream, to_delete)
+    out, stats = delete_matches_from_json_file(out_stream, to_delete, [])
     assert isinstance(out, pa.BufferOutputStream)
     assert {"ProcessedRows": 3, "DeletedRows": 1} == stats
     assert to_json_string(out) == (
@@ -162,7 +270,7 @@ def test_delete_correct_rows_from_json_file_with_multiple_identifiers():
     )
     out_stream = to_json_file(data)
     # Act
-    out, stats = delete_matches_from_json_file(out_stream, to_delete)
+    out, stats = delete_matches_from_json_file(out_stream, to_delete, [])
     assert isinstance(out, pa.BufferOutputStream)
     assert {"ProcessedRows": 3, "DeletedRows": 2} == stats
     assert to_json_string(out) == '{"user": {"id": "34567", "name": "Mary"}}\n'
@@ -179,7 +287,7 @@ def test_it_throws_meaningful_error_for_serialization_issues():
     out_stream = to_json_file(data)
     # Act
     with pytest.raises(ValueError) as e:
-        out, stats = delete_matches_from_json_file(out_stream, to_delete)
+        out, stats = delete_matches_from_json_file(out_stream, to_delete, [])
     assert e.value.args[0] == (
         "Serialization error when processing JSON object: "
         "Unterminated string starting at: line 2 column 40 (char 39)"

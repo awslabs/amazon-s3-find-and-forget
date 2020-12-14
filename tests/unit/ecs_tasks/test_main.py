@@ -826,7 +826,7 @@ def test_it_deletes_from_json_file(mock_parquet, mock_json):
     f = MagicMock()
     cols = MagicMock()
     delete_matches_from_file(f, cols, [], "json", False)
-    mock_json.assert_called_with(f, cols, False)
+    mock_json.assert_called_with(f, cols, [], False)
     mock_parquet.assert_not_called()
 
 
