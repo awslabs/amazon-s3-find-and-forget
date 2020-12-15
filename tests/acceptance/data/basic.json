@@ -1,3 +1,3 @@
-{ "customer_id": "12345", "user_info": {"personal_information": {"email": "12345@test.com", "name": "matteo"}}, "days_off": ["2020-01-01", "2020-01-02"]}
-{ "customer_id": "23456", "user_info": {"personal_information": {"email": "23456@test.com", "name": "nick"}}, "days_off": ["2020-01-01", "2020-01-07"]}
-{ "customer_id": "34567", "user_info": {"personal_information": {"email": "34567@test.com", "name": "chris"}}, "days_off": ["2020-01-05"]}
+{ "customer_id": "12345", "user_info": {"personal_information": {"email": "12345@test.com", "first_name": "John", "last_name": "Doe"}}, "days_off": ["2020-01-01", "2020-01-02"]}
+{ "customer_id": "23456", "user_info": {"personal_information": {"email": "23456@test.com", "first_name": "Jane", "last_name": "Doe"}}, "days_off": ["2020-01-01", "2020-01-07"]}
+{ "customer_id": "34567", "user_info": {"personal_information": {"email": "34567@test.com", "first_name": "Mary", "last_name": "Smith"}}, "days_off": ["2020-01-05"]}

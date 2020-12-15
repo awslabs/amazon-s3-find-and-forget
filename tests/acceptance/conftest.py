@@ -123,7 +123,7 @@ def glue_columns():
         {"Name": "customerId", "Type": "int"},
         {
             "Name": "user_info",
-            "Type": "struct<personal_information:struct<email:string,name:string>>",
+            "Type": "struct<personal_information:struct<email:string,first_name:string,last_name:string>>",
         },
         {"Name": "days_off", "Type": "array<string>"},
     ]
@@ -222,6 +222,29 @@ def del_queue_factory(queue_table):
             "CreatedAt": created_at,
             "DataMappers": data_mappers,
             "Type": "Simple",
+        }
+        queue_table.put_item(Item=item)
+        return item
+
+    yield factory
+
+    empty_table(queue_table, "DeletionQueueItemId")
+
+
+@pytest.fixture
+def composite_del_queue_factory(queue_table):
+    def factory(
+        match_id,
+        deletion_queue_item_id="id123",
+        created_at=round(datetime.datetime.now(datetime.timezone.utc).timestamp()),
+        data_mappers=["test"],
+    ):
+        item = {
+            "DeletionQueueItemId": deletion_queue_item_id,
+            "MatchId": match_id,
+            "CreatedAt": created_at,
+            "DataMappers": data_mappers,
+            "Type": "Composite",
         }
         queue_table.put_item(Item=item)
         return item
