@@ -1,5 +1,12 @@
 # Change Log
 
+## v0.19
+
+- [#226](https://github.com/awslabs/amazon-s3-find-and-forget/pull/226): Support
+  for Composite Match Ids
+- [#227](https://github.com/awslabs/amazon-s3-find-and-forget/pull/227): Upgrade
+  frontend dependencies
+
 ## v0.18
 
 - [#223](https://github.com/awslabs/amazon-s3-find-and-forget/pull/223): This
