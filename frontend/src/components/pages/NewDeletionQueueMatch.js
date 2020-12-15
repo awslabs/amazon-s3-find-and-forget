@@ -187,7 +187,9 @@ export default ({ gateway, goToDeletionQueue }) => {
                 title="Simple"
               >
                 A value to be matched against any column identifier of one or
-                more data mappers<br /><br />
+                more data mappers
+                <br />
+                <br />
               </FormRadioBinaryChoice>
               {compositeMatchesAllowed && (
                 <FormRadioBinaryChoice
@@ -199,7 +201,7 @@ export default ({ gateway, goToDeletionQueue }) => {
                   selected={!simpleMatchType}
                   title="Composite"
                 >
-                  One or more values to be matched against specific columns
+                  One or more values to be matched against specific column
                   identifiers of a multi-column based data mapper
                 </FormRadioBinaryChoice>
               )}

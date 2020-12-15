@@ -41,8 +41,7 @@ def get_value(key, obj):
     for segment in key.split("."):
         current_key = find_key(segment, record)
         if not current_key:
-            record = None
-            break
+            return None
         record = record[current_key]
     return record
 
