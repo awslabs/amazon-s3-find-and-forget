@@ -105,7 +105,7 @@ def generate_athena_queries(data_mapper, deletion_items):
             continue
         else:
             simple_applicable_match_ids = [
-                item for item in applicable_match_ids if isinstance(item, str)
+                item for item in applicable_match_ids if not isinstance(item, list)
             ]
             query["Columns"] = (
                 [

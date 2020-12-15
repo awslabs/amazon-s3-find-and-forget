@@ -129,6 +129,44 @@ class TestAthenaQueries:
 
     @patch("backend.lambdas.tasks.generate_queries.get_table")
     @patch("backend.lambdas.tasks.generate_queries.get_partitions")
+    def test_it_handles_int_matches(self, get_partitions_mock, get_table_mock):
+        columns = [{"Name": "customer_id"}]
+        partition_keys = ["product_category"]
+        partitions = [["Books"]]
+        get_table_mock.return_value = table_stub(columns, partition_keys)
+        get_partitions_mock.return_value = [
+            partition_stub(p, columns) for p in partitions
+        ]
+        resp = generate_athena_queries(
+            {
+                "DataMapperId": "a",
+                "QueryExecutor": "athena",
+                "Columns": [col["Name"] for col in columns],
+                "Format": "parquet",
+                "QueryExecutorParameters": {
+                    "DataCatalogProvider": "glue",
+                    "Database": "test_db",
+                    "Table": "test_table",
+                },
+            },
+            [{"MatchId": 12345}, {"MatchId": 23456}],
+        )
+        assert resp == [
+            {
+                "DataMapperId": "a",
+                "QueryExecutor": "athena",
+                "Format": "parquet",
+                "Database": "test_db",
+                "Table": "test_table",
+                "Columns": [{"Column": "customer_id", "MatchIds": ["12345", "23456"]}],
+                "CompositeColumns": [],
+                "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
+                "DeleteOldVersions": True,
+            }
+        ]
+
+    @patch("backend.lambdas.tasks.generate_queries.get_table")
+    @patch("backend.lambdas.tasks.generate_queries.get_partitions")
     def test_it_handles_int_partitions(self, get_partitions_mock, get_table_mock):
         columns = [{"Name": "customer_id"}]
         partition_keys = ["year"]
