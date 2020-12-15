@@ -73,6 +73,7 @@ def enqueue_batch_handler(event, context):
 @request_validator(load_schema("list_queue_items"))
 @catch_errors
 def get_handler(event, context):
+    defaults = {"Type": "Simple"}
     qs = event.get("queryStringParameters")
     if not qs:
         qs = {}
@@ -89,7 +90,11 @@ def get_handler(event, context):
     return {
         "statusCode": 200,
         "body": json.dumps(
-            {"MatchIds": items, "NextStart": next_start}, cls=DecimalEncoder
+            {
+                "MatchIds": list(map(lambda item: dict(defaults, **item), items)),
+                "NextStart": next_start,
+            },
+            cls=DecimalEncoder,
         ),
         "headers": {"Access-Control-Expose-Headers": "content-length"},
     }

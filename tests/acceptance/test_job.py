@@ -239,8 +239,8 @@ def test_it_runs_for_parquet_happy_path(
     assert "cache" == bucket.Object(object_key).cache_control
 
 
-def test_it_runs_for_parquet_composite_matches(
-    composite_del_queue_factory,
+def test_it_runs_for_parquet_backwards_compatible_matches(
+    del_queue_factory,
     job_factory,
     dummy_lake,
     glue_data_mapper_factory,
@@ -254,12 +254,55 @@ def test_it_runs_for_parquet_composite_matches(
         partition_keys=["year", "month", "day"],
         partitions=[["2019", "08", "20"]],
     )
-    item = composite_del_queue_factory(
+    # MatchId Type was introduced in 0.19 only and it should default to Simple
+    item = del_queue_factory("12345", matchid_type=None)
+    object_key = "test/2019/08/20/test.parquet"
+    data_loader(
+        "basic.parquet", object_key, Metadata={"foo": "bar"}, CacheControl="cache"
+    )
+    bucket = dummy_lake["bucket"]
+    job_id = job_factory(del_queue_items=[item])["Id"]
+    # Act
+    job_complete_waiter.wait(
+        TableName=job_table.name, Key={"Id": {"S": job_id}, "Sk": {"S": job_id}}
+    )
+    # Assert
+    tmp = tempfile.NamedTemporaryFile()
+    bucket.download_fileobj(object_key, tmp)
+    assert (
+        "COMPLETED"
+        == job_table.get_item(Key={"Id": job_id, "Sk": job_id})["Item"]["JobStatus"]
+    )
+    assert 0 == len(query_parquet_file(tmp, "customer_id", "12345"))
+    assert 1 == len(query_parquet_file(tmp, "customer_id", "23456"))
+    assert 1 == len(query_parquet_file(tmp, "customer_id", "34567"))
+    assert 2 == len(list(bucket.object_versions.filter(Prefix=object_key)))
+    assert {"foo": "bar"} == bucket.Object(object_key).metadata
+    assert "cache" == bucket.Object(object_key).cache_control
+
+
+def test_it_runs_for_parquet_composite_matches(
+    del_queue_factory,
+    job_factory,
+    dummy_lake,
+    glue_data_mapper_factory,
+    data_loader,
+    job_complete_waiter,
+    job_table,
+):
+    # Arrange
+    glue_data_mapper_factory(
+        "test",
+        partition_keys=["year", "month", "day"],
+        partitions=[["2019", "08", "20"]],
+    )
+    item = del_queue_factory(
         [
             {"Column": "user_info.personal_information.first_name", "Value": "John"},
             {"Column": "user_info.personal_information.last_name", "Value": "Doe"},
         ],
         "id123",
+        matchid_type="Composite",
     )
     object_key = "test/2019/08/20/test.parquet"
     data_loader(
@@ -287,7 +330,6 @@ def test_it_runs_for_parquet_composite_matches(
 
 
 def test_it_runs_for_parquet_mixed_matches(
-    composite_del_queue_factory,
     del_queue_factory,
     job_factory,
     dummy_lake,
@@ -302,12 +344,13 @@ def test_it_runs_for_parquet_mixed_matches(
         partition_keys=["year", "month", "day"],
         partitions=[["2019", "08", "20"]],
     )
-    composite_item = composite_del_queue_factory(
+    composite_item = del_queue_factory(
         [
             {"Column": "user_info.personal_information.first_name", "Value": "John"},
             {"Column": "user_info.personal_information.last_name", "Value": "Doe"},
         ],
         "id123",
+        matchid_type="Composite",
     )
     simple_item = del_queue_factory("23456", "id234")
     object_key = "test/2019/08/20/test.parquet"
@@ -377,7 +420,6 @@ def test_it_runs_for_json_happy_path(
 
 def test_it_runs_for_json_composite_matches(
     del_queue_factory,
-    composite_del_queue_factory,
     job_factory,
     dummy_lake,
     glue_data_mapper_factory,
@@ -392,12 +434,13 @@ def test_it_runs_for_json_composite_matches(
         partitions=[["2019", "08", "20"]],
         fmt="json",
     )
-    composite_item = composite_del_queue_factory(
+    composite_item = del_queue_factory(
         [
             {"Column": "user_info.personal_information.first_name", "Value": "John"},
             {"Column": "user_info.personal_information.last_name", "Value": "Doe"},
         ],
         "id123",
+        matchid_type="Composite",
     )
     object_key = "test/2019/08/20/test.json"
     data_loader("basic.json", object_key, Metadata={"foo": "bar"}, CacheControl="cache")
@@ -424,7 +467,6 @@ def test_it_runs_for_json_composite_matches(
 
 def test_it_runs_for_json_mixed_matches(
     del_queue_factory,
-    composite_del_queue_factory,
     job_factory,
     dummy_lake,
     glue_data_mapper_factory,
@@ -439,12 +481,13 @@ def test_it_runs_for_json_mixed_matches(
         partitions=[["2019", "08", "20"]],
         fmt="json",
     )
-    composite_item = composite_del_queue_factory(
+    composite_item = del_queue_factory(
         [
             {"Column": "user_info.personal_information.first_name", "Value": "John"},
             {"Column": "user_info.personal_information.last_name", "Value": "Doe"},
         ],
         "id123",
+        matchid_type="Composite",
     )
     simple_item = del_queue_factory("23456", "id234")
     object_key = "test/2019/08/20/test.json"

@@ -52,6 +52,7 @@ def test_it_retrieves_all_items_with_size_and_pagination(table):
             {
                 "MatchIds": [
                     {
+                        "Type": "Simple",
                         "DeletionQueueItemId": "id123",
                         "MatchId": "foo",
                         "DataMappers": [],
