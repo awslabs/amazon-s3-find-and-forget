@@ -303,6 +303,7 @@ def test_it_runs_for_parquet_composite_matches(
         ],
         "id123",
         matchid_type="Composite",
+        data_mappers=["test"],
     )
     object_key = "test/2019/08/20/test.parquet"
     data_loader(
@@ -351,6 +352,7 @@ def test_it_runs_for_parquet_mixed_matches(
         ],
         "id123",
         matchid_type="Composite",
+        data_mappers=["test"],
     )
     simple_item = del_queue_factory("23456", "id234")
     object_key = "test/2019/08/20/test.parquet"
@@ -441,6 +443,7 @@ def test_it_runs_for_json_composite_matches(
         ],
         "id123",
         matchid_type="Composite",
+        data_mappers=["test"],
     )
     object_key = "test/2019/08/20/test.json"
     data_loader("basic.json", object_key, Metadata={"foo": "bar"}, CacheControl="cache")
@@ -488,6 +491,7 @@ def test_it_runs_for_json_mixed_matches(
         ],
         "id123",
         matchid_type="Composite",
+        data_mappers=["test"],
     )
     simple_item = del_queue_factory("23456", "id234")
     object_key = "test/2019/08/20/test.json"
