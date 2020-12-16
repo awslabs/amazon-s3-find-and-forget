@@ -45,9 +45,7 @@ def get_value(key, obj):
     return obj
 
 
-def delete_matches_from_json_file(
-    input_file, to_delete, composite_to_delete, compressed=False
-):
+def delete_matches_from_json_file(input_file, to_delete, compressed=False):
     deleted_rows = 0
     with BufferOutputStream() as out_stream:
         input_file, writer = initialize(input_file, out_stream, compressed)
@@ -67,18 +65,18 @@ def delete_matches_from_json_file(
                 )
             should_delete = False
             for column in to_delete:
-                record = get_value(column["Column"], parsed)
-                if record and record in column["MatchIds"]:
-                    should_delete = True
-                    break
-            if not should_delete:
-                for batch in composite_to_delete:
+                if column["Type"] == "Simple":
+                    record = get_value(column["Column"], parsed)
+                    if record and record in column["MatchIds"]:
+                        should_delete = True
+                        break
+                else:
                     matched = []
-                    for column in batch["Columns"]:
-                        record = get_value(column, parsed)
+                    for col in column["Columns"]:
+                        record = get_value(col, parsed)
                         if record:
                             matched.append(record)
-                    if matched in batch["MatchIds"]:
+                    if matched in column["MatchIds"]:
                         should_delete = True
                         break
             if should_delete:

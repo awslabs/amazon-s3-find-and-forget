@@ -37,7 +37,6 @@ def handler(event, context):
             "JobId": event["JobId"],
             "Object": p,
             "Columns": event["Columns"],
-            "CompositeColumns": event["CompositeColumns"],
             "RoleArn": event.get("RoleArn", None),
             "DeleteOldVersions": event.get("DeleteOldVersions", True),
             "Format": event.get("Format"),

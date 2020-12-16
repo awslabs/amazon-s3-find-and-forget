@@ -74,7 +74,7 @@ def test_happy_path_when_queue_not_empty(
         "receipt_handle",
     )
     mock_s3.open.assert_called_with("s3://bucket/path/basic.parquet", "rb")
-    mock_delete.assert_called_with(mock_file, [column], [], "parquet", False)
+    mock_delete.assert_called_with(mock_file, [column], "parquet", False)
     mock_save.assert_called_with(
         ANY, ANY, ANY, "bucket", "path/basic.parquet", "abc123"
     )
@@ -123,7 +123,7 @@ def test_happy_path_when_queue_not_empty_for_compressed_json(
         "receipt_handle",
     )
     mock_s3.open.assert_called_with("s3://bucket/path/basic.json.gz", "rb")
-    mock_delete.assert_called_with(mock_file, [column], [], "json", True)
+    mock_delete.assert_called_with(mock_file, [column], "json", True)
     mock_save.assert_called_with(
         ANY, ANY, ANY, "bucket", "path/basic.json.gz", "abc123"
     )
@@ -825,8 +825,8 @@ def test_it_sets_kill_handlers(mock_queue, mock_signal):
 def test_it_deletes_from_json_file(mock_parquet, mock_json):
     f = MagicMock()
     cols = MagicMock()
-    delete_matches_from_file(f, cols, [], "json", False)
-    mock_json.assert_called_with(f, cols, [], False)
+    delete_matches_from_file(f, cols, "json", False)
+    mock_json.assert_called_with(f, cols, False)
     mock_parquet.assert_not_called()
 
 
@@ -835,6 +835,6 @@ def test_it_deletes_from_json_file(mock_parquet, mock_json):
 def test_it_deletes_from_parquet_file(mock_parquet, mock_json):
     f = MagicMock()
     cols = MagicMock()
-    delete_matches_from_file(f, cols, [], "parquet")
-    mock_parquet.assert_called_with(f, cols, [])
+    delete_matches_from_file(f, cols, "parquet")
+    mock_parquet.assert_called_with(f, cols)
     mock_json.assert_not_called()

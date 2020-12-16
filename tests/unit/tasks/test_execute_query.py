@@ -55,8 +55,13 @@ def test_it_generates_query_with_partition():
         {
             "Database": "amazonreviews",
             "Table": "amazon_reviews_parquet",
-            "Columns": [{"Column": "customer_id", "MatchIds": ["123456", "456789"]}],
-            "CompositeColumns": [],
+            "Columns": [
+                {
+                    "Column": "customer_id",
+                    "MatchIds": ["123456", "456789"],
+                    "Type": "Simple",
+                }
+            ],
             "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
         }
     )
@@ -74,8 +79,13 @@ def test_it_generates_query_with_partition_and_int_column():
         {
             "Database": "amazonreviews",
             "Table": "amazon_reviews_parquet",
-            "Columns": [{"Column": "customer_id", "MatchIds": [123456, 456789]}],
-            "CompositeColumns": [],
+            "Columns": [
+                {
+                    "Column": "customer_id",
+                    "MatchIds": [123456, 456789],
+                    "Type": "Simple",
+                }
+            ],
             "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
         }
     )
@@ -93,8 +103,13 @@ def test_it_generates_query_with_int_partition():
         {
             "Database": "amazonreviews",
             "Table": "amazon_reviews_parquet",
-            "Columns": [{"Column": "customer_id", "MatchIds": ["123456", "456789"]}],
-            "CompositeColumns": [],
+            "Columns": [
+                {
+                    "Column": "customer_id",
+                    "MatchIds": ["123456", "456789"],
+                    "Type": "Simple",
+                }
+            ],
             "PartitionKeys": [{"Key": "year", "Value": 2010}],
         }
     )
@@ -112,8 +127,13 @@ def test_it_generates_query_with_multiple_partitions():
         {
             "Database": "amazonreviews",
             "Table": "amazon_reviews_parquet",
-            "Columns": [{"Column": "customer_id", "MatchIds": ["123456", "456789"]}],
-            "CompositeColumns": [],
+            "Columns": [
+                {
+                    "Column": "customer_id",
+                    "MatchIds": ["123456", "456789"],
+                    "Type": "Simple",
+                }
+            ],
             "PartitionKeys": [
                 {"Key": "product_category", "Value": "Books"},
                 {"Key": "published", "Value": "2019"},
@@ -135,8 +155,13 @@ def test_it_generates_query_without_partition():
         {
             "Database": "amazonreviews",
             "Table": "amazon_reviews_parquet",
-            "CompositeColumns": [],
-            "Columns": [{"Column": "customer_id", "MatchIds": ["123456", "456789"]}],
+            "Columns": [
+                {
+                    "Column": "customer_id",
+                    "MatchIds": ["123456", "456789"],
+                    "Type": "Simple",
+                }
+            ],
         }
     )
 
@@ -152,10 +177,9 @@ def test_it_generates_query_with_multiple_columns():
         {
             "Database": "amazonreviews",
             "Table": "amazon_reviews_parquet",
-            "CompositeColumns": [],
             "Columns": [
-                {"Column": "a", "MatchIds": ["a123456", "b123456"]},
-                {"Column": "b", "MatchIds": ["a456789", "b456789"]},
+                {"Column": "a", "MatchIds": ["a123456", "b123456"], "Type": "Simple"},
+                {"Column": "b", "MatchIds": ["a456789", "b456789"], "Type": "Simple"},
             ],
         }
     )
@@ -172,8 +196,13 @@ def test_it_generates_query_with_columns_of_complex_type():
         {
             "Database": "amazonreviews",
             "Table": "amazon_reviews_parquet",
-            "CompositeColumns": [],
-            "Columns": [{"Column": "a.b.c", "MatchIds": ["a123456", "b123456"]}],
+            "Columns": [
+                {
+                    "Column": "a.b.c",
+                    "MatchIds": ["a123456", "b123456"],
+                    "Type": "Simple",
+                }
+            ],
         }
     )
 
@@ -189,18 +218,23 @@ def test_it_generates_query_with_composite_matches():
         {
             "Database": "amazonreviews",
             "Table": "amazon_reviews_parquet",
-            "CompositeColumns": [
+            "Columns": [
                 {
                     "Columns": ["user.first_name", "user.last_name"],
                     "MatchIds": [["John", "Doe"], ["Jane", "Doe"]],
+                    "Type": "Composite",
                 },
                 {
                     "Columns": ["user.age", "user.last_name"],
                     "MatchIds": [[28, "Smith"]],
+                    "Type": "Composite",
                 },
-                {"Columns": ["user.userid"], "MatchIds": [["123456"]],},
+                {
+                    "Columns": ["user.userid"],
+                    "MatchIds": [["123456"]],
+                    "Type": "Composite",
+                },
             ],
-            "Columns": [],
         }
     )
 
@@ -220,13 +254,18 @@ def test_it_generates_query_with_simple_and_composite_matches():
         {
             "Database": "amazonreviews",
             "Table": "amazon_reviews_parquet",
-            "CompositeColumns": [
+            "Columns": [
+                {
+                    "Column": "a.b.c",
+                    "MatchIds": ["a123456", "b123456"],
+                    "Type": "Simple",
+                },
                 {
                     "Columns": ["user.first_name", "user.last_name"],
                     "MatchIds": [["John", "Doe"], ["Jane", "Doe"]],
-                }
+                    "Type": "Composite",
+                },
             ],
-            "Columns": [{"Column": "a.b.c", "MatchIds": ["a123456", "b123456"]}],
         }
     )
 

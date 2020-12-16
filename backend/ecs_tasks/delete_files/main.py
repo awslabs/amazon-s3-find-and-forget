@@ -71,15 +71,11 @@ def validate_message(message):
             raise ValueError("Malformed message. Missing key: %s", k)
 
 
-def delete_matches_from_file(
-    input_file, to_delete, composite_to_delete, file_format, compressed=False
-):
+def delete_matches_from_file(input_file, to_delete, file_format, compressed=False):
     logger.info("Generating new file without matches")
     if file_format == "json":
-        return delete_matches_from_json_file(
-            input_file, to_delete, composite_to_delete, compressed
-        )
-    return delete_matches_from_parquet_file(input_file, to_delete, composite_to_delete)
+        return delete_matches_from_json_file(input_file, to_delete, compressed)
+    return delete_matches_from_parquet_file(input_file, to_delete)
 
 
 def execute(queue_url, message_body, receipt_handle):
@@ -92,8 +88,8 @@ def execute(queue_url, message_body, receipt_handle):
         body = json.loads(message_body)
         session = get_session(body.get("RoleArn"))
         client = session.client("s3")
-        cols, composite_cols, object_path, job_id, file_format = itemgetter(
-            "Columns", "CompositeColumns", "Object", "JobId", "Format"
+        cols, object_path, job_id, file_format = itemgetter(
+            "Columns", "Object", "JobId", "Format"
         )(body)
         input_bucket, input_key = parse_s3_url(object_path)
         validate_bucket_versioning(client, input_bucket)
@@ -114,9 +110,7 @@ def execute(queue_url, message_body, receipt_handle):
             logger.info("Using object version %s as source", source_version)
             # Write new file in-memory
             compressed = object_path.endswith(".gz")
-            out_sink, stats = delete_matches_from_file(
-                f, cols, composite_cols, file_format, compressed
-            )
+            out_sink, stats = delete_matches_from_file(f, cols, file_format, compressed)
         if stats["DeletedRows"] == 0:
             raise ValueError(
                 "The object {} was processed successfully but no rows required deletion".format(

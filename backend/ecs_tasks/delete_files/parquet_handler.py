@@ -72,31 +72,30 @@ def get_row_indexes_to_delete(table, identifier, to_delete):
     return np.array(indexes)
 
 
-def delete_from_table(table, to_delete=[], composite_to_delete=[]):
+def delete_from_table(table, to_delete=[]):
     """
     Deletes rows from a Arrow Table where any of the MatchIds is found as
     value in any of the columns
     """
     initial_rows = table.num_rows
     for column in to_delete:
-        indexes = get_row_indexes_to_delete(table, column["Column"], column["MatchIds"])
-        table = table.filter(~indexes)
-    for column in composite_to_delete:
-        indexes = get_row_indexes_to_delete_for_composite(
-            table, column["Columns"], column["MatchIds"]
+        indexes = (
+            get_row_indexes_to_delete(table, column["Column"], column["MatchIds"])
+            if column["Type"] == "Simple"
+            else get_row_indexes_to_delete_for_composite(
+                table, column["Columns"], column["MatchIds"]
+            )
         )
         table = table.filter(~indexes)
     deleted_rows = initial_rows - table.num_rows
     return table, deleted_rows
 
 
-def delete_matches_from_parquet_file(input_file, to_delete, composite_to_delete):
+def delete_matches_from_parquet_file(input_file, to_delete):
     """
     Deletes matches from Parquet file where to_delete is a list of dicts where
     each dict contains a column to search and the MatchIds to search for in
-    that particular column and composite_to_delete is a list of dicts where each
-    dict contains multiple columns to search and the MatchIds to search for in
-    that particular list of columns
+    that particular column
     """
     parquet_file = load_parquet(input_file)
     schema = parquet_file.metadata.schema.to_arrow_schema().remove_metadata()
@@ -111,9 +110,7 @@ def delete_matches_from_parquet_file(input_file, to_delete, composite_to_delete)
                     str(parquet_file.num_row_groups),
                 )
                 table = parquet_file.read_row_group(row_group)
-                table, deleted_rows = delete_from_table(
-                    table, to_delete, composite_to_delete
-                )
+                table, deleted_rows = delete_from_table(table, to_delete)
                 writer.write_table(table)
                 stats.update({"DeletedRows": deleted_rows})
         return out_stream, stats

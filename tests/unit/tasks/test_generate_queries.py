@@ -120,8 +120,9 @@ class TestAthenaQueries:
                 "Format": "parquet",
                 "Database": "test_db",
                 "Table": "test_table",
-                "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
-                "CompositeColumns": [],
+                "Columns": [
+                    {"Column": "customer_id", "MatchIds": ["hi"], "Type": "Simple"}
+                ],
                 "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
                 "DeleteOldVersions": True,
             }
@@ -158,8 +159,13 @@ class TestAthenaQueries:
                 "Format": "parquet",
                 "Database": "test_db",
                 "Table": "test_table",
-                "Columns": [{"Column": "customer_id", "MatchIds": ["12345", "23456"]}],
-                "CompositeColumns": [],
+                "Columns": [
+                    {
+                        "Column": "customer_id",
+                        "MatchIds": ["12345", "23456"],
+                        "Type": "Simple",
+                    }
+                ],
                 "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
                 "DeleteOldVersions": True,
             }
@@ -198,8 +204,9 @@ class TestAthenaQueries:
                 "Format": "parquet",
                 "Database": "test_db",
                 "Table": "test_table",
-                "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
-                "CompositeColumns": [],
+                "Columns": [
+                    {"Column": "customer_id", "MatchIds": ["hi"], "Type": "Simple"}
+                ],
                 "PartitionKeys": [{"Key": "year", "Value": 2010}],
                 "DeleteOldVersions": True,
             }
@@ -238,10 +245,9 @@ class TestAthenaQueries:
                 "Database": "test_db",
                 "Table": "test_table",
                 "Columns": [
-                    {"Column": "customer_id", "MatchIds": ["hi"]},
-                    {"Column": "alt_customer_id", "MatchIds": ["hi"]},
+                    {"Column": "customer_id", "MatchIds": ["hi"], "Type": "Simple"},
+                    {"Column": "alt_customer_id", "MatchIds": ["hi"], "Type": "Simple"},
                 ],
-                "CompositeColumns": [],
                 "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
                 "DeleteOldVersions": True,
             }
@@ -250,26 +256,21 @@ class TestAthenaQueries:
     @patch("backend.lambdas.tasks.generate_queries.get_table")
     @patch("backend.lambdas.tasks.generate_queries.get_partitions")
     def test_it_handles_composite_columns(self, get_partitions_mock, get_table_mock):
-        columns = [{"Name": "customer_id"}]
-        composite_columns = [
+        columns = [
             {"Name": "first_name"},
             {"Name": "last_name"},
-            {"Name": "age", "Type": "int"},
         ]
         partition_keys = ["product_category"]
         partitions = [["Books"]]
-        get_table_mock.return_value = table_stub(
-            columns + composite_columns, partition_keys
-        )
+        get_table_mock.return_value = table_stub(columns, partition_keys)
         get_partitions_mock.return_value = [
-            partition_stub(p, columns + composite_columns) for p in partitions
+            partition_stub(p, columns) for p in partitions
         ]
         resp = generate_athena_queries(
             {
                 "DataMapperId": "a",
                 "QueryExecutor": "athena",
                 "Columns": [col["Name"] for col in columns],
-                "CompositeColumns": [col["Name"] for col in composite_columns],
                 "Format": "parquet",
                 "QueryExecutorParameters": {
                     "DataCatalogProvider": "glue",
@@ -278,7 +279,67 @@ class TestAthenaQueries:
                 },
             },
             [
-                {"MatchId": "hi"},
+                {
+                    "MatchId": [
+                        {"Column": "first_name", "Value": "John"},
+                        {"Column": "last_name", "Value": "Doe"},
+                    ],
+                    "Type": "Composite",
+                    "DataMappers": ["a"],
+                }
+            ],
+        )
+
+        assert resp == [
+            {
+                "DataMapperId": "a",
+                "QueryExecutor": "athena",
+                "Format": "parquet",
+                "Database": "test_db",
+                "Table": "test_table",
+                "Columns": [
+                    {
+                        "Columns": ["first_name", "last_name"],
+                        "MatchIds": [["John", "Doe"]],
+                        "Type": "Composite",
+                    }
+                ],
+                "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
+                "DeleteOldVersions": True,
+            }
+        ]
+
+    @patch("backend.lambdas.tasks.generate_queries.get_table")
+    @patch("backend.lambdas.tasks.generate_queries.get_partitions")
+    def test_it_handles_mixed_columns(self, get_partitions_mock, get_table_mock):
+        columns = [
+            {"Name": "customer_id"},
+            {"Name": "first_name"},
+            {"Name": "last_name"},
+            {"Name": "age", "Type": "int"},
+        ]
+        partition_keys = ["product_category"]
+        partitions = [["Books"]]
+        get_table_mock.return_value = table_stub(columns, partition_keys)
+        get_partitions_mock.return_value = [
+            partition_stub(p, columns) for p in partitions
+        ]
+        resp = generate_athena_queries(
+            {
+                "DataMapperId": "a",
+                "QueryExecutor": "athena",
+                "Columns": [col["Name"] for col in columns],
+                "Format": "parquet",
+                "QueryExecutorParameters": {
+                    "DataCatalogProvider": "glue",
+                    "Database": "test_db",
+                    "Table": "test_table",
+                },
+            },
+            [
+                {"MatchId": "12345", "Type": "Simple"},
+                {"MatchId": "23456", "Type": "Simple"},
+                {"MatchId": "23456", "Type": "Simple"},  # duplicate
                 {
                     "MatchId": [
                         {"Column": "first_name", "Value": "John"},
@@ -288,6 +349,14 @@ class TestAthenaQueries:
                     "DataMappers": ["a"],
                 },
                 {
+                    "MatchId": [
+                        {"Column": "first_name", "Value": "Jane"},
+                        {"Column": "last_name", "Value": "Doe"},
+                    ],
+                    "Type": "Composite",
+                    "DataMappers": ["a"],
+                },
+                {  # duplicate
                     "MatchId": [
                         {"Column": "first_name", "Value": "Jane"},
                         {"Column": "last_name", "Value": "Doe"},
@@ -313,13 +382,33 @@ class TestAthenaQueries:
                 "Format": "parquet",
                 "Database": "test_db",
                 "Table": "test_table",
-                "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]},],
-                "CompositeColumns": [
+                "Columns": [
+                    {
+                        "Column": "customer_id",
+                        "MatchIds": ["12345", "23456"],
+                        "Type": "Simple",
+                    },
+                    {
+                        "Column": "first_name",
+                        "MatchIds": ["12345", "23456"],
+                        "Type": "Simple",
+                    },
+                    {
+                        "Column": "last_name",
+                        "MatchIds": ["12345", "23456"],
+                        "Type": "Simple",
+                    },
+                    {"Column": "age", "MatchIds": [12345, 23456], "Type": "Simple"},
                     {
                         "Columns": ["first_name", "last_name"],
                         "MatchIds": [["John", "Doe"], ["Jane", "Doe"]],
+                        "Type": "Composite",
                     },
-                    {"Columns": ["age", "last_name"], "MatchIds": [[28, "Smith"]],},
+                    {
+                        "Columns": ["age", "last_name"],
+                        "MatchIds": [[28, "Smith"]],
+                        "Type": "Composite",
+                    },
                 ],
                 "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
                 "DeleteOldVersions": True,
@@ -361,8 +450,9 @@ class TestAthenaQueries:
                 "Format": "parquet",
                 "Database": "test_db",
                 "Table": "test_table",
-                "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
-                "CompositeColumns": [],
+                "Columns": [
+                    {"Column": "customer_id", "MatchIds": ["hi"], "Type": "Simple"}
+                ],
                 "PartitionKeys": [
                     {"Key": "year", "Value": "2019"},
                     {"Key": "month", "Value": "01"},
@@ -406,8 +496,9 @@ class TestAthenaQueries:
                 "Table": "test_table",
                 "QueryExecutor": "athena",
                 "Format": "parquet",
-                "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
-                "CompositeColumns": [],
+                "Columns": [
+                    {"Column": "customer_id", "MatchIds": ["hi"], "Type": "Simple"}
+                ],
                 "PartitionKeys": [
                     {"Key": "year", "Value": "2018"},
                     {"Key": "month", "Value": "12"},
@@ -420,8 +511,9 @@ class TestAthenaQueries:
                 "Table": "test_table",
                 "QueryExecutor": "athena",
                 "Format": "parquet",
-                "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
-                "CompositeColumns": [],
+                "Columns": [
+                    {"Column": "customer_id", "MatchIds": ["hi"], "Type": "Simple"}
+                ],
                 "PartitionKeys": [
                     {"Key": "year", "Value": "2019"},
                     {"Key": "month", "Value": "01"},
@@ -434,8 +526,9 @@ class TestAthenaQueries:
                 "Table": "test_table",
                 "QueryExecutor": "athena",
                 "Format": "parquet",
-                "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
-                "CompositeColumns": [],
+                "Columns": [
+                    {"Column": "customer_id", "MatchIds": ["hi"], "Type": "Simple"}
+                ],
                 "PartitionKeys": [
                     {"Key": "year", "Value": "2019"},
                     {"Key": "month", "Value": "02"},
@@ -481,8 +574,9 @@ class TestAthenaQueries:
                 "Table": "test_table",
                 "QueryExecutor": "athena",
                 "Format": "parquet",
-                "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
-                "CompositeColumns": [],
+                "Columns": [
+                    {"Column": "customer_id", "MatchIds": ["hi"], "Type": "Simple"}
+                ],
                 "PartitionKeys": [
                     {"Key": "year", "Value": "2018"},
                     {"Key": "month", "Value": "12"},
@@ -496,8 +590,9 @@ class TestAthenaQueries:
                 "Table": "test_table",
                 "QueryExecutor": "athena",
                 "Format": "parquet",
-                "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
-                "CompositeColumns": [],
+                "Columns": [
+                    {"Column": "customer_id", "MatchIds": ["hi"], "Type": "Simple"}
+                ],
                 "PartitionKeys": [
                     {"Key": "year", "Value": "2019"},
                     {"Key": "month", "Value": "01"},
@@ -544,8 +639,9 @@ class TestAthenaQueries:
                 "Table": "B",
                 "QueryExecutor": "athena",
                 "Format": "parquet",
-                "Columns": [{"Column": "customer_id", "MatchIds": ["456"]}],
-                "CompositeColumns": [],
+                "Columns": [
+                    {"Column": "customer_id", "MatchIds": ["456"], "Type": "Simple"}
+                ],
                 "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
                 "DeleteOldVersions": True,
             }
@@ -578,8 +674,9 @@ class TestAthenaQueries:
                 "Table": "test_table",
                 "QueryExecutor": "athena",
                 "Format": "parquet",
-                "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
-                "CompositeColumns": [],
+                "Columns": [
+                    {"Column": "customer_id", "MatchIds": ["hi"], "Type": "Simple"}
+                ],
                 "PartitionKeys": [],
                 "DeleteOldVersions": True,
             }
@@ -615,8 +712,9 @@ class TestAthenaQueries:
                 "Table": "test_table",
                 "QueryExecutor": "athena",
                 "Format": "parquet",
-                "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
-                "CompositeColumns": [],
+                "Columns": [
+                    {"Column": "customer_id", "MatchIds": ["hi"], "Type": "Simple"}
+                ],
                 "PartitionKeys": [],
                 "RoleArn": "arn:aws:iam::accountid:role/rolename",
                 "DeleteOldVersions": True,

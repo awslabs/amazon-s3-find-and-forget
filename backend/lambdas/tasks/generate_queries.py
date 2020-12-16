@@ -99,53 +99,45 @@ def generate_athena_queries(data_mapper, deletion_items):
             if query["DataMapperId"] in item.get("DataMappers", [])
             or len(item.get("DataMappers", [])) == 0
         ]
-
-        # Remove the query if there are no relevant matches
-        if len(applicable_match_ids) == 0:
-            continue
-        else:
-            simple_applicable_match_ids = [
-                item for item in applicable_match_ids if not isinstance(item, list)
-            ]
-            query["Columns"] = (
-                [
-                    {
-                        "Column": c,
-                        "MatchIds": [
-                            cast_to_type(mid, c, table)
-                            for mid in simple_applicable_match_ids
-                        ],
-                    }
-                    for c in queries[i]["Columns"]
-                ]
-                if len(simple_applicable_match_ids) > 0
-                else []
-            )
-            composite_applicable_match_ids = [
-                item for item in applicable_match_ids if isinstance(item, list)
-            ]
-            query["CompositeColumns"] = []
-            for mid in composite_applicable_match_ids:
-                sorted_mid = sorted(mid, key=lambda x: x["Column"])
-                cols = list(map(lambda x: x["Column"], sorted_mid))
-                composite_column = next(
-                    iter(
-                        [x for x in query["CompositeColumns"] if x["Columns"] == cols]
-                    ),
-                    None,
-                )
-                composite_match = list(
-                    map(
-                        lambda x: cast_to_type(x["Value"], x["Column"], table),
-                        sorted_mid,
-                    )
-                )
-                if composite_column:
-                    composite_column["MatchIds"].append(composite_match)
+        if len(applicable_match_ids) > 0:
+            results = []
+            for mid in applicable_match_ids:
+                is_simple = not isinstance(mid, list)
+                if is_simple:
+                    for column in query["Columns"]:
+                        casted = cast_to_type(mid, column, table)
+                        result = find_in_dict(results, "Column", column)
+                        if not result:
+                            results.append(
+                                {
+                                    "Column": column,
+                                    "MatchIds": [casted],
+                                    "Type": "Simple",
+                                }
+                            )
+                        elif casted not in result["MatchIds"]:
+                            result["MatchIds"].append(casted)
                 else:
-                    query["CompositeColumns"].append(
-                        {"Columns": cols, "MatchIds": [composite_match]}
+                    sorted_mid = sorted(mid, key=lambda x: x["Column"])
+                    query_columns = list(map(lambda x: x["Column"], sorted_mid))
+                    result = find_in_dict(results, "Columns", query_columns)
+                    composite_match = list(
+                        map(
+                            lambda x: cast_to_type(x["Value"], x["Column"], table),
+                            sorted_mid,
+                        )
                     )
+                    if not result:
+                        results.append(
+                            {
+                                "Columns": query_columns,
+                                "MatchIds": [composite_match],
+                                "Type": "Composite",
+                            }
+                        )
+                    elif composite_match not in result["MatchIds"]:
+                        result["MatchIds"].append(composite_match)
+            query["Columns"] = results
             filtered.append(query)
     return filtered
 
@@ -359,3 +351,7 @@ def cast_to_type(val, col, table, is_partition=False):
         return float(val)
 
     return str(val)
+
+
+def find_in_dict(d, key, value):
+    return next(iter([x for x in d if x.get(key) == value]), None)
