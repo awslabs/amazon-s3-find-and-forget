@@ -37,13 +37,12 @@ def get_value(key, obj):
     obj='{"user":{"id": 1234}}'
     result=1234
     """
-    record = obj
     for segment in key.split("."):
-        current_key = find_key(segment, record)
+        current_key = find_key(segment, obj)
         if not current_key:
             return None
-        record = record[current_key]
-    return record
+        obj = obj[current_key]
+    return obj
 
 
 def delete_matches_from_json_file(

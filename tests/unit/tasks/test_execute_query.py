@@ -207,10 +207,10 @@ def test_it_generates_query_with_composite_matches():
     assert (
         escape_resp(resp) == 'SELECT DISTINCT "$path" '
         'FROM "amazonreviews"."amazon_reviews_parquet" '
-        'WHERE (concat("user"."first_name", \'____\', "user"."last_name") '
-        "in ('John____Doe', 'Jane____Doe') OR "
-        'concat("user"."age", \'____\', "user"."last_name") '
-        "in ('28____Smith') OR "
+        'WHERE (concat("user"."first_name", \'_S3F2COMP_\', "user"."last_name") '
+        "in ('John_S3F2COMP_Doe', 'Jane_S3F2COMP_Doe') OR "
+        'concat("user"."age", \'_S3F2COMP_\', "user"."last_name") '
+        "in ('28_S3F2COMP_Smith') OR "
         '"user"."userid" in (\'123456\'))'
     )
 
@@ -234,8 +234,8 @@ def test_it_generates_query_with_simple_and_composite_matches():
         escape_resp(resp) == 'SELECT DISTINCT "$path" '
         'FROM "amazonreviews"."amazon_reviews_parquet" '
         'WHERE ("a"."b"."c" in (\'a123456\', \'b123456\') '
-        'OR concat("user"."first_name", \'____\', "user"."last_name") '
-        "in ('John____Doe', 'Jane____Doe'))"
+        'OR concat("user"."first_name", \'_S3F2COMP_\', "user"."last_name") '
+        "in ('John_S3F2COMP_Doe', 'Jane_S3F2COMP_Doe'))"
     )
 
 
