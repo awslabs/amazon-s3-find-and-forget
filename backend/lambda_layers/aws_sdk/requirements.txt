@@ -4,8 +4,8 @@
 #
 #    pip-compile --output-file=backend/lambda_layers/aws_sdk/requirements.txt backend/lambda_layers/aws_sdk/requirements.in
 #
-boto3==1.14.54            # via -r backend/lambda_layers/aws_sdk/requirements.in
-botocore==1.17.55         # via boto3, s3transfer
+boto3==1.14.44            # via -r backend/lambda_layers/aws_sdk/requirements.in
+botocore==1.17.44         # via boto3, s3transfer
 docutils==0.15.2          # via botocore
 jmespath==0.10.0          # via boto3, botocore
 python-dateutil==2.8.1    # via botocore

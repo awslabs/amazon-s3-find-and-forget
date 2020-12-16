@@ -4,17 +4,21 @@
 #
 #    pip-compile --output-file=requirements.txt requirements.in
 #
+aiobotocore==1.1.2        # via -r ./backend/ecs_tasks/delete_files/requirements.txt, s3fs
+aiohttp==3.7.3            # via -r ./backend/ecs_tasks/delete_files/requirements.txt, aiobotocore
+aioitertools==0.7.1       # via -r ./backend/ecs_tasks/delete_files/requirements.txt, aiobotocore
 appdirs==1.4.4            # via black, virtualenv
-attrs==20.1.0             # via -r ./backend/lambda_layers/decorators/requirements.txt, black, jsonschema, pytest
+async-timeout==3.0.1      # via -r ./backend/ecs_tasks/delete_files/requirements.txt, aiohttp
+attrs==20.3.0             # via -r ./backend/ecs_tasks/delete_files/requirements.txt, -r ./backend/lambda_layers/decorators/requirements.txt, aiohttp, black, jsonschema, pytest
 aws-sam-translator==1.26.0  # via cfn-lint
 black==19.10b0            # via -r requirements.in
-boto3==1.14.54            # via -r ./backend/ecs_tasks/delete_files/requirements.txt, -r ./backend/lambda_layers/aws_sdk/requirements.txt, aws-sam-translator, s3fs
-botocore==1.17.55         # via -r ./backend/ecs_tasks/delete_files/requirements.txt, -r ./backend/lambda_layers/aws_sdk/requirements.txt, boto3, s3fs, s3transfer
+boto3==1.14.44            # via -r ./backend/ecs_tasks/delete_files/requirements.txt, -r ./backend/lambda_layers/aws_sdk/requirements.txt, aws-sam-translator
+botocore==1.17.44         # via -r ./backend/ecs_tasks/delete_files/requirements.txt, -r ./backend/lambda_layers/aws_sdk/requirements.txt, aiobotocore, boto3, s3transfer
 certifi==2020.6.20        # via -r ./backend/lambda_layers/cr_helper/requirements.txt, requests
 cfgv==3.2.0               # via pre-commit
 cfn-flip==1.2.3           # via -r requirements.in
 cfn-lint==0.32.1          # via -r requirements.in
-chardet==3.0.4            # via -r ./backend/lambda_layers/cr_helper/requirements.txt, requests
+chardet==3.0.4            # via -r ./backend/ecs_tasks/delete_files/requirements.txt, -r ./backend/lambda_layers/cr_helper/requirements.txt, aiohttp, requests
 click==7.1.2              # via black, cfn-flip, pip-tools
 coverage==5.2.1           # via pytest-cov
 crhelper==2.0.5           # via -r ./backend/lambda_layers/cr_helper/requirements.txt
@@ -24,7 +28,7 @@ docutils==0.15.2          # via -r ./backend/ecs_tasks/delete_files/requirements
 filelock==3.0.12          # via virtualenv
 fsspec==0.8.0             # via -r ./backend/ecs_tasks/delete_files/requirements.txt, s3fs
 identify==1.4.30          # via pre-commit
-idna==2.10                # via -r ./backend/lambda_layers/cr_helper/requirements.txt, requests
+idna==2.10                # via -r ./backend/ecs_tasks/delete_files/requirements.txt, -r ./backend/lambda_layers/cr_helper/requirements.txt, requests, yarl
 importlib-metadata==1.7.0  # via -r ./backend/lambda_layers/decorators/requirements.txt, jsonschema, pluggy, pre-commit, pytest, virtualenv
 jmespath==0.10.0          # via -r ./backend/ecs_tasks/delete_files/requirements.txt, -r ./backend/lambda_layers/aws_sdk/requirements.txt, boto3, botocore
 jsonpatch==1.26           # via cfn-lint
@@ -33,6 +37,7 @@ jsonschema==3.2.0         # via -r ./backend/lambda_layers/decorators/requiremen
 junit-xml==1.9            # via cfn-lint
 mock==4.0.1               # via -r requirements.in
 more-itertools==8.5.0     # via pytest
+multidict==5.1.0          # via -r ./backend/ecs_tasks/delete_files/requirements.txt, aiohttp, yarl
 networkx==2.5             # via cfn-lint
 nodeenv==1.5.0            # via pre-commit
 numpy==1.19.1             # via -r ./backend/ecs_tasks/delete_files/requirements.txt, pandas, pyarrow
@@ -54,14 +59,17 @@ pytz==2020.1              # via -r ./backend/ecs_tasks/delete_files/requirements
 pyyaml==5.3.1             # via cfn-flip, cfn-lint, pre-commit
 regex==2020.7.14          # via black
 requests==2.24.0          # via -r ./backend/lambda_layers/cr_helper/requirements.txt, crhelper
-s3fs==0.4.0               # via -r ./backend/ecs_tasks/delete_files/requirements.txt
+s3fs==0.5.2               # via -r ./backend/ecs_tasks/delete_files/requirements.txt
 s3transfer==0.3.3         # via -r ./backend/ecs_tasks/delete_files/requirements.txt, -r ./backend/lambda_layers/aws_sdk/requirements.txt, boto3
 six==1.15.0               # via -r ./backend/ecs_tasks/delete_files/requirements.txt, -r ./backend/lambda_layers/aws_sdk/requirements.txt, -r ./backend/lambda_layers/decorators/requirements.txt, aws-sam-translator, cfn-flip, cfn-lint, jsonschema, junit-xml, packaging, pip-tools, pyrsistent, python-dateutil, virtualenv
 toml==0.10.1              # via black, pre-commit
 typed-ast==1.4.1          # via black
+typing-extensions==3.7.4.3  # via -r ./backend/ecs_tasks/delete_files/requirements.txt, aiohttp, aioitertools, yarl
 urllib3==1.25.10          # via -r ./backend/ecs_tasks/delete_files/requirements.txt, -r ./backend/lambda_layers/aws_sdk/requirements.txt, -r ./backend/lambda_layers/cr_helper/requirements.txt, botocore, requests
 virtualenv==20.0.31       # via pre-commit
 wcwidth==0.2.5            # via pytest
+wrapt==1.12.1             # via -r ./backend/ecs_tasks/delete_files/requirements.txt, aiobotocore
+yarl==1.6.3               # via -r ./backend/ecs_tasks/delete_files/requirements.txt, aiohttp
 zipp==3.1.0               # via -r ./backend/lambda_layers/decorators/requirements.txt, importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:

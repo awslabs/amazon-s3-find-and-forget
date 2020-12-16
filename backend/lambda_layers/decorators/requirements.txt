@@ -4,7 +4,7 @@
 #
 #    pip-compile --output-file=backend/lambda_layers/decorators/requirements.txt backend/lambda_layers/decorators/requirements.in
 #
-attrs==20.1.0             # via jsonschema
+attrs==20.3.0             # via jsonschema
 importlib-metadata==1.7.0  # via jsonschema
 jsonschema==3.2.0         # via -r backend/lambda_layers/decorators/requirements.in
 pyrsistent==0.16.0        # via jsonschema

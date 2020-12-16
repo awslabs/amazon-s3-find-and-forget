@@ -26,7 +26,6 @@ def save(s3, client, buf, bucket, key, source_version=None):
     contents = buf.read()
     with s3.open("s3://{}/{}".format(bucket, key), "wb", **extra_args) as f:
         f.write(contents)
-    s3.invalidate_cache()  # TODO: remove once https://github.com/dask/s3fs/issues/294 is resolved
     new_version_id = f.version_id
     logger.info("Object uploaded to S3")
     # GrantWrite cannot be set whilst uploading therefore ACLs need to be restored separately
