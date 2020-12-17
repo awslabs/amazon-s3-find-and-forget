@@ -72,7 +72,7 @@ def get_row_indexes_to_delete(table, identifier, to_delete):
     return np.array(indexes)
 
 
-def delete_from_table(table, to_delete=[]):
+def delete_from_table(table, to_delete):
     """
     Deletes rows from a Arrow Table where any of the MatchIds is found as
     value in any of the columns
