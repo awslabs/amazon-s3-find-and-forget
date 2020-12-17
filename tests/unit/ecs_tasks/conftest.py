@@ -11,6 +11,7 @@ def message_stub():
                 "JobId": "1234",
                 "Object": "s3://bucket/path/basic.parquet",
                 "Columns": [{"Column": "customer_id", "MatchIds": ["12345", "23456"]}],
+                "CompositeColumns": [],
                 "DeleteOldVersions": False,
                 "Format": "parquet",
                 **kwargs,

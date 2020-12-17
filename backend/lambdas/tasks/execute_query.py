@@ -1,10 +1,13 @@
 import os
+from operator import itemgetter
 
 import boto3
 
 from decorators import with_logging
 
 client = boto3.client("athena")
+
+COMPOSITE_JOIN_TOKEN = "_S3F2COMP_"
 
 
 @with_logging
@@ -33,7 +36,14 @@ def make_query(query_data):
     {
       "Database":"db",
       "Table": "table",
-      "Columns": [{"Column": "col, "MatchIds": ["match"]}],
+      "Columns": [
+        {"Column": "col", "MatchIds": ["match"], "Type": "Simple"},
+        {
+          "Columns": ["first_name", "last_name"],
+          "MatchIds: [["John", "Doe"]],
+          "Type": "Composite"
+        }
+      ],
       "PartitionKeys": [{"Key":"k", "Value":"val"}]
     }
     """
@@ -43,21 +53,41 @@ def make_query(query_data):
     WHERE
         ({column_filters})
     """
-    db = query_data["Database"]
-    table = query_data["Table"]
-    columns = query_data["Columns"]
+    single_column_template = "{} in ({})"
+    multiple_columns_template = "concat({}) in ({})"
+    columns_composite_join_token = ", '{}', ".format(COMPOSITE_JOIN_TOKEN)
+
+    db, table, columns = itemgetter("Database", "Table", "Columns")(query_data)
     partitions = query_data.get("PartitionKeys", [])
 
     column_filters = ""
     for i, col in enumerate(columns):
         if i > 0:
-            column_filters = column_filters + " OR "
-        column_filters = column_filters + "{} in ({})".format(
-            escape_column(col["Column"]),
-            ", ".join("{0}".format(escape_item(m)) for m in col["MatchIds"]),
-        )
+            column_filters += " OR "
+        if col["Type"] == "Simple":
+            column_filters += single_column_template.format(
+                escape_column(col["Column"]),
+                ", ".join("{0}".format(escape_item(m)) for m in col["MatchIds"]),
+            )
+        else:
+            column_template = (
+                multiple_columns_template
+                if len(col["Columns"]) > 1
+                else single_column_template
+            )
+            column_filters += column_template.format(
+                columns_composite_join_token.join(
+                    "{0}".format(escape_column(c)) for c in col["Columns"]
+                ),
+                ", ".join(
+                    "{0}".format(
+                        escape_item(COMPOSITE_JOIN_TOKEN.join(str(x) for x in m))
+                    )
+                    for m in col["MatchIds"]
+                ),
+            )
     for partition in partitions:
-        template = template + " AND {key} = {value} ".format(
+        template += " AND {key} = {value} ".format(
             key=escape_column(partition["Key"]), value=escape_item(partition["Value"])
         )
     return template.format(db=db, table=table, column_filters=column_filters)

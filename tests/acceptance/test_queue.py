@@ -40,6 +40,47 @@ def test_it_adds_to_queue(api_client, queue_base_endpoint, queue_table, stack):
         "CreatedAt": mock.ANY,
         "DataMappers": ["a", "b"],
         "CreatedBy": {"Username": "aws-uk-sa-builders@amazon.com", "Sub": mock.ANY},
+        "Type": "Simple",
+    }
+    # Act
+    response = api_client.patch(queue_base_endpoint, json=item)
+    response_body = response.json()
+    # Assert
+    # Check the response is ok
+    assert 201 == response.status_code
+    assert expected == response_body
+    assert (
+        response.headers.get("Access-Control-Allow-Origin")
+        == stack["APIAccessControlAllowOriginHeader"]
+    )
+    # Check the item exists in the DDB Table
+    query_result = queue_table.get_item(
+        Key={"DeletionQueueItemId": response_body["DeletionQueueItemId"]}
+    )
+    assert query_result["Item"]
+    assert expected == query_result["Item"]
+
+
+def test_it_adds_composite_to_queue(
+    api_client, queue_base_endpoint, queue_table, stack
+):
+    # Arrange
+    key = [
+        {"Column": "first_name", "Value": "John"},
+        {"Column": "last_name", "Value": "Doe"},
+    ]
+    item = {
+        "MatchId": key,
+        "Type": "Composite",
+        "DataMappers": ["a"],
+    }
+    expected = {
+        "DeletionQueueItemId": mock.ANY,
+        "MatchId": key,
+        "CreatedAt": mock.ANY,
+        "DataMappers": ["a"],
+        "CreatedBy": {"Username": "aws-uk-sa-builders@amazon.com", "Sub": mock.ANY},
+        "Type": "Composite",
     }
     # Act
     response = api_client.patch(queue_base_endpoint, json=item)
@@ -64,9 +105,21 @@ def test_it_adds_batch_to_queue(api_client, queue_base_endpoint, queue_table, st
     # Arrange
     items = {
         "Matches": [
-            {"MatchId": "test", "DataMappers": ["a", "b"],},
-            {"MatchId": "test1", "DataMappers": ["a", "b"],},
+            {"MatchId": "test", "DataMappers": ["a", "b"]},
+            {"MatchId": "test1", "DataMappers": ["a", "b"], "Type": "Simple"},
+            {
+                "MatchId": [
+                    {"Column": "first_name", "Value": "John"},
+                    {"Column": "last_name", "Value": "Doe"},
+                ],
+                "DataMappers": ["a"],
+                "Type": "Composite",
+            },
         ]
+    }
+    created_by_mock = {
+        "Username": "aws-uk-sa-builders@amazon.com",
+        "Sub": mock.ANY,
     }
     expected = {
         "Matches": [
@@ -75,20 +128,27 @@ def test_it_adds_batch_to_queue(api_client, queue_base_endpoint, queue_table, st
                 "MatchId": "test",
                 "CreatedAt": mock.ANY,
                 "DataMappers": ["a", "b"],
-                "CreatedBy": {
-                    "Username": "aws-uk-sa-builders@amazon.com",
-                    "Sub": mock.ANY,
-                },
+                "CreatedBy": created_by_mock,
+                "Type": "Simple",
             },
             {
                 "DeletionQueueItemId": mock.ANY,
                 "MatchId": "test1",
                 "CreatedAt": mock.ANY,
                 "DataMappers": ["a", "b"],
-                "CreatedBy": {
-                    "Username": "aws-uk-sa-builders@amazon.com",
-                    "Sub": mock.ANY,
-                },
+                "CreatedBy": created_by_mock,
+                "Type": "Simple",
+            },
+            {
+                "DeletionQueueItemId": mock.ANY,
+                "MatchId": [
+                    {"Column": "first_name", "Value": "John"},
+                    {"Column": "last_name", "Value": "Doe"},
+                ],
+                "CreatedAt": mock.ANY,
+                "DataMappers": ["a"],
+                "CreatedBy": created_by_mock,
+                "Type": "Composite",
             },
         ]
     }
@@ -117,12 +177,20 @@ def test_it_adds_batch_to_queue(api_client, queue_base_endpoint, queue_table, st
 
 
 def test_it_rejects_invalid_add_to_queue(api_client, queue_base_endpoint, stack):
-    response = api_client.patch(queue_base_endpoint, json={"INVALID": "PAYLOAD"})
-    assert 422 == response.status_code
-    assert (
-        response.headers.get("Access-Control-Allow-Origin")
-        == stack["APIAccessControlAllowOriginHeader"]
-    )
+    scenarios = [
+        {"INVALID": "PAYLOAD"},
+        {"Type": "Composite", "DataMappers": ["a"], "MatchId": ["a"]},
+        {"Type": "Composite", "DataMappers": ["a"], "MatchId": [{}]},
+        {"Type": "Composite", "DataMappers": ["a"], "MatchId": [{"Column": "a"}]},
+        {"Type": "Composite", "DataMappers": ["a"], "MatchId": [{"Value": "a"}]},
+    ]
+    for scenario in scenarios:
+        response = api_client.patch(queue_base_endpoint, json=scenario)
+        assert 422 == response.status_code
+        assert (
+            response.headers.get("Access-Control-Allow-Origin")
+            == stack["APIAccessControlAllowOriginHeader"]
+        )
 
 
 def test_it_gets_queue(api_client, queue_base_endpoint, del_queue_factory, stack):
@@ -151,7 +219,7 @@ def test_it_rejects_invalid_deletion(
     # Act
     response = api_client.delete(
         "{}/matches".format(queue_base_endpoint),
-        json={"Matches": [{"MatchId": match_id,}]},
+        json={"Matches": [{"MatchId": match_id}]},
     )
     # Assert
     assert 422 == response.status_code

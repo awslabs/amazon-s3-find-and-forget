@@ -13,9 +13,27 @@ df = pd.DataFrame(
         "customer_id": ["12345", "23456", "34567"],
         "customerId": [12345, 23456, 34567],
         "user_info": [
-            {"personal_information": {"email": "12345@test.com", "name": "matteo"}},
-            {"personal_information": {"email": "23456@test.com", "name": "nick"}},
-            {"personal_information": {"email": "34567@test.com", "name": "chris"}},
+            {
+                "personal_information": {
+                    "email": "12345@test.com",
+                    "first_name": "John",
+                    "last_name": "Doe",
+                }
+            },
+            {
+                "personal_information": {
+                    "email": "23456@test.com",
+                    "first_name": "Jane",
+                    "last_name": "Doe",
+                }
+            },
+            {
+                "personal_information": {
+                    "email": "34567@test.com",
+                    "first_name": "Mary",
+                    "last_name": "Smith",
+                }
+            },
         ],
         "days_off": [
             ["2020-01-01", "2020-01-02"],

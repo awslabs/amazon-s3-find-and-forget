@@ -30,6 +30,21 @@ def find_key(key, obj):
             return found_key
 
 
+def get_value(key, obj):
+    """
+    Method to find a value given a nested key in an object. Example:
+    key="user.Id"
+    obj='{"user":{"id": 1234}}'
+    result=1234
+    """
+    for segment in key.split("."):
+        current_key = find_key(segment, obj)
+        if not current_key:
+            return None
+        obj = obj[current_key]
+    return obj
+
+
 def delete_matches_from_json_file(input_file, to_delete, compressed=False):
     deleted_rows = 0
     with BufferOutputStream() as out_stream:
@@ -50,16 +65,20 @@ def delete_matches_from_json_file(input_file, to_delete, compressed=False):
                 )
             should_delete = False
             for column in to_delete:
-                record = parsed
-                for segment in column["Column"].split("."):
-                    current_key = find_key(segment, record)
-                    if not current_key:
-                        record = None
+                if column["Type"] == "Simple":
+                    record = get_value(column["Column"], parsed)
+                    if record and record in column["MatchIds"]:
+                        should_delete = True
                         break
-                    record = record[current_key]
-                if record and record in column["MatchIds"]:
-                    should_delete = True
-                    break
+                else:
+                    matched = []
+                    for col in column["Columns"]:
+                        record = get_value(col, parsed)
+                        if record:
+                            matched.append(record)
+                    if matched in column["MatchIds"]:
+                        should_delete = True
+                        break
             if should_delete:
                 deleted_rows += 1
             else:

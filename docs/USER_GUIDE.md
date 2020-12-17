@@ -450,10 +450,34 @@ Once your Data Mappers are configured, you can begin adding "Matches" to the
    for the stack.
 2. Choose **Deletion Queue** from the menu then choose **Add Match to the
    Deletion Queue**.
-3. Input a **Match**, which is the value to search for in your data mappers. If
+
+Matches can be **Simple** or **Composite**.
+
+- A **Simple** match is a value to be matched against any column identifier of
+  one or more data mappers. For instance a value _12345_ to be matched against
+  the _customer_id_ column of _DataMapperA_ or the _admin_id_ of _DataMapperB_.
+- A **Composite** match consists on one or more values to be matched against
+  specific column identifiers of a multi-column based data mapper. For instance
+  a tuple _John_ and _Doe_ to be matched against the _first_name_ and
+  _last_name_ columns of _DataMapperC_
+
+To add a simple match:
+
+1. Choose _Simple_ as **Match Type**
+2. Input a **Match**, which is the value to search for in your data mappers. If
    you wish to search for the match from all data mappers choose **All Data
    Mappers**, otherwise choose **Select your Data Mappers** then select the
    relevant data mappers from the list.
+3. Choose **Add Item to the Deletion Queue** and confirm you can see the match
+   in the Deletion Queue.
+
+To add a composite match you need to have at least one data mapper with more
+than one column identifier. Then:
+
+1. Choose _Composite_ as **Match Type**
+2. Select the Data Mapper from the List
+3. Select all the columns (at least one) that you want to map to a match and
+   then provide a value for each of them. Empty is a valid value.
 4. Choose **Add Item to the Deletion Queue** and confirm you can see the match
    in the Deletion Queue.
 

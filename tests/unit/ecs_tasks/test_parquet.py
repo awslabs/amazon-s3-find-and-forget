@@ -20,7 +20,11 @@ pytestmark = [pytest.mark.unit, pytest.mark.ecs_tasks]
 @patch("backend.ecs_tasks.delete_files.parquet_handler.delete_from_table")
 def test_it_generates_new_parquet_file_without_matches(mock_delete, mock_load_parquet):
     # Arrange
-    column = {"Column": "customer_id", "MatchIds": ["12345", "23456"]}
+    column = {
+        "Column": "customer_id",
+        "MatchIds": ["12345", "23456"],
+        "Type": "Simple",
+    }
     data = [{"customer_id": "12345"}, {"customer_id": "34567"}]
     df = pd.DataFrame(data)
     buf = BytesIO()
@@ -48,7 +52,7 @@ def test_it_handles_files_with_multiple_row_groups_and_pandas_indexes(
         {"customer_id": "12345"},
         {"customer_id": "34567"},
     ]
-    columns = [{"Column": "customer_id", "MatchIds": ["12345"]}]
+    columns = [{"Column": "customer_id", "MatchIds": ["12345"], "Type": "Simple"}]
     df = pd.DataFrame(data, list("ab"))
     table = pa.Table.from_pandas(df)
     buf = BytesIO()
@@ -75,7 +79,9 @@ def test_delete_correct_rows_from_table():
         {"customer_id": "23456"},
         {"customer_id": "34567"},
     ]
-    columns = [{"Column": "customer_id", "MatchIds": ["12345", "23456"]}]
+    columns = [
+        {"Column": "customer_id", "MatchIds": ["12345", "23456"], "Type": "Simple"}
+    ]
     df = pd.DataFrame(data)
     table = pa.Table.from_pandas(df)
     table, deleted_rows = delete_from_table(table, columns)
@@ -91,7 +97,13 @@ def test_handles_lower_cased_column_names():
         {"userData": {"customerId": "23456"}},
         {"userData": {"customerId": "34567"}},
     ]
-    columns = [{"Column": "userdata.customerid", "MatchIds": ["12345", "23456"]}]
+    columns = [
+        {
+            "Column": "userdata.customerid",
+            "MatchIds": ["12345", "23456"],
+            "Type": "Simple",
+        }
+    ]
     df = pd.DataFrame(data)
     table = pa.Table.from_pandas(df)
     table, deleted_rows = delete_from_table(table, columns)
@@ -107,7 +119,9 @@ def test_it_handles_data_with_pandas_indexes():
         {"customer_id": "23456"},
         {"customer_id": "34567"},
     ]
-    columns = [{"Column": "customer_id", "MatchIds": ["12345", "23456"]}]
+    columns = [
+        {"Column": "customer_id", "MatchIds": ["12345", "23456"], "Type": "Simple"}
+    ]
     df = pd.DataFrame(data, list("abc"))
     table = pa.Table.from_pandas(df)
     table, deleted_rows = delete_from_table(table, columns)
@@ -130,6 +144,7 @@ def test_delete_correct_rows_from_parquet_table_with_complex_types():
         {
             "Column": "user_info.personal_information.name",
             "MatchIds": ["matteo", "chris"],
+            "Type": "Simple",
         }
     ]
     df = pd.DataFrame(data)
@@ -143,6 +158,116 @@ def test_delete_correct_rows_from_parquet_table_with_complex_types():
     assert res["user_info"].values[0] == {
         "personal_information": {"name": "nick", "email": "23456@test.com"}
     }
+
+
+def test_delete_correct_rows_from_parquet_table_with_composite_types_tuple_col():
+    data = {
+        "customer_id": [12345, 23456, 34567],
+        "first_name": ["john", "jane", "matteo"],
+        "last_name": ["doe", "doe", "hey"],
+    }
+    columns = [
+        {
+            "Columns": ["first_name", "last_name"],
+            "MatchIds": [["john", "doe"], ["jane", "doe"], ["matteo", "doe"]],
+            "Type": "Composite",
+        }
+    ]
+    df = pd.DataFrame(data)
+    table = pa.Table.from_pandas(df)
+    table, deleted_rows = delete_from_table(table, columns)
+    res = table.to_pandas()
+    assert len(res) == 1
+    assert deleted_rows == 2
+    assert res["customer_id"].values[0] == 34567
+
+
+def test_delete_correct_rows_from_parquet_table_with_composite_types_single_col():
+    data = {
+        "customer_id": [12345, 23456, 34567],
+        "first_name": ["john", "jane", "matteo"],
+        "last_name": ["doe", "doe", "hey"],
+    }
+    columns = [{"Columns": ["last_name"], "MatchIds": [["doe"]], "Type": "Composite"}]
+    df = pd.DataFrame(data)
+    table = pa.Table.from_pandas(df)
+    table, deleted_rows = delete_from_table(table, columns)
+    res = table.to_pandas()
+    assert len(res) == 1
+    assert deleted_rows == 2
+    assert res["customer_id"].values[0] == 34567
+
+
+def test_delete_correct_rows_from_parquet_table_with_composite_types_multiple_types():
+    data = {
+        "age": [11, 12, 12],
+        "customer_id": [12345, 23456, 34567],
+        "first_name": ["john", "jane", "matteo"],
+        "last_name": ["doe", "doe", "hey"],
+    }
+    columns = [
+        {
+            "Columns": ["age", "last_name"],
+            "MatchIds": [[12, "doe"]],
+            "Type": "Composite",
+        }
+    ]
+    df = pd.DataFrame(data)
+    table = pa.Table.from_pandas(df)
+    table, deleted_rows = delete_from_table(table, columns)
+    res = table.to_pandas()
+    assert len(res) == 2
+    assert deleted_rows == 1
+    assert res["customer_id"].values[0] == 12345
+    assert res["customer_id"].values[1] == 34567
+
+
+def test_delete_correct_rows_from_parquet_table_with_complex_composite_types():
+    data = {
+        "customer_id": [12345, 23456, 34567],
+        "details": [
+            {"first_name": "John", "last_name": "Doe"},
+            {"first_name": "Jane", "last_name": "Doe"},
+            {"first_name": "Matteo", "last_name": "Hey"},
+        ],
+    }
+    columns = [
+        {
+            "Columns": ["details.first_name", "details.last_name"],
+            "MatchIds": [["John", "Doe"], ["Jane", "Doe"], ["Matteo", "Doe"]],
+            "Type": "Composite",
+        }
+    ]
+    df = pd.DataFrame(data)
+    table = pa.Table.from_pandas(df)
+    table, deleted_rows = delete_from_table(table, columns)
+    res = table.to_pandas()
+    assert len(res) == 1
+    assert deleted_rows == 2
+    assert res["customer_id"].values[0] == 34567
+
+
+def test_delete_correct_rows_from_parquet_table_with_both_simple_and_composite_types():
+    data = {
+        "customer_id": [12345, 23456, 34567],
+        "first_name": ["john", "jane", "matteo"],
+        "last_name": ["doe", "doe", "hey"],
+    }
+    columns = [
+        {"Column": "customer_id", "MatchIds": [12345], "Type": "Simple"},
+        {
+            "Columns": ["first_name", "last_name"],
+            "MatchIds": [["jane", "doe"]],
+            "Type": "Composite",
+        },
+    ]
+    df = pd.DataFrame(data)
+    table = pa.Table.from_pandas(df)
+    table, deleted_rows = delete_from_table(table, columns)
+    res = table.to_pandas()
+    assert len(res) == 1
+    assert deleted_rows == 2
+    assert res["customer_id"].values[0] == 34567
 
 
 def test_it_loads_parquet_files():

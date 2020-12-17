@@ -10,10 +10,12 @@ export const formatErrorMessage = e => {
   return e ? e.toString() : "Unknown error";
 };
 
+export const isArray = x => Array.isArray(x);
+
 export const isEmpty = x =>
   x === null ||
   isUndefined(x) ||
-  (Array.isArray(x)
+  (isArray(x)
     ? x.length === 0
     : typeof x === "string"
     ? x.trim() === ""

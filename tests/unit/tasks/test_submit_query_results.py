@@ -46,7 +46,9 @@ def test_it_submits_results_to_be_batched(paginate_mock, batch_sqs_msgs_mock):
     )
     columns = [{"Column": "customer_id", "MatchIds": ["2732559"]}]
 
-    handler({"JobId": "1234", "QueryId": "123", "Columns": columns}, SimpleNamespace())
+    handler(
+        {"JobId": "1234", "QueryId": "123", "Columns": columns,}, SimpleNamespace(),
+    )
     batch_sqs_msgs_mock.assert_called_with(
         ANY,
         [

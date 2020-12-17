@@ -24,6 +24,36 @@ def case_insensitive_getter(from_array, value):
     return next(x for x in from_array if value.lower() == x.lower())
 
 
+def get_row_indexes_to_delete_for_composite(table, identifiers, to_delete):
+    """
+    Iterates over the values of a particular group of columns and returns a
+    numpy mask identifying the rows to delete. The column identifier is a
+    list of simple or complex identifiers, like ["user_first_name", "user.last_name"]
+    """
+    indexes = []
+    data = {}
+    for identifier in identifiers:
+        column_first_level = identifier.split(".")[0].lower()
+        if not column_first_level in data:
+            column_identifier = case_insensitive_getter(
+                table.column_names, column_first_level
+            )
+            data[column_first_level] = table.column(column_identifier).to_pylist()
+    for i in range(table.num_rows):
+        values_array = []
+        for identifier in identifiers:
+            segments = identifier.split(".")
+            current = data[segments[0].lower()][i]
+            for j in range(1, len(segments)):
+                next_segment = case_insensitive_getter(
+                    list(current.keys()), segments[j]
+                )
+                current = current[next_segment]
+            values_array.append(current)
+        indexes.append(values_array in to_delete)
+    return np.array(indexes)
+
+
 def get_row_indexes_to_delete(table, identifier, to_delete):
     """
     Iterates over the values of a particular column and returns a
@@ -49,7 +79,13 @@ def delete_from_table(table, to_delete):
     """
     initial_rows = table.num_rows
     for column in to_delete:
-        indexes = get_row_indexes_to_delete(table, column["Column"], column["MatchIds"])
+        indexes = (
+            get_row_indexes_to_delete(table, column["Column"], column["MatchIds"])
+            if column["Type"] == "Simple"
+            else get_row_indexes_to_delete_for_composite(
+                table, column["Columns"], column["MatchIds"]
+            )
+        )
         table = table.filter(~indexes)
     deleted_rows = initial_rows - table.num_rows
     return table, deleted_rows

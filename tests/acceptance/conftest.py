@@ -123,7 +123,7 @@ def glue_columns():
         {"Name": "customerId", "Type": "int"},
         {
             "Name": "user_info",
-            "Type": "struct<personal_information:struct<email:string,name:string>>",
+            "Type": "struct<personal_information:struct<email:string,first_name:string,last_name:string>>",
         },
         {"Name": "days_off", "Type": "array<string>"},
     ]
@@ -215,6 +215,7 @@ def del_queue_factory(queue_table):
         deletion_queue_item_id="id123",
         created_at=round(datetime.datetime.now(datetime.timezone.utc).timestamp()),
         data_mappers=[],
+        matchid_type="Simple",
     ):
         item = {
             "DeletionQueueItemId": deletion_queue_item_id,
@@ -222,6 +223,8 @@ def del_queue_factory(queue_table):
             "CreatedAt": created_at,
             "DataMappers": data_mappers,
         }
+        if matchid_type:
+            item["Type"] = matchid_type
         queue_table.put_item(Item=item)
         return item
 

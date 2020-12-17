@@ -55,7 +55,13 @@ def test_it_generates_query_with_partition():
         {
             "Database": "amazonreviews",
             "Table": "amazon_reviews_parquet",
-            "Columns": [{"Column": "customer_id", "MatchIds": ["123456", "456789"]}],
+            "Columns": [
+                {
+                    "Column": "customer_id",
+                    "MatchIds": ["123456", "456789"],
+                    "Type": "Simple",
+                }
+            ],
             "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
         }
     )
@@ -73,7 +79,13 @@ def test_it_generates_query_with_partition_and_int_column():
         {
             "Database": "amazonreviews",
             "Table": "amazon_reviews_parquet",
-            "Columns": [{"Column": "customer_id", "MatchIds": [123456, 456789]}],
+            "Columns": [
+                {
+                    "Column": "customer_id",
+                    "MatchIds": [123456, 456789],
+                    "Type": "Simple",
+                }
+            ],
             "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
         }
     )
@@ -91,7 +103,13 @@ def test_it_generates_query_with_int_partition():
         {
             "Database": "amazonreviews",
             "Table": "amazon_reviews_parquet",
-            "Columns": [{"Column": "customer_id", "MatchIds": ["123456", "456789"]}],
+            "Columns": [
+                {
+                    "Column": "customer_id",
+                    "MatchIds": ["123456", "456789"],
+                    "Type": "Simple",
+                }
+            ],
             "PartitionKeys": [{"Key": "year", "Value": 2010}],
         }
     )
@@ -109,7 +127,13 @@ def test_it_generates_query_with_multiple_partitions():
         {
             "Database": "amazonreviews",
             "Table": "amazon_reviews_parquet",
-            "Columns": [{"Column": "customer_id", "MatchIds": ["123456", "456789"]}],
+            "Columns": [
+                {
+                    "Column": "customer_id",
+                    "MatchIds": ["123456", "456789"],
+                    "Type": "Simple",
+                }
+            ],
             "PartitionKeys": [
                 {"Key": "product_category", "Value": "Books"},
                 {"Key": "published", "Value": "2019"},
@@ -131,7 +155,13 @@ def test_it_generates_query_without_partition():
         {
             "Database": "amazonreviews",
             "Table": "amazon_reviews_parquet",
-            "Columns": [{"Column": "customer_id", "MatchIds": ["123456", "456789"]}],
+            "Columns": [
+                {
+                    "Column": "customer_id",
+                    "MatchIds": ["123456", "456789"],
+                    "Type": "Simple",
+                }
+            ],
         }
     )
 
@@ -148,8 +178,8 @@ def test_it_generates_query_with_multiple_columns():
             "Database": "amazonreviews",
             "Table": "amazon_reviews_parquet",
             "Columns": [
-                {"Column": "a", "MatchIds": ["a123456", "b123456"]},
-                {"Column": "b", "MatchIds": ["a456789", "b456789"]},
+                {"Column": "a", "MatchIds": ["a123456", "b123456"], "Type": "Simple"},
+                {"Column": "b", "MatchIds": ["a456789", "b456789"], "Type": "Simple"},
             ],
         }
     )
@@ -166,7 +196,13 @@ def test_it_generates_query_with_columns_of_complex_type():
         {
             "Database": "amazonreviews",
             "Table": "amazon_reviews_parquet",
-            "Columns": [{"Column": "a.b.c", "MatchIds": ["a123456", "b123456"]}],
+            "Columns": [
+                {
+                    "Column": "a.b.c",
+                    "MatchIds": ["a123456", "b123456"],
+                    "Type": "Simple",
+                }
+            ],
         }
     )
 
@@ -174,6 +210,71 @@ def test_it_generates_query_with_columns_of_complex_type():
         escape_resp(resp) == 'SELECT DISTINCT "$path" '
         'FROM "amazonreviews"."amazon_reviews_parquet" '
         'WHERE ("a"."b"."c" in (\'a123456\', \'b123456\'))'
+    )
+
+
+def test_it_generates_query_with_composite_matches():
+    resp = make_query(
+        {
+            "Database": "amazonreviews",
+            "Table": "amazon_reviews_parquet",
+            "Columns": [
+                {
+                    "Columns": ["user.first_name", "user.last_name"],
+                    "MatchIds": [["John", "Doe"], ["Jane", "Doe"]],
+                    "Type": "Composite",
+                },
+                {
+                    "Columns": ["user.age", "user.last_name"],
+                    "MatchIds": [[28, "Smith"]],
+                    "Type": "Composite",
+                },
+                {
+                    "Columns": ["user.userid"],
+                    "MatchIds": [["123456"]],
+                    "Type": "Composite",
+                },
+            ],
+        }
+    )
+
+    assert (
+        escape_resp(resp) == 'SELECT DISTINCT "$path" '
+        'FROM "amazonreviews"."amazon_reviews_parquet" '
+        'WHERE (concat("user"."first_name", \'_S3F2COMP_\', "user"."last_name") '
+        "in ('John_S3F2COMP_Doe', 'Jane_S3F2COMP_Doe') OR "
+        'concat("user"."age", \'_S3F2COMP_\', "user"."last_name") '
+        "in ('28_S3F2COMP_Smith') OR "
+        '"user"."userid" in (\'123456\'))'
+    )
+
+
+def test_it_generates_query_with_simple_and_composite_matches():
+    resp = make_query(
+        {
+            "Database": "amazonreviews",
+            "Table": "amazon_reviews_parquet",
+            "Columns": [
+                {
+                    "Column": "a.b.c",
+                    "MatchIds": ["a123456", "b123456"],
+                    "Type": "Simple",
+                },
+                {
+                    "Columns": ["user.first_name", "user.last_name"],
+                    "MatchIds": [["John", "Doe"], ["Jane", "Doe"]],
+                    "Type": "Composite",
+                },
+            ],
+        }
+    )
+
+    assert (
+        escape_resp(resp) == 'SELECT DISTINCT "$path" '
+        'FROM "amazonreviews"."amazon_reviews_parquet" '
+        'WHERE ("a"."b"."c" in (\'a123456\', \'b123456\') '
+        'OR concat("user"."first_name", \'_S3F2COMP_\', "user"."last_name") '
+        "in ('John_S3F2COMP_Doe', 'Jane_S3F2COMP_Doe'))"
     )
 
 
