@@ -18,7 +18,7 @@
     "react-bootstrap": "^1.0.0",
     "react-dom": "^16.13.1",
     "react-json-view": "^1.19.1",
-    "react-scripts": "^3.4.4"
+    "react-scripts": "^4.0.1"
   },
   "scripts": {
     "build": "REACT_APP_REPO_URL=$npm_package_repository_url SKIP_PREFLIGHT_CHECK=true react-scripts build",

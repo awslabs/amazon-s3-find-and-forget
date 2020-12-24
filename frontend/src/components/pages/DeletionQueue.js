@@ -27,7 +27,7 @@ const MatchId = ({ matchId }) =>
         .reduce((a, b) => [a, ", ", b])
     : matchId;
 
-export default ({ gateway, onPageChange }) => {
+const DeletionQueue = ({ gateway, onPageChange }) => {
   const [currentPage, setCurrentPage] = useState(0);
   const [deleting, setDeleting] = useState(false);
   const [errorDetails, setErrorDetails] = useState(undefined);
@@ -197,3 +197,5 @@ export default ({ gateway, onPageChange }) => {
     </div>
   );
 };
+
+export default DeletionQueue;

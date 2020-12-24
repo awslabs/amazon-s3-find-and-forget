@@ -10,12 +10,12 @@ import {
   findMin,
   formatErrorMessage,
   formatFileSize,
-  repoUrl
+  repoUrl,
 } from "../../utils";
 
 const { region, version } = window.s3f2Settings;
 
-export default ({ gateway, goToJobDetails, goToPage }) => {
+const Dashboard = ({ gateway, goToJobDetails, goToPage }) => {
   const [errorDetails, setErrorDetails] = useState(undefined);
   const [formState, setFormState] = useState("initial");
   const [metrics, setMetrics] = useState([]);
@@ -25,7 +25,7 @@ export default ({ gateway, goToJobDetails, goToPage }) => {
       try {
         const [queue, jobs] = await Promise.all([
           gateway.getQueue(),
-          gateway.getLastJob()
+          gateway.getLastJob(),
         ]);
 
         const anyJob = jobs.Jobs.length > 0;
@@ -46,23 +46,23 @@ export default ({ gateway, goToJobDetails, goToPage }) => {
           {
             title: "Deletion Queue size",
             value: deletionQueueSummary,
-            link: 2
+            link: 2,
           },
           {
             title: "Days since oldest Queue Item added",
             value: daysSinceOldestQueueItemAdded,
-            link: 3
+            link: 3,
           },
           {
             title: "Days since last job run",
             value: daysSinceLastRun,
-            link: 3
+            link: 3,
           },
           {
             title: "Solution Version",
             value: version,
-            link: repoUrl("blob/master/CHANGELOG.md")
-          }
+            link: repoUrl("blob/master/CHANGELOG.md"),
+          },
         ]);
         setFormState("data-loaded");
       } catch (e) {
@@ -109,3 +109,5 @@ export default ({ gateway, goToJobDetails, goToPage }) => {
     </>
   );
 };
+
+export default Dashboard;

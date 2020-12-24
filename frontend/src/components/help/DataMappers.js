@@ -6,23 +6,23 @@ import { docsUrl } from "../../utils";
 const links = [
   {
     title: "Working with Data Mappers",
-    url: docsUrl("ARCHITECTURE.md#data-mappers")
+    url: docsUrl("ARCHITECTURE.md#data-mappers"),
   },
   {
     title: "Add a Data Mapper",
-    url: docsUrl("USER_GUIDE.md#configuring-data-mappers")
+    url: docsUrl("USER_GUIDE.md#configuring-data-mappers"),
   },
   {
     title: "Setup and Test Data Access",
-    url: docsUrl("USER_GUIDE.md#granting-access-to-data")
+    url: docsUrl("USER_GUIDE.md#granting-access-to-data"),
   },
   {
     title: "Troubleshooting",
-    url: docsUrl("TROUBLESHOOTING.md")
-  }
+    url: docsUrl("TROUBLESHOOTING.md"),
+  },
 ];
 
-export default () => (
+const DataMappers = () => (
   <>
     <h2>Data Mappers</h2>
     <p className="separator-top">
@@ -57,3 +57,5 @@ export default () => (
     </ul>
   </>
 );
+
+export default DataMappers;

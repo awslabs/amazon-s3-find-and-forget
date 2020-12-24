@@ -6,19 +6,19 @@ import { docsUrl } from "../../utils";
 const links = [
   {
     title: "Working with the Deletion Queue",
-    url: docsUrl("ARCHITECTURE.md#deletion-queue")
+    url: docsUrl("ARCHITECTURE.md#deletion-queue"),
   },
   {
     title: "Add a Match to the Deletion Queue",
-    url: docsUrl("USER_GUIDE.md#adding-to-the-deletion-queue")
+    url: docsUrl("USER_GUIDE.md#adding-to-the-deletion-queue"),
   },
   {
     title: "Troubleshooting",
-    url: docsUrl("TROUBLESHOOTING.md")
-  }
+    url: docsUrl("TROUBLESHOOTING.md"),
+  },
 ];
 
-export default () => (
+const DeletionQueue = () => (
   <>
     <h2>Deletion Queue</h2>
     <p className="separator-top">
@@ -53,3 +53,5 @@ export default () => (
     </ul>
   </>
 );
+
+export default DeletionQueue;

@@ -6,31 +6,31 @@ import { repoUrl, docsUrl } from "../../utils";
 const links = [
   {
     title: "Getting Started",
-    url: repoUrl("/")
+    url: repoUrl("/"),
   },
   {
     title: "Solution Architecture",
-    url: docsUrl("ARCHITECTURE.md")
+    url: docsUrl("ARCHITECTURE.md"),
   },
   {
     title: "Add a Data Mapper",
-    url: docsUrl("USER_GUIDE.md#configuring-data-mappers")
+    url: docsUrl("USER_GUIDE.md#configuring-data-mappers"),
   },
   {
     title: "Add a Match to the Deletion Queue",
-    url: docsUrl("USER_GUIDE.md#adding-to-the-deletion-queue")
+    url: docsUrl("USER_GUIDE.md#adding-to-the-deletion-queue"),
   },
   {
     title: "Start a Deletion Job",
-    url: docsUrl("USER_GUIDE.md#running-a-deletion-job")
+    url: docsUrl("USER_GUIDE.md#running-a-deletion-job"),
   },
   {
     title: "Github Repository",
-    url: repoUrl("/")
-  }
+    url: repoUrl("/"),
+  },
 ];
 
-export default () => (
+const Dashboard = () => (
   <>
     <h2>Dashboard</h2>
     <p className="separator-top separator-bottom">
@@ -57,3 +57,5 @@ export default () => (
     </ul>
   </>
 );
+
+export default Dashboard;

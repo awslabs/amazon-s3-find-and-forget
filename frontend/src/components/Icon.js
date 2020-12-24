@@ -1,6 +1,6 @@
 import React from "react";
 
-export default ({ type, size }) => {
+const Icon = ({ type, size }) => {
   size = size || "16";
 
   const SVGWrapper = ({ children }) => (
@@ -205,3 +205,5 @@ export default ({ type, size }) => {
 
   return "";
 };
+
+export default Icon;

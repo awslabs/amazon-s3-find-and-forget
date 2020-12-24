@@ -6,7 +6,7 @@ import {
   Row,
   Spinner,
   Table,
-  InputGroup
+  InputGroup,
 } from "react-bootstrap";
 
 import Alert from "../Alert";
@@ -21,12 +21,12 @@ import {
   isUndefined,
   isEmpty,
   successJobClass,
-  withDefault
+  withDefault,
 } from "../../utils";
 
 const COUNTDOWN_INTERVAL = 10;
 
-export default ({ gateway, jobId }) => {
+const DeletionJob = ({ gateway, jobId }) => {
   const [countDownLeft, setCountDownLeft] = useState(COUNTDOWN_INTERVAL);
   const [deletionQueueShown, showDeletionQueue] = useState(false);
   const [errorDetails, setErrorDetails] = useState(undefined);
@@ -48,7 +48,7 @@ export default ({ gateway, jobId }) => {
   }, [renderTableCount, setCountDownLeft, setRenderTableCount]);
 
   const loadMoreEvents = useCallback(
-    watermark => {
+    (watermark) => {
       const fetchJobEvents = async () => {
         setEventsState("loading");
         try {
@@ -58,7 +58,7 @@ export default ({ gateway, jobId }) => {
             20,
             eventFilters
           );
-          setJobEvents(j => j.concat(jobEventsList.JobEvents));
+          setJobEvents((j) => j.concat(jobEventsList.JobEvents));
           setNextStart(jobEventsList.NextStart);
           setEventsState("loaded");
         } catch (e) {
@@ -78,10 +78,10 @@ export default ({ gateway, jobId }) => {
       job.JobStatus
     ) !== -1;
 
-  const errorCountClass = x =>
+  const errorCountClass = (x) =>
     x === 0 || isUndefined(x) ? "success" : "error";
 
-  const warningCountClass = x => (!x ? "success" : "warning");
+  const warningCountClass = (x) => (!x ? "success" : "warning");
 
   useEffect(() => {
     if (withCountDown) {
@@ -123,17 +123,17 @@ export default ({ gateway, jobId }) => {
 
   const applyFilters = () => {
     const filters = [
-      { key: "EventName", value: eventNameFilter, operator: "=" }
+      { key: "EventName", value: eventNameFilter, operator: "=" },
     ];
     resetEvents();
-    setEventFilters(filters.filter(f => f.value !== ""));
+    setEventFilters(filters.filter((f) => f.value !== ""));
   };
 
   const exportJob = async () => {
     setExportState("loading");
     const exportData = {
       ...job,
-      JobEvents: await gateway.getAllJobEvents(jobId)
+      JobEvents: await gateway.getAllJobEvents(jobId),
     };
     const el = document.getElementById("export-job-link");
     if (el) {
@@ -234,7 +234,9 @@ export default ({ gateway, jobId }) => {
                   job.DeletionQueueItemsSkipped
                 )}`}
               />
-              <span>{job.DeletionQueueItemsSkipped.toString().toUpperCase()}</span>
+              <span>
+                {job.DeletionQueueItemsSkipped.toString().toUpperCase()}
+              </span>
             </DetailsBox>
             <DetailsBox label="Start Time">
               {formatDateTime(job.JobStartTime)}
@@ -262,13 +264,13 @@ export default ({ gateway, jobId }) => {
             <DetailsBox label="Total Query Time">
               {withDefault(
                 job.TotalQueryTimeInMillis,
-                x => `${(x / 1000).toFixed(0)}s`
+                (x) => `${(x / 1000).toFixed(0)}s`
               )}
             </DetailsBox>
             <DetailsBox label="Total Query Scanned Bytes">
               {withDefault(
                 job.TotalQueryScannedInBytes,
-                x => `${x} ${x > 0 ? "(" + formatFileSize(x) + ")" : ""}`
+                (x) => `${x} ${x > 0 ? "(" + formatFileSize(x) + ")" : ""}`
               )}
             </DetailsBox>
             <DetailsBox label="Total Object Updated Count" noSeparator>
@@ -364,7 +366,7 @@ export default ({ gateway, jobId }) => {
               </Col>
             </Row>
             <Form
-              onSubmit={e => {
+              onSubmit={(e) => {
                 e.preventDefault();
                 applyFilters();
               }}
@@ -375,7 +377,7 @@ export default ({ gateway, jobId }) => {
                     type="text"
                     id="event-name"
                     placeholder="Filter by event name"
-                    onChange={e => setEventNameFilter(e.target.value)}
+                    onChange={(e) => setEventNameFilter(e.target.value)}
                   />
                   <Button
                     disabled={eventsState === "loading"}
@@ -447,3 +449,5 @@ export default ({ gateway, jobId }) => {
     </>
   );
 };
+
+export default DeletionJob;

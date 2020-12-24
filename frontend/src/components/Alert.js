@@ -1,16 +1,18 @@
 import React from "react";
-import { Alert } from "react-bootstrap";
+import { Alert as BootstrapAlert } from "react-bootstrap";
 
 import Icon from "./Icon";
 
-export default ({ children, title, type }) => (
-  <Alert variant={type === "error" ? "danger" : "info"}>
+const Alert = ({ children, title, type }) => (
+  <BootstrapAlert variant={type === "error" ? "danger" : "info"}>
     <span className="icon">
       <Icon type={`alert-${type}`} size="32" />
     </span>
     <div className="alert-content">
-      <Alert.Heading>{title}</Alert.Heading>
+      <BootstrapAlert.Heading>{title}</BootstrapAlert.Heading>
       <p>{children}</p>
     </div>
-  </Alert>
+  </BootstrapAlert>
 );
+
+export default Alert;

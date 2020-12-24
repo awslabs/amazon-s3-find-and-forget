@@ -8,7 +8,7 @@ import Icon from "../Icon";
 import { formatErrorMessage, isEmpty, isUndefined, sortBy } from "../../utils";
 import { bucketMapper } from "../../utils/glueSerializer";
 
-export default ({ gateway, onPageChange }) => {
+const DataMappers = ({ gateway, onPageChange }) => {
   const [accountId, setAccountId] = useState("<AWS::ACCOUNT_ID>");
   const [bucketLocations, setBucketLocations] = useState(undefined);
   const [dataMappers, setDataMappers] = useState([]);
@@ -21,7 +21,7 @@ export default ({ gateway, onPageChange }) => {
 
   const noSelected = isUndefined(selectedRow);
 
-  const getBucket = row => {
+  const getBucket = (row) => {
     const selectedDataMapper = dataMappers[row];
     const key = `${selectedDataMapper.QueryExecutorParameters.Database}/${selectedDataMapper.QueryExecutorParameters.Table}`;
     return bucketLocations[key];
@@ -52,11 +52,11 @@ export default ({ gateway, onPageChange }) => {
       try {
         const [mappers, identity] = await Promise.all([
           gateway.getDataMappers(),
-          gateway.getAccountId()
+          gateway.getAccountId(),
         ]);
 
         const tableDetails = await Promise.all(
-          mappers.DataMappers.map(dm =>
+          mappers.DataMappers.map((dm) =>
             gateway.getGlueTable(
               dm.QueryExecutorParameters.Database,
               dm.QueryExecutorParameters.Table
@@ -218,3 +218,5 @@ export default ({ gateway, onPageChange }) => {
     </div>
   );
 };
+
+export default DataMappers;

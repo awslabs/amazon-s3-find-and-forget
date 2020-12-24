@@ -23,7 +23,7 @@ import {
 } from "./components/pages";
 import gateway from "./utils/gateway";
 
-export default () => {
+const App = () => {
   const [authState, setAuthState] = useState(undefined);
   const [currentPage, setCurrentPage] = useState(0);
   const [selectedJobId, selectJobId] = useState(undefined);
@@ -145,3 +145,5 @@ export default () => {
     </div>
   );
 };
+
+export default App;

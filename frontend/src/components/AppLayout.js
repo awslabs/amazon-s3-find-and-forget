@@ -6,7 +6,7 @@ import "./AppLayout.css";
 
 import { isUndefined, repoUrl } from "../utils";
 
-export default ({ currentPage, onMenuClick, pages }) => {
+const AppLayout = ({ currentPage, onMenuClick, pages }) => {
   const [leftOpen, setLeftOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(false);
 
@@ -85,3 +85,5 @@ export default ({ currentPage, onMenuClick, pages }) => {
     </div>
   );
 };
+
+export default AppLayout;

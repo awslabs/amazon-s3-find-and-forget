@@ -7,7 +7,7 @@ import FormRadioBinaryChoice from "../FormRadioBinaryChoice";
 
 import { formatErrorMessage, isEmpty, isUndefined, sortBy } from "../../utils";
 
-export default ({ gateway, goToDeletionQueue }) => {
+const NewDeletionQueueMatch = ({ gateway, goToDeletionQueue }) => {
   const [compositeMatchDataMapper, setCompositeMatchDataMapper] = useState(
     undefined
   );
@@ -342,3 +342,5 @@ export default ({ gateway, goToDeletionQueue }) => {
     </Form>
   );
 };
+
+export default NewDeletionQueueMatch;

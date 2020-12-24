@@ -6,19 +6,19 @@ import { docsUrl } from "../../utils";
 const links = [
   {
     title: "Deletion Job Architecture",
-    url: docsUrl("ARCHITECTURE.md#deletion-job-workflow")
+    url: docsUrl("ARCHITECTURE.md#deletion-job-workflow"),
   },
   {
     title: "Start a Deletion Job",
-    url: docsUrl("USER_GUIDE.md#running-a-deletion-job")
+    url: docsUrl("USER_GUIDE.md#running-a-deletion-job"),
   },
   {
     title: "Troubleshooting",
-    url: docsUrl("TROUBLESHOOTING.md")
-  }
+    url: docsUrl("TROUBLESHOOTING.md"),
+  },
 ];
 
-export default () => (
+const DeletionJobs = () => (
   <>
     <h2>Deletion Jobs</h2>
     <p className="separator-top">
@@ -51,3 +51,5 @@ export default () => (
     </ul>
   </>
 );
+
+export default DeletionJobs;

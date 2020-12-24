@@ -1,7 +1,7 @@
 import React from "react";
 import { Form } from "react-bootstrap";
 
-export default ({
+const FormRadioBinaryChoice = ({
   children,
   isDefaultChoice = false,
   name,
@@ -28,3 +28,5 @@ export default ({
     <p>{children}</p>
   </div>
 );
+
+export default FormRadioBinaryChoice;

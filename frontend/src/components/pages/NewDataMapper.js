@@ -51,7 +51,7 @@ const ColumnsViewer = ({
     </Fragment>
   ));
 
-export default ({ gateway, goToDataMappers }) => {
+const NewDataMapper = ({ gateway, goToDataMappers }) => {
   const [columns, setColumns] = useReducer((state, action) => {
     if (action.type === "add" && !state.includes(action.column))
       return [...state, action.column];
@@ -382,3 +382,5 @@ export default ({ gateway, goToDataMappers }) => {
     </Form>
   );
 };
+
+export default NewDataMapper;

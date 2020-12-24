@@ -5,7 +5,7 @@ import { Button, Navbar } from "react-bootstrap";
 import { retryWrapper } from "../utils/retryWrapper";
 import "./Header.css";
 
-export default ({ signedIn }) => {
+const Header = ({ signedIn }) => {
   const [authError, setAuthError] = useState(null);
   const [userEmail, setUserEmail] = useState(undefined);
 
@@ -57,3 +57,5 @@ export default ({ signedIn }) => {
     </Navbar>
   );
 };
+
+export default Header;

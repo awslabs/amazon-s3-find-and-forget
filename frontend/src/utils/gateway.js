@@ -20,7 +20,7 @@ const getPaginatedList = async (endpoint, key, pageSize) => {
   return { contentLength, response: all };
 };
 
-export default {
+const gateway = {
   deleteDataMapper(id) {
     return apiGateway(`data_mappers/${id}`, { method: "del" });
   },
@@ -194,3 +194,5 @@ export default {
     });
   }
 };
+
+export default gateway;
