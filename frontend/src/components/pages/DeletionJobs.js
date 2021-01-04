@@ -11,12 +11,12 @@ import {
   formatErrorMessage,
   isEmpty,
   successJobClass,
-  withDefault
+  withDefault,
 } from "../../utils";
 
 const PAGE_SIZE = 10;
 
-export default ({ gateway, goToJobDetails }) => {
+const DeletionJobs = ({ gateway, goToJobDetails }) => {
   const [currentPage, setCurrentPage] = useState(0);
   const [errorDetails, setErrorDetails] = useState(undefined);
   const [formState, setFormState] = useState("initial");
@@ -41,7 +41,7 @@ export default ({ gateway, goToJobDetails }) => {
     fetchJobs();
   }, [gateway, renderTableCount]);
 
-  const shouldShowItem = index =>
+  const shouldShowItem = (index) =>
     index >= PAGE_SIZE * currentPage && index < PAGE_SIZE * (currentPage + 1);
 
   return (
@@ -135,3 +135,5 @@ export default ({ gateway, goToJobDetails }) => {
     </div>
   );
 };
+
+export default DeletionJobs;

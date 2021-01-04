@@ -6,7 +6,7 @@ import DetailsBox from "./DetailsBox";
 
 import { formatErrorMessage } from "../utils";
 
-export default ({ className, gateway, goToJobDetails }) => {
+const StartDeletionJob = ({ className, gateway, goToJobDetails }) => {
   const [errorDetails, setErrorDetails] = useState(undefined);
   const [formState, setFormState] = useState("initial");
   const [summary, setSummary] = useState(undefined);
@@ -106,3 +106,5 @@ export default ({ className, gateway, goToJobDetails }) => {
     </>
   );
 };
+
+export default StartDeletionJob;

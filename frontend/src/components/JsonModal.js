@@ -2,7 +2,7 @@ import React from "react";
 import ReactJson from "react-json-view";
 import { Button, Modal } from "react-bootstrap";
 
-export default ({ object, onHide, show, title }) => (
+const JsonModal = ({ object, onHide, show, title }) => (
   <Modal centered show={show} size="lg" onHide={onHide}>
     <Modal.Header closeButton>
       <Modal.Title>{title}</Modal.Title>
@@ -22,3 +22,5 @@ export default ({ object, onHide, show, title }) => (
     </Modal.Footer>
   </Modal>
 );
+
+export default JsonModal;

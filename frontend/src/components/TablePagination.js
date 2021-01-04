@@ -5,7 +5,7 @@ import Icon from "./Icon";
 
 import { getPagesList } from "../utils/paginator";
 
-export default ({ onPageChange, pages }) => {
+const TablePagination = ({ onPageChange, pages }) => {
   const [currentPage, setCurrentPage] = useState(0);
 
   const setPage = index => {
@@ -50,3 +50,5 @@ export default ({ onPageChange, pages }) => {
     </>
   );
 };
+
+export default TablePagination;

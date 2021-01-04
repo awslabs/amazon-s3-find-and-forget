@@ -14,7 +14,7 @@ const links = [
   },
 ];
 
-export default () => (
+const NewDeletionQueueMatch = () => (
   <>
     <h2>Add to the Deletion Queue</h2>
     <p className="separator-top">
@@ -63,3 +63,5 @@ export default () => (
     </ul>
   </>
 );
+
+export default NewDeletionQueueMatch;

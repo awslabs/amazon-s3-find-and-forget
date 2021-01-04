@@ -5,7 +5,14 @@ import Alert from "./Alert";
 
 const { athenaExecutionRole, region } = window.s3f2Settings;
 
-export default ({ accountId, bucket, roleArn, close, show, location }) => {
+const BucketPolicyModal = ({
+  accountId,
+  bucket,
+  roleArn,
+  close,
+  show,
+  location
+}) => {
   const [key, setKey] = useState("bucket");
   const locationWithoutProtocol = location.replace("s3://", "");
   const tabs = [
@@ -204,3 +211,5 @@ const KmsPolicy = ({ bucket, accountId, location, roleArn }) => {
     </>
   );
 };
+
+export default BucketPolicyModal;

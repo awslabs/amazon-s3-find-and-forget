@@ -1,6 +1,6 @@
 import React from "react";
 
-export default ({
+const DetailsBox = ({
   children,
   className = "value",
   fullWidth = false,
@@ -16,3 +16,5 @@ export default ({
     <div className={className}>{children}</div>
   </div>
 );
+
+export default DetailsBox;

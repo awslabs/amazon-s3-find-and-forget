@@ -5,7 +5,7 @@ import { isUndefined } from "../utils";
 
 import "./MetricsDashboard.css";
 
-export default ({ title, description, goToPage, metrics }) => {
+const MetricsDashboard = ({ title, description, goToPage, metrics }) => {
   const openLink = link => {
     if (!isUndefined(link)) {
       const isString = typeof link === "string";
@@ -30,3 +30,5 @@ export default ({ title, description, goToPage, metrics }) => {
     </div>
   );
 };
+
+export default MetricsDashboard;
