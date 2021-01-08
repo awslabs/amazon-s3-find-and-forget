@@ -4,6 +4,8 @@
 
 - [#230](https://github.com/awslabs/amazon-s3-find-and-forget/pull/230): Upgrade
   frontend dependencies
+- [#231](https://github.com/awslabs/amazon-s3-find-and-forget/pull/231): Upgrade
+  aws-amplify dependency
 
 ## v0.19
 
