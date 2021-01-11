@@ -8,13 +8,14 @@ const { athenaExecutionRole, region } = window.s3f2Settings;
 const BucketPolicyModal = ({
   accountId,
   bucket,
-  roleArn,
   close,
-  show,
-  location
+  error,
+  location,
+  roleArn,
+  show
 }) => {
   const [key, setKey] = useState("bucket");
-  const locationWithoutProtocol = location.replace("s3://", "");
+  const locationWithoutProtocol = (location || "").replace("s3://", "");
   const tabs = [
     {
       key: "bucket",
@@ -48,23 +49,32 @@ const BucketPolicyModal = ({
         <Modal.Title>Generate Policies</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        <p>
-          After configuring a data mapper, you need to configure the relevant S3
-          bucket, Customer Managed CMK and IAM policies to enable the solution
-          to read and write from/to the bucket. The policy statements provided
-          below are examples of how to grant the required access.
-        </p>
-        <Tabs activeKey={key} onSelect={k => setKey(k)}>
-          {tabs.map(tab => (
-            <Tab
-              key={tab.key}
-              eventKey={tab.key}
-              title={<span>{tab.title}</span>}
-            >
-              {tab.content}
-            </Tab>
-          ))}
-        </Tabs>
+        {error ? (
+          <Alert type="error" title="An Error Occurred">
+            {error}
+          </Alert>
+        ) : (
+          <>
+            <p>
+              After configuring a data mapper, you need to configure the
+              relevant S3 bucket, Customer Managed CMK and IAM policies to
+              enable the solution to read and write from/to the bucket. The
+              policy statements provided below are examples of how to grant the
+              required access.
+            </p>
+            <Tabs activeKey={key} onSelect={k => setKey(k)}>
+              {tabs.map(tab => (
+                <Tab
+                  key={tab.key}
+                  eventKey={tab.key}
+                  title={<span>{tab.title}</span>}
+                >
+                  {tab.content}
+                </Tab>
+              ))}
+            </Tabs>
+          </>
+        )}
       </Modal.Body>
       <Modal.Footer>
         <Button className="aws-button action-button" onClick={close}>
