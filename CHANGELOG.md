@@ -1,5 +1,11 @@
 # Change Log
 
+## v0.21 (unreleased)
+
+- [#232](https://github.com/awslabs/amazon-s3-find-and-forget/pull/232): Fix for
+  a bug affecting the Frontend not rendering the Data Mappers list when a Glue
+  Table associated to a Data Mapper gets deleted
+
 ## v0.20
 
 - [#230](https://github.com/awslabs/amazon-s3-find-and-forget/pull/230): Upgrade
