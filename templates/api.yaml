@@ -258,6 +258,21 @@ Resources:
             - !Sub "arn:${AWS::Partition}:glue:*:*:partition*"
       - DynamoDBCrudPolicy:
           TableName: !Ref DataMapperTableName
+  GetDataMapper:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers.get_data_mapper_handler
+      CodeUri: ../backend/lambdas/data_mappers/
+      Events:
+        Get:
+          Type: Api
+          Properties:
+            Path: /v1/data_mappers/{data_mapper_id}
+            Method: GET
+            RestApiId: !Ref Api
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref DataMapperTableName
   GetDataMappers:
     Type: AWS::Serverless::Function
     Properties:

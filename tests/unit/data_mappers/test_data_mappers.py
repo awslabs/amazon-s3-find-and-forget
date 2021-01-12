@@ -91,6 +91,53 @@ def test_it_creates_data_mapper(validate_mapper, table):
 
 @patch("backend.lambdas.data_mappers.handlers.table")
 @patch("backend.lambdas.data_mappers.handlers.validate_mapper")
+def test_it_gets_data_mapper(validate_mapper, table):
+    mock_dm = {
+        "Columns": ["column"],
+        "DataMapperId": "test",
+        "QueryExecutor": "athena",
+        "QueryExecutorParameters": {
+            "DataCatalogProvider": "glue",
+            "Database": "test",
+            "Table": "test",
+        },
+        "Format": "parquet",
+        "RoleArn": "arn:aws:iam::accountid:role/S3F2DataAccessRole",
+        "DeleteOldVersions": False,
+    }
+    table.get_item.return_value = {"Item": mock_dm}
+    get_response = handlers.get_data_mapper_handler(
+        {
+            "pathParameters": {"data_mapper_id": "test"},
+            "requestContext": autorization_mock,
+        },
+        SimpleNamespace(),
+    )
+
+    assert {
+        "statusCode": 200,
+        "body": json.dumps(mock_dm),
+        "headers": ANY,
+    } == get_response
+
+
+@patch("backend.lambdas.data_mappers.handlers.table")
+@patch("backend.lambdas.data_mappers.handlers.validate_mapper")
+def test_it_gets_data_mapper_not_found(validate_mapper, table):
+    table.get_item.return_value = {}
+    response = handlers.get_data_mapper_handler(
+        {
+            "pathParameters": {"data_mapper_id": "test"},
+            "requestContext": autorization_mock,
+        },
+        SimpleNamespace(),
+    )
+
+    assert 404 == response["statusCode"]
+
+
+@patch("backend.lambdas.data_mappers.handlers.table")
+@patch("backend.lambdas.data_mappers.handlers.validate_mapper")
 def test_it_modifies_data_mapper(validate_mapper, table):
     def test_body(table_name):
         return json.dumps(

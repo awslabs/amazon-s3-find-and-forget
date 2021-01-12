@@ -28,6 +28,19 @@ SUPPORTED_SERDE_LIBS = [PARQUET_HIVE_SERDE, JSON_HIVE_SERDE, JSON_OPENX_SERDE]
 
 @with_logging
 @add_cors_headers
+@request_validator(load_schema("get_data_mapper"))
+@catch_errors
+def get_data_mapper_handler(event, context):
+    data_mapper_id = event["pathParameters"]["data_mapper_id"]
+    item = table.get_item(Key={"DataMapperId": data_mapper_id}).get("Item")
+    if not item:
+        return {"statusCode": 404}
+
+    return {"statusCode": 200, "body": json.dumps(item, cls=DecimalEncoder)}
+
+
+@with_logging
+@add_cors_headers
 @request_validator(load_schema("list_data_mappers"))
 @catch_errors
 def get_data_mappers_handler(event, context):
