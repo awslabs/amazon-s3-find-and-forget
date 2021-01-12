@@ -6,7 +6,8 @@ export const retryWrapper = (p, timeout, retryN) =>
     p()
       .then(resolve)
       .catch(e => {
-        if (retryN === MAX_RETRIES) return reject(e);
+        const retryable = e?.response?.status !== 400;
+        if (retryN === MAX_RETRIES || !retryable) return reject(e);
         const t = (timeout || RETRY_START / 2) * 2;
         const r = (retryN || 0) + 1;
         console.log(`Retry n. ${r} in ${t / 1000}s...`);

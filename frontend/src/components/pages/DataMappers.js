@@ -3,6 +3,7 @@ import { Button, Col, Form, Modal, Row, Spinner, Table } from "react-bootstrap";
 
 import Alert from "../Alert";
 import BucketPolicyModal from "../BucketPolicyModal";
+import CellError from "../CellError";
 import Icon from "../Icon";
 
 import { formatErrorMessage, isEmpty, isUndefined, sortBy } from "../../utils";
@@ -55,9 +56,21 @@ const DataMappers = ({ gateway, onPageChange }) => {
           gateway.getAccountId(),
         ]);
 
+        const tryGetTable = async (db, table) => {
+          try {
+            return await gateway.getGlueTable(db, table);
+          } catch (e) {
+            return {
+              Table: { DatabaseName: db, Name: table },
+              error: `Glue API Error: ${e.response?.data?.__type ||
+                "Unknown Error"}`,
+            };
+          }
+        };
+
         const tableDetails = await Promise.all(
           mappers.DataMappers.map((dm) =>
-            gateway.getGlueTable(
+            tryGetTable(
               dm.QueryExecutorParameters.Database,
               dm.QueryExecutorParameters.Table
             )
@@ -155,6 +168,7 @@ const DataMappers = ({ gateway, onPageChange }) => {
             accountId={accountId}
             bucket={getBucket(selectedRow).bucket}
             close={() => showBucketPolicy(false)}
+            error={getBucket(selectedRow).error}
             location={getBucket(selectedRow).location}
             roleArn={dataMappers[selectedRow].RoleArn}
             show={showingBucketPolicy}
@@ -200,7 +214,13 @@ const DataMappers = ({ gateway, onPageChange }) => {
                     {dataMapper.QueryExecutorParameters.Table} (
                     {dataMapper.QueryExecutorParameters.DataCatalogProvider})
                   </td>
-                  <td>{getBucket(index).location}</td>
+                  <td>
+                    {getBucket(index).error ? (
+                      <CellError error={getBucket(index).error} />
+                    ) : (
+                      getBucket(index).location
+                    )}
+                  </td>
                 </tr>
               ))}
           </tbody>
