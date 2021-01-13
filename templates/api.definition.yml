@@ -343,6 +343,26 @@ paths:
   /v1/data_mappers/{data_mapper_id}:
     parameters:
       - '$ref': '#/components/parameters/DataMapperId'
+    get:
+      summary: Returns the details of a data mapper
+      tags:
+        - DataMapper
+      operationId: "getDataMapper"
+      security:
+        - CognitoAuthorizer: []
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataMapper'
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetDataMapper.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        type: "aws_proxy"
     put:
       summary: Creates or modifies a data mapper
       tags:

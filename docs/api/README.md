@@ -8,6 +8,7 @@ All URIs are relative to *https://your-apigw-id.execute-api.region.amazonaws.com
 API | Operation | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
 *DataMapperApi* | [**DeleteDataMapper**](./Apis/DataMapperApi.md#deletedatamapper) | **DELETE** /v1/data_mappers/{data_mapper_id} | Removes a data mapper
+*DataMapperApi* | [**GetDataMapper**](./Apis/DataMapperApi.md#getdatamapper) | **GET** /v1/data_mappers/{data_mapper_id} | Returns the details of a data mapper
 *DataMapperApi* | [**ListDataMappers**](./Apis/DataMapperApi.md#listdatamappers) | **GET** /v1/data_mappers | Lists data mappers
 *DataMapperApi* | [**PutDataMapper**](./Apis/DataMapperApi.md#putdatamapper) | **PUT** /v1/data_mappers/{data_mapper_id} | Creates or modifies a data mapper
 *DeletionQueueApi* | [**AddItemToDeletionQueue**](./Apis/DeletionQueueApi.md#additemtodeletionqueue) | **PATCH** /v1/queue | Adds an item to the deletion queue (Deprecated: use PATCH /v1/queue/matches)

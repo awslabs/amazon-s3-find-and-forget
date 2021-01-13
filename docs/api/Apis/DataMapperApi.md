@@ -5,6 +5,7 @@ All URIs are relative to *https://your-apigw-id.execute-api.region.amazonaws.com
 Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**DeleteDataMapper**](DataMapperApi.md#deletedatamapper) | **DELETE** /v1/data_mappers/{data_mapper_id} | Removes a data mapper
+[**GetDataMapper**](DataMapperApi.md#getdatamapper) | **GET** /v1/data_mappers/{data_mapper_id} | Returns the details of a data mapper
 [**ListDataMappers**](DataMapperApi.md#listdatamappers) | **GET** /v1/data_mappers | Lists data mappers
 [**PutDataMapper**](DataMapperApi.md#putdatamapper) | **PUT** /v1/data_mappers/{data_mapper_id} | Creates or modifies a data mapper
 
@@ -32,6 +33,30 @@ null (empty response body)
 
 - **Content-Type**: Not defined
 - **Accept**: Not defined
+
+<a name="getdatamapper"></a>
+## **GetDataMapper**
+
+Returns the details of a data mapper
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **DataMapperId** | **String**| Data Mapper ID path parameter | [default to null]
+
+### Return type
+
+[**DataMapper**](../Models/DataMapper.md)
+
+### Authorization
+
+[CognitoAuthorizer](../README.md#CognitoAuthorizer)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
 
 <a name="listdatamappers"></a>
 ## **ListDataMappers**

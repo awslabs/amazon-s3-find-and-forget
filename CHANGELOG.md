@@ -5,6 +5,8 @@
 - [#232](https://github.com/awslabs/amazon-s3-find-and-forget/pull/232): Fix for
   a bug affecting the Frontend not rendering the Data Mappers list when a Glue
   Table associated to a Data Mapper gets deleted
+- [#233](https://github.com/awslabs/amazon-s3-find-and-forget/pull/233): Add GET
+  endpoint for specific data mapper
 
 ## v0.20
 

@@ -289,6 +289,24 @@ def test_it_gets_all_data_mappers(
     )
 
 
+def test_it_gets_data_mapper(
+    api_client, data_mapper_base_endpoint, glue_data_mapper_factory, stack
+):
+    # Arrange
+    item = glue_data_mapper_factory()
+    key = item["DataMapperId"]
+    # Act
+    response = api_client.get("{}/{}".format(data_mapper_base_endpoint, key))
+    response_body = response.json()
+    # Assert
+    assert response.status_code == 200
+    assert item == response_body
+    assert (
+        response.headers.get("Access-Control-Allow-Origin")
+        == stack["APIAccessControlAllowOriginHeader"]
+    )
+
+
 def test_it_deletes_data_mapper(
     api_client,
     glue_data_mapper_factory,
