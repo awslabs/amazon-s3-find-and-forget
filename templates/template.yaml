@@ -207,6 +207,43 @@ Resources:
         - Name: email_verified
           Value: "true"
 
+  GlueDatabase:
+    Type: AWS::Glue::Database
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseInput:
+        Description: Database used by S3 Find and Forget Solution
+  
+  JobManifestsGlueTable:
+    Type: AWS::Glue::Table
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: !Ref GlueDatabase
+      TableInput:
+        Description: Table used by S3 Find and Forget Solution
+        StorageDescriptor:
+          Columns:
+            - Name: Columns
+              Type: array<string>
+            - Name: MatchId
+              Type: array<string>
+            - Name: DeletionQueueItemId
+              Type: string
+            - Name: QueryableColumns
+              Type: string
+            - Name: QueryableMatchId
+              Type: string
+          Location: !Sub s3://${TempBucket}/manifests/
+          InputFormat: org.apache.hadoop.mapred.TextInputFormat
+          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+          SerdeInfo:
+            SerializationLibrary: org.openx.data.jsonserde.JsonSerDe
+        PartitionKeys:
+          - Name: JobId
+            Type: string
+          - Name: DataMapperId
+            Type: string          
+
   APIStack:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -299,7 +336,10 @@ Resources:
         DataMapperTableName: !GetAtt DDBStack.Outputs.DataMapperTable
         DeleteServiceName: !GetAtt DelStack.Outputs.DeleteServiceName
         DeleteQueueUrl: !GetAtt DelStack.Outputs.DeleteObjectsQueueUrl
+        DeletionQueueTableName: !GetAtt DDBStack.Outputs.DeletionQueueTable
         ECSCluster: !GetAtt DelStack.Outputs.ECSCluster
+        GlueDatabase: !Ref GlueDatabase
+        JobManifestsGlueTable: !Ref JobManifestsGlueTable
         JobTableName: !GetAtt DDBStack.Outputs.JobTable
         ResultBucket: !Ref TempBucket
         StateMachinePrefix: !Ref ResourcePrefix

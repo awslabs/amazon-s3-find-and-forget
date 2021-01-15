@@ -11,7 +11,10 @@ Globals:
     Environment:
       Variables:
         DataMapperTable: !Ref DataMapperTableName
+        DeletionQueueTable: !Ref DeletionQueueTableName
+        GlueDatabase: !Ref GlueDatabase
         LogLevel: !Ref LogLevel
+        JobManifestsGlueTable: !Ref JobManifestsGlueTable
         JobTable: !Ref JobTableName
         StateBucket: !Ref ResultBucket
 
@@ -30,7 +33,11 @@ Parameters:
     Type: String
   DeleteServiceName:
     Type: String
+  DeletionQueueTableName:
+    Type: String
   ECSCluster:
+    Type: String
+  GlueDatabase:
     Type: String
   JobTableName:
     Description: Table name for Jobs Table
@@ -46,6 +53,8 @@ Parameters:
     - INFO
     - DEBUG
     - NOTSET
+  JobManifestsGlueTable:
+    Type: String
   ResultBucket:
     Type: String
   StateMachinePrefix:
@@ -816,10 +825,14 @@ Resources:
         Variables:
           QueryQueue: !Ref QueryQueue
       Policies:
+      - S3CrudPolicy:
+          BucketName: !Ref ResultBucket
       - DynamoDBReadPolicy:
           TableName: !Ref JobTableName
       - DynamoDBReadPolicy:
           TableName: !Ref DataMapperTableName
+      - DynamoDBReadPolicy:
+          TableName: !Ref DeletionQueueTableName
       - Statement:
         - Action:
           - "glue:BatchGetPartition"
@@ -832,6 +845,13 @@ Resources:
           - !Sub "arn:${AWS::Partition}:glue:*:*:database*"
           - !Sub "arn:${AWS::Partition}:glue:*:*:table*"
           - !Sub "arn:${AWS::Partition}:glue:*:*:partition*"
+        - Action:
+          - "glue:BatchCreatePartition"
+          Effect: "Allow"
+          Resource:
+          - !Sub "arn:${AWS::Partition}:glue:*:*:catalog*"
+          - !Sub "arn:${AWS::Partition}:glue:*:*:database/${GlueDatabase}"
+          - !Sub "arn:${AWS::Partition}:glue:*:*:table/${GlueDatabase}/${JobManifestsGlueTable}"
         - Effect: Allow
           Action:
           - "sqs:SendMessage*"

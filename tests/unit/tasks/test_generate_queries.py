@@ -286,8 +286,10 @@ class TestAthenaQueries:
                     ],
                     "Type": "Composite",
                     "DataMappers": ["a"],
+                    "DeletionQueueItemId": "id1234",
                 }
             ],
+            "job_1234567890",
         )
 
         assert resp == [
@@ -309,6 +311,7 @@ class TestAthenaQueries:
             }
         ]
 
+    @pytest.mark.only
     @patch("backend.lambdas.tasks.generate_queries.get_table")
     @patch("backend.lambdas.tasks.generate_queries.get_partitions")
     def test_it_handles_mixed_columns(self, get_partitions_mock, get_table_mock):
@@ -337,9 +340,13 @@ class TestAthenaQueries:
                 },
             },
             [
-                {"MatchId": "12345", "Type": "Simple"},
-                {"MatchId": "23456", "Type": "Simple"},
-                {"MatchId": "23456", "Type": "Simple"},  # duplicate
+                {"MatchId": "12345", "Type": "Simple", "DeletionQueueItemId": "id001"},
+                {"MatchId": "23456", "Type": "Simple", "DeletionQueueItemId": "id002"},
+                {
+                    "MatchId": "23456",
+                    "Type": "Simple",
+                    "DeletionQueueItemId": "id003",
+                },  # duplicate
                 {
                     "MatchId": [
                         {"Column": "first_name", "Value": "John"},
@@ -347,6 +354,7 @@ class TestAthenaQueries:
                     ],
                     "Type": "Composite",
                     "DataMappers": ["a"],
+                    "DeletionQueueItemId": "id004",
                 },
                 {
                     "MatchId": [
@@ -355,6 +363,7 @@ class TestAthenaQueries:
                     ],
                     "Type": "Composite",
                     "DataMappers": ["a"],
+                    "DeletionQueueItemId": "id005",
                 },
                 {  # duplicate
                     "MatchId": [
@@ -363,6 +372,7 @@ class TestAthenaQueries:
                     ],
                     "Type": "Composite",
                     "DataMappers": ["a"],
+                    "DeletionQueueItemId": "id006",
                 },
                 {
                     "MatchId": [
@@ -371,8 +381,10 @@ class TestAthenaQueries:
                     ],
                     "Type": "Composite",
                     "DataMappers": ["a"],
+                    "DeletionQueueItemId": "id007",
                 },
             ],
+            "job1234567890",
         )
 
         assert resp == [
@@ -486,7 +498,8 @@ class TestAthenaQueries:
                     "Table": "test_table",
                 },
             },
-            [{"MatchId": "hi"}],
+            [{"MatchId": "hi", "DeletionQueueItemId": "item1234"}],
+            "job_1234567890",
         )
 
         assert resp == [

@@ -198,6 +198,7 @@ def test_it_filters_job_events_by_event_name(
     )
 
 
+@pytest.mark.only
 def test_it_runs_for_parquet_happy_path(
     del_queue_factory,
     job_factory,
