@@ -2,16 +2,12 @@ import logging
 from functools import lru_cache
 from urllib.parse import urlencode, quote_plus
 
-import boto3
 from boto_utils import fetch_job_manifest, paginate
 from botocore.exceptions import ClientError
 
 from utils import remove_none, retry_wrapper
 
 logger = logging.getLogger(__name__)
-
-
-boto_s3 = boto3.resource("s3")
 
 
 def save(s3, client, buf, bucket, key, source_version=None):

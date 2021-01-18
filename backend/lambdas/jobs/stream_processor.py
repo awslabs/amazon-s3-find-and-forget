@@ -1,6 +1,5 @@
 import logging
 from datetime import datetime, timezone
-from functools import lru_cache
 from os import getenv
 import json
 import boto3
@@ -28,7 +27,6 @@ client = boto3.client("stepfunctions")
 state_machine_arn = getenv("StateMachineArn")
 ddb = boto3.resource("dynamodb")
 q_table = ddb.Table(getenv("DeletionQueueTable"))
-s3 = boto3.resource("s3")
 
 
 @with_logging

@@ -70,13 +70,6 @@ supported:
   that reads from the data lake unless it has been designed to handle temporary
   inconsistencies between objects
 - Buckets with MFA Delete enabled are not supported
-- An individual [Deletion Job] can process max 375KB of items from the [Deletion
-  Queue]. When the queue is too large, the Job will automatically try to process
-  as many items as possible. The `DeletionQueueItemsSkipped` attribute indicates
-  if any matches in the deletion queue were not able to be processed as part of
-  this job. If the attribute is set to `TRUE`, we recommend running another job
-  after completion of the current one to delete any remaining items in the
-  queue.
 
 ## Service Quotas
 
