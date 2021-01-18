@@ -11,7 +11,7 @@ from operator import itemgetter
 import boto3
 import pyarrow as pa
 import s3fs
-from boto_utils import parse_s3_url, get_session
+from boto_utils import get_session, json_lines_iterator, parse_s3_url
 from botocore.exceptions import ClientError
 from pyarrow.lib import ArrowException
 
@@ -19,13 +19,14 @@ from events import sanitize_message, emit_failure_event, emit_deletion_event
 from json_handler import delete_matches_from_json_file
 from parquet_handler import delete_matches_from_parquet_file
 from s3 import (
-    validate_bucket_versioning,
-    save,
-    verify_object_versions_integrity,
     delete_old_versions,
+    DeleteOldVersionsError,
+    fetch_manifest,
     IntegrityCheckFailedError,
     rollback_object_version,
-    DeleteOldVersionsError,
+    save,
+    validate_bucket_versioning,
+    verify_object_versions_integrity,
 )
 
 logger = logging.getLogger(__name__)
@@ -78,6 +79,31 @@ def delete_matches_from_file(input_file, to_delete, file_format, compressed=Fals
     return delete_matches_from_parquet_file(input_file, to_delete)
 
 
+def build_matches(
+    cols, manifest_object
+):  # TODO: Add description for what this function does
+    COMP_TOKEN = "_S3F2COMP_"
+    manifest = fetch_manifest(manifest_object)
+    matches = {}
+    for line in json_lines_iterator(manifest):
+        if not line["QueryableColumns"] in matches:
+            matches[line["QueryableColumns"]] = []
+        is_simple = len(line["Columns"]) == 1
+        match = line["MatchId"][0] if is_simple else line["MatchId"]
+        matches[line["QueryableColumns"]].append(match)
+    return list(
+        map(
+            lambda c: {
+                "MatchIds": matches[
+                    COMP_TOKEN.join(c["Columns"]) if "Columns" in c else c["Column"]
+                ],
+                **c,
+            },
+            cols,
+        )
+    )
+
+
 def execute(queue_url, message_body, receipt_handle):
     logger.info("Message received")
     queue = get_queue(queue_url)
@@ -88,11 +114,12 @@ def execute(queue_url, message_body, receipt_handle):
         body = json.loads(message_body)
         session = get_session(body.get("RoleArn"))
         client = session.client("s3")
-        cols, object_path, job_id, file_format = itemgetter(
-            "Columns", "Object", "JobId", "Format"
+        cols, object_path, job_id, file_format, manifest_object = itemgetter(
+            "Columns", "Object", "JobId", "Format", "Manifest"
         )(body)
         input_bucket, input_key = parse_s3_url(object_path)
         validate_bucket_versioning(client, input_bucket)
+        match_ids = build_matches(cols, manifest_object)
         creds = session.get_credentials().get_frozen_credentials()
         s3 = s3fs.S3FileSystem(
             key=creds.access_key,
@@ -110,7 +137,9 @@ def execute(queue_url, message_body, receipt_handle):
             logger.info("Using object version %s as source", source_version)
             # Write new file in-memory
             compressed = object_path.endswith(".gz")
-            out_sink, stats = delete_matches_from_file(f, cols, file_format, compressed)
+            out_sink, stats = delete_matches_from_file(
+                f, match_ids, file_format, compressed
+            )
         if stats["DeletedRows"] == 0:
             raise ValueError(
                 "The object {} was processed successfully but no rows required deletion".format(

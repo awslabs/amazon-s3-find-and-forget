@@ -198,12 +198,11 @@ def test_it_prevents_cancelling_whilst_running_jobs(mock_running_job):
 
 
 @patch("backend.lambdas.queue.handlers.bucket_count", 1)
-@patch("backend.lambdas.queue.handlers.paginate")
 @patch("backend.lambdas.queue.handlers.uuid")
 @patch("backend.lambdas.queue.handlers.jobs_table")
 @patch("backend.lambdas.queue.handlers.running_job_exists")
 @patch("backend.lambdas.queue.handlers.get_config")
-def test_it_process_queue(mock_config, mock_running_job, job_table, uuid, paginate):
+def test_it_process_queue(mock_config, mock_running_job, job_table, uuid):
     mock_running_job.return_value = False
     mock_config.return_value = {
         "AthenaConcurrencyLimit": 15,
@@ -212,7 +211,6 @@ def test_it_process_queue(mock_config, mock_running_job, job_table, uuid, pagina
         "QueryQueueWaitSeconds": 5,
         "ForgetQueueWaitSeconds": 30,
     }
-    paginate.return_value = iter([{"MatchId": {"S": "123"}, "CreatedAt": {"N": "123"}}])
     uuid.uuid4.return_value = 123
     response = handlers.process_handler(
         {"body": "", "requestContext": autorization_mock}, SimpleNamespace()
@@ -225,8 +223,6 @@ def test_it_process_queue(mock_config, mock_running_job, job_table, uuid, pagina
             "JobStatus": "QUEUED",
             "GSIBucket": "0",
             "CreatedAt": ANY,
-            "DeletionQueueItems": [{"MatchId": "123", "CreatedAt": 123}],
-            "DeletionQueueItemsSkipped": False,
             "AthenaConcurrencyLimit": 15,
             "DeletionTasksMaxNumber": 50,
             "QueryExecutionWaitSeconds": 5,
@@ -244,8 +240,6 @@ def test_it_process_queue(mock_config, mock_running_job, job_table, uuid, pagina
         "JobStatus": "QUEUED",
         "GSIBucket": "0",
         "CreatedAt": ANY,
-        "DeletionQueueItems": [{"MatchId": "123", "CreatedAt": 123}],
-        "DeletionQueueItemsSkipped": False,
         "AthenaConcurrencyLimit": 15,
         "DeletionTasksMaxNumber": 50,
         "QueryExecutionWaitSeconds": 5,
@@ -255,79 +249,13 @@ def test_it_process_queue(mock_config, mock_running_job, job_table, uuid, pagina
     } == json.loads(response["body"])
 
 
-@patch("backend.lambdas.queue.handlers.max_size_bytes", 300)
 @patch("backend.lambdas.queue.handlers.bucket_count", 1)
-@patch("backend.lambdas.queue.handlers.paginate")
-@patch("backend.lambdas.queue.handlers.uuid")
-@patch("backend.lambdas.queue.handlers.jobs_table")
-@patch("backend.lambdas.queue.handlers.running_job_exists")
-@patch("backend.lambdas.queue.handlers.get_config")
-def test_it_partitions_queue(mock_config, mock_running_job, job_table, uuid, paginate):
-    mock_running_job.return_value = False
-    mock_config.return_value = {}
-
-    deserialised_match = {
-        "DataMappers": {"L": []},
-        "MatchId": {"S": "123"},
-        "CreatedAt": {"N": "1587992978"},
-        "CreatedBy": {
-            "M": {
-                "Username": {"S": "foo@website.com"},
-                "Sub": {"S": "123456789-123456789"},
-            }
-        },
-    }
-
-    serialised_match = {
-        "MatchId": "123",
-        "CreatedAt": 1587992978,
-        "DataMappers": [],
-        "CreatedBy": {"Username": "foo@website.com", "Sub": "123456789-123456789"},
-    }
-
-    paginate.return_value = iter([deserialised_match, deserialised_match])
-    uuid.uuid4.return_value = 123
-    response = handlers.process_handler(
-        {"body": "", "requestContext": autorization_mock}, SimpleNamespace()
-    )
-    job_table.put_item.assert_called_with(
-        Item={
-            "Id": "123",
-            "Sk": "123",
-            "Type": "Job",
-            "JobStatus": "QUEUED",
-            "GSIBucket": "0",
-            "CreatedAt": ANY,
-            "DeletionQueueItems": [serialised_match],
-            "DeletionQueueItemsSkipped": True,
-            "CreatedBy": {"Username": "cognitoUsername", "Sub": "cognitoSub"},
-        }
-    )
-    assert 202 == response["statusCode"]
-    assert "headers" in response
-    assert {
-        "Id": "123",
-        "Sk": "123",
-        "Type": "Job",
-        "JobStatus": "QUEUED",
-        "GSIBucket": "0",
-        "CreatedAt": ANY,
-        "DeletionQueueItems": [serialised_match],
-        "DeletionQueueItemsSkipped": True,
-        "CreatedBy": {"Username": "cognitoUsername", "Sub": "cognitoSub"},
-    } == json.loads(response["body"])
-
-
-@patch("backend.lambdas.queue.handlers.bucket_count", 1)
-@patch("backend.lambdas.queue.handlers.paginate")
 @patch("backend.lambdas.queue.handlers.uuid")
 @patch("backend.lambdas.queue.handlers.jobs_table")
 @patch("backend.lambdas.queue.handlers.running_job_exists")
 @patch("backend.lambdas.queue.handlers.get_config")
 @patch("backend.lambdas.queue.handlers.utc_timestamp")
-def test_it_applies_expiry(
-    mock_utc, mock_config, mock_running_job, job_table, uuid, paginate
-):
+def test_it_applies_expiry(mock_utc, mock_config, mock_running_job, job_table, uuid):
     mock_running_job.return_value = False
     mock_utc.return_value = 12346789
     mock_config.return_value = {
@@ -338,7 +266,6 @@ def test_it_applies_expiry(
         "QueryQueueWaitSeconds": 5,
         "ForgetQueueWaitSeconds": 30,
     }
-    paginate.return_value = iter([{"MatchId": {"S": "123"}, "CreatedAt": {"N": "123"}}])
     uuid.uuid4.return_value = 123
     response = handlers.process_handler(
         {"body": "", "requestContext": autorization_mock}, SimpleNamespace()
@@ -353,8 +280,6 @@ def test_it_applies_expiry(
             "GSIBucket": "0",
             "CreatedAt": ANY,
             "Expires": 12346789,
-            "DeletionQueueItems": [{"MatchId": "123", "CreatedAt": 123}],
-            "DeletionQueueItemsSkipped": False,
             "AthenaConcurrencyLimit": 15,
             "DeletionTasksMaxNumber": 50,
             "QueryExecutionWaitSeconds": 5,
@@ -375,38 +300,6 @@ def test_it_prevents_concurrent_running_jobs(mock_running_job):
 
     assert 400 == response["statusCode"]
     assert "headers" in response
-
-
-def test_it_calculates_ddb_item_size():
-    scenarios = [
-        [None, 0],
-        [{"string": "test"}, 10],
-        [{"int": 1234567}, 24],
-        [{"zero": 0}, 25],
-        [{"int": 1234567.892}, 24],
-        [{"decimal": Decimal(1588080439)}, 28],
-        [{"bool": False}, 5],
-        [{"null": None}, 5],
-        [{"arr": []}, 6],
-        [{"arr": ["foo", "bar"]}, 12],
-        [{"obj": {"foo": "bar"}}, 12],
-        [{"obj": {}}, 6],
-        [
-            {
-                "CreatedBy": {
-                    "Username": "foo@website.com",
-                    "Sub": "48265f68-ff51-471f-9702-c4ef18cf3d94",
-                },
-                "DataMappers": [],
-                "MatchId": "jon_doe",
-                "CreatedAt": Decimal(1587992978),
-            },
-            132,
-        ],
-    ]
-
-    for scenario, result in scenarios:
-        assert handlers.calculate_ddb_item_bytes(scenario) == result
 
 
 def test_it_validates_composite_queue_item_for_matchid_not_array():

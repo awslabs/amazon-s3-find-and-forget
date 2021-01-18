@@ -16,6 +16,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 batch_size = 10  # SQS Max Batch Size
 
+s3 = boto3.resource("s3")
 ssm = boto3.client("ssm")
 ddb = boto3.resource("dynamodb")
 table = ddb.Table(os.getenv("JobTable", "S3F2_Jobs"))
@@ -236,3 +237,27 @@ def get_session(assume_role_arn=None, role_session_name="s3f2"):
             aws_session_token=response["Credentials"]["SessionToken"],
         )
     return boto3.session.Session()
+
+
+def fetch_job_manifest(path):
+    bucket, obj = parse_s3_url(path)
+    return s3.Object(bucket, obj).get().get("Body").read().decode("utf-8")
+
+
+def json_lines_iterator(content, include_unparsed=False):
+    lines = content.split("\n")
+    if lines[-1] == "":
+        lines.pop()
+    for i, line in enumerate(lines):
+        try:
+            parsed = json.loads(line)
+        except (json.JSONDecodeError) as e:
+            raise ValueError(
+                "Serialization error when parsing JSON lines: {}".format(
+                    str(e).replace("line 1", "line {}".format(i + 1)),
+                )
+            )
+        if include_unparsed:
+            yield parsed, line
+        else:
+            yield parsed

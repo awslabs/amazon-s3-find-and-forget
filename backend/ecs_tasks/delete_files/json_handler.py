@@ -3,6 +3,8 @@ from io import BytesIO
 import json
 from collections import Counter
 
+from boto_utils import json_lines_iterator
+
 from pyarrow import BufferOutputStream, CompressedOutputStream
 
 
@@ -50,19 +52,9 @@ def delete_matches_from_json_file(input_file, to_delete, compressed=False):
     with BufferOutputStream() as out_stream:
         input_file, writer = initialize(input_file, out_stream, compressed)
         content = input_file.read().decode("utf-8")
-        lines = content.split("\n")
-        if lines[-1] == "":
-            lines.pop()
-        total_rows = len(lines)
-        for i, line in enumerate(lines):
-            try:
-                parsed = json.loads(line)
-            except (json.JSONDecodeError) as e:
-                raise ValueError(
-                    "Serialization error when processing JSON object: {}".format(
-                        str(e).replace("line 1", "line {}".format(i + 1))
-                    )
-                )
+        total_rows = 0
+        for parsed, line in json_lines_iterator(content, include_unparsed=True):
+            total_rows += 1
             should_delete = False
             for column in to_delete:
                 if column["Type"] == "Simple":

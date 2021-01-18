@@ -18,12 +18,12 @@ queue = sqs.Queue(os.getenv("QueryQueue"))
 jobs_table = ddb.Table(os.getenv("JobTable", "S3F2_Jobs"))
 data_mapper_table_name = os.getenv("DataMapperTable", "S3F2_DataMappers")
 deletion_queue_table_name = os.getenv("DeletionQueueTable", "S3F2_DeletionQueue")
-state_bucket_name = os.getenv("StateBucket")
-state_bucket = s3.Bucket(state_bucket_name)
-glue_db = os.getenv("GlueDatabase")
-glue_table = os.getenv("JobManifestsGlueTable")
+state_bucket_name = os.getenv("StateBucket", "S3F2-temp-bucket")
+glue_db = os.getenv("GlueDatabase", "s3f2_manifests_database")
+glue_table = os.getenv("JobManifestsGlueTable", "s3f2_manifests_table")
 
 COMPOSITE_JOIN_TOKEN = "_S3F2COMP_"
+MANIFEST_KEY = "manifests/{job_id}/{data_mapper_id}/manifest.json"
 
 ARRAYSTRUCT = "array<struct>"
 ARRAYSTRUCT_PREFIX = "array<struct<"
@@ -50,7 +50,9 @@ def handler(event, context):
     job_id = event["ExecutionName"]
     deletion_items = get_deletion_queue()
     manifests_partitions = []
-    for data_mapper in get_data_mappers():
+    data_mappers = get_data_mappers()
+    total_queries = 0
+    for data_mapper in data_mappers:
         manifests_partitions.append([job_id, data_mapper["DataMapperId"]])
         query_executor = data_mapper["QueryExecutor"]
         if query_executor == "athena":
@@ -61,25 +63,33 @@ def handler(event, context):
             )
 
         batch_sqs_msgs(queue, queries)
+        total_queries += len(queries)
     write_partitions(manifests_partitions)
+    return {
+        "GeneratedQueries": total_queries,
+        "DeletionQueueSize": len(deletion_items),
+        "Manifests": list(
+            map(
+                lambda x: "s3://{}/{}".format(
+                    state_bucket_name,
+                    MANIFEST_KEY.format(job_id=x[0], data_mapper_id=x[1]),
+                ),
+                manifests_partitions,
+            )
+        ),
+    }
 
 
 def build_manifest_row(columns, match_id, item_id):
-    # stringify only if composite
     is_composite = len(columns) > 1
-    queryable = (
-        COMPOSITE_JOIN_TOKEN.join(str(x) for x in match_id)
-        if is_composite
-        else match_id
-    )
-
+    iterable_match = match_id if is_composite else [match_id]
+    queryable = COMPOSITE_JOIN_TOKEN.join(str(x) for x in iterable_match)
     queryable_cols = COMPOSITE_JOIN_TOKEN.join(str(x) for x in columns)
-
     return (
         json.dumps(
             {
                 "Columns": columns,
-                "MatchId": match_id if is_composite else [match_id],
+                "MatchId": iterable_match,
                 "DeletionQueueItemId": item_id,
                 "QueryableColumns": queryable_cols,
                 "QueryableMatchId": queryable,
@@ -90,8 +100,8 @@ def build_manifest_row(columns, match_id, item_id):
 
 
 def generate_athena_queries(data_mapper, deletion_items, job_id):
-    manifest_key = "manifests/{}/{}/manifest.json".format(
-        job_id, data_mapper["DataMapperId"]
+    manifest_key = MANIFEST_KEY.format(
+        job_id=job_id, data_mapper_id=data_mapper["DataMapperId"]
     )
     db = data_mapper["QueryExecutorParameters"]["Database"]
     table_name = data_mapper["QueryExecutorParameters"]["Table"]
@@ -132,11 +142,7 @@ def generate_athena_queries(data_mapper, deletion_items, job_id):
                 casted = cast_to_type(mid, column, table)
                 result = find_in_dict(results, "Column", column)
                 if not result:
-                    results.append(
-                        {"Column": column, "MatchIds": [casted], "Type": "Simple",}
-                    )
-                elif casted not in result["MatchIds"]:
-                    result["MatchIds"].append(casted)
+                    results.append({"Column": column, "Type": "Simple"})
                 manifest += build_manifest_row([column], casted, item_id)
         else:
             sorted_mid = sorted(mid, key=lambda x: x["Column"])
@@ -146,19 +152,11 @@ def generate_athena_queries(data_mapper, deletion_items, job_id):
                 map(lambda x: cast_to_type(x["Value"], x["Column"], table), sorted_mid,)
             )
             if not result:
-                results.append(
-                    {
-                        "Columns": query_columns,
-                        "MatchIds": [composite_match],
-                        "Type": "Composite",
-                    }
-                )
-            elif composite_match not in result["MatchIds"]:
-                result["MatchIds"].append(composite_match)
+                results.append({"Columns": query_columns, "Type": "Composite"})
             manifest += build_manifest_row(query_columns, composite_match, item_id)
+    s3.Bucket(state_bucket_name).put_object(Body=manifest, Key=manifest_key)
     msg["Columns"] = results
-    state_bucket.put_object(Body=manifest, Key=manifest_key)
-    msg["Manifest"] = manifest_key
+    msg["Manifest"] = "s3://{}/{}".format(state_bucket_name, manifest_key)
 
     if len(partition_keys) == 0:
         return [msg]
@@ -182,14 +180,10 @@ def generate_athena_queries(data_mapper, deletion_items, job_id):
 
 
 def get_deletion_queue():
-    # def get_deletion_queue(job_id):
-    # resp = jobs_table.get_item(Key={"Id": job_id, "Sk": job_id})
-    # return resp.get("Item").get("DeletionQueueItems")
     results = paginate(
         ddb_client, ddb_client.scan, "Items", TableName=deletion_queue_table_name
     )
-    for result in results:
-        yield deserialize_item(result)
+    return [deserialize_item(result) for result in results]
 
 
 def get_data_mappers():

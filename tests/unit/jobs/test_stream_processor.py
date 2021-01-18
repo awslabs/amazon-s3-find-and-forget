@@ -5,7 +5,7 @@ from types import SimpleNamespace
 import pytest
 import boto3
 from botocore.exceptions import ClientError
-from mock import patch, Mock, ANY
+from mock import patch, Mock, ANY, MagicMock, call
 
 with patch.dict(
     os.environ,
@@ -480,7 +480,17 @@ def test_it_emits_event_for_cleanup_error(
 
 
 @patch("backend.lambdas.jobs.stream_processor.q_table.batch_writer")
-def test_it_clears_queue(mock_writer):
+@patch("backend.lambdas.jobs.stream_processor.fetch_job_manifest", MagicMock())
+@patch("backend.lambdas.jobs.stream_processor.json_lines_iterator")
+def test_it_clears_queue(mock_json, mock_writer):
+    mock_json.side_effect = [
+        [{"DeletionQueueItemId": "id-1"}, {"DeletionQueueItemId": "id-2"}],
+        [
+            {"DeletionQueueItemId": "id-3"},
+            {"DeletionQueueItemId": "id-4"},
+            {"DeletionQueueItemId": "id-5"},
+        ],
+    ]
     mock_writer.return_value.__enter__.return_value = mock_writer
     clear_deletion_queue(
         {
@@ -488,14 +498,20 @@ def test_it_clears_queue(mock_writer):
             "Sk": "job123",
             "Type": "Job",
             "JobStatus": "FORGET_COMPLETED_CLEANUP_IN_PROGRESS",
-            "DeletionQueueItems": [
-                {
-                    "MatchId": "test",
-                    "CreatedAt": 123456789,
-                    "DeletionQueueItemId": "id123",
-                }
+            "DeletionQueueSize": 1,
+            "Manifests": [
+                "s3://temp-bucket/manifests/job123/dm_01/manifest.json",
+                "s3://temp-bucket/manifests/job123/dm_02/manifest.json",
             ],
         }
     )
-
-    mock_writer.delete_item.assert_called()
+    mock_writer.delete_item.assert_has_calls(
+        [
+            call(Key={"DeletionQueueItemId": "id-1"}),
+            call(Key={"DeletionQueueItemId": "id-2"}),
+            call(Key={"DeletionQueueItemId": "id-3"}),
+            call(Key={"DeletionQueueItemId": "id-4"}),
+            call(Key={"DeletionQueueItemId": "id-5"}),
+        ],
+        any_order=True,
+    )

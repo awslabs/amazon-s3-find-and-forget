@@ -52,6 +52,11 @@ def update_status(job_id, events):
         # Ignore non status events
         event_name = event["EventName"]
         if event_name not in status_map:
+            if event_name == "QueryPlanningComplete":
+                event_data = event.get("EventData", {})
+                attr_updates["GeneratedQueries"] = event_data["GeneratedQueries"]
+                attr_updates["DeletionQueueSize"] = event_data["DeletionQueueSize"]
+                attr_updates["Manifests"] = event_data["Manifests"]
             continue
 
         new_status = determine_status(job_id, event_name)

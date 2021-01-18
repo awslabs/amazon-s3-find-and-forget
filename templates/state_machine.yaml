@@ -529,6 +529,23 @@ Resources:
               "Comment": "Process each of the data mappers and populate the query queue",
               "Type": "Task",
               "Resource": "${GenerateQueries.Arn}",
+              "ResultPath": "$.QueriesStats",
+              "Next": "End Query Planning",
+              "Catch": [{
+                "ErrorEquals": ["States.ALL"],
+                "ResultPath": "$.ErrorDetails",
+                "Next": "Handle Find Error"
+              }]
+            },
+            "End Query Planning": {
+              "Type": "Task",
+              "Parameters": {
+                "EventName": "QueryPlanningComplete",
+                "EventData.$": "$.QueriesStats",
+                "EmitterId": "StepFunctions",
+                "JobId.$": "$$.Execution.Name"
+              },
+              "Resource": "${EmitEvent.Arn}",
               "ResultPath": null,
               "Next": "Work Queue",
               "Catch": [{

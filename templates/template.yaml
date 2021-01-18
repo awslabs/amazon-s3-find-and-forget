@@ -292,6 +292,7 @@ Resources:
         DeletionTaskMemory: !Ref DeletionTaskMemory
         EnableContainerInsights: !Ref EnableContainerInsights
         JobTableName: !GetAtt DDBStack.Outputs.JobTable
+        ManifestsBucket: !Ref TempBucket
         ResourcePrefix: !Ref ResourcePrefix
         VpcSecurityGroups: !If [ShouldDeployVpc, !GetAtt VpcStack.Outputs.SecurityGroup, !Join [",", !Ref VpcSecurityGroups]]
         VpcSubnets: !If [ShouldDeployVpc, !GetAtt VpcStack.Outputs.Subnets, !Join [",", !Ref VpcSubnets]]
@@ -357,6 +358,7 @@ Resources:
         JobTableDateGSI: !GetAtt DDBStack.Outputs.JobTableDateGSI
         JobTableName: !GetAtt DDBStack.Outputs.JobTable
         JobTableStreamArn: !GetAtt DDBStack.Outputs.JobTableStreamArn
+        ManifestsBucket: !Ref TempBucket
         StateMachineArn: !GetAtt StateMachineStack.Outputs.StateMachineArn
   VpcStack:
     Type: AWS::CloudFormation::Stack

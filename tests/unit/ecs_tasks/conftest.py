@@ -10,10 +10,11 @@ def message_stub():
             {
                 "JobId": "1234",
                 "Object": "s3://bucket/path/basic.parquet",
-                "Columns": [{"Column": "customer_id", "MatchIds": ["12345", "23456"]}],
+                "Columns": [{"Column": "customer_id"}],
                 "CompositeColumns": [],
                 "DeleteOldVersions": False,
                 "Format": "parquet",
+                "Manifest": "s3://temp-bucket/manifests/1234/dm54321/manifest.json",
                 **kwargs,
             }
         )

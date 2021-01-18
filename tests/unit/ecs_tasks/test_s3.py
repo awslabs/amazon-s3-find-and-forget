@@ -7,20 +7,21 @@ from io import BytesIO
 import pytest
 from botocore.exceptions import ClientError
 
-
 from backend.ecs_tasks.delete_files.s3 import (
+    delete_old_versions,
+    DeleteOldVersionsError,
+    fetch_job_manifest,
+    fetch_manifest,
     get_requester_payment,
     get_grantees,
     get_object_acl,
     get_object_info,
     get_object_tags,
-    validate_bucket_versioning,
-    verify_object_versions_integrity,
-    delete_old_versions,
-    save,
-    DeleteOldVersionsError,
     IntegrityCheckFailedError,
     rollback_object_version,
+    save,
+    validate_bucket_versioning,
+    verify_object_versions_integrity,
 )
 
 pytestmark = [pytest.mark.unit, pytest.mark.ecs_tasks]
@@ -658,4 +659,18 @@ def test_it_handles_error_for_generic_errors():
     mock_callback.assert_called_with(
         "Unknown error: Some issue. Version rollback caused by version integrity "
         "conflict failed"
+    )
+
+
+@patch("backend.ecs_tasks.delete_files.s3.fetch_job_manifest")
+def test_it_caches_manifests(mock_fetch):
+    fetch_manifest.cache_clear()
+    fetch_manifest("s3://path/to/manifest1.json")
+    fetch_manifest("s3://path/to/manifest1.json")
+    fetch_manifest("s3://path/to/manifest2.json")
+
+    assert mock_fetch.call_count == 2
+    mock_fetch.assert_has_calls(
+        [call("s3://path/to/manifest1.json"), call("s3://path/to/manifest2.json")],
+        any_order=True,
     )

@@ -11,7 +11,7 @@ Metadata:
 Globals:
   Function:
     Runtime: python3.7
-    Timeout: 180
+    Timeout: 900
     Layers: !Ref CommonLayers
     Environment:
       Variables:
@@ -49,6 +49,8 @@ Parameters:
       - INFO
       - DEBUG
       - NOTSET
+  ManifestsBucket:
+    Type: String
   StateMachineArn:
     Description: State Machine to invoke to process the deletion queue
     Type: String
@@ -71,6 +73,9 @@ Resources:
               - "states:DescribeExecution"
               - "states:StartExecution"
             Resource: !Ref StateMachineArn
+          - Effect: Allow
+            Action: s3:GetObject*
+            Resource: !Sub arn:aws:s3:::${ManifestsBucket}/manifests/*
       Events:
         Stream:
           Type: DynamoDB

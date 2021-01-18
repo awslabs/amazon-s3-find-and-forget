@@ -18,13 +18,15 @@ import {
   formatDateTime,
   formatErrorMessage,
   formatFileSize,
-  isUndefined,
   isEmpty,
+  isUndefined,
   successJobClass,
   withDefault,
 } from "../../utils";
 
 const COUNTDOWN_INTERVAL = 10;
+
+// TODO: Cleanup
 
 const DeletionJob = ({ gateway, jobId }) => {
   const [countDownLeft, setCountDownLeft] = useState(COUNTDOWN_INTERVAL);
@@ -80,8 +82,6 @@ const DeletionJob = ({ gateway, jobId }) => {
 
   const errorCountClass = (x) =>
     x === 0 || isUndefined(x) ? "success" : "error";
-
-  const warningCountClass = (x) => (!x ? "success" : "warning");
 
   useEffect(() => {
     if (withCountDown) {
@@ -207,36 +207,10 @@ const DeletionJob = ({ gateway, jobId }) => {
               <Icon type={`alert-${successJobClass(job.JobStatus)}`} />
               <span>{job.JobStatus}</span>
             </DetailsBox>
-            <DetailsBox label="Deletion Queue Size">
-              {job.DeletionQueueItems.length}{" "}
-              {job.DeletionQueueItems.length > 0 && (
-                <>
-                  (
-                  <Button
-                    variant="link"
-                    style={{ padding: 0 }}
-                    onClick={() => showDeletionQueue(true)}
-                  >
-                    View Deletion Queue
-                  </Button>
-                  )
-                </>
-              )}
-            </DetailsBox>
-            <DetailsBox
-              label="Deletion Queue Items Skipped"
-              className={`status-label ${warningCountClass(
-                job.DeletionQueueItemsSkipped
-              )}`}
-            >
-              <Icon
-                type={`alert-${warningCountClass(
-                  job.DeletionQueueItemsSkipped
-                )}`}
-              />
-              <span>
-                {job.DeletionQueueItemsSkipped.toString().toUpperCase()}
-              </span>
+            <DetailsBox label="Deletion Queue Size" fullWidth>
+              {isUndefined(job.DeletionQueueSize)
+                ? "Unknown (Planning pending)"
+                : job.DeletionQueueSize}
             </DetailsBox>
             <DetailsBox label="Start Time">
               {formatDateTime(job.JobStartTime)}
@@ -244,8 +218,10 @@ const DeletionJob = ({ gateway, jobId }) => {
             <DetailsBox label="Finish Time">
               {formatDateTime(job.JobFinishTime)}
             </DetailsBox>
-            <DetailsBox label="Total Query Count" noSeparator>
-              {withDefault(job.TotalQueryCount)}
+            <DetailsBox label="Total Executed Query Count" noSeparator>
+              {isUndefined(job.GeneratedQueries)
+                ? "-"
+                : `${job.TotalQueryCount}/${job.GeneratedQueries}`}
             </DetailsBox>
             <DetailsBox
               label="Total Query Failed Count"

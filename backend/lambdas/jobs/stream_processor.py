@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timezone
+from functools import lru_cache
 from os import getenv
 import json
 import boto3
@@ -10,7 +11,14 @@ from operator import itemgetter
 
 from stats_updater import update_stats
 from status_updater import update_status, skip_cleanup_states
-from boto_utils import DecimalEncoder, deserialize_item, emit_event, utc_timestamp
+from boto_utils import (
+    DecimalEncoder,
+    deserialize_item,
+    emit_event,
+    fetch_job_manifest,
+    json_lines_iterator,
+    utc_timestamp,
+)
 from decorators import with_logging
 
 deserializer = TypeDeserializer()
@@ -20,6 +28,7 @@ client = boto3.client("stepfunctions")
 state_machine_arn = getenv("StateMachineArn")
 ddb = boto3.resource("dynamodb")
 q_table = ddb.Table(getenv("DeletionQueueTable"))
+s3 = boto3.resource("s3")
 
 
 @with_logging
@@ -101,9 +110,15 @@ def process_job(job):
 
 def clear_deletion_queue(job):
     logger.info("Clearing successfully deleted matches")
+    to_delete = set()
+    for manifest_object in job.get("Manifests", []):
+        manifest = fetch_job_manifest(manifest_object)
+        for line in json_lines_iterator(manifest):
+            to_delete.add(line["DeletionQueueItemId"])
+
     with q_table.batch_writer() as batch:
-        for item in job.get("DeletionQueueItems", []):
-            batch.delete_item(Key={"DeletionQueueItemId": item["DeletionQueueItemId"]})
+        for item_id in to_delete:
+            batch.delete_item(Key={"DeletionQueueItemId": item_id})
 
 
 def is_operation(record, operation):

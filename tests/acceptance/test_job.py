@@ -54,8 +54,6 @@ def test_it_gets_jobs(
         "JobStatus": mock.ANY,
         "GSIBucket": mock.ANY,
         "CreatedAt": mock.ANY,
-        "DeletionQueueItems": mock.ANY,
-        "DeletionQueueItemsSkipped": mock.ANY,
         "AthenaConcurrencyLimit": mock.ANY,
         "DeletionTasksMaxNumber": mock.ANY,
         "QueryExecutionWaitSeconds": mock.ANY,
@@ -198,7 +196,6 @@ def test_it_filters_job_events_by_event_name(
     )
 
 
-@pytest.mark.only
 def test_it_runs_for_parquet_happy_path(
     del_queue_factory,
     job_factory,

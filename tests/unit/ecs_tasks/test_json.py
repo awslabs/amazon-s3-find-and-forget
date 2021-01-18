@@ -304,7 +304,7 @@ def test_it_throws_meaningful_error_for_serialization_issues():
     with pytest.raises(ValueError) as e:
         out, stats = delete_matches_from_json_file(out_stream, to_delete)
     assert e.value.args[0] == (
-        "Serialization error when processing JSON object: "
+        "Serialization error when parsing JSON lines: "
         "Unterminated string starting at: line 2 column 40 (char 39)"
     )
 
