@@ -79,10 +79,16 @@ def delete_matches_from_file(input_file, to_delete, file_format, compressed=Fals
     return delete_matches_from_parquet_file(input_file, to_delete)
 
 
-def build_matches(
-    cols, manifest_object
-):  # TODO: Add description for what this function does
-    COMP_TOKEN = "_S3F2COMP_"
+def build_matches(cols, manifest_object):
+    """
+    This function takes the columns and the manifests, and returns
+    the match_ids grouped by column.
+    Input example:
+    [{"Column":"customer_id", "Type":"Simple"}]
+    Output example:
+    [{"Column":"customer_id", "Type":"Simple", "MatchIds":[123, 234]}]
+    """
+    COMPOSITE_MATCH_TOKEN = "_S3F2COMP_"
     manifest = fetch_manifest(manifest_object)
     matches = {}
     for line in json_lines_iterator(manifest):
@@ -95,7 +101,9 @@ def build_matches(
         map(
             lambda c: {
                 "MatchIds": matches[
-                    COMP_TOKEN.join(c["Columns"]) if "Columns" in c else c["Column"]
+                    COMPOSITE_MATCH_TOKEN.join(c["Columns"])
+                    if "Columns" in c
+                    else c["Column"]
                 ],
                 **c,
             },

@@ -1,5 +1,5 @@
 """
-Task for generating Athena queries from glue catalogs
+Task for generating Athena queries from glue catalogsm aka Query Planning
 """
 import json
 import os
@@ -81,6 +81,26 @@ def handler(event, context):
 
 
 def build_manifest_row(columns, match_id, item_id):
+    """
+    Function for building each row of the manifest that will be written to S3.
+
+    * What are 'queryablematchid' and 'queryablecolumns'?
+    A convenience stringified value of match_id and its column when the match
+    is simple, or a stringified joint value when composite (for instance,
+    "John_S3F2COMP_Doe" and "first_name_S3F2COMP_last_name"). The purpose of
+    these fields is optimise query execution by doing the SQL JOINs over strings only.
+    
+    * What are MatchId and Columns?
+    Original values to be used by the ECS task instead.
+    Note that the MatchId is declared as array<string> in the Glue Table as it's
+    not possible to declare it as array of generic types and the design is for
+    using a single table schema for each match/column tuple, despite
+    the current column type.
+    This means that using the "MatchId" field in Athena will always coherce its values
+    to strings, for instance [1234] => ["1234"]. That's ok because when working with
+    the manifest, the Fargate task will read and parse the JSON directly and therefore
+    will use its original type (for instance, int over strings to do the comparison).
+    """
     is_composite = len(columns) > 1
     iterable_match = match_id if is_composite else [match_id]
     queryable = COMPOSITE_JOIN_TOKEN.join(str(x) for x in iterable_match)
@@ -100,6 +120,13 @@ def build_manifest_row(columns, match_id, item_id):
 
 
 def generate_athena_queries(data_mapper, deletion_items, job_id):
+    """
+    For each Data Mapper, it generates a list of parameters needed for each
+    query execution. The matches for the given column are saved in an external
+    S3 object (aka manifest) to allow its size to grow into the thousands without
+    incurring in DDB Document size limit, SQS message size limit, or Athena query
+    size limit. The manifest S3 Path is finally referenced as part of the SQS message.
+    """
     manifest_key = MANIFEST_KEY.format(
         job_id=job_id, data_mapper_id=data_mapper["DataMapperId"]
     )
@@ -209,6 +236,10 @@ def get_partitions(db, table_name):
 
 
 def write_partitions(partitions):
+    """
+    In order for the manifests to be used by Athena in a JOIN, we make them
+    available as partitions with Job a DataMapperId tuple.
+    """
     return glue_client.batch_create_partition(
         DatabaseName=glue_db,
         TableName=glue_table,

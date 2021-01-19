@@ -28,22 +28,34 @@ def handler(event, context):
     return response["QueryExecutionId"]
 
 
-def make_query(query_data):  # TODO: Update description
+def make_query(query_data):
     """
     Returns a query which will look like
-    SELECT DISTINCT $path
-    FROM "db"."table"
-    WHERE col1 in (matchid1, matchid2) OR col1 in (matchid1, matchid2) AND partition_key = value"
+    SELECT DISTINCT t."$path"
+    FROM "db"."table" t,
+        "manifests_db"."manifests_table" m
+    WHERE
+        m."jobid"='job1234' AND
+        m."datamapperid"='dm123' AND    
+        (cast(t."customer_id" as varchar)=m."queryablematchid" AND
+            m."queryablecolumns"='customer_id')
+        AND partition_key = value"
+    
+    Note: 'queryablematchid' and 'queryablecolumns' is a convenience
+    stringified value of match_id and its column when the match is simple,
+    or a stringified joint value when composite (for instance,
+    "John_S3F2COMP_Doe" and "first_name_S3F2COMP_last_name").
+    JobId and DataMapperId are both used as partitions for the manifest to
+    optimize query execution time.
 
     :param query_data: a dict which looks like
     {
       "Database":"db",
       "Table": "table",
       "Columns": [
-        {"Column": "col", "MatchIds": ["match"], "Type": "Simple"},
+        {"Column": "col", "Type": "Simple"},
         {
           "Columns": ["first_name", "last_name"],
-          "MatchIds: [["John", "Doe"]],
           "Type": "Composite"
         }
       ],
