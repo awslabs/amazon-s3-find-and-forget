@@ -16,6 +16,8 @@ queue = sqs.Queue(os.getenv("QueryQueue"))
 jobs_table = ddb.Table(os.getenv("JobTable", "S3F2_Jobs"))
 data_mapper_table_name = os.getenv("DataMapperTable", "S3F2_DataMappers")
 
+COMPOSITE_JOIN_TOKEN = "_S3F2COMP_"
+
 ARRAYSTRUCT = "array<struct>"
 ARRAYSTRUCT_PREFIX = "array<struct<"
 ARRAYSTRUCT_SUFFIX = ">>"
@@ -80,37 +82,37 @@ def generate_athena_queries(data_mapper, deletion_items):
     if len(applicable_match_ids) == 0:
         return []
 
-    results = []
+    # Compile a list of MatchIds grouped by Column
+    columns_with_matches = {}
     for mid in applicable_match_ids:
         is_simple = not isinstance(mid, list)
         if is_simple:
             for column in msg["Columns"]:
                 casted = cast_to_type(mid, column, table)
-                result = find_in_dict(results, "Column", column)
-                if not result:
-                    results.append(
-                        {"Column": column, "MatchIds": [casted], "Type": "Simple",}
-                    )
-                elif casted not in result["MatchIds"]:
-                    result["MatchIds"].append(casted)
+                if column not in columns_with_matches:
+                    columns_with_matches[column] = {
+                        "Column": column,
+                        "MatchIds": [casted],
+                        "Type": "Simple",
+                    }
+                elif casted not in columns_with_matches[column]["MatchIds"]:
+                    columns_with_matches[column]["MatchIds"].append(casted)
         else:
             sorted_mid = sorted(mid, key=lambda x: x["Column"])
             query_columns = list(map(lambda x: x["Column"], sorted_mid))
-            result = find_in_dict(results, "Columns", query_columns)
+            column_key = COMPOSITE_JOIN_TOKEN.join(query_columns)
             composite_match = list(
-                map(lambda x: cast_to_type(x["Value"], x["Column"], table), sorted_mid,)
+                map(lambda x: cast_to_type(x["Value"], x["Column"], table), sorted_mid)
             )
-            if not result:
-                results.append(
-                    {
-                        "Columns": query_columns,
-                        "MatchIds": [composite_match],
-                        "Type": "Composite",
-                    }
-                )
-            elif composite_match not in result["MatchIds"]:
-                result["MatchIds"].append(composite_match)
-    msg["Columns"] = results
+            if column_key not in columns_with_matches:
+                columns_with_matches[column_key] = {
+                    "Columns": query_columns,
+                    "MatchIds": [composite_match],
+                    "Type": "Composite",
+                }
+            elif composite_match not in columns_with_matches[column_key]["MatchIds"]:
+                columns_with_matches[column_key]["MatchIds"].append(composite_match)
+    msg["Columns"] = list(columns_with_matches.values())
 
     if len(partition_keys) == 0:
         return [msg]
@@ -342,7 +344,3 @@ def cast_to_type(val, col, table, is_partition=False):
         return float(val)
 
     return str(val)
-
-
-def find_in_dict(d, key, value):
-    return next(iter([x for x in d if x.get(key) == value]), None)
