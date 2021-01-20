@@ -71,10 +71,14 @@ def validate_message(message):
             raise ValueError("Malformed message. Missing key: %s", k)
 
 
-def delete_matches_from_file(input_file, to_delete, file_format, compressed=False):
+def delete_matches_from_file(
+    input_file, to_delete, file_format, data_mapper_id, compressed=False
+):
     logger.info("Generating new file without matches")
     if file_format == "json":
-        return delete_matches_from_json_file(input_file, to_delete, compressed)
+        return delete_matches_from_json_file(
+            input_file, to_delete, data_mapper_id, compressed,
+        )
     return delete_matches_from_parquet_file(input_file, to_delete)
 
 
@@ -88,8 +92,8 @@ def execute(queue_url, message_body, receipt_handle):
         body = json.loads(message_body)
         session = get_session(body.get("RoleArn"))
         client = session.client("s3")
-        cols, object_path, job_id, file_format = itemgetter(
-            "Columns", "Object", "JobId", "Format"
+        cols, object_path, job_id, file_format, data_mapper_id = itemgetter(
+            "Columns", "Object", "JobId", "Format", "DataMapperId"
         )(body)
         input_bucket, input_key = parse_s3_url(object_path)
         validate_bucket_versioning(client, input_bucket)
@@ -110,10 +114,12 @@ def execute(queue_url, message_body, receipt_handle):
             logger.info("Using object version %s as source", source_version)
             # Write new file in-memory
             compressed = object_path.endswith(".gz")
-            out_sink, stats = delete_matches_from_file(f, cols, file_format, compressed)
-        if stats["DeletedRows"] == 0:
+            out_sink, stats = delete_matches_from_file(
+                f, cols, file_format, data_mapper_id, compressed,
+            )
+        if stats["DeletedRows"] == 0 and stats["RedactedRows"] == 0:
             raise ValueError(
-                "The object {} was processed successfully but no rows required deletion".format(
+                "The object {} was processed successfully but no rows required deletion or redaction".format(
                     object_path
                 )
             )

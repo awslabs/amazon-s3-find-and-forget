@@ -11,6 +11,7 @@ from backend.ecs_tasks.delete_files.json_handler import delete_matches_from_json
 pytestmark = [pytest.mark.unit, pytest.mark.ecs_tasks]
 
 
+@pytest.mark.only
 def test_it_generates_new_json_file_without_matches():
     # Arrange
     to_delete = [{"Column": "customer_id", "MatchIds": ["23456"], "Type": "Simple"}]
@@ -21,12 +22,37 @@ def test_it_generates_new_json_file_without_matches():
     )
     out_stream = to_json_file(data)
     # Act
-    out, stats = delete_matches_from_json_file(out_stream, to_delete)
+    out, stats = delete_matches_from_json_file(out_stream, to_delete, "test1")
     assert isinstance(out, pa.BufferOutputStream)
-    assert {"ProcessedRows": 3, "DeletedRows": 1} == stats
+    assert {"ProcessedRows": 3, "DeletedRows": 1, "RedactedRows": 0} == stats
     assert to_json_string(out) == (
         '{"customer_id": "12345", "x": 1.2, "d":"2001-01-01"}\n'
         '{"customer_id": "34567", "x": 3.4, "d":"2001-01-05"}\n'
+    )
+
+
+@pytest.mark.only
+@patch("backend.ecs_tasks.delete_files.json_handler.transform_rows")
+def test_it_generates_new_json_file_with_redacted_rows(mock_transform_rows):
+    # Arrange
+    mock_transform_rows.return_value = [
+        {"customer_id": "[REDACTED]", "x": 2.3, "d": "2001-01-03"}
+    ]
+    to_delete = [{"Column": "customer_id", "MatchIds": ["23456"], "Type": "Simple"}]
+    data = (
+        '{"customer_id": "12345", "x": 1.2, "d": "2001-01-01"}\n'
+        '{"customer_id": "23456", "x": 2.3, "d": "2001-01-03"}\n'
+        '{"customer_id": "34567", "x": 3.4, "d": "2001-01-05"}\n'
+    )
+    out_stream = to_json_file(data)
+    # Act
+    out, stats = delete_matches_from_json_file(out_stream, to_delete, "test1")
+    assert isinstance(out, pa.BufferOutputStream)
+    assert {"ProcessedRows": 3, "DeletedRows": 0, "RedactedRows": 1} == stats
+    assert to_json_string(out) == (
+        '{"customer_id": "12345", "x": 1.2, "d": "2001-01-01"}\n'
+        '{"customer_id": "34567", "x": 3.4, "d": "2001-01-05"}\n'
+        '{"customer_id": "[REDACTED]", "x": 2.3, "d": "2001-01-03"}\n'
     )
 
 

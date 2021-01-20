@@ -38,6 +38,8 @@ Parameters:
   LogRetentionInDays:
     Type: Number
     Default: 7
+  RedactionPOCBucket: # Redaction POC
+    Type: String
   ResourcePrefix:
     Type: String
   VpcSecurityGroups:
@@ -132,6 +134,8 @@ Resources:
               Value: !Ref LogLevel
             - Name: JobTable
               Value: !Ref JobTableName
+            - Name: RedactionPOCBucket
+              Value: !Ref RedactionPOCBucket
 
   DeleteService:
     Type: AWS::ECS::Service
@@ -175,6 +179,11 @@ Resources:
             - sts:AssumeRole
             Effect: Allow
             Resource: !Sub "arn:${AWS::Partition}:iam::*:role/S3F2DataAccessRole"
+          - Action:
+            - s3:GetObject*
+            - s3:PutObject*
+            Effect: Allow
+            Resource: !Sub arn:aws:s3:::${RedactionPOCBucket}/*
 
   DeleteTaskLogGroup:
     Type: AWS::Logs::LogGroup

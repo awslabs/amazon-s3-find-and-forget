@@ -5,6 +5,8 @@ from collections import Counter
 
 from pyarrow import BufferOutputStream, CompressedOutputStream
 
+from redaction_handler import transform_rows
+
 
 def initialize(input_file, out_stream, compressed):
     if compressed:
@@ -45,8 +47,11 @@ def get_value(key, obj):
     return obj
 
 
-def delete_matches_from_json_file(input_file, to_delete, compressed=False):
+def delete_matches_from_json_file(
+    input_file, to_delete, data_mapper_id, compressed=False
+):
     deleted_rows = 0
+    transformed_rows = 0
     with BufferOutputStream() as out_stream:
         input_file, writer = initialize(input_file, out_stream, compressed)
         content = input_file.read().decode("utf-8")
@@ -54,6 +59,7 @@ def delete_matches_from_json_file(input_file, to_delete, compressed=False):
         if lines[-1] == "":
             lines.pop()
         total_rows = len(lines)
+        to_transform = []
         for i, line in enumerate(lines):
             try:
                 parsed = json.loads(line)
@@ -80,10 +86,25 @@ def delete_matches_from_json_file(input_file, to_delete, compressed=False):
                         should_delete = True
                         break
             if should_delete:
-                deleted_rows += 1
+                # Before deleting, check if we need to redact instead
+                to_transform.append(parsed)
             else:
                 writer.write(bytes(line + "\n", "utf-8"))
+
+        transformed = transform_rows(to_transform, data_mapper_id)
+
+        for transformed_line in transformed:
+            writer.write(bytes(json.dumps(transformed_line) + "\n", "utf-8"))
+        redacted_rows = len(transformed)
+        deleted_rows = len(to_transform) - redacted_rows
+
         if compressed:
             writer.close()
-        stats = Counter({"ProcessedRows": total_rows, "DeletedRows": deleted_rows})
+        stats = Counter(
+            {
+                "ProcessedRows": total_rows,
+                "DeletedRows": deleted_rows,
+                "RedactedRows": redacted_rows,
+            }
+        )
         return out_stream, stats

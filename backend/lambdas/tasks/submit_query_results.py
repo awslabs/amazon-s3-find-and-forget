@@ -40,6 +40,7 @@ def handler(event, context):
             "RoleArn": event.get("RoleArn", None),
             "DeleteOldVersions": event.get("DeleteOldVersions", True),
             "Format": event.get("Format"),
+            "DataMapperId": event.get("DataMapperId"),  # Redaction POC
         }
         messages.append({k: v for k, v in msg.items() if v is not None})
 

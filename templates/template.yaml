@@ -138,6 +138,36 @@ Mappings:
       Version: 'v0.20'
 
 Resources:
+
+  # Redaction POC
+
+  RedactionPOCBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+  RedactionPOCBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref RedactionPOCBucket
+      PolicyDocument:
+        Statement:
+          - Sid: HttpsOnly
+            Action: '*'
+            Effect: Deny
+            Resource: !Sub arn:aws:s3:::${RedactionPOCBucket}/*
+            Principal: '*'
+            Condition:
+              Bool:
+                'aws:SecureTransport': 'false'
+
+  # End Redaction POC
+
   TempBucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -255,6 +285,7 @@ Resources:
         DeletionTaskMemory: !Ref DeletionTaskMemory
         EnableContainerInsights: !Ref EnableContainerInsights
         JobTableName: !GetAtt DDBStack.Outputs.JobTable
+        RedactionPOCBucket: !Ref RedactionPOCBucket # Redaction POC
         ResourcePrefix: !Ref ResourcePrefix
         VpcSecurityGroups: !If [ShouldDeployVpc, !GetAtt VpcStack.Outputs.SecurityGroup, !Join [",", !Ref VpcSecurityGroups]]
         VpcSubnets: !If [ShouldDeployVpc, !GetAtt VpcStack.Outputs.Subnets, !Join [",", !Ref VpcSubnets]]
