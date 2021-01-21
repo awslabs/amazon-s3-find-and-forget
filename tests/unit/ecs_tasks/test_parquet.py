@@ -16,6 +16,7 @@ from backend.ecs_tasks.delete_files.parquet_handler import (
 pytestmark = [pytest.mark.unit, pytest.mark.ecs_tasks]
 
 
+@pytest.mark.only
 @patch("backend.ecs_tasks.delete_files.parquet_handler.load_parquet")
 @patch("backend.ecs_tasks.delete_files.parquet_handler.delete_from_table")
 def test_it_generates_new_parquet_file_without_matches(mock_delete, mock_load_parquet):
@@ -32,12 +33,14 @@ def test_it_generates_new_parquet_file_without_matches(mock_delete, mock_load_pa
     br = pa.BufferReader(buf.getvalue())
     f = pq.ParquetFile(br, memory_map=False)
     mock_df = pd.DataFrame([{"customer_id": "12345"}])
-    mock_delete.return_value = [pa.Table.from_pandas(mock_df), 1]
+    mock_delete.return_value = [pa.Table.from_pandas(mock_df), 1, 0]
     mock_load_parquet.return_value = f
     # Act
-    out, stats = delete_matches_from_parquet_file("input_file.parquet", column)
+    out, stats = delete_matches_from_parquet_file(
+        "input_file.parquet", column, "dm-123"
+    )
     assert isinstance(out, pa.BufferOutputStream)
-    assert {"ProcessedRows": 2, "DeletedRows": 1} == stats
+    assert {"ProcessedRows": 2, "DeletedRows": 1, "RedactedRows": 0} == stats
     res = pa.BufferReader(out.getvalue())
     newf = pq.ParquetFile(res, memory_map=False)
     assert 1 == newf.read().num_rows
@@ -89,6 +92,28 @@ def test_delete_correct_rows_from_table():
     assert len(res) == 1
     assert deleted_rows == 2
     assert table.to_pydict() == {"customer_id": ["34567"]}
+
+
+@pytest.mark.only
+@patch("backend.ecs_tasks.delete_files.parquet_handler.transform_parquet_rows")
+def test_redact_correct_rows_from_table(mock_transform_rows):
+    mock_transform_rows.return_value = {"customer_id": ["REDACTED", "REDACTED"]}
+    data = [
+        {"customer_id": "12345"},
+        {"customer_id": "23456"},
+        {"customer_id": "34567"},
+    ]
+    columns = [
+        {"Column": "customer_id", "MatchIds": ["12345", "23456"], "Type": "Simple"}
+    ]
+    df = pd.DataFrame(data)
+    table = pa.Table.from_pandas(df)
+    table, deleted_rows, redacted_rows = delete_from_table(table, columns, "test1")
+    res = table.to_pandas()
+    assert len(res) == 3
+    assert deleted_rows == 0
+    assert redacted_rows == 2
+    assert table.to_pydict() == {"customer_id": ["34567", "REDACTED", "REDACTED"]}
 
 
 def test_handles_lower_cased_column_names():

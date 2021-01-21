@@ -5,7 +5,7 @@ from collections import Counter
 
 from pyarrow import BufferOutputStream, CompressedOutputStream
 
-from redaction_handler import transform_rows
+from redaction_handler import transform_json_rows
 
 
 def initialize(input_file, out_stream, compressed):
@@ -91,7 +91,7 @@ def delete_matches_from_json_file(
             else:
                 writer.write(bytes(line + "\n", "utf-8"))
 
-        transformed = transform_rows(to_transform, data_mapper_id)
+        transformed = transform_json_rows(to_transform, data_mapper_id)
 
         for transformed_line in transformed:
             writer.write(bytes(json.dumps(transformed_line) + "\n", "utf-8"))

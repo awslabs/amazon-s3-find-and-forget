@@ -1,13 +1,12 @@
 {
-    "Configuration": {
-        "test1": {
-            "DeletionMode": "Redaction",
-            "LogOriginalRows": true,
-            "ColumnsToRedact": {
-                "type": "[REDACTED]",
-                "actor.id": -1,
-                "actor.display_login": "[REDACTED]"
-            }
-        }
+  "Configuration": {
+    "test1": {
+      "DeletionMode": "Redaction",
+      "LogOriginalRows": true,
+      "ColumnsToRedact": {
+        "customerid": "[REDACTED]",
+        "userinfo.personalinformation.email": "redacted@redacted.com"
+      }
     }
+  }
 }

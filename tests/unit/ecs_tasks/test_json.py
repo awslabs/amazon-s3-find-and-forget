@@ -32,7 +32,7 @@ def test_it_generates_new_json_file_without_matches():
 
 
 @pytest.mark.only
-@patch("backend.ecs_tasks.delete_files.json_handler.transform_rows")
+@patch("backend.ecs_tasks.delete_files.json_handler.transform_json_rows")
 def test_it_generates_new_json_file_with_redacted_rows(mock_transform_rows):
     # Arrange
     mock_transform_rows.return_value = [

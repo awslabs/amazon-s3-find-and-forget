@@ -41,7 +41,40 @@ def find_key(key, obj):
             return found_key
 
 
-def transform_rows(rows, data_mapper_id):
+def pydict_to_array(columns, rows):
+    array = []
+    num_rows = len(rows[columns[0]])
+
+    for i in range(num_rows):
+        item = {}
+        for column in columns:
+            item[column] = rows[column][i]
+        array.append(item)
+    return array
+
+
+def array_to_pydict(columns, array):
+    new_rows = {}
+    for column in columns:
+        new_rows[column] = []
+        for item in array:
+            new_rows[column].append(item[column])
+
+    return new_rows
+
+
+def transform_parquet_rows(rows, data_mapper_id):
+    return transform_rows(rows, data_mapper_id, "parquet")
+
+
+def transform_json_rows(rows, data_mapper_id):
+    return transform_rows(rows, data_mapper_id, "json")
+
+
+def transform_rows(rows, data_mapper_id, file_type):
+    if len(rows) == 0:
+        return rows
+
     config = get_config()
     data_mapper_config = config.get(
         data_mapper_id,
@@ -51,9 +84,6 @@ def transform_rows(rows, data_mapper_id):
         },
     )
 
-    if data_mapper_config.get("LogOriginalRows", False):
-        log_rows(rows, data_mapper_id)
-
     columns_to_redact = data_mapper_config.get("ColumnsToRedact", [])
 
     if (
@@ -62,7 +92,15 @@ def transform_rows(rows, data_mapper_id):
     ):
         return []
 
-    for row in rows:
+    iterable = rows
+    if file_type == "parquet":
+        columns = list(rows.keys())
+        iterable = pydict_to_array(columns, rows)
+
+    if data_mapper_config.get("LogOriginalRows", False):
+        log_rows(iterable, data_mapper_id)
+
+    for row in iterable:
         for column_to_redact in columns_to_redact:
             obj = row
             splits = column_to_redact.split(".")
@@ -78,5 +116,4 @@ def transform_rows(rows, data_mapper_id):
                 else:
                     # keep iterating
                     obj = obj[current_key]
-
-    return rows
+    return iterable if file_type == "json" else array_to_pydict(columns, iterable)

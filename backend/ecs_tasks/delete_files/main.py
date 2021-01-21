@@ -79,7 +79,7 @@ def delete_matches_from_file(
         return delete_matches_from_json_file(
             input_file, to_delete, data_mapper_id, compressed,
         )
-    return delete_matches_from_parquet_file(input_file, to_delete)
+    return delete_matches_from_parquet_file(input_file, to_delete, data_mapper_id)
 
 
 def execute(queue_url, message_body, receipt_handle):

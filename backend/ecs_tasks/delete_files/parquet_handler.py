@@ -7,6 +7,8 @@ import pyarrow.parquet as pq
 
 logger = logging.getLogger(__name__)
 
+from redaction_handler import transform_parquet_rows
+
 
 def load_parquet(f):
     return pq.ParquetFile(f, memory_map=False)
@@ -72,12 +74,14 @@ def get_row_indexes_to_delete(table, identifier, to_delete):
     return np.array(indexes)
 
 
-def delete_from_table(table, to_delete):
+def delete_from_table(table, to_delete, data_mapper_id):
     """
     Deletes rows from a Arrow Table where any of the MatchIds is found as
     value in any of the columns
     """
     initial_rows = table.num_rows
+    redacted_rows = 0
+    schema = table.schema
     for column in to_delete:
         indexes = (
             get_row_indexes_to_delete(table, column["Column"], column["MatchIds"])
@@ -86,12 +90,24 @@ def delete_from_table(table, to_delete):
                 table, column["Columns"], column["MatchIds"]
             )
         )
+        transformed_rows = transform_parquet_rows(
+            table.filter(indexes).to_pydict(), data_mapper_id
+        )
         table = table.filter(~indexes)
+
+        if len(transformed_rows) > 0:
+            original_dict = table.to_pydict()
+            for col in transformed_rows:
+                redacted_current_rows = len(transformed_rows[col])
+                original_dict[col].extend(transformed_rows[col])
+            redacted_rows += redacted_current_rows
+            table = pa.Table.from_pydict(original_dict, schema=schema)
+
     deleted_rows = initial_rows - table.num_rows
-    return table, deleted_rows
+    return table, deleted_rows, redacted_rows
 
 
-def delete_matches_from_parquet_file(input_file, to_delete):
+def delete_matches_from_parquet_file(input_file, to_delete, data_mapper_id):
     """
     Deletes matches from Parquet file where to_delete is a list of dicts where
     each dict contains a column to search and the MatchIds to search for in
@@ -100,7 +116,7 @@ def delete_matches_from_parquet_file(input_file, to_delete):
     parquet_file = load_parquet(input_file)
     schema = parquet_file.metadata.schema.to_arrow_schema().remove_metadata()
     total_rows = parquet_file.metadata.num_rows
-    stats = Counter({"ProcessedRows": total_rows, "DeletedRows": 0})
+    stats = Counter({"ProcessedRows": total_rows, "DeletedRows": 0, "RedactedRows": 0})
     with pa.BufferOutputStream() as out_stream:
         with pq.ParquetWriter(out_stream, schema) as writer:
             for row_group in range(parquet_file.num_row_groups):
@@ -110,7 +126,11 @@ def delete_matches_from_parquet_file(input_file, to_delete):
                     str(parquet_file.num_row_groups),
                 )
                 table = parquet_file.read_row_group(row_group)
-                table, deleted_rows = delete_from_table(table, to_delete)
+                table, deleted_rows, redacted_rows = delete_from_table(
+                    table, to_delete, data_mapper_id
+                )
                 writer.write_table(table)
-                stats.update({"DeletedRows": deleted_rows})
+                stats.update(
+                    {"DeletedRows": deleted_rows, "RedactedRows": redacted_rows}
+                )
         return out_stream, stats
