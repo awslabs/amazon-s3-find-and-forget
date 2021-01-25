@@ -16,6 +16,8 @@ queue = sqs.Queue(os.getenv("QueryQueue"))
 jobs_table = ddb.Table(os.getenv("JobTable", "S3F2_Jobs"))
 data_mapper_table_name = os.getenv("DataMapperTable", "S3F2_DataMappers")
 
+COMPOSITE_JOIN_TOKEN = "_S3F2COMP_"
+
 ARRAYSTRUCT = "array<struct>"
 ARRAYSTRUCT_PREFIX = "array<struct<"
 ARRAYSTRUCT_SUFFIX = ">>"
@@ -52,13 +54,11 @@ def handler(event, context):
 
 
 def generate_athena_queries(data_mapper, deletion_items):
-    queries = []
     db = data_mapper["QueryExecutorParameters"]["Database"]
     table_name = data_mapper["QueryExecutorParameters"]["Table"]
     table = get_table(db, table_name)
     partition_keys = [p["Name"] for p in table.get("PartitionKeys", [])]
     columns = [c for c in data_mapper["Columns"]]
-    # Handle unpartitioned data
     msg = {
         "DataMapperId": data_mapper["DataMapperId"],
         "QueryExecutor": data_mapper["QueryExecutor"],
@@ -71,75 +71,68 @@ def generate_athena_queries(data_mapper, deletion_items):
     }
     if data_mapper.get("RoleArn", None):
         msg["RoleArn"] = data_mapper["RoleArn"]
-    if len(partition_keys) == 0:
-        queries.append(msg)
-    else:
-        # For every partition combo of every table, create a query
-        partitions = get_partitions(db, table_name)
-        for partition in partitions:
-            values = partition["Values"]
-            queries.append(
-                {
-                    **msg,
-                    "PartitionKeys": [
-                        {
-                            "Key": partition_keys[i],
-                            "Value": cast_to_type(v, partition_keys[i], table, True),
-                        }
-                        for i, v in enumerate(values)
-                    ],
-                }
-            )
+
     # Workout which deletion items should be included in this query
-    filtered = []
-    for i, query in enumerate(queries):
-        applicable_match_ids = [
-            item["MatchId"]
-            for item in deletion_items
-            if query["DataMapperId"] in item.get("DataMappers", [])
-            or len(item.get("DataMappers", [])) == 0
-        ]
-        if len(applicable_match_ids) > 0:
-            results = []
-            for mid in applicable_match_ids:
-                is_simple = not isinstance(mid, list)
-                if is_simple:
-                    for column in query["Columns"]:
-                        casted = cast_to_type(mid, column, table)
-                        result = find_in_dict(results, "Column", column)
-                        if not result:
-                            results.append(
-                                {
-                                    "Column": column,
-                                    "MatchIds": [casted],
-                                    "Type": "Simple",
-                                }
-                            )
-                        elif casted not in result["MatchIds"]:
-                            result["MatchIds"].append(casted)
-                else:
-                    sorted_mid = sorted(mid, key=lambda x: x["Column"])
-                    query_columns = list(map(lambda x: x["Column"], sorted_mid))
-                    result = find_in_dict(results, "Columns", query_columns)
-                    composite_match = list(
-                        map(
-                            lambda x: cast_to_type(x["Value"], x["Column"], table),
-                            sorted_mid,
-                        )
-                    )
-                    if not result:
-                        results.append(
-                            {
-                                "Columns": query_columns,
-                                "MatchIds": [composite_match],
-                                "Type": "Composite",
-                            }
-                        )
-                    elif composite_match not in result["MatchIds"]:
-                        result["MatchIds"].append(composite_match)
-            query["Columns"] = results
-            filtered.append(query)
-    return filtered
+    applicable_match_ids = [
+        item["MatchId"]
+        for item in deletion_items
+        if msg["DataMapperId"] in item.get("DataMappers", [])
+        or len(item.get("DataMappers", [])) == 0
+    ]
+    if len(applicable_match_ids) == 0:
+        return []
+
+    # Compile a list of MatchIds grouped by Column
+    columns_with_matches = {}
+    for mid in applicable_match_ids:
+        is_simple = not isinstance(mid, list)
+        if is_simple:
+            for column in msg["Columns"]:
+                casted = cast_to_type(mid, column, table)
+                if column not in columns_with_matches:
+                    columns_with_matches[column] = {
+                        "Column": column,
+                        "MatchIds": [casted],
+                        "Type": "Simple",
+                    }
+                elif casted not in columns_with_matches[column]["MatchIds"]:
+                    columns_with_matches[column]["MatchIds"].append(casted)
+        else:
+            sorted_mid = sorted(mid, key=lambda x: x["Column"])
+            query_columns = list(map(lambda x: x["Column"], sorted_mid))
+            column_key = COMPOSITE_JOIN_TOKEN.join(query_columns)
+            composite_match = list(
+                map(lambda x: cast_to_type(x["Value"], x["Column"], table), sorted_mid)
+            )
+            if column_key not in columns_with_matches:
+                columns_with_matches[column_key] = {
+                    "Columns": query_columns,
+                    "MatchIds": [composite_match],
+                    "Type": "Composite",
+                }
+            elif composite_match not in columns_with_matches[column_key]["MatchIds"]:
+                columns_with_matches[column_key]["MatchIds"].append(composite_match)
+    msg["Columns"] = list(columns_with_matches.values())
+
+    if len(partition_keys) == 0:
+        return [msg]
+
+    # For every partition combo of every table, create a query
+    return list(
+        map(
+            lambda x: {
+                **msg,
+                "PartitionKeys": [
+                    {
+                        "Key": partition_keys[i],
+                        "Value": cast_to_type(v, partition_keys[i], table, True),
+                    }
+                    for i, v in enumerate(x["Values"])
+                ],
+            },
+            get_partitions(db, table_name),
+        )
+    )
 
 
 def get_deletion_queue(job_id):
@@ -351,7 +344,3 @@ def cast_to_type(val, col, table, is_partition=False):
         return float(val)
 
     return str(val)
-
-
-def find_in_dict(d, key, value):
-    return next(iter([x for x in d if x.get(key) == value]), None)
