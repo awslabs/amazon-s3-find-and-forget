@@ -32,9 +32,7 @@ following command:
 make deploy \
   REGION=<aws-region> \
   ADMIN_EMAIL=<your-email-address> \
-  TEMP_BUCKET=<temp-bucket-name> \
-  SUBNETS=<comma-separated-subnet-ids> \
-  SEC_GROUPS=<comma-separated-security-group-ids>
+  TEMP_BUCKET=<temp-bucket-name>
 ```
 
 > For information on how to obtain your subnet and security group IDs, see
