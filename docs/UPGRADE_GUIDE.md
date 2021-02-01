@@ -14,11 +14,12 @@ Starting from v0.22, the queue is processed asynchronously after job creation
 and is stored in S3 in order to remove the queue limit. As a result:
 
 1. The fields `DeletionQueueItemsSkipped` and `DeletionQueueItems` are both
-   deprecated from the Job API.
+   removed from the `GET /jobs/{job_id}` and `DELETE /queue` APIs.
 2. A new Job Event is created when the Query Planning ends called
    `QueryPlanningComplete`, containing details of the query planning phase.
 3. After Query Planning, the `QueryPlanningComplete` event's payload is
-   available in the Job API for a quick lookup of the properties:
+   available in the `GET /jobs/{job_id}` API for a quick lookup of the
+   properties:
    - `GeneratedQueries` is the number of queries planned for execution
    - `DeletionQueueSize` is the size of the queue for the Job
    - `Manifests` is an array of S3 Objects containing the location for the Job
@@ -28,7 +29,7 @@ and is stored in S3 in order to remove the queue limit. As a result:
 4. The manifests follow the same expiration policy as the Job Details (they will
    get automatically removed if the `JobDetailsRetentionDays` parameter is
    configured when installing the solution).
-5. If you relied on the deprecated `DeletionQueueItems` parameter to inspect the
+5. If you relied on the removed `DeletionQueueItems` parameter to inspect the
    Job's queue, you'll need to migrate to fetching the S3 Manifests.
 
 ## Migrating from <=v0.8 to 0.9

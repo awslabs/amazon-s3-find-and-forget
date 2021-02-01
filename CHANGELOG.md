@@ -1,6 +1,15 @@
 # Change Log
 
-## v0.21 (unreleased)
+## v0.22 (unreleased)
+
+> This version introduces breaking changes on the API. Please visit the
+> [Migrating from <=v0.21 to 0.22 chapter](docs/UPGRADE_GUIDE.md#migrating-from-v021-to-22)
+> in the upgrade guide.
+
+- [#TODO](https://github.com/awslabs/amazon-s3-find-and-forget/pull/TODO):
+  Remove limit on queue size for individual jobs.
+
+## v0.21
 
 - [#232](https://github.com/awslabs/amazon-s3-find-and-forget/pull/232): Fix for
   a bug affecting the Frontend not rendering the Data Mappers list when a Glue
@@ -108,6 +117,11 @@
   duplicated query executions during Find Phase
 
 ## v0.9
+
+> This version introduces breaking changes on the CloudFormation templates.
+> Please visit the
+> [Migrating from <=v0.8 to 0.9 chapter](docs/UPGRADE_GUIDE.md#migrating-from-v08-to-09)
+> in the upgrade guide.
 
 - [#189](https://github.com/awslabs/amazon-s3-find-and-forget/pull/189): UI
   Updates

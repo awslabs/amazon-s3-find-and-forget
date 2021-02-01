@@ -1,5 +1,5 @@
 """
-Task for generating Athena queries from glue catalogsm aka Query Planning
+Task for generating Athena queries from glue catalog aka Query Planning
 """
 import json
 import os
@@ -24,6 +24,8 @@ glue_table = os.getenv("JobManifestsGlueTable", "s3f2_manifests_table")
 
 COMPOSITE_JOIN_TOKEN = "_S3F2COMP_"
 MANIFEST_KEY = "manifests/{job_id}/{data_mapper_id}/manifest.json"
+
+COMPOSITE_JOIN_TOKEN = "_S3F2COMP_"
 
 ARRAYSTRUCT = "array<struct>"
 ARRAYSTRUCT_PREFIX = "array<struct<"
@@ -158,7 +160,8 @@ def generate_athena_queries(data_mapper, deletion_items, job_id):
     if len(applicable_match_ids) == 0:
         return []
 
-    results = []
+    # Compile a list of MatchIds grouped by Column
+    columns_with_matches = {}
     manifest = ""
     for item in applicable_match_ids:
         mid = item["MatchId"]
@@ -167,22 +170,27 @@ def generate_athena_queries(data_mapper, deletion_items, job_id):
         if is_simple:
             for column in msg["Columns"]:
                 casted = cast_to_type(mid, column, table)
-                result = find_in_dict(results, "Column", column)
-                if not result:
-                    results.append({"Column": column, "Type": "Simple"})
+                if column not in columns_with_matches:
+                    columns_with_matches[column] = {
+                        "Column": column,
+                        "Type": "Simple",
+                    }
                 manifest += build_manifest_row([column], casted, item_id)
         else:
             sorted_mid = sorted(mid, key=lambda x: x["Column"])
             query_columns = list(map(lambda x: x["Column"], sorted_mid))
-            result = find_in_dict(results, "Columns", query_columns)
+            column_key = COMPOSITE_JOIN_TOKEN.join(query_columns)
             composite_match = list(
-                map(lambda x: cast_to_type(x["Value"], x["Column"], table), sorted_mid,)
+                map(lambda x: cast_to_type(x["Value"], x["Column"], table), sorted_mid)
             )
-            if not result:
-                results.append({"Columns": query_columns, "Type": "Composite"})
+            if column_key not in columns_with_matches:
+                columns_with_matches[column_key] = {
+                    "Columns": query_columns,
+                    "Type": "Composite",
+                }
             manifest += build_manifest_row(query_columns, composite_match, item_id)
     s3.Bucket(state_bucket_name).put_object(Body=manifest, Key=manifest_key)
-    msg["Columns"] = results
+    msg["Columns"] = list(columns_with_matches.values())
     msg["Manifest"] = "s3://{}/{}".format(state_bucket_name, manifest_key)
 
     if len(partition_keys) == 0:
@@ -455,7 +463,3 @@ def cast_to_type(val, col, table, is_partition=False):
         return float(val)
 
     return str(val)
-
-
-def find_in_dict(d, key, value):
-    return next(iter([x for x in d if x.get(key) == value]), None)
