@@ -24,7 +24,6 @@ def handler(event, context):
         },
         WorkGroup=os.getenv("WorkGroup", "primary"),
     )
-
     return response["QueryExecutionId"]
 
 
@@ -72,7 +71,7 @@ def make_query(query_data):
         ({column_filters})
     """
     single_column_template = '({}=m."queryablematchid" AND m."queryablecolumns"=\'{}\')'
-    multiple_columns_template = "concat({}) in ({})"
+    cast_as_str = "cast(t.{} as varchar)"
     columns_composite_join_token = ", '{}', ".format(COMPOSITE_JOIN_TOKEN)
 
     db, table, columns, data_mapper_id, job_id = itemgetter(
@@ -86,9 +85,9 @@ def make_query(query_data):
             column_filters += " OR "
         is_simple = col["Type"] == "Simple"
         queryable_matches = (
-            "cast(t.{} as varchar)".format(escape_column(col["Column"]))
+            cast_as_str.format(escape_column(col["Column"]))
             if is_simple
-            else "cast(t.{} as varchar)".format(escape_column(col["Columns"][0]))
+            else cast_as_str.format(escape_column(col["Columns"][0]))
             if len(col["Columns"]) == 1
             else "concat({})".format(
                 columns_composite_join_token.join(
@@ -102,7 +101,6 @@ def make_query(query_data):
         column_filters += single_column_template.format(
             queryable_matches, queryable_columns
         )
-
     for partition in partitions:
         template += " AND {key} = {value} ".format(
             key=escape_column(partition["Key"]), value=escape_item(partition["Value"])
