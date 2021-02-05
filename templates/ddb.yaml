@@ -28,6 +28,8 @@ Resources:
     DeletionPolicy: Delete
     UpdateReplacePolicy: Delete
     Properties:
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
       AttributeDefinitions:
         -
           AttributeName: DeletionQueueItemId
@@ -50,6 +52,8 @@ Resources:
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
     Properties:
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
       AttributeDefinitions:
         -
           AttributeName: DeletionQueueItemId
@@ -218,6 +222,11 @@ Outputs:
       - ShouldRetainTables
       - !Ref DeletionQueueTableRetain
       - !Ref DeletionQueueTableNotRetain
+  DeletionQueueTableStreamArn:
+    Value: !If
+      - ShouldRetainTables
+      - !GetAtt DeletionQueueTableRetain.StreamArn
+      - !GetAtt DeletionQueueTableNotRetain.StreamArn
   DataMapperTable:
     Value: !If
       - ShouldRetainTables

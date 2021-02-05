@@ -342,6 +342,8 @@ Outputs:
     Value: !Ref APIStack
   ApiUrl:
     Value: !GetAtt APIStack.Outputs.ApiUrl
+    Export:
+      Name: !Sub ${ResourcePrefix}-ApiUrl
   AthenaStateMachineArn:
     Value: !GetAtt StateMachineStack.Outputs.AthenaStateMachineArn
   AthenaExecutionRoleArn:
@@ -362,6 +364,10 @@ Outputs:
     Value: !GetAtt DelStack.Outputs.DeleteTaskRoleArn
   DeletionQueueTable:
     Value: !GetAtt DDBStack.Outputs.DeletionQueueTable
+  DeletionQueueTableStreamArn:
+    Value: !GetAtt DDBStack.Outputs.DeletionQueueTableStreamArn
+    Export:
+      Name: !Sub ${ResourcePrefix}-DeletionQueueTableStreamArn
   DeletionQueueUrl:
     Value: !GetAtt DelStack.Outputs.DeleteObjectsQueueUrl
   DLQUrl:
