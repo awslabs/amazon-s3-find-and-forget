@@ -26,11 +26,8 @@ import {
 
 const COUNTDOWN_INTERVAL = 10;
 
-// TODO: Cleanup
-
 const DeletionJob = ({ gateway, jobId }) => {
   const [countDownLeft, setCountDownLeft] = useState(COUNTDOWN_INTERVAL);
-  const [deletionQueueShown, showDeletionQueue] = useState(false);
   const [errorDetails, setErrorDetails] = useState(undefined);
   const [eventsErrorDetails, setEventsErrorDetails] = useState(undefined);
   const [eventsState, setEventsState] = useState("initial");
@@ -149,6 +146,8 @@ const DeletionJob = ({ gateway, jobId }) => {
     setExportState("initial");
   };
 
+  const isLegacy = (job) => !isUndefined(job.DeletionQueueItems);
+
   return (
     <>
       <div className="page-table">
@@ -209,7 +208,9 @@ const DeletionJob = ({ gateway, jobId }) => {
             </DetailsBox>
             <DetailsBox label="Deletion Queue Size" fullWidth>
               {isUndefined(job.DeletionQueueSize)
-                ? "Unknown (Planning pending)"
+                ? isLegacy(job)
+                  ? job.DeletionQueueItems.length
+                  : "Unknown (Planning pending)"
                 : job.DeletionQueueSize}
             </DetailsBox>
             <DetailsBox label="Start Time">
@@ -220,7 +221,9 @@ const DeletionJob = ({ gateway, jobId }) => {
             </DetailsBox>
             <DetailsBox label="Total Executed Query Count" noSeparator>
               {isUndefined(job.GeneratedQueries)
-                ? "-"
+                ? isLegacy(job)
+                  ? job.TotalQueryCount
+                  : "-"
                 : `${job.TotalQueryCount}/${job.GeneratedQueries}`}
             </DetailsBox>
             <DetailsBox
@@ -300,12 +303,7 @@ const DeletionJob = ({ gateway, jobId }) => {
             show={!isEmpty(selectedEvent)}
             title={selectedEvent && `Job Event: ${selectedEvent.Sk}`}
           />
-          <JsonModal
-            object={job.DeletionQueueItems}
-            onHide={() => showDeletionQueue(false)}
-            show={deletionQueueShown}
-            title={job && `Deletion Queue for job: ${job.Id}`}
-          />
+
           <div className="page-table">
             <Row>
               <Col>

@@ -31,6 +31,8 @@ and is stored in S3 in order to remove the queue limit. As a result:
    configured when installing the solution).
 5. If you relied on the removed `DeletionQueueItems` parameter to inspect the
    Job's queue, you'll need to migrate to fetching the S3 Manifests.
+6. The deletion queue items are not visible in the UI anymore in the job details
+   page and in the job JSON export.
 
 ## Migrating from <=v0.8 to 0.9
 
