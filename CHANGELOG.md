@@ -1,6 +1,6 @@
 # Change Log
 
-## v0.22 (unreleased)
+## v0.22
 
 - [#236](https://github.com/awslabs/amazon-s3-find-and-forget/pull/236): Export
   API Gateway URL + Deletion Queue Table Stream ARN from main CloudFormation
