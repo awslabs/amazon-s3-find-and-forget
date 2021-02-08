@@ -15,6 +15,7 @@ Forget solution.
   - [Logging in for the first time](#logging-in-for-the-first-time)
   - [Managing users](#managing-users)
   - [Making authenticated API requests](#making-authenticated-api-requests)
+  - [Integrating the solution with other applications using CloudFormation stack outputs](#integrating-the-solution-with-other-applications-using-cloudformation-stack-outputs)
 - [Configuring Data Mappers](#configuring-data-mappers)
   - [AWS Lake Formation Configuration](#aws-lake-formation-configuration)
   - [Data Mapper Creation](#data-mapper-creation)
@@ -317,6 +318,22 @@ requests using the AWS CLI:
    ```
 
 For more information, consult the [Cognito REST API integration guide].
+
+### Integrating the solution with other applications using CloudFormation stack outputs
+
+Applications deployed as CloudFormation stacks in the same AWS account and
+region can share information by importing and exporting output values. You can
+use the solution stack as a nested stack to use its outputs (such as the API
+url) as input for another application. Alternatively, you can use some of the
+exported values for deploying separate stacks.
+
+After another stack imports an output value, you can't delete the stack that is
+exporting the output value or modify the exported output value. All of the
+imports must be removed before you can delete the exporting stack or modify the
+output value.
+
+Consult the [exporting stack output values] guide and review the differences
+between importing exported values vs using nested stacks.
 
 ## Configuring Data Mappers
 
@@ -830,3 +847,5 @@ To delete a stack via the AWS CLI
   https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-invoke-api-integrated-with-cognito-user-pool.html
 [lake formation data permissions console]:
   https://docs.aws.amazon.com/lake-formation/latest/dg/granting-catalog-permissions.html
+[exporting stack output values]:
+  https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-stack-exports.html
