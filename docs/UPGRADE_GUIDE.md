@@ -1,6 +1,6 @@
 # Upgrade Guide
 
-## Migrating from <=v0.22 to 0.23
+## Migrating from <=v0.22 to v0.23
 
 Prior to v0.22, the Deletion Queue was synchronously processed on Job Creation
 and stored in DynamoDB. As a result, the job API provided the full queue for a
@@ -34,7 +34,7 @@ and is stored in S3 in order to remove the queue limit. As a result:
 6. The deletion queue items are not visible in the UI anymore in the job details
    page and in the job JSON export.
 
-## Migrating from <=v0.8 to 0.9
+## Migrating from <=v0.8 to v0.9
 
 The default behaviour of the solution has been changed in v0.9 to deploy and use
 a purpose-built VPC when creating the solution CloudFormation stack.

@@ -2,9 +2,9 @@
 
 ## v0.23 (unreleased)
 
-> This version introduces breaking changes on the API. Please visit the
-> [Migrating from <=v0.22 to 0.23 chapter](docs/UPGRADE_GUIDE.md#migrating-from-v022-to-23)
-> in the upgrade guide.
+> This version introduces breaking changes to the API and Web UI. Please consult
+> the
+> [migrating from <=v0.22 to v0.23 guide](docs/UPGRADE_GUIDE.md#migrating-from-v022-to-v023)
 
 - [#TODO](https://github.com/awslabs/amazon-s3-find-and-forget/pull/TODO):
   Remove limit on queue size for individual jobs.
@@ -124,10 +124,9 @@
 
 ## v0.9
 
-> This version introduces breaking changes on the CloudFormation templates.
-> Please visit the
-> [Migrating from <=v0.8 to 0.9 chapter](docs/UPGRADE_GUIDE.md#migrating-from-v08-to-09)
-> in the upgrade guide.
+> This version introduces breaking changes to the CloudFormation templates.
+> Please consult the
+> [migrating from <=v0.8 to v0.9 guide](docs/UPGRADE_GUIDE.md#migrating-from-v08-to-v09)
 
 - [#189](https://github.com/awslabs/amazon-s3-find-and-forget/pull/189): UI
   Updates
