@@ -321,19 +321,22 @@ For more information, consult the [Cognito REST API integration guide].
 
 ### Integrating the solution with other applications using CloudFormation stack outputs
 
-Applications deployed as CloudFormation stacks in the same AWS account and
-region can share information by importing and exporting output values. You can
-use the solution stack as a nested stack to use its outputs (such as the API
-url) as input for another application. Alternatively, you can use some of the
-exported values for deploying separate stacks.
+Applications deployed using AWS CloudFormation in the same AWS account and
+region can integrate with Find and Forget by using CloudFormation output
+values. You can use the solution stack as a nested stack to use its outputs
+(such as the API URL) as inputs for another application. 
 
-After another stack imports an output value, you can't delete the stack that is
-exporting the output value or modify the exported output value. All of the
-imports must be removed before you can delete the exporting stack or modify the
-output value.
+Some outputs are also available as exports. You can import these values to use
+in your own CloudFormation stacks that you deploy following the Find and Forget
+stack.
 
-Consult the [exporting stack output values] guide and review the differences
-between importing exported values vs using nested stacks.
+**Note for using exports:** After another stack imports an output value, you
+can't delete the stack that is exporting the output value or modify the
+exported output value. All of the imports must be removed before you can delete
+the exporting stack or modify the output value.
+
+Consult the [exporting stack output values] guide to review the differences
+between importing exported values and using nested stacks. 
 
 ## Configuring Data Mappers
 
