@@ -1,6 +1,6 @@
 # Upgrade Guide
 
-## Migrating from <=v0.21 to 0.22
+## Migrating from <=v0.22 to 0.23
 
 Prior to v0.22, the Deletion Queue was synchronously processed on Job Creation
 and stored in DynamoDB. As a result, the job API provided the full queue for a

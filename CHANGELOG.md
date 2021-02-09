@@ -1,13 +1,19 @@
 # Change Log
 
-## v0.22 (unreleased)
+## v0.23 (unreleased)
 
 > This version introduces breaking changes on the API. Please visit the
-> [Migrating from <=v0.21 to 0.22 chapter](docs/UPGRADE_GUIDE.md#migrating-from-v021-to-22)
+> [Migrating from <=v0.22 to 0.23 chapter](docs/UPGRADE_GUIDE.md#migrating-from-v022-to-23)
 > in the upgrade guide.
 
 - [#TODO](https://github.com/awslabs/amazon-s3-find-and-forget/pull/TODO):
   Remove limit on queue size for individual jobs.
+
+## v0.22
+
+- [#236](https://github.com/awslabs/amazon-s3-find-and-forget/pull/236): Export
+  API Gateway URL + Deletion Queue Table Stream ARN from main CloudFormation
+  Template
 
 ## v0.21
 

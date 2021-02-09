@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
-Description: Amazon S3 Find and Forget (uksb-1q2j8beb0) (version:v0.21)
+Description: Amazon S3 Find and Forget (uksb-1q2j8beb0) (version:v0.22)
 
 Parameters:
   AccessControlAllowOriginOverride:
@@ -135,7 +135,7 @@ Conditions:
 Mappings:
   Solution:
     Constants:
-      Version: 'v0.21'
+      Version: 'v0.22'
 
 Resources:
   TempBucket:
@@ -384,6 +384,8 @@ Outputs:
     Value: !Ref APIStack
   ApiUrl:
     Value: !GetAtt APIStack.Outputs.ApiUrl
+    Export:
+      Name: !Sub ${ResourcePrefix}-ApiUrl
   AthenaStateMachineArn:
     Value: !GetAtt StateMachineStack.Outputs.AthenaStateMachineArn
   AthenaExecutionRoleArn:
@@ -404,6 +406,10 @@ Outputs:
     Value: !GetAtt DelStack.Outputs.DeleteTaskRoleArn
   DeletionQueueTable:
     Value: !GetAtt DDBStack.Outputs.DeletionQueueTable
+  DeletionQueueTableStreamArn:
+    Value: !GetAtt DDBStack.Outputs.DeletionQueueTableStreamArn
+    Export:
+      Name: !Sub ${ResourcePrefix}-DeletionQueueTableStreamArn
   DeletionQueueUrl:
     Value: !GetAtt DelStack.Outputs.DeleteObjectsQueueUrl
   DLQUrl:
