@@ -1,13 +1,18 @@
 # Change Log
 
-## v0.23 (unreleased)
+## v0.24 (unreleased)
 
 > This version introduces breaking changes to the API and Web UI. Please consult
 > the
-> [migrating from <=v0.22 to v0.23 guide](docs/UPGRADE_GUIDE.md#migrating-from-v022-to-v023)
+> [migrating from <=v0.23 to v0.24 guide](docs/UPGRADE_GUIDE.md#migrating-from-v023-to-v024)
 
 - [#TODO](https://github.com/awslabs/amazon-s3-find-and-forget/pull/TODO):
   Remove limit on queue size for individual jobs.
+
+## v0.23
+
+- [#238](https://github.com/awslabs/amazon-s3-find-and-forget/pull/238): Upgrade
+  frontend dependencies
 
 ## v0.22
 

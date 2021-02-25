@@ -12,13 +12,13 @@
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
-    "aws-amplify": "^3.0.20",
+    "aws-amplify": "^3.3.20",
     "bootstrap": "^4.4.1",
     "react": "^16.13.1",
     "react-bootstrap": "^1.0.0",
     "react-dom": "^16.13.1",
-    "react-json-view": "^1.19.1",
-    "react-scripts": "^4.0.1"
+    "react-json-view": "^1.21.1",
+    "react-scripts": "^4.0.3"
   },
   "scripts": {
     "build": "REACT_APP_REPO_URL=$npm_package_repository_url SKIP_PREFLIGHT_CHECK=true react-scripts build",
