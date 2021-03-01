@@ -149,7 +149,13 @@ Resources:
               SSEAlgorithm: AES256
       LifecycleConfiguration:
         Rules:
-          - Id: ExpireContents
+          - Id: ExpireCodeArtifactBuildPackages
+            Prefix: build/
+            Status: Enabled
+            ExpirationInDays: 1
+            NoncurrentVersionExpirationInDays: 1
+          - Id: ExpireAthenaQueryResults
+            Prefix: queries/
             Status: Enabled
             ExpirationInDays: 1
             NoncurrentVersionExpirationInDays: 1
