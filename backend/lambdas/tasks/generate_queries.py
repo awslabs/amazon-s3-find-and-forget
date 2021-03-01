@@ -18,7 +18,7 @@ queue = sqs.Queue(os.getenv("QueryQueue"))
 jobs_table = ddb.Table(os.getenv("JobTable", "S3F2_Jobs"))
 data_mapper_table_name = os.getenv("DataMapperTable", "S3F2_DataMappers")
 deletion_queue_table_name = os.getenv("DeletionQueueTable", "S3F2_DeletionQueue")
-state_bucket_name = os.getenv("StateBucket", "S3F2-temp-bucket")
+manifests_bucket_name = os.getenv("ManifestsBucket", "S3F2-manifests-bucket")
 glue_db = os.getenv("GlueDatabase", "s3f2_manifests_database")
 glue_table = os.getenv("JobManifestsGlueTable", "s3f2_manifests_table")
 
@@ -55,10 +55,11 @@ def handler(event, context):
     data_mappers = get_data_mappers()
     total_queries = 0
     for data_mapper in data_mappers:
-        manifests_partitions.append([job_id, data_mapper["DataMapperId"]])
         query_executor = data_mapper["QueryExecutor"]
         if query_executor == "athena":
             queries = generate_athena_queries(data_mapper, deletion_items, job_id)
+            if len(queries) > 0:
+                manifests_partitions.append([job_id, data_mapper["DataMapperId"]])
         else:
             raise NotImplementedError(
                 "Unsupported data mapper query executor: '{}'".format(query_executor)
@@ -73,7 +74,7 @@ def handler(event, context):
         "Manifests": list(
             map(
                 lambda x: "s3://{}/{}".format(
-                    state_bucket_name,
+                    manifests_bucket_name,
                     MANIFEST_KEY.format(job_id=x[0], data_mapper_id=x[1]),
                 ),
                 manifests_partitions,
@@ -189,9 +190,9 @@ def generate_athena_queries(data_mapper, deletion_items, job_id):
                     "Type": "Composite",
                 }
             manifest += build_manifest_row(query_columns, composite_match, item_id)
-    s3.Bucket(state_bucket_name).put_object(Body=manifest, Key=manifest_key)
+    s3.Bucket(manifests_bucket_name).put_object(Body=manifest, Key=manifest_key)
     msg["Columns"] = list(columns_with_matches.values())
-    msg["Manifest"] = "s3://{}/{}".format(state_bucket_name, manifest_key)
+    msg["Manifest"] = "s3://{}/{}".format(manifests_bucket_name, manifest_key)
 
     if len(partition_keys) == 0:
         return [msg]
@@ -248,13 +249,14 @@ def write_partitions(partitions):
     In order for the manifests to be used by Athena in a JOIN, we make them
     available as partitions with Job a DataMapperId tuple.
     """
-    return glue_client.batch_create_partition(
-        DatabaseName=glue_db,
-        TableName=glue_table,
-        PartitionInputList=list(
-            map(
-                lambda x: {
-                    "Values": x,
+    max_create_batch_size = 100
+    for i in range(0, len(partitions), max_create_batch_size):
+        glue_client.batch_create_partition(
+            DatabaseName=glue_db,
+            TableName=glue_table,
+            PartitionInputList=[
+                {
+                    "Values": partition_tuple,
                     "StorageDescriptor": {
                         "Columns": [
                             {"Name": "columns", "Type": "array<string>"},
@@ -264,7 +266,9 @@ def write_partitions(partitions):
                             {"Name": "queryablematchid", "Type": "string"},
                         ],
                         "Location": "s3://{}/manifests/{}/{}/".format(
-                            state_bucket_name, x[0], x[1]
+                            manifests_bucket_name,
+                            partition_tuple[0],
+                            partition_tuple[1],
                         ),
                         "InputFormat": "org.apache.hadoop.mapred.TextInputFormat",
                         "OutputFormat": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
@@ -274,11 +278,10 @@ def write_partitions(partitions):
                         },
                         "StoredAsSubDirectories": False,
                     },
-                },
-                partitions,
-            )
-        ),
-    )
+                }
+                for partition_tuple in partitions[i : i + max_create_batch_size]
+            ],
+        )
 
 
 def get_inner_children(str, prefix, suffix):

@@ -46,7 +46,7 @@ def test_it_generates_queries_writes_manifests_populates_queue_and_returns_resul
             "Columns": [{"Column": "customer_id"}],
             "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
             "DeleteOldVersions": True,
-            "Manifest": "s3://S3F2-temp-bucket/manifests/test/a/manifest.json",
+            "Manifest": "s3://S3F2-manifests-bucket/manifests/test/a/manifest.json",
         }
     ]
     data_mapper = {
@@ -72,7 +72,7 @@ def test_it_generates_queries_writes_manifests_populates_queue_and_returns_resul
     assert result == {
         "GeneratedQueries": 1,
         "DeletionQueueSize": 1,
-        "Manifests": ["s3://S3F2-temp-bucket/manifests/test/a/manifest.json"],
+        "Manifests": ["s3://S3F2-manifests-bucket/manifests/test/a/manifest.json"],
     }
 
 
@@ -144,7 +144,7 @@ class TestAthenaQueries:
                 "Columns": [{"Column": "customer_id", "Type": "Simple"}],
                 "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
                 "DeleteOldVersions": True,
-                "Manifest": "s3://S3F2-temp-bucket/manifests/job_1234567890/a/manifest.json",
+                "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
             }
         ]
         put_object_mock.put_object.assert_called_with(
@@ -204,7 +204,7 @@ class TestAthenaQueries:
                 "Columns": [{"Column": "customer_id", "Type": "Simple",}],
                 "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
                 "DeleteOldVersions": True,
-                "Manifest": "s3://S3F2-temp-bucket/manifests/job_1234567890/a/manifest.json",
+                "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
             }
         ]
         put_object_mock.put_object.assert_called_with(
@@ -275,7 +275,7 @@ class TestAthenaQueries:
                 "Columns": [{"Column": "customer_id", "Type": "Simple"}],
                 "PartitionKeys": [{"Key": "year", "Value": 2010}],
                 "DeleteOldVersions": True,
-                "Manifest": "s3://S3F2-temp-bucket/manifests/job_1234567890/a/manifest.json",
+                "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
             }
         ]
         put_object_mock.put_object.assert_called_with(
@@ -336,7 +336,7 @@ class TestAthenaQueries:
                 ],
                 "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
                 "DeleteOldVersions": True,
-                "Manifest": "s3://S3F2-temp-bucket/manifests/job_1234567890/a/manifest.json",
+                "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
             }
         ]
         put_object_mock.put_object.assert_called_with(
@@ -421,7 +421,7 @@ class TestAthenaQueries:
                 ],
                 "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
                 "DeleteOldVersions": True,
-                "Manifest": "s3://S3F2-temp-bucket/manifests/job_1234567890/a/manifest.json",
+                "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
             }
         ]
         put_object_mock.put_object.assert_called_with(
@@ -533,7 +533,7 @@ class TestAthenaQueries:
                 ],
                 "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
                 "DeleteOldVersions": True,
-                "Manifest": "s3://S3F2-temp-bucket/manifests/job1234567890/a/manifest.json",
+                "Manifest": "s3://S3F2-manifests-bucket/manifests/job1234567890/a/manifest.json",
             }
         ]
         put_object_mock.put_object.assert_called_with(
@@ -757,7 +757,7 @@ class TestAthenaQueries:
                     {"Key": "month", "Value": "01"},
                 ],
                 "DeleteOldVersions": True,
-                "Manifest": "s3://S3F2-temp-bucket/manifests/job_1234567890/a/manifest.json",
+                "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
             }
         ]
         put_object_mock.put_object.assert_called_with(
@@ -821,7 +821,7 @@ class TestAthenaQueries:
                     {"Key": "month", "Value": "12"},
                 ],
                 "DeleteOldVersions": True,
-                "Manifest": "s3://S3F2-temp-bucket/manifests/job_1234567890/a/manifest.json",
+                "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
             },
             {
                 "DataMapperId": "a",
@@ -835,7 +835,7 @@ class TestAthenaQueries:
                     {"Key": "month", "Value": "01"},
                 ],
                 "DeleteOldVersions": True,
-                "Manifest": "s3://S3F2-temp-bucket/manifests/job_1234567890/a/manifest.json",
+                "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
             },
             {
                 "DataMapperId": "a",
@@ -849,7 +849,7 @@ class TestAthenaQueries:
                     {"Key": "month", "Value": "02"},
                 ],
                 "DeleteOldVersions": True,
-                "Manifest": "s3://S3F2-temp-bucket/manifests/job_1234567890/a/manifest.json",
+                "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
             },
         ]
         put_object_mock.put_object.assert_called_with(
@@ -916,7 +916,7 @@ class TestAthenaQueries:
                 ],
                 "RoleArn": "arn:aws:iam::accountid:role/rolename",
                 "DeleteOldVersions": True,
-                "Manifest": "s3://S3F2-temp-bucket/manifests/job_1234567890/a/manifest.json",
+                "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
             },
             {
                 "DataMapperId": "a",
@@ -931,7 +931,7 @@ class TestAthenaQueries:
                 ],
                 "RoleArn": "arn:aws:iam::accountid:role/rolename",
                 "DeleteOldVersions": True,
-                "Manifest": "s3://S3F2-temp-bucket/manifests/job_1234567890/a/manifest.json",
+                "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
             },
         ]
         put_object_mock.put_object.assert_called_with(
@@ -994,7 +994,7 @@ class TestAthenaQueries:
                 "Columns": [{"Column": "customer_id", "Type": "Simple"}],
                 "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
                 "DeleteOldVersions": True,
-                "Manifest": "s3://S3F2-temp-bucket/manifests/job_1234567890/B/manifest.json",
+                "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/B/manifest.json",
             }
         ]
         put_object_mock.put_object.assert_called_with(
@@ -1049,7 +1049,7 @@ class TestAthenaQueries:
                 "Columns": [{"Column": "customer_id", "Type": "Simple"}],
                 "PartitionKeys": [],
                 "DeleteOldVersions": True,
-                "Manifest": "s3://S3F2-temp-bucket/manifests/job_1234567890/a/manifest.json",
+                "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
             }
         ]
         put_object_mock.put_object.assert_called_with(
@@ -1106,7 +1106,7 @@ class TestAthenaQueries:
                 "PartitionKeys": [],
                 "RoleArn": "arn:aws:iam::accountid:role/rolename",
                 "DeleteOldVersions": True,
-                "Manifest": "s3://S3F2-temp-bucket/manifests/job_1234567890/a/manifest.json",
+                "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
             }
         ]
         put_object_mock.put_object.assert_called_with(
@@ -1365,7 +1365,7 @@ def test_it_writes_glue_partitions(glue_client):
                         {"Name": "queryablecolumns", "Type": "string"},
                         {"Name": "queryablematchid", "Type": "string"},
                     ],
-                    "Location": "s3://S3F2-temp-bucket/manifests/job_1234/dm_0001/",
+                    "Location": "s3://S3F2-manifests-bucket/manifests/job_1234/dm_0001/",
                     "InputFormat": "org.apache.hadoop.mapred.TextInputFormat",
                     "OutputFormat": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
                     "Compressed": False,
@@ -1385,7 +1385,7 @@ def test_it_writes_glue_partitions(glue_client):
                         {"Name": "queryablecolumns", "Type": "string"},
                         {"Name": "queryablematchid", "Type": "string"},
                     ],
-                    "Location": "s3://S3F2-temp-bucket/manifests/job_1234/dm_0003/",
+                    "Location": "s3://S3F2-manifests-bucket/manifests/job_1234/dm_0003/",
                     "InputFormat": "org.apache.hadoop.mapred.TextInputFormat",
                     "OutputFormat": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
                     "Compressed": False,

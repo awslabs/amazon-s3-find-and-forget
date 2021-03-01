@@ -39,6 +39,7 @@ def test_it_recognises_jobs():
             }
         },
         "Job",
+        True,
     )
     assert not is_record_type(
         {
@@ -51,8 +52,9 @@ def test_it_recognises_jobs():
             }
         },
         "Job",
+        True,
     )
-    assert not is_record_type({"dynamodb": {}}, "Job")
+    assert not is_record_type({"dynamodb": {}}, "Job", True)
 
 
 def test_it_recognises_job_events():
@@ -67,6 +69,7 @@ def test_it_recognises_job_events():
             }
         },
         "JobEvent",
+        True,
     )
     assert not is_record_type(
         {
@@ -79,6 +82,7 @@ def test_it_recognises_job_events():
             }
         },
         "JobEvent",
+        True,
     )
 
 
@@ -92,7 +96,7 @@ def test_it_handles_job_records(mock_deserializer, mock_process, mock_is_record)
         "Sk": "job123",
         "Type": "Job",
     }
-    mock_is_record.side_effect = [True, False]
+    mock_is_record.side_effect = [True, False, False]
     handler(
         {
             "Records": [
@@ -128,7 +132,7 @@ def test_it_handles_job_event_records(
         "Sk": "123456",
         "Type": "JobEvent",
     }
-    mock_is_record.side_effect = [False, True]
+    mock_is_record.side_effect = [False, False, True]
     mock_status.return_value = {"JobStatus": "RUNNING"}
     mock_stats.return_value = {}
 
@@ -149,7 +153,7 @@ def test_it_handles_job_event_records(
         },
         SimpleNamespace(),
     )
-    mock_is_record.side_effect = [False, True]
+    mock_is_record.side_effect = [False, False, True]
 
     assert 1 == mock_status.call_count
     assert 1 == mock_stats.call_count
@@ -170,7 +174,7 @@ def test_it_does_not_update_status_if_stats_fails(
         "Type": "JobEvent",
     }
     mock_stats.side_effect = ValueError
-    mock_is_record.side_effect = [False, True]
+    mock_is_record.side_effect = [False, False, True]
 
     with pytest.raises(ValueError):
         handler(
@@ -233,7 +237,7 @@ def test_it_handles_already_existing_executions(mock_client, mock_is_record):
     e = boto3.client("stepfunctions").exceptions.ExecutionAlreadyExists
     mock_client.exceptions.ExecutionAlreadyExists = e
     mock_client.start_execution.side_effect = e({}, "ExecutionAlreadyExists")
-    mock_is_record.side_effect = [True, False]
+    mock_is_record.side_effect = [True, False, False]
     process_job(
         {
             "Id": "job123",
@@ -292,7 +296,7 @@ def test_it_handles_execution_failure(mock_emit, mock_client):
 def test_it_cleans_up_on_forget_complete(
     mock_deserializer, mock_emit, mock_clear, mock_status, mock_is_record
 ):
-    mock_is_record.side_effect = [False, True]
+    mock_is_record.side_effect = [False, False, True]
     mock_deserializer.return_value = {
         "Id": "job123",
         "Sk": "event123",
@@ -354,7 +358,9 @@ def test_it_emits_skipped_event_for_failures(
         {"Id": "job123", "Sk": "event123", "Type": "JobEvent", "JobStatus": status,}
         for status in locked_statuses
     ]
-    mock_is_record.side_effect = list(sum([(False, True) for _ in locked_statuses], ()))
+    mock_is_record.side_effect = list(
+        sum([(False, False, True) for _ in locked_statuses], ())
+    )
     for _ in locked_statuses:
         handler(
             {
@@ -402,7 +408,7 @@ def test_it_does_not_emit_skipped_event_for_non_failures(
         "COMPLETED",
         "COMPLETED_CLEANUP_FAILED",
     ]
-    mock_is_record.side_effect = list(sum([(False, True) for _ in statuses], ()))
+    mock_is_record.side_effect = list(sum([(False, False, True) for _ in statuses], ()))
     mock_status.side_effect = [
         {"Id": "job123", "Sk": "event123", "Type": "JobEvent", "JobStatus": status,}
         for status in statuses
@@ -442,7 +448,7 @@ def test_it_does_not_emit_skipped_event_for_non_failures(
 def test_it_emits_event_for_cleanup_error(
     mock_deserializer, mock_emit, mock_clear, mock_status, mock_is_record
 ):
-    mock_is_record.side_effect = [False, True]
+    mock_is_record.side_effect = [False, False, True]
     mock_deserializer.return_value = {
         "Id": "job123",
         "Sk": "event123",

@@ -16,6 +16,7 @@ from boto_utils import (
     emit_event,
     fetch_job_manifest,
     json_lines_iterator,
+    parse_s3_url,
     utc_timestamp,
 )
 from decorators import with_logging
@@ -23,29 +24,30 @@ from decorators import with_logging
 deserializer = TypeDeserializer()
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
+
 client = boto3.client("stepfunctions")
-state_machine_arn = getenv("StateMachineArn")
 ddb = boto3.resource("dynamodb")
+s3 = boto3.client("s3")
+glue = boto3.client("glue")
+
+state_machine_arn = getenv("StateMachineArn")
 q_table = ddb.Table(getenv("DeletionQueueTable"))
+glue_db = getenv("GlueDatabase", "s3f2_manifests_database")
+glue_table = getenv("JobManifestsGlueTable", "s3f2_manifests_table")
 
 
 @with_logging
 def handler(event, context):
     records = event["Records"]
-    new_jobs = [
-        deserialize_item(r["dynamodb"]["NewImage"])
-        for r in records
-        if is_record_type(r, "Job") and is_operation(r, "INSERT")
-    ]
-    events = [
-        deserialize_item(r["dynamodb"]["NewImage"])
-        for r in records
-        if is_record_type(r, "JobEvent") and is_operation(r, "INSERT")
-    ]
+    new_jobs = get_records(records, "Job", "INSERT")
+    deleted_jobs = get_records(records, "Job", "REMOVE", new_image=False)
+    events = get_records(records, "JobEvent", "INSERT")
     grouped_events = groupby(sorted(events, key=itemgetter("Id")), key=itemgetter("Id"))
-
     for job in new_jobs:
         process_job(job)
+
+    for job in deleted_jobs:
+        cleanup_manifests(job)
 
     for job_id, group in grouped_events:
         group = [i for i in group]
@@ -106,6 +108,27 @@ def process_job(job):
         )
 
 
+def cleanup_manifests(job):
+    logger.info("Removing job manifests and related partitions")
+    job_id = job["Id"]
+    partitions = []
+    for manifest in job.get("Manifests", []):
+        data_mapper_id = manifest.split("/")[5]
+        partitions.append([job_id, data_mapper_id])
+        bucket, key = parse_s3_url(manifest)
+        s3.delete_object(Bucket=bucket, Key=key)
+    max_deletion_batch_size = 25
+    for i in range(0, len(partitions), max_deletion_batch_size):
+        glue.batch_delete_partition(
+            DatabaseName=glue_db,
+            TableName=glue_table,
+            PartitionsToDelete=[
+                {"Values": partition_tuple}
+                for partition_tuple in partitions[i : i + max_deletion_batch_size]
+            ],
+        )
+
+
 def clear_deletion_queue(job):
     logger.info("Clearing successfully deleted matches")
     to_delete = set()
@@ -123,9 +146,17 @@ def is_operation(record, operation):
     return record.get("eventName") == operation
 
 
-def is_record_type(record, record_type):
-    new_image = record["dynamodb"].get("NewImage")
-    if not new_image:
+def is_record_type(record, record_type, new_image):
+    image = record["dynamodb"].get("NewImage" if new_image else "OldImage")
+    if not image:
         return False
-    item = deserialize_item(new_image)
+    item = deserialize_item(image)
     return item.get("Type") and item.get("Type") == record_type
+
+
+def get_records(records, record_type, operation, new_image=True):
+    return [
+        deserialize_item(r["dynamodb"].get("NewImage" if new_image else "OldImage", {}))
+        for r in records
+        if is_record_type(r, record_type, new_image) and is_operation(r, operation)
+    ]
