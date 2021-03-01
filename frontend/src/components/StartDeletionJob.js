@@ -16,16 +16,16 @@ const StartDeletionJob = ({ className, gateway, goToJobDetails }) => {
     setFormState("wait");
     setStarting(true);
     try {
-      const [{ Settings }, { MatchIds }, { DataMappers }] = await Promise.all([
+      const [{ Settings }, { DataMappers }] = await Promise.all([
         gateway.getSettings(),
-        gateway.getQueue(),
         gateway.getDataMappers()
       ]);
 
       setSummary({
-        "Deletion Queue Size": MatchIds.length,
         "Data Mappers Count": DataMappers.length,
-        "Job Details Retention (Days)": Settings.JobDetailsRetentionDays,
+        "Job Details Retention Policy": Settings.JobDetailsRetentionDays
+          ? `Retain for ${Settings.JobDetailsRetentionDay} days`
+          : "Retain indefinitely",
         "Athena Concurrency Limit": Settings.AthenaConcurrencyLimit,
         "Query Execution Wait Duration (Seconds)":
           Settings.QueryExecutionWaitSeconds,
