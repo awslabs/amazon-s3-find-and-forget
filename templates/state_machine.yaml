@@ -17,6 +17,7 @@ Globals:
         JobManifestsGlueTable: !Ref JobManifestsGlueTable
         JobTable: !Ref JobTableName
         StateBucket: !Ref ResultBucket
+        ManifestsBucket: !Ref ManifestsBucket
 
 Parameters:
   AthenaWorkGroup:
@@ -54,6 +55,8 @@ Parameters:
     - DEBUG
     - NOTSET
   JobManifestsGlueTable:
+    Type: String
+  ManifestsBucket:
     Type: String
   ResultBucket:
     Type: String
@@ -754,6 +757,8 @@ Resources:
         Variables:
           WorkGroup: !Ref AthenaWorkGroup
       Policies:
+      - S3ReadPolicy:
+          BucketName: !Ref ManifestsBucket
       - S3CrudPolicy:
           BucketName: !Ref ResultBucket
       - Statement:
@@ -843,7 +848,7 @@ Resources:
           QueryQueue: !Ref QueryQueue
       Policies:
       - S3CrudPolicy:
-          BucketName: !Ref ResultBucket
+          BucketName: !Ref ManifestsBucket
       - DynamoDBReadPolicy:
           TableName: !Ref JobTableName
       - DynamoDBReadPolicy:

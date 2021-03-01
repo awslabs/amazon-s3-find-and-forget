@@ -124,7 +124,7 @@ Resources:
         AttributeName: Expires
         Enabled: true
       StreamSpecification:
-        StreamViewType: NEW_IMAGE
+        StreamViewType: NEW_AND_OLD_IMAGES
       AttributeDefinitions:
         -
           AttributeName: Id
@@ -175,7 +175,7 @@ Resources:
         AttributeName: Expires
         Enabled: true
       StreamSpecification:
-        StreamViewType: NEW_IMAGE
+        StreamViewType: NEW_AND_OLD_IMAGES
       AttributeDefinitions:
         -
           AttributeName: Id

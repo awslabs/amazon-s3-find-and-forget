@@ -2,7 +2,6 @@
   "name": "amazon-s3-find-and-forget",
   "version": "0.1.0",
   "private": true,
-  "dependencies": {},
   "devDependencies": {
     "@openapitools/openapi-generator-cli": "^1.0.18-4.3.1",
     "prettier-eslint-cli": "^5.0.0"

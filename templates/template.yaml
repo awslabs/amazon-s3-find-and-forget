@@ -205,44 +205,7 @@ Resources:
         - Name: email
           Value: !Ref AdminEmail
         - Name: email_verified
-          Value: "true"
-
-  GlueDatabase:
-    Type: AWS::Glue::Database
-    Properties:
-      CatalogId: !Ref AWS::AccountId
-      DatabaseInput:
-        Description: Database used by S3 Find and Forget Solution
-  
-  JobManifestsGlueTable:
-    Type: AWS::Glue::Table
-    Properties:
-      CatalogId: !Ref AWS::AccountId
-      DatabaseName: !Ref GlueDatabase
-      TableInput:
-        Description: Table used by S3 Find and Forget Solution
-        StorageDescriptor:
-          Columns:
-            - Name: Columns
-              Type: array<string>
-            - Name: MatchId
-              Type: array<string>
-            - Name: DeletionQueueItemId
-              Type: string
-            - Name: QueryableColumns
-              Type: string
-            - Name: QueryableMatchId
-              Type: string
-          Location: !Sub s3://${TempBucket}/manifests/
-          InputFormat: org.apache.hadoop.mapred.TextInputFormat
-          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
-          SerdeInfo:
-            SerializationLibrary: org.openx.data.jsonserde.JsonSerDe
-        PartitionKeys:
-          - Name: JobId
-            Type: string
-          - Name: DataMapperId
-            Type: string          
+          Value: "true"  
 
   APIStack:
     Type: AWS::CloudFormation::Stack
@@ -292,7 +255,7 @@ Resources:
         DeletionTaskMemory: !Ref DeletionTaskMemory
         EnableContainerInsights: !Ref EnableContainerInsights
         JobTableName: !GetAtt DDBStack.Outputs.JobTable
-        ManifestsBucket: !Ref TempBucket
+        ManifestsBucket: !GetAtt ManifestsStack.Outputs.ManifestsBucket
         ResourcePrefix: !Ref ResourcePrefix
         VpcSecurityGroups: !If [ShouldDeployVpc, !GetAtt VpcStack.Outputs.SecurityGroup, !Join [",", !Ref VpcSecurityGroups]]
         VpcSubnets: !If [ShouldDeployVpc, !GetAtt VpcStack.Outputs.Subnets, !Join [",", !Ref VpcSubnets]]
@@ -323,6 +286,10 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: ./layers.yaml
+  ManifestsStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ./manifests.yaml
   StateMachineStack:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -339,9 +306,10 @@ Resources:
         DeleteQueueUrl: !GetAtt DelStack.Outputs.DeleteObjectsQueueUrl
         DeletionQueueTableName: !GetAtt DDBStack.Outputs.DeletionQueueTable
         ECSCluster: !GetAtt DelStack.Outputs.ECSCluster
-        GlueDatabase: !Ref GlueDatabase
-        JobManifestsGlueTable: !Ref JobManifestsGlueTable
+        GlueDatabase: !GetAtt ManifestsStack.Outputs.GlueDatabase
+        JobManifestsGlueTable: !GetAtt ManifestsStack.Outputs.JobManifestsGlueTable
         JobTableName: !GetAtt DDBStack.Outputs.JobTable
+        ManifestsBucket: !GetAtt ManifestsStack.Outputs.ManifestsBucket
         ResultBucket: !Ref TempBucket
         StateMachinePrefix: !Ref ResourcePrefix
   StreamProcessorStack:
@@ -355,10 +323,12 @@ Resources:
             - !GetAtt LayersStack.Outputs.Decorators
             - !GetAtt LayersStack.Outputs.BotoUtils
         DeletionQueueTableName: !GetAtt DDBStack.Outputs.DeletionQueueTable
+        GlueDatabase: !GetAtt ManifestsStack.Outputs.GlueDatabase
+        JobManifestsGlueTable: !GetAtt ManifestsStack.Outputs.JobManifestsGlueTable
         JobTableDateGSI: !GetAtt DDBStack.Outputs.JobTableDateGSI
         JobTableName: !GetAtt DDBStack.Outputs.JobTable
         JobTableStreamArn: !GetAtt DDBStack.Outputs.JobTableStreamArn
-        ManifestsBucket: !Ref TempBucket
+        ManifestsBucket: !GetAtt ManifestsStack.Outputs.ManifestsBucket
         StateMachineArn: !GetAtt StateMachineStack.Outputs.StateMachineArn
   VpcStack:
     Type: AWS::CloudFormation::Stack
