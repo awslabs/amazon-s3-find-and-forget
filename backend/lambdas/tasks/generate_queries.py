@@ -6,7 +6,7 @@ import os
 import boto3
 
 from operator import itemgetter
-from boto_utils import paginate, batch_sqs_msgs, deserialize_item
+from boto_utils import paginate, batch_sqs_msgs, deserialize_item, DecimalEncoder
 from decorators import with_logging
 
 ddb = boto3.resource("dynamodb")
@@ -118,7 +118,8 @@ def build_manifest_row(columns, match_id, item_id, item_createdat):
                 "CreatedAt": item_createdat,
                 "QueryableColumns": queryable_cols,
                 "QueryableMatchId": queryable,
-            }
+            },
+            cls=DecimalEncoder,
         )
         + "\n"
     )
