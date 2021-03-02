@@ -6,8 +6,8 @@
 > the
 > [migrating from <=v0.23 to v0.24 guide](docs/UPGRADE_GUIDE.md#migrating-from-v023-to-v024)
 
-- [#TODO](https://github.com/awslabs/amazon-s3-find-and-forget/pull/TODO):
-  Remove limit on queue size for individual jobs.
+- [#239](https://github.com/awslabs/amazon-s3-find-and-forget/pull/239): Remove
+  limit on queue size for individual jobs.
 
 ## v0.23
 
