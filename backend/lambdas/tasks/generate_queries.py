@@ -5,6 +5,7 @@ import json
 import os
 import boto3
 
+from operator import itemgetter
 from boto_utils import paginate, batch_sqs_msgs, deserialize_item
 from decorators import with_logging
 
@@ -83,7 +84,7 @@ def handler(event, context):
     }
 
 
-def build_manifest_row(columns, match_id, item_id):
+def build_manifest_row(columns, match_id, item_id, item_createdat):
     """
     Function for building each row of the manifest that will be written to S3.
 
@@ -114,6 +115,7 @@ def build_manifest_row(columns, match_id, item_id):
                 "Columns": columns,
                 "MatchId": iterable_match,
                 "DeletionQueueItemId": item_id,
+                "CreatedAt": item_createdat,
                 "QueryableColumns": queryable_cols,
                 "QueryableMatchId": queryable,
             }
@@ -165,8 +167,9 @@ def generate_athena_queries(data_mapper, deletion_items, job_id):
     columns_with_matches = {}
     manifest = ""
     for item in applicable_match_ids:
-        mid = item["MatchId"]
-        item_id = item["DeletionQueueItemId"]
+        mid, item_id, item_createdat = itemgetter(
+            "MatchId", "DeletionQueueItemId", "CreatedAt"
+        )(item)
         is_simple = not isinstance(mid, list)
         if is_simple:
             for column in msg["Columns"]:
@@ -176,7 +179,9 @@ def generate_athena_queries(data_mapper, deletion_items, job_id):
                         "Column": column,
                         "Type": "Simple",
                     }
-                manifest += build_manifest_row([column], casted, item_id)
+                manifest += build_manifest_row(
+                    [column], casted, item_id, item_createdat
+                )
         else:
             sorted_mid = sorted(mid, key=lambda x: x["Column"])
             query_columns = list(map(lambda x: x["Column"], sorted_mid))
@@ -189,7 +194,9 @@ def generate_athena_queries(data_mapper, deletion_items, job_id):
                     "Columns": query_columns,
                     "Type": "Composite",
                 }
-            manifest += build_manifest_row(query_columns, composite_match, item_id)
+            manifest += build_manifest_row(
+                query_columns, composite_match, item_id, item_createdat
+            )
     s3.Bucket(manifests_bucket_name).put_object(Body=manifest, Key=manifest_key)
     msg["Columns"] = list(columns_with_matches.values())
     msg["Manifest"] = "s3://{}/{}".format(manifests_bucket_name, manifest_key)
@@ -262,6 +269,7 @@ def write_partitions(partitions):
                             {"Name": "columns", "Type": "array<string>"},
                             {"Name": "matchid", "Type": "array<string>"},
                             {"Name": "deletionqueueitemid", "Type": "string"},
+                            {"Name": "createdat", "Type": "int"},
                             {"Name": "queryablecolumns", "Type": "string"},
                             {"Name": "queryablematchid", "Type": "string"},
                         ],

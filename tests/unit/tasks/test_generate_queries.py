@@ -131,7 +131,13 @@ class TestAthenaQueries:
                     "Table": "test_table",
                 },
             },
-            [{"MatchId": "hi", "DeletionQueueItemId": "id-01"}],
+            [
+                {
+                    "MatchId": "hi",
+                    "CreatedAt": 1614698440,
+                    "DeletionQueueItemId": "id-01",
+                }
+            ],
             "job_1234567890",
         )
         assert resp == [
@@ -154,6 +160,7 @@ class TestAthenaQueries:
                     "Columns": ["customer_id"],
                     "MatchId": ["hi"],
                     "DeletionQueueItemId": "id-01",
+                    "CreatedAt": 1614698440,
                     "QueryableColumns": "customer_id",
                     "QueryableMatchId": "hi",
                 }
@@ -189,8 +196,16 @@ class TestAthenaQueries:
                 },
             },
             [
-                {"MatchId": 12345, "DeletionQueueItemId": "id-01"},
-                {"MatchId": 23456, "DeletionQueueItemId": "id-02"},
+                {
+                    "MatchId": 12345,
+                    "CreatedAt": 1614698440,
+                    "DeletionQueueItemId": "id-01",
+                },
+                {
+                    "MatchId": 23456,
+                    "CreatedAt": 1614698440,
+                    "DeletionQueueItemId": "id-02",
+                },
             ],
             "job_1234567890",
         )
@@ -215,6 +230,7 @@ class TestAthenaQueries:
                         "Columns": ["customer_id"],
                         "MatchId": [12345],
                         "DeletionQueueItemId": "id-01",
+                        "CreatedAt": 1614698440,
                         "QueryableColumns": "customer_id",
                         "QueryableMatchId": "12345",
                     }
@@ -225,6 +241,7 @@ class TestAthenaQueries:
                         "Columns": ["customer_id"],
                         "MatchId": [23456],
                         "DeletionQueueItemId": "id-02",
+                        "CreatedAt": 1614698440,
                         "QueryableColumns": "customer_id",
                         "QueryableMatchId": "23456",
                     }
@@ -262,7 +279,13 @@ class TestAthenaQueries:
                     "Table": "test_table",
                 },
             },
-            [{"MatchId": "hi", "DeletionQueueItemId": "id-01"}],
+            [
+                {
+                    "MatchId": "hi",
+                    "CreatedAt": 1614698440,
+                    "DeletionQueueItemId": "id-01",
+                }
+            ],
             "job_1234567890",
         )
         assert resp == [
@@ -285,6 +308,7 @@ class TestAthenaQueries:
                     "Columns": ["customer_id"],
                     "MatchId": ["hi"],
                     "DeletionQueueItemId": "id-01",
+                    "CreatedAt": 1614698440,
                     "QueryableColumns": "customer_id",
                     "QueryableMatchId": "hi",
                 }
@@ -319,7 +343,13 @@ class TestAthenaQueries:
                     "Table": "test_table",
                 },
             },
-            [{"MatchId": "hi", "DeletionQueueItemId": "id-01"}],
+            [
+                {
+                    "MatchId": "hi",
+                    "CreatedAt": 1614698440,
+                    "DeletionQueueItemId": "id-01",
+                }
+            ],
             "job_1234567890",
         )
 
@@ -347,6 +377,7 @@ class TestAthenaQueries:
                         "Columns": ["customer_id"],
                         "MatchId": ["hi"],
                         "DeletionQueueItemId": "id-01",
+                        "CreatedAt": 1614698440,
                         "QueryableColumns": "customer_id",
                         "QueryableMatchId": "hi",
                     }
@@ -357,6 +388,7 @@ class TestAthenaQueries:
                         "Columns": ["alt_customer_id"],
                         "MatchId": ["hi"],
                         "DeletionQueueItemId": "id-01",
+                        "CreatedAt": 1614698440,
                         "QueryableColumns": "alt_customer_id",
                         "QueryableMatchId": "hi",
                     }
@@ -403,6 +435,7 @@ class TestAthenaQueries:
                     ],
                     "Type": "Composite",
                     "DataMappers": ["a"],
+                    "CreatedAt": 1614698440,
                     "DeletionQueueItemId": "id1234",
                 }
             ],
@@ -432,6 +465,7 @@ class TestAthenaQueries:
                         "Columns": ["first_name", "last_name"],
                         "MatchId": ["John", "Doe"],
                         "DeletionQueueItemId": "id1234",
+                        "CreatedAt": 1614698440,
                         "QueryableColumns": "first_name_S3F2COMP_last_name",
                         "QueryableMatchId": "John_S3F2COMP_Doe",
                     }
@@ -473,9 +507,24 @@ class TestAthenaQueries:
                 },
             },
             [
-                {"MatchId": "12345", "Type": "Simple", "DeletionQueueItemId": "id001"},
-                {"MatchId": "23456", "Type": "Simple", "DeletionQueueItemId": "id002"},
-                {"MatchId": "23456", "Type": "Simple", "DeletionQueueItemId": "id003",},
+                {
+                    "MatchId": "12345",
+                    "Type": "Simple",
+                    "CreatedAt": 1614698440,
+                    "DeletionQueueItemId": "id001",
+                },
+                {
+                    "MatchId": "23456",
+                    "Type": "Simple",
+                    "CreatedAt": 1614698440,
+                    "DeletionQueueItemId": "id002",
+                },
+                {
+                    "MatchId": "23456",
+                    "Type": "Simple",
+                    "CreatedAt": 1614698440,
+                    "DeletionQueueItemId": "id003",
+                },
                 {
                     "MatchId": [
                         {"Column": "first_name", "Value": "John"},
@@ -483,6 +532,7 @@ class TestAthenaQueries:
                     ],
                     "Type": "Composite",
                     "DataMappers": ["a"],
+                    "CreatedAt": 1614698440,
                     "DeletionQueueItemId": "id004",
                 },
                 {
@@ -492,6 +542,7 @@ class TestAthenaQueries:
                     ],
                     "Type": "Composite",
                     "DataMappers": ["a"],
+                    "CreatedAt": 1614698440,
                     "DeletionQueueItemId": "id005",
                 },
                 {
@@ -501,6 +552,7 @@ class TestAthenaQueries:
                     ],
                     "Type": "Composite",
                     "DataMappers": ["a"],
+                    "CreatedAt": 1614698440,
                     "DeletionQueueItemId": "id006",
                 },
                 {
@@ -510,6 +562,7 @@ class TestAthenaQueries:
                     ],
                     "Type": "Composite",
                     "DataMappers": ["a"],
+                    "CreatedAt": 1614698440,
                     "DeletionQueueItemId": "id007",
                 },
             ],
@@ -545,6 +598,7 @@ class TestAthenaQueries:
                         "Columns": ["customer_id"],
                         "MatchId": ["12345"],
                         "DeletionQueueItemId": "id001",
+                        "CreatedAt": 1614698440,
                         "QueryableColumns": "customer_id",
                         "QueryableMatchId": "12345",
                     }
@@ -555,6 +609,7 @@ class TestAthenaQueries:
                         "Columns": ["first_name"],
                         "MatchId": ["12345"],
                         "DeletionQueueItemId": "id001",
+                        "CreatedAt": 1614698440,
                         "QueryableColumns": "first_name",
                         "QueryableMatchId": "12345",
                     }
@@ -565,6 +620,7 @@ class TestAthenaQueries:
                         "Columns": ["last_name"],
                         "MatchId": ["12345"],
                         "DeletionQueueItemId": "id001",
+                        "CreatedAt": 1614698440,
                         "QueryableColumns": "last_name",
                         "QueryableMatchId": "12345",
                     }
@@ -575,6 +631,7 @@ class TestAthenaQueries:
                         "Columns": ["age"],
                         "MatchId": [12345],
                         "DeletionQueueItemId": "id001",
+                        "CreatedAt": 1614698440,
                         "QueryableColumns": "age",
                         "QueryableMatchId": "12345",
                     }
@@ -586,6 +643,7 @@ class TestAthenaQueries:
                         "Columns": ["customer_id"],
                         "MatchId": ["23456"],
                         "DeletionQueueItemId": "id002",
+                        "CreatedAt": 1614698440,
                         "QueryableColumns": "customer_id",
                         "QueryableMatchId": "23456",
                     }
@@ -596,6 +654,7 @@ class TestAthenaQueries:
                         "Columns": ["first_name"],
                         "MatchId": ["23456"],
                         "DeletionQueueItemId": "id002",
+                        "CreatedAt": 1614698440,
                         "QueryableColumns": "first_name",
                         "QueryableMatchId": "23456",
                     }
@@ -606,6 +665,7 @@ class TestAthenaQueries:
                         "Columns": ["last_name"],
                         "MatchId": ["23456"],
                         "DeletionQueueItemId": "id002",
+                        "CreatedAt": 1614698440,
                         "QueryableColumns": "last_name",
                         "QueryableMatchId": "23456",
                     }
@@ -616,6 +676,7 @@ class TestAthenaQueries:
                         "Columns": ["age"],
                         "MatchId": [23456],
                         "DeletionQueueItemId": "id002",
+                        "CreatedAt": 1614698440,
                         "QueryableColumns": "age",
                         "QueryableMatchId": "23456",
                     }
@@ -629,6 +690,7 @@ class TestAthenaQueries:
                         "Columns": ["customer_id"],
                         "MatchId": ["23456"],
                         "DeletionQueueItemId": "id003",
+                        "CreatedAt": 1614698440,
                         "QueryableColumns": "customer_id",
                         "QueryableMatchId": "23456",
                     }
@@ -639,6 +701,7 @@ class TestAthenaQueries:
                         "Columns": ["first_name"],
                         "MatchId": ["23456"],
                         "DeletionQueueItemId": "id003",
+                        "CreatedAt": 1614698440,
                         "QueryableColumns": "first_name",
                         "QueryableMatchId": "23456",
                     }
@@ -649,6 +712,7 @@ class TestAthenaQueries:
                         "Columns": ["last_name"],
                         "MatchId": ["23456"],
                         "DeletionQueueItemId": "id003",
+                        "CreatedAt": 1614698440,
                         "QueryableColumns": "last_name",
                         "QueryableMatchId": "23456",
                     }
@@ -659,6 +723,7 @@ class TestAthenaQueries:
                         "Columns": ["age"],
                         "MatchId": [23456],
                         "DeletionQueueItemId": "id003",
+                        "CreatedAt": 1614698440,
                         "QueryableColumns": "age",
                         "QueryableMatchId": "23456",
                     }
@@ -670,6 +735,7 @@ class TestAthenaQueries:
                         "Columns": ["first_name", "last_name"],
                         "MatchId": ["John", "Doe"],
                         "DeletionQueueItemId": "id004",
+                        "CreatedAt": 1614698440,
                         "QueryableColumns": "first_name_S3F2COMP_last_name",
                         "QueryableMatchId": "John_S3F2COMP_Doe",
                     }
@@ -681,6 +747,7 @@ class TestAthenaQueries:
                         "Columns": ["first_name", "last_name"],
                         "MatchId": ["Jane", "Doe"],
                         "DeletionQueueItemId": "id005",
+                        "CreatedAt": 1614698440,
                         "QueryableColumns": "first_name_S3F2COMP_last_name",
                         "QueryableMatchId": "Jane_S3F2COMP_Doe",
                     }
@@ -692,6 +759,7 @@ class TestAthenaQueries:
                         "Columns": ["first_name", "last_name"],
                         "MatchId": ["Jane", "Doe"],
                         "DeletionQueueItemId": "id006",
+                        "CreatedAt": 1614698440,
                         "QueryableColumns": "first_name_S3F2COMP_last_name",
                         "QueryableMatchId": "Jane_S3F2COMP_Doe",
                     }
@@ -704,6 +772,7 @@ class TestAthenaQueries:
                         "Columns": ["age", "last_name"],
                         "MatchId": [28, "Smith"],
                         "DeletionQueueItemId": "id007",
+                        "CreatedAt": 1614698440,
                         "QueryableColumns": "age_S3F2COMP_last_name",
                         "QueryableMatchId": "28_S3F2COMP_Smith",
                     }
@@ -740,7 +809,13 @@ class TestAthenaQueries:
                     "Table": "test_table",
                 },
             },
-            [{"MatchId": "hi", "DeletionQueueItemId": "id1234"}],
+            [
+                {
+                    "MatchId": "hi",
+                    "CreatedAt": 1614698440,
+                    "DeletionQueueItemId": "id1234",
+                }
+            ],
             "job_1234567890",
         )
 
@@ -768,6 +843,7 @@ class TestAthenaQueries:
                         "Columns": ["customer_id"],
                         "MatchId": ["hi"],
                         "DeletionQueueItemId": "id1234",
+                        "CreatedAt": 1614698440,
                         "QueryableColumns": "customer_id",
                         "QueryableMatchId": "hi",
                     }
@@ -804,7 +880,13 @@ class TestAthenaQueries:
                     "Table": "test_table",
                 },
             },
-            [{"MatchId": "hi", "DeletionQueueItemId": "item1234"}],
+            [
+                {
+                    "MatchId": "hi",
+                    "CreatedAt": 1614698440,
+                    "DeletionQueueItemId": "item1234",
+                }
+            ],
             "job_1234567890",
         )
 
@@ -860,6 +942,7 @@ class TestAthenaQueries:
                         "Columns": ["customer_id"],
                         "MatchId": ["hi"],
                         "DeletionQueueItemId": "item1234",
+                        "CreatedAt": 1614698440,
                         "QueryableColumns": "customer_id",
                         "QueryableMatchId": "hi",
                     }
@@ -898,7 +981,13 @@ class TestAthenaQueries:
                 "RoleArn": "arn:aws:iam::accountid:role/rolename",
                 "DeleteOldVersions": True,
             },
-            [{"MatchId": "hi", "DeletionQueueItemId": "item1234"}],
+            [
+                {
+                    "MatchId": "hi",
+                    "CreatedAt": 1614698440,
+                    "DeletionQueueItemId": "item1234",
+                }
+            ],
             "job_1234567890",
         )
 
@@ -942,6 +1031,7 @@ class TestAthenaQueries:
                         "Columns": ["customer_id"],
                         "MatchId": ["hi"],
                         "DeletionQueueItemId": "item1234",
+                        "CreatedAt": 1614698440,
                         "QueryableColumns": "customer_id",
                         "QueryableMatchId": "hi",
                     }
@@ -978,8 +1068,18 @@ class TestAthenaQueries:
                 },
             },
             [
-                {"MatchId": "123", "DataMappers": ["A"], "DeletionQueueItemId": "id1"},
-                {"MatchId": "456", "DataMappers": [], "DeletionQueueItemId": "id2"},
+                {
+                    "MatchId": "123",
+                    "CreatedAt": 1614698440,
+                    "DataMappers": ["A"],
+                    "DeletionQueueItemId": "id1",
+                },
+                {
+                    "MatchId": "456",
+                    "CreatedAt": 1614698440,
+                    "DataMappers": [],
+                    "DeletionQueueItemId": "id2",
+                },
             ],
             "job_1234567890",
         )
@@ -1005,6 +1105,7 @@ class TestAthenaQueries:
                         "Columns": ["customer_id"],
                         "MatchId": ["456"],
                         "DeletionQueueItemId": "id2",
+                        "CreatedAt": 1614698440,
                         "QueryableColumns": "customer_id",
                         "QueryableMatchId": "456",
                     }
@@ -1036,7 +1137,13 @@ class TestAthenaQueries:
                     "Table": "test_table",
                 },
             },
-            [{"MatchId": "hi", "DeletionQueueItemId": "item1234"}],
+            [
+                {
+                    "MatchId": "hi",
+                    "CreatedAt": 1614698440,
+                    "DeletionQueueItemId": "item1234",
+                }
+            ],
             "job_1234567890",
         )
         assert resp == [
@@ -1060,6 +1167,7 @@ class TestAthenaQueries:
                         "Columns": ["customer_id"],
                         "MatchId": ["hi"],
                         "DeletionQueueItemId": "item1234",
+                        "CreatedAt": 1614698440,
                         "QueryableColumns": "customer_id",
                         "QueryableMatchId": "hi",
                     }
@@ -1092,7 +1200,13 @@ class TestAthenaQueries:
                 },
                 "RoleArn": "arn:aws:iam::accountid:role/rolename",
             },
-            [{"MatchId": "hi", "DeletionQueueItemId": "item1234"}],
+            [
+                {
+                    "MatchId": "hi",
+                    "CreatedAt": 1614698440,
+                    "DeletionQueueItemId": "item1234",
+                }
+            ],
             "job_1234567890",
         )
         assert resp == [
@@ -1117,6 +1231,7 @@ class TestAthenaQueries:
                         "Columns": ["customer_id"],
                         "MatchId": ["hi"],
                         "DeletionQueueItemId": "item1234",
+                        "CreatedAt": 1614698440,
                         "QueryableColumns": "customer_id",
                         "QueryableMatchId": "hi",
                     }
@@ -1362,6 +1477,7 @@ def test_it_writes_glue_partitions(glue_client):
                         {"Name": "columns", "Type": "array<string>"},
                         {"Name": "matchid", "Type": "array<string>"},
                         {"Name": "deletionqueueitemid", "Type": "string"},
+                        {"Name": "createdat", "Type": "int"},
                         {"Name": "queryablecolumns", "Type": "string"},
                         {"Name": "queryablematchid", "Type": "string"},
                     ],
@@ -1382,6 +1498,7 @@ def test_it_writes_glue_partitions(glue_client):
                         {"Name": "columns", "Type": "array<string>"},
                         {"Name": "matchid", "Type": "array<string>"},
                         {"Name": "deletionqueueitemid", "Type": "string"},
+                        {"Name": "createdat", "Type": "int"},
                         {"Name": "queryablecolumns", "Type": "string"},
                         {"Name": "queryablematchid", "Type": "string"},
                     ],
