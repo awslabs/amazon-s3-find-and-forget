@@ -157,6 +157,7 @@ def test_happy_path_when_queue_not_empty_for_compressed_json(
 @patch("backend.ecs_tasks.delete_files.main.get_queue", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.emit_deletion_event", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.save", MagicMock())
+@patch("backend.ecs_tasks.delete_files.main.build_matches", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.get_session")
 @patch("backend.ecs_tasks.delete_files.main.s3fs")
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
@@ -368,6 +369,7 @@ def test_it_validates_messages_with_invalid_body(mock_error_handler):
 
 @patch.dict(os.environ, {"JobTable": "test"})
 @patch("backend.ecs_tasks.delete_files.main.get_queue", MagicMock())
+@patch("backend.ecs_tasks.delete_files.main.build_matches", MagicMock())
 @patch(
     "backend.ecs_tasks.delete_files.main.validate_bucket_versioning",
     MagicMock(return_value=True),
