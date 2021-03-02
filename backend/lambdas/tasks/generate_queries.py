@@ -255,7 +255,7 @@ def get_partitions(db, table_name):
 def write_partitions(partitions):
     """
     In order for the manifests to be used by Athena in a JOIN, we make them
-    available as partitions with Job a DataMapperId tuple.
+    available as partitions with Job and DataMapperId tuple.
     """
     max_create_batch_size = 100
     for i in range(0, len(partitions), max_create_batch_size):

@@ -149,13 +149,7 @@ Resources:
               SSEAlgorithm: AES256
       LifecycleConfiguration:
         Rules:
-          - Id: ExpireCodeArtifactBuildPackages
-            Prefix: build/
-            Status: Enabled
-            ExpirationInDays: 1
-            NoncurrentVersionExpirationInDays: 1
-          - Id: ExpireAthenaQueryResults
-            Prefix: queries/
+          - Id: ExpireContents
             Status: Enabled
             ExpirationInDays: 1
             NoncurrentVersionExpirationInDays: 1
@@ -211,7 +205,7 @@ Resources:
         - Name: email
           Value: !Ref AdminEmail
         - Name: email_verified
-          Value: "true"  
+          Value: "true"
 
   APIStack:
     Type: AWS::CloudFormation::Stack
