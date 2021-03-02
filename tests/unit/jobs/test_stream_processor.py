@@ -12,11 +12,12 @@ with patch.dict(
     {"JobTable": "test", "DeletionQueueTable": "test", "StateMachineArn": "sm-arn"},
 ):
     from backend.lambdas.jobs.stream_processor import (
+        cleanup_manifests,
+        clear_deletion_queue,
         handler,
         is_operation,
         is_record_type,
         process_job,
-        clear_deletion_queue,
     )
 
 pytestmark = [pytest.mark.unit, pytest.mark.jobs]
@@ -116,6 +117,39 @@ def test_it_handles_job_records(mock_deserializer, mock_process, mock_is_record)
     )
 
     assert 1 == mock_process.call_count
+    assert 1 == mock_deserializer.call_count
+
+
+@patch("backend.lambdas.jobs.stream_processor.is_operation", Mock(return_value=True))
+@patch("backend.lambdas.jobs.stream_processor.is_record_type")
+@patch("backend.lambdas.jobs.stream_processor.cleanup_manifests")
+@patch("backend.lambdas.jobs.stream_processor.deserialize_item")
+def test_it_handles_job_deletions(mock_deserializer, mock_cleanup, mock_is_record):
+    mock_deserializer.return_value = {
+        "Id": "job123",
+        "Sk": "job123",
+        "Type": "Job",
+    }
+    mock_is_record.side_effect = [False, True, False]
+    handler(
+        {
+            "Records": [
+                {
+                    "eventName": "REMOVE",
+                    "dynamodb": {
+                        "OldImage": {
+                            "Id": {"S": "job123"},
+                            "Sk": {"S": "job123"},
+                            "Type": {"S": "Job"},
+                        }
+                    },
+                }
+            ]
+        },
+        SimpleNamespace(),
+    )
+
+    assert 1 == mock_cleanup.call_count
     assert 1 == mock_deserializer.call_count
 
 
@@ -227,6 +261,33 @@ def test_it_starts_state_machine(mock_client):
                 "QueryQueueWaitSeconds": 5,
             }
         ),
+    )
+
+
+@patch("backend.lambdas.jobs.stream_processor.glue")
+@patch("backend.lambdas.jobs.stream_processor.s3")
+def test_it_removes_manifests_and_partitions(s3_mock, glue_mock):
+    job = {
+        "Id": "job-id",
+        "Manifests": [
+            "s3://bucket/manifests/job-id/dm-1/manifest.json",
+            "s3://bucket/manifests/job-id/dm-2/manifest.json",
+        ],
+    }
+    cleanup_manifests(job)
+    s3_mock.delete_object.assert_has_calls(
+        [
+            call(Bucket="bucket", Key="manifests/job-id/dm-1/manifest.json"),
+            call(Bucket="bucket", Key="manifests/job-id/dm-2/manifest.json"),
+        ]
+    )
+    glue_mock.batch_delete_partition.assert_called_with(
+        DatabaseName="s3f2_manifests_database",
+        TableName="s3f2_manifests_table",
+        PartitionsToDelete=[
+            {"Values": ["job-id", "dm-1"]},
+            {"Values": ["job-id", "dm-2"]},
+        ],
     )
 
 
