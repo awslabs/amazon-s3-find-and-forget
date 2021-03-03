@@ -3,8 +3,8 @@
 ## v0.24
 
 - [#240](https://github.com/awslabs/amazon-s3-find-and-forget/pull/240): Add ECR
-  API Endpoint in order to
-  [support Fargate Platform version 1.4.0](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/platform_versions.html#platform-version-migration)
+  API Endpoint and migrate to
+  [Fargate Platform version 1.4.0](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/platform_versions.html#platform-version-migration)
 
 ## v0.23
 
