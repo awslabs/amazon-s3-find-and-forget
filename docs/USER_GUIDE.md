@@ -42,12 +42,15 @@ The Fargate tasks used by this solution to perform deletions must be able to
 access the following AWS services, either via an Internet Gateway or via [VPC
 Endpoints]:
 
-- Amazon S3
-- Amazon DynamoDB
-- Amazon CloudWatch (monitoring and logs)
-- AWS ECR
-- Amazon SQS
-- AWS STS
+- Amazon S3 gateway endpoint (_com.amazonaws.**region**.s3_)
+- Amazon DynamoDB gateway endpoint (_com.amazonaws.**region**.dynamodb_)
+- Amazon CloudWatch Monitoring interface endpoint
+  (_com.amazonaws.**region**.monitoring_)
+- Amazon CloudWatch Logs interface endpoint (_com.amazonaws.**region**.logs_)
+- AWS ECR API interface endpoint (_com.amazonaws.**region**.ecr.api_)
+- AWS ECR Docker interface endpoint (_com.amazonaws.**region**.ecr.dkr_)
+- Amazon SQS interface endpoint (_com.amazonaws.**region**.sqs_)
+- AWS STS interface endpoint (_com.amazonaws.**region**.sts_)
 
 #### Creating a New VPC
 

@@ -52,6 +52,13 @@ Resources:
 
   ECSCluster:
     Type: AWS::ECS::Cluster
+    Properties:
+      ClusterSettings:
+        - Name: containerInsights
+          Value: !If
+            - WithContainerInsights
+            - enabled
+            - disabled
 
   ECRRepository:
     Type: AWS::ECR::Repository
@@ -139,7 +146,6 @@ Resources:
       Cluster: !GetAtt ECSCluster.Arn
       DesiredCount: 0
       LaunchType: FARGATE
-      PlatformVersion: 1.4.0
       NetworkConfiguration:
         AwsvpcConfiguration:
           SecurityGroups: !Ref VpcSecurityGroups
@@ -190,25 +196,6 @@ Resources:
       KmsMasterKeyId: alias/aws/sqs
       ReceiveMessageWaitTimeSeconds: 0
 
-  UpdateClusterConfig:
-    Type: Custom::Setup
-    Condition: WithContainerInsights
-    Properties:
-      ServiceToken: !GetAtt UpdateClusterEnableContainerInsights.Arn
-
-  UpdateClusterEnableContainerInsights:
-    Type: AWS::Serverless::Function
-    Condition: WithContainerInsights
-    Properties:
-      Handler: enable_container_insights.handler
-      CodeUri: ../backend/lambdas/custom_resources/
-      Description: Custom Lambda resource for the Amazon S3 Find and Forget Cloudformation Stack
-      Policies:
-        - Statement:
-          - Effect: Allow
-            Action: ecs:UpdateClusterSettings
-            Resource: !Sub arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:cluster/${ECSCluster}
-      
 Outputs:
   DeleteObjectsQueueUrl:
     Value: !Ref DelObjQ
