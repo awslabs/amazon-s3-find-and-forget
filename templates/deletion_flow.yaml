@@ -139,6 +139,7 @@ Resources:
       Cluster: !GetAtt ECSCluster.Arn
       DesiredCount: 0
       LaunchType: FARGATE
+      PlatformVersion: 1.4.0
       NetworkConfiguration:
         AwsvpcConfiguration:
           SecurityGroups: !Ref VpcSecurityGroups
