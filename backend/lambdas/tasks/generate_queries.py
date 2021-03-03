@@ -72,15 +72,15 @@ def handler(event, context):
     return {
         "GeneratedQueries": total_queries,
         "DeletionQueueSize": len(deletion_items),
-        "Manifests": list(
-            map(
-                lambda x: "s3://{}/{}".format(
-                    manifests_bucket_name,
-                    MANIFEST_KEY.format(job_id=x[0], data_mapper_id=x[1]),
+        "Manifests": [
+            "s3://{}/{}".format(
+                manifests_bucket_name,
+                MANIFEST_KEY.format(
+                    job_id=partition_tuple[0], data_mapper_id=partition_tuple[1]
                 ),
-                manifests_partitions,
             )
-        ),
+            for partition_tuple in manifests_partitions
+        ],
     }
 
 

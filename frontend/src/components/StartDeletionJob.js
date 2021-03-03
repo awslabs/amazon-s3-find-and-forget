@@ -21,11 +21,16 @@ const StartDeletionJob = ({ className, gateway, goToJobDetails }) => {
         gateway.getDataMappers()
       ]);
 
+      const retentionPolicy = x =>
+        `Retain ${
+          !x ? "indefinitely" : "for " + (x === 1 ? "1 day" : x + " days")
+        }`;
+
       setSummary({
         "Data Mappers Count": DataMappers.length,
-        "Job Details Retention Policy": Settings.JobDetailsRetentionDays
-          ? `Retain for ${Settings.JobDetailsRetentionDay} days`
-          : "Retain indefinitely",
+        "Job Details Retention Policy": retentionPolicy(
+          Settings.JobDetailsRetentionDays
+        ),
         "Athena Concurrency Limit": Settings.AthenaConcurrencyLimit,
         "Query Execution Wait Duration (Seconds)":
           Settings.QueryExecutionWaitSeconds,

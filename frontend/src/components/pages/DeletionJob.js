@@ -146,7 +146,12 @@ const DeletionJob = ({ gateway, jobId }) => {
     setExportState("initial");
   };
 
-  const isLegacy = (job) => !isUndefined(job.DeletionQueueItems);
+  /*
+    In old versions the Deletion Queue was  processed synchronously after job start.
+    After moving to an asynchronous model, some fields were removed from the API.
+    The UI allows to see details of jobs executed with both old and new versions.
+  */
+  const syncQueueProcessing = (job) => !isUndefined(job.DeletionQueueItems);
 
   return (
     <>
@@ -208,7 +213,7 @@ const DeletionJob = ({ gateway, jobId }) => {
             </DetailsBox>
             <DetailsBox label="Deletion Queue Size" fullWidth>
               {isUndefined(job.DeletionQueueSize)
-                ? isLegacy(job)
+                ? syncQueueProcessing(job)
                   ? job.DeletionQueueItems.length
                   : "Unknown (Planning pending)"
                 : job.DeletionQueueSize}
@@ -221,7 +226,7 @@ const DeletionJob = ({ gateway, jobId }) => {
             </DetailsBox>
             <DetailsBox label="Total Executed Query Count" noSeparator>
               {isUndefined(job.GeneratedQueries)
-                ? isLegacy(job)
+                ? syncQueueProcessing(job)
                   ? job.TotalQueryCount
                   : "-"
                 : `${job.TotalQueryCount}/${job.GeneratedQueries}`}

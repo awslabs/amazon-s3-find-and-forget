@@ -5,10 +5,10 @@
 Prior to v0.24, the Deletion Queue was synchronously processed on Job Creation
 and stored in DynamoDB. As a result, the job API provided the full queue for a
 given job in the `DeletionQueueItems` property and there was a limit of ~375KB
-on the queue size for each individual Job (if the size for a given job would
+on the queue size for each individual Job. If the size for a given job would
 have exceeded the allowed space, the `DeletionQueueItemsSkipped` property would
 have been set to `true` and it would have been necessary to run one or more
-deletion jobs, upon completion, to process the whole queue).
+deletion jobs, upon completion, to process the whole queue.
 
 Starting from v0.24, the queue is processed asynchronously after job creation
 and is stored in S3 in order to remove the queue limit. As a result:
@@ -30,7 +30,8 @@ and is stored in S3 in order to remove the queue limit. As a result:
    get automatically removed if the `JobDetailsRetentionDays` parameter is
    configured when installing the solution).
 5. If you relied on the removed `DeletionQueueItems` parameter to inspect the
-   Job's queue, you'll need to migrate to fetching the S3 Manifests.
+   Job's queue, you'll need to migrate to fetching the S3 Manifests or querying
+   the AWS Glue Manifests Table.
 6. The deletion queue items are not visible in the UI anymore in the job details
    page and in the job JSON export.
 
