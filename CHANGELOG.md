@@ -1,13 +1,19 @@
 # Change Log
 
-## v0.24 (unreleased)
+## v0.25 (unreleased)
 
 > This version introduces breaking changes to the API and Web UI. Please consult
 > the
-> [migrating from <=v0.23 to v0.24 guide](docs/UPGRADE_GUIDE.md#migrating-from-v023-to-v024)
+> [migrating from <=v0.24 to v0.25 guide](docs/UPGRADE_GUIDE.md#migrating-from-v024-to-v025)
 
 - [#239](https://github.com/awslabs/amazon-s3-find-and-forget/pull/239): Remove
   limit on queue size for individual jobs.
+
+## v0.24
+
+- [#240](https://github.com/awslabs/amazon-s3-find-and-forget/pull/240): Add ECR
+  API Endpoint and migrate to
+  [Fargate Platform version 1.4.0](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/platform_versions.html#platform-version-migration)
 
 ## v0.23
 

@@ -1,8 +1,8 @@
 # Upgrade Guide
 
-## Migrating from <=v0.23 to v0.24
+## Migrating from <=v0.24 to v0.25
 
-Prior to v0.24, the Deletion Queue was synchronously processed on Job Creation
+Prior to v0.25, the Deletion Queue was synchronously processed on Job Creation
 and stored in DynamoDB. As a result, the job API provided the full queue for a
 given job in the `DeletionQueueItems` property and there was a limit of ~375KB
 on the queue size for each individual Job. If the size for a given job would
@@ -10,7 +10,7 @@ have exceeded the allowed space, the `DeletionQueueItemsSkipped` property would
 have been set to `true` and it would have been necessary to run one or more
 deletion jobs, upon completion, to process the whole queue.
 
-Starting from v0.24, the queue is processed asynchronously after job creation
+Starting from v0.25, the queue is processed asynchronously after job creation
 and is stored in S3 in order to remove the queue limit. As a result:
 
 1. The fields `DeletionQueueItemsSkipped` and `DeletionQueueItems` are both
