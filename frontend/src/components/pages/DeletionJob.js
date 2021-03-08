@@ -215,7 +215,7 @@ const DeletionJob = ({ gateway, jobId }) => {
               {isUndefined(job.DeletionQueueSize)
                 ? syncQueueProcessing(job)
                   ? job.DeletionQueueItems.length
-                  : "Unknown (Planning pending)"
+                  : "Unknown (Plan pending)"
                 : job.DeletionQueueSize}
             </DetailsBox>
             <DetailsBox label="Start Time">

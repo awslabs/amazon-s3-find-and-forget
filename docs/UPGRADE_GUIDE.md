@@ -13,12 +13,12 @@ deletion jobs, upon completion, to process the whole queue.
 Starting from v0.25, the queue is processed asynchronously after job creation
 and is stored in S3 in order to remove the queue limit. As a result:
 
-1. The fields `DeletionQueueItemsSkipped` and `DeletionQueueItems` are both
+1. The `DeletionQueueItemsSkipped` and `DeletionQueueItems` fields are
    removed from the `GET /jobs/{job_id}` and `DELETE /queue` APIs.
 2. A new Job Event is created when the Query Planning ends called
-   `QueryPlanningComplete`, containing details of the query planning phase.
-3. After Query Planning, the `QueryPlanningComplete` event's payload is
-   available in the `GET /jobs/{job_id}` API for a quick lookup of the
+   `QueryPlanningComplete` that contains details of the query planning phase.
+3. After Query Planning, the `QueryPlanningComplete` event payload is
+   available in the `GET /jobs/{job_id}` API for lookup of the
    properties:
    - `GeneratedQueries` is the number of queries planned for execution
    - `DeletionQueueSize` is the size of the queue for the Job
@@ -33,7 +33,7 @@ and is stored in S3 in order to remove the queue limit. As a result:
    Job's queue, you'll need to migrate to fetching the S3 Manifests or querying
    the AWS Glue Manifests Table.
 6. The deletion queue items are not visible in the UI anymore in the job details
-   page and in the job JSON export.
+   page or in the job JSON export.
 
 ## Migrating from <=v0.8 to v0.9
 
