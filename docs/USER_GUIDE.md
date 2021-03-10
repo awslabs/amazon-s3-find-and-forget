@@ -223,9 +223,12 @@ resources.
    - **EnableContainerInsights:** (Default: false) Whether to enable CloudWatch
      Container Insights.
    - **JobDetailsRetentionDays:** (Default: 0) How long job records should
-     remain in the Job table for. Use 0 to retain logs indefinitely. **Note:**
-     If the retention setting is changed it will only apply to _new_ deletion
-     jobs. Existing deletion jobs will retain the TTL at the time they were ran.
+     remain in the Job table and how long job manifests should remain in the S3
+     manifests bucket. Use 0 to retain data indefinitely. **Note**: if the
+     retention setting is changed it will only apply to new deletion jobs in
+     DynamoDB, existing deletion jobs will retain the TTL at the time they were
+     ran; but the policy will apply immediately to new and existing job
+     manifests in S3.
    - **EnableDynamoDBBackups:** (Default: false) Whether to enable [DynamoDB
      Point-in-Time Recovery] for the DynamoDB tables. Enabling this feature will
      incur additional costs. See the [DynamoDB Pricing] page for the associated

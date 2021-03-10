@@ -13,13 +13,12 @@ deletion jobs, upon completion, to process the whole queue.
 Starting from v0.25, the queue is processed asynchronously after job creation
 and is stored in S3 in order to remove the queue limit. As a result:
 
-1. The `DeletionQueueItemsSkipped` and `DeletionQueueItems` fields are
-   removed from the `GET /jobs/{job_id}` and `DELETE /queue` APIs.
+1. The `DeletionQueueItemsSkipped` and `DeletionQueueItems` fields are removed
+   from the `GET /jobs/{job_id}` and `DELETE /queue` APIs.
 2. A new Job Event is created when the Query Planning ends called
    `QueryPlanningComplete` that contains details of the query planning phase.
-3. After Query Planning, the `QueryPlanningComplete` event payload is
-   available in the `GET /jobs/{job_id}` API for lookup of the
-   properties:
+3. After Query Planning, the `QueryPlanningComplete` event payload is available
+   in the `GET /jobs/{job_id}` API for lookup of the properties:
    - `GeneratedQueries` is the number of queries planned for execution
    - `DeletionQueueSize` is the size of the queue for the Job
    - `Manifests` is an array of S3 Objects containing the location for the Job

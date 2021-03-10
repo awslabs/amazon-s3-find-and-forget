@@ -16,7 +16,6 @@ from boto_utils import (
     emit_event,
     fetch_job_manifest,
     json_lines_iterator,
-    parse_s3_url,
     utc_timestamp,
 )
 from decorators import with_logging
@@ -27,7 +26,6 @@ logger.setLevel(logging.INFO)
 
 client = boto3.client("stepfunctions")
 ddb = boto3.resource("dynamodb")
-s3 = boto3.client("s3")
 glue = boto3.client("glue")
 
 state_machine_arn = getenv("StateMachineArn")
@@ -109,14 +107,12 @@ def process_job(job):
 
 
 def cleanup_manifests(job):
-    logger.info("Removing job manifests and related partitions")
+    logger.info("Removing job manifest partitions")
     job_id = job["Id"]
     partitions = []
     for manifest in job.get("Manifests", []):
         data_mapper_id = manifest.split("/")[5]
         partitions.append([job_id, data_mapper_id])
-        bucket, key = parse_s3_url(manifest)
-        s3.delete_object(Bucket=bucket, Key=key)
     max_deletion_batch_size = 25
     for i in range(0, len(partitions), max_deletion_batch_size):
         glue.batch_delete_partition(

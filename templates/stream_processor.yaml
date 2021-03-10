@@ -81,12 +81,10 @@ Resources:
               - "states:StartExecution"
             Resource: !Ref StateMachineArn
           - Effect: Allow
-            Action:
-              - s3:GetObject*
-              - s3:DeleteObject*
+            Action: s3:GetObject*
             Resource: !Sub arn:aws:s3:::${ManifestsBucket}/manifests/*
-          - Effect: "Allow"
-            Action: "glue:BatchDeletePartition"
+          - Effect: Allow
+            Action: glue:BatchDeletePartition
             Resource:
             - !Sub "arn:${AWS::Partition}:glue:*:*:catalog*"
             - !Sub "arn:${AWS::Partition}:glue:*:*:database/${GlueDatabase}"

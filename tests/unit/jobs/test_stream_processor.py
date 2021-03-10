@@ -265,8 +265,7 @@ def test_it_starts_state_machine(mock_client):
 
 
 @patch("backend.lambdas.jobs.stream_processor.glue")
-@patch("backend.lambdas.jobs.stream_processor.s3")
-def test_it_removes_manifests_and_partitions(s3_mock, glue_mock):
+def test_it_removes_manifest_partitions(glue_mock):
     job = {
         "Id": "job-id",
         "Manifests": [
@@ -275,12 +274,6 @@ def test_it_removes_manifests_and_partitions(s3_mock, glue_mock):
         ],
     }
     cleanup_manifests(job)
-    s3_mock.delete_object.assert_has_calls(
-        [
-            call(Bucket="bucket", Key="manifests/job-id/dm-1/manifest.json"),
-            call(Bucket="bucket", Key="manifests/job-id/dm-2/manifest.json"),
-        ]
-    )
     glue_mock.batch_delete_partition.assert_called_with(
         DatabaseName="s3f2_manifests_database",
         TableName="s3f2_manifests_table",

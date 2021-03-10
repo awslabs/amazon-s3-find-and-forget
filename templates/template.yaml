@@ -290,6 +290,8 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: ./manifests.yaml
+      Parameters:
+        JobDetailsRetentionDays: !Ref JobDetailsRetentionDays
   StateMachineStack:
     Type: AWS::CloudFormation::Stack
     Properties:

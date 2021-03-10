@@ -1,6 +1,13 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: Amazon S3 Find and Forget Manifests stack
 
+Parameters:
+  JobDetailsRetentionDays:
+    Type: Number
+
+Conditions:
+  WithoutRetentionPolicy: !Equals [!Ref JobDetailsRetentionDays, 0]
+
 Resources:
   ManifestsBucket:
     Type: AWS::S3::Bucket
@@ -18,6 +25,10 @@ Resources:
           - Id: ExpireDeletedManifests
             Prefix: manifests/
             Status: Enabled
+            ExpirationInDays: !If
+              - WithoutRetentionPolicy
+              - !Ref AWS::NoValue
+              - !Ref JobDetailsRetentionDays
             NoncurrentVersionExpirationInDays: 1
 
   ManifestsBucketPolicy:
