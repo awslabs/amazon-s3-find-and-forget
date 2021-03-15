@@ -11,12 +11,14 @@ Metadata:
 Globals:
   Function:
     Runtime: python3.7
-    Timeout: 180
+    Timeout: 900
     Layers: !Ref CommonLayers
     Environment:
       Variables:
         DeletionQueueTable: !Ref DeletionQueueTableName
+        GlueDatabase: !Ref GlueDatabase
         GSIBucketCount: "1"
+        JobManifestsGlueTable: !Ref JobManifestsGlueTable
         JobTable: !Ref JobTableName
         JobTableDateGSI: !Ref JobTableDateGSI
         LogLevel: !Ref LogLevel
@@ -28,6 +30,10 @@ Parameters:
     Description: Common layers supplied to all functions
   DeletionQueueTableName:
     Description: Table name for Deletion Queue Table
+    Type: String
+  GlueDatabase:
+    Type: String
+  JobManifestsGlueTable:
     Type: String
   JobTableDateGSI:
     Description: Date ordered GSI for Jobs Table
@@ -49,6 +55,8 @@ Parameters:
       - INFO
       - DEBUG
       - NOTSET
+  ManifestsBucket:
+    Type: String
   StateMachineArn:
     Description: State Machine to invoke to process the deletion queue
     Type: String
@@ -59,6 +67,7 @@ Resources:
     Properties:
       Handler: stream_processor.handler
       CodeUri: ../backend/lambdas/jobs/
+      MemorySize: 512
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref JobTableName
@@ -71,6 +80,15 @@ Resources:
               - "states:DescribeExecution"
               - "states:StartExecution"
             Resource: !Ref StateMachineArn
+          - Effect: Allow
+            Action: s3:GetObject*
+            Resource: !Sub arn:aws:s3:::${ManifestsBucket}/manifests/*
+          - Effect: Allow
+            Action: glue:BatchDeletePartition
+            Resource:
+            - !Sub "arn:${AWS::Partition}:glue:*:*:catalog*"
+            - !Sub "arn:${AWS::Partition}:glue:*:*:database/${GlueDatabase}"
+            - !Sub "arn:${AWS::Partition}:glue:*:*:table/${GlueDatabase}/${JobManifestsGlueTable}"  
       Events:
         Stream:
           Type: DynamoDB

@@ -405,3 +405,51 @@ def test_it_ignores_none_status_events(table):
         ],
     )
     table.update_item.assert_not_called()
+
+
+@patch("backend.lambdas.jobs.status_updater.table")
+def test_it_handles_query_planning_complete(table):
+    update_status(
+        "job123",
+        [
+            {
+                "Id": "job123",
+                "Sk": "123456",
+                "Type": "JobEvent",
+                "CreatedAt": 123.0,
+                "EventName": "QueryPlanningComplete",
+                "EventData": {
+                    "GeneratedQueries": 123,
+                    "DeletionQueueSize": 3456,
+                    "Manifests": [
+                        "s3://temp-bucket/manifests/job123/dm-123/manifest.json"
+                    ],
+                },
+            }
+        ],
+    )
+    table.update_item.assert_called_with(
+        Key={"Id": "job123", "Sk": "job123",},
+        UpdateExpression="set #GeneratedQueries = :GeneratedQueries, #DeletionQueueSize = :DeletionQueueSize, #Manifests = :Manifests",
+        ConditionExpression="#Id = :Id AND #Sk = :Sk AND (#JobStatus = :RUNNING OR #JobStatus = :QUEUED OR #JobStatus = :FORGET_COMPLETED_CLEANUP_IN_PROGRESS)",
+        ExpressionAttributeNames={
+            "#Id": "Id",
+            "#Sk": "Sk",
+            "#JobStatus": "JobStatus",
+            "#GeneratedQueries": "GeneratedQueries",
+            "#DeletionQueueSize": "DeletionQueueSize",
+            "#Manifests": "Manifests",
+        },
+        ExpressionAttributeValues={
+            ":Id": "job123",
+            ":Sk": "job123",
+            ":GeneratedQueries": 123,
+            ":DeletionQueueSize": 3456,
+            ":Manifests": ["s3://temp-bucket/manifests/job123/dm-123/manifest.json"],
+            ":RUNNING": "RUNNING",
+            ":QUEUED": "QUEUED",
+            ":FORGET_COMPLETED_CLEANUP_IN_PROGRESS": "FORGET_COMPLETED_CLEANUP_IN_PROGRESS",
+        },
+        ReturnValues="ALL_NEW",
+    )
+    assert 1 == table.update_item.call_count

@@ -11,12 +11,12 @@ The following data formats are supported:
 
 #### Apache Parquet
 
-|                                       |                                                                                                                                                                                                          |
-| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Compression on Read                   | Snappy, Brotli, Gzip, uncompressed                                                                                                                                                                       |
-| Compression on Write                  | Snappy                                                                                                                                                                                                   |
-| Supported Types for Column Identifier | bigint, char, double, float, int, smallint, string, tinyint, varchar. Nested types (types whose parent is a struct, map, array) are only supported for **struct** type (\*).                             |
-| Notes                                 | (\*) When using a type nested in a struct as column identifier with Apache Parquet files, use the Athena's `AmazonAthenaPreviewFunctionality` Workgroup. For more information, see [Managing Workgroups] |
+|                                       |                                                                                                                                                                              |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Compression on Read                   | Snappy, Brotli, Gzip, uncompressed                                                                                                                                           |
+| Compression on Write                  | Snappy                                                                                                                                                                       |
+| Supported Types for Column Identifier | bigint, char, double, float, int, smallint, string, tinyint, varchar. Nested types (types whose parent is a struct, map, array) are only supported for **struct** type (\*). |
+| Notes                                 | (\*) When using a type nested in a struct as column identifier with Apache Parquet files, use the Athena's version 2 engine. For more information, see [Managing Workgroups] |
 
 #### JSON
 
@@ -70,13 +70,6 @@ supported:
   that reads from the data lake unless it has been designed to handle temporary
   inconsistencies between objects
 - Buckets with MFA Delete enabled are not supported
-- An individual [Deletion Job] can process max 375KB of items from the [Deletion
-  Queue]. When the queue is too large, the Job will automatically try to process
-  as many items as possible. The `DeletionQueueItemsSkipped` attribute indicates
-  if any matches in the deletion queue were not able to be processed as part of
-  this job. If the attribute is set to `TRUE`, we recommend running another job
-  after completion of the current one to delete any remaining items in the
-  queue.
 
 ## Service Quotas
 

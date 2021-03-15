@@ -25,6 +25,8 @@ from boto_utils import (
     parse_s3_url,
     get_user_info,
     get_session,
+    fetch_job_manifest,
+    json_lines_iterator,
 )
 
 pytestmark = [pytest.mark.unit, pytest.mark.layers]
@@ -412,4 +414,61 @@ def test_it_assumes_role_for_session_where_given(mock_sts, mock_boto):
     )
     mock_boto.session.Session.assert_called_with(
         aws_access_key_id="a", aws_secret_access_key="b", aws_session_token="c",
+    )
+
+
+@patch("boto_utils.s3")
+def test_it_fetches_s3_manifest(mock_s3):
+    mock_object = mock_get = mock_get_body = mock_read = mock_decode = MagicMock()
+    mock_s3.Object.return_value = mock_object
+    mock_object.get.return_value = mock_get
+    mock_object.get.return_value = mock_get
+    mock_get.get.return_value = mock_get_body
+    mock_get_body.read.return_value = mock_read
+    mock_read.decode.return_value = '{"hi": true}\n'
+    bucket = "my-bucket"
+    key = "manifests/job_id/data_mapper_id/manifest.json"
+    result = fetch_job_manifest("s3://{}/{}".format(bucket, key))
+
+    assert result == '{"hi": true}\n'
+    mock_s3.Object.assert_called_once_with(bucket, key)
+    mock_read.decode.assert_called_once_with("utf-8")
+
+
+def test_it_iterates_over_json_lines():
+    json_content = '{"hello":123,"world":true}\n{"hello":456,"world":false}\n'
+    result = json_lines_iterator(json_content)
+    assert isinstance(result, types.GeneratorType)
+    assert list(result) == [
+        {"hello": 123, "world": True},
+        {"hello": 456, "world": False},
+    ]
+
+
+def test_it_iterates_over_json_lines_with_unparsed():
+    json_content = '{"hello":123,"world":true}\n{"hello":456,"world":false}\n'
+    result = json_lines_iterator(json_content, include_unparsed=True)
+    assert isinstance(result, types.GeneratorType)
+    parsed = []
+    unparsed = []
+    for line, unparsed_line in result:
+        parsed.append(line)
+        unparsed.append(unparsed_line)
+    assert list(parsed) == [
+        {"hello": 123, "world": True},
+        {"hello": 456, "world": False},
+    ]
+    assert list(unparsed) == [
+        '{"hello":123,"world":true}',
+        '{"hello":456,"world":false}',
+    ]
+
+
+def test_it_raises_exception_for_invalid_json():
+    json_content = '{"hello":123,"world":true}\nNOT_VALID\n'
+    with pytest.raises(ValueError) as e:
+        list(json_lines_iterator(json_content))
+    assert e.value.args[0] == (
+        "Serialization error when parsing JSON lines: "
+        "Expecting value: line 2 column 1 (char 0)"
     )

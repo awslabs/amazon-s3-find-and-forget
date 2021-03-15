@@ -55,46 +55,24 @@ def test_it_generates_query_with_partition():
         {
             "Database": "amazonreviews",
             "Table": "amazon_reviews_parquet",
-            "Columns": [
-                {
-                    "Column": "customer_id",
-                    "MatchIds": ["123456", "456789"],
-                    "Type": "Simple",
-                }
-            ],
+            "Columns": [{"Column": "customer_id", "Type": "Simple",}],
             "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
+            "DataMapperId": "dm_1234",
+            "JobId": "job_1234567890",
         }
     )
+    assert escape_resp(resp) == escape_resp(
+        """
+            SELECT DISTINCT t."$path"
+            FROM "amazonreviews"."amazon_reviews_parquet" t,
+                "s3f2_manifests_database"."s3f2_manifests_table" m
+            WHERE m."jobid"='job_1234567890'
+            AND m."datamapperid"='dm_1234' AND
 
-    assert (
-        escape_resp(resp) == 'SELECT DISTINCT "$path" '
-        'FROM "amazonreviews"."amazon_reviews_parquet" '
-        "WHERE (\"customer_id\" in ('123456', '456789')) "
-        "AND \"product_category\" = 'Books'"
-    )
+            ((cast(t."customer_id" as varchar)=m."queryablematchid" AND m."queryablecolumns"='customer_id'))
 
-
-def test_it_generates_query_with_partition_and_int_column():
-    resp = make_query(
-        {
-            "Database": "amazonreviews",
-            "Table": "amazon_reviews_parquet",
-            "Columns": [
-                {
-                    "Column": "customer_id",
-                    "MatchIds": [123456, 456789],
-                    "Type": "Simple",
-                }
-            ],
-            "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
-        }
-    )
-
-    assert (
-        escape_resp(resp) == 'SELECT DISTINCT "$path" '
-        'FROM "amazonreviews"."amazon_reviews_parquet" '
-        'WHERE ("customer_id" in (123456, 456789)) '
-        "AND \"product_category\" = 'Books'"
+            AND "product_category" = 'Books'
+        """
     )
 
 
@@ -103,22 +81,24 @@ def test_it_generates_query_with_int_partition():
         {
             "Database": "amazonreviews",
             "Table": "amazon_reviews_parquet",
-            "Columns": [
-                {
-                    "Column": "customer_id",
-                    "MatchIds": ["123456", "456789"],
-                    "Type": "Simple",
-                }
-            ],
+            "Columns": [{"Column": "customer_id", "Type": "Simple",}],
             "PartitionKeys": [{"Key": "year", "Value": 2010}],
+            "DataMapperId": "dm_1234",
+            "JobId": "job_1234567890",
         }
     )
+    assert escape_resp(resp) == escape_resp(
+        """
+            SELECT DISTINCT t."$path"
+            FROM "amazonreviews"."amazon_reviews_parquet" t,
+                "s3f2_manifests_database"."s3f2_manifests_table" m
+            WHERE m."jobid"='job_1234567890'
+            AND m."datamapperid"='dm_1234' AND
 
-    assert (
-        escape_resp(resp) == 'SELECT DISTINCT "$path" '
-        'FROM "amazonreviews"."amazon_reviews_parquet" '
-        "WHERE (\"customer_id\" in ('123456', '456789')) "
-        'AND "year" = 2010'
+            ((cast(t."customer_id" as varchar)=m."queryablematchid" AND m."queryablecolumns"='customer_id'))
+
+            AND "year" = 2010
+        """
     )
 
 
@@ -127,26 +107,27 @@ def test_it_generates_query_with_multiple_partitions():
         {
             "Database": "amazonreviews",
             "Table": "amazon_reviews_parquet",
-            "Columns": [
-                {
-                    "Column": "customer_id",
-                    "MatchIds": ["123456", "456789"],
-                    "Type": "Simple",
-                }
-            ],
+            "Columns": [{"Column": "customer_id", "Type": "Simple",}],
             "PartitionKeys": [
                 {"Key": "product_category", "Value": "Books"},
                 {"Key": "published", "Value": "2019"},
             ],
+            "DataMapperId": "dm_1234",
+            "JobId": "job_1234567890",
         }
     )
+    assert escape_resp(resp) == escape_resp(
+        """
+            SELECT DISTINCT t."$path"
+            FROM "amazonreviews"."amazon_reviews_parquet" t,
+                "s3f2_manifests_database"."s3f2_manifests_table" m
+            WHERE m."jobid"='job_1234567890'
+            AND m."datamapperid"='dm_1234' AND
 
-    assert (
-        escape_resp(resp) == 'SELECT DISTINCT "$path" '
-        'FROM "amazonreviews"."amazon_reviews_parquet" '
-        "WHERE (\"customer_id\" in ('123456', '456789')) "
-        "AND \"product_category\" = 'Books' "
-        "AND \"published\" = '2019'"
+            ((cast(t."customer_id" as varchar)=m."queryablematchid" AND m."queryablecolumns"='customer_id'))
+
+            AND "product_category" = 'Books' AND "published" = '2019'
+        """
     )
 
 
@@ -155,20 +136,21 @@ def test_it_generates_query_without_partition():
         {
             "Database": "amazonreviews",
             "Table": "amazon_reviews_parquet",
-            "Columns": [
-                {
-                    "Column": "customer_id",
-                    "MatchIds": ["123456", "456789"],
-                    "Type": "Simple",
-                }
-            ],
+            "Columns": [{"Column": "customer_id", "Type": "Simple",}],
+            "DataMapperId": "dm_1234",
+            "JobId": "job_1234567890",
         }
     )
+    assert escape_resp(resp) == escape_resp(
+        """
+            SELECT DISTINCT t."$path"
+            FROM "amazonreviews"."amazon_reviews_parquet" t,
+                "s3f2_manifests_database"."s3f2_manifests_table" m
+            WHERE m."jobid"='job_1234567890'
+            AND m."datamapperid"='dm_1234' AND
 
-    assert (
-        escape_resp(resp) == 'SELECT DISTINCT "$path" '
-        'FROM "amazonreviews"."amazon_reviews_parquet" '
-        "WHERE (\"customer_id\" in ('123456', '456789'))"
+            ((cast(t."customer_id" as varchar)=m."queryablematchid" AND m."queryablecolumns"='customer_id'))
+        """
     )
 
 
@@ -178,16 +160,24 @@ def test_it_generates_query_with_multiple_columns():
             "Database": "amazonreviews",
             "Table": "amazon_reviews_parquet",
             "Columns": [
-                {"Column": "a", "MatchIds": ["a123456", "b123456"], "Type": "Simple"},
-                {"Column": "b", "MatchIds": ["a456789", "b456789"], "Type": "Simple"},
+                {"Column": "a", "Type": "Simple"},
+                {"Column": "b", "Type": "Simple"},
             ],
+            "DataMapperId": "dm_1234",
+            "JobId": "job_1234567890",
         }
     )
+    assert escape_resp(resp) == escape_resp(
+        """
+            SELECT DISTINCT t."$path"
+            FROM "amazonreviews"."amazon_reviews_parquet" t,
+                "s3f2_manifests_database"."s3f2_manifests_table" m
+            WHERE m."jobid"='job_1234567890'
+            AND m."datamapperid"='dm_1234' AND
 
-    assert (
-        escape_resp(resp) == 'SELECT DISTINCT "$path" '
-        'FROM "amazonreviews"."amazon_reviews_parquet" '
-        "WHERE (\"a\" in ('a123456', 'b123456') OR \"b\" in ('a456789', 'b456789'))"
+            ((cast(t."a" as varchar)=m."queryablematchid" AND m."queryablecolumns"='a') OR
+            (cast(t."b" as varchar)=m."queryablematchid" AND m."queryablecolumns"='b'))
+        """
     )
 
 
@@ -196,20 +186,21 @@ def test_it_generates_query_with_columns_of_complex_type():
         {
             "Database": "amazonreviews",
             "Table": "amazon_reviews_parquet",
-            "Columns": [
-                {
-                    "Column": "a.b.c",
-                    "MatchIds": ["a123456", "b123456"],
-                    "Type": "Simple",
-                }
-            ],
+            "Columns": [{"Column": "a.b.c", "Type": "Simple"}],
+            "DataMapperId": "dm_1234",
+            "JobId": "job_1234567890",
         }
     )
+    assert escape_resp(resp) == escape_resp(
+        """
+            SELECT DISTINCT t."$path"
+            FROM "amazonreviews"."amazon_reviews_parquet" t,
+                "s3f2_manifests_database"."s3f2_manifests_table" m
+            WHERE m."jobid"='job_1234567890'
+            AND m."datamapperid"='dm_1234' AND
 
-    assert (
-        escape_resp(resp) == 'SELECT DISTINCT "$path" '
-        'FROM "amazonreviews"."amazon_reviews_parquet" '
-        'WHERE ("a"."b"."c" in (\'a123456\', \'b123456\'))'
+            ((cast(t."a"."b"."c" as varchar)=m."queryablematchid" AND m."queryablecolumns"='a.b.c'))
+        """
     )
 
 
@@ -221,31 +212,31 @@ def test_it_generates_query_with_composite_matches():
             "Columns": [
                 {
                     "Columns": ["user.first_name", "user.last_name"],
-                    "MatchIds": [["John", "Doe"], ["Jane", "Doe"]],
                     "Type": "Composite",
                 },
-                {
-                    "Columns": ["user.age", "user.last_name"],
-                    "MatchIds": [[28, "Smith"]],
-                    "Type": "Composite",
-                },
-                {
-                    "Columns": ["user.userid"],
-                    "MatchIds": [["123456"]],
-                    "Type": "Composite",
-                },
+                {"Columns": ["user.age", "user.last_name"], "Type": "Composite",},
+                {"Columns": ["user.userid"], "Type": "Composite",},
             ],
+            "DataMapperId": "dm_1234",
+            "JobId": "job_1234567890",
         }
     )
+    assert escape_resp(resp) == escape_resp(
+        """
+            SELECT DISTINCT t."$path"
+            FROM "amazonreviews"."amazon_reviews_parquet" t,
+                "s3f2_manifests_database"."s3f2_manifests_table" m
+            WHERE m."jobid"='job_1234567890'
+            AND m."datamapperid"='dm_1234' AND
 
-    assert (
-        escape_resp(resp) == 'SELECT DISTINCT "$path" '
-        'FROM "amazonreviews"."amazon_reviews_parquet" '
-        'WHERE (concat("user"."first_name", \'_S3F2COMP_\', "user"."last_name") '
-        "in ('John_S3F2COMP_Doe', 'Jane_S3F2COMP_Doe') OR "
-        'concat("user"."age", \'_S3F2COMP_\', "user"."last_name") '
-        "in ('28_S3F2COMP_Smith') OR "
-        '"user"."userid" in (\'123456\'))'
+            ((concat(t."user"."first_name", '_S3F2COMP_', t."user"."last_name")=m."queryablematchid" AND
+            m."queryablecolumns"='user.first_name_S3F2COMP_user.last_name') OR
+
+            (concat(t."user"."age", '_S3F2COMP_', t."user"."last_name")=m."queryablematchid" AND
+            m."queryablecolumns"='user.age_S3F2COMP_user.last_name') OR
+
+            (cast(t."user"."userid" as varchar)=m."queryablematchid" AND m."queryablecolumns"='user.userid'))
+        """
     )
 
 
@@ -255,26 +246,29 @@ def test_it_generates_query_with_simple_and_composite_matches():
             "Database": "amazonreviews",
             "Table": "amazon_reviews_parquet",
             "Columns": [
-                {
-                    "Column": "a.b.c",
-                    "MatchIds": ["a123456", "b123456"],
-                    "Type": "Simple",
-                },
+                {"Column": "a.b.c", "Type": "Simple",},
                 {
                     "Columns": ["user.first_name", "user.last_name"],
-                    "MatchIds": [["John", "Doe"], ["Jane", "Doe"]],
                     "Type": "Composite",
                 },
             ],
-        }
+            "DataMapperId": "dm_1234",
+            "JobId": "job_1234567890",
+        },
     )
+    assert escape_resp(resp) == escape_resp(
+        """
+            SELECT DISTINCT t."$path"
+            FROM "amazonreviews"."amazon_reviews_parquet" t,
+                "s3f2_manifests_database"."s3f2_manifests_table" m
+            WHERE m."jobid"='job_1234567890'
+            AND m."datamapperid"='dm_1234' AND
 
-    assert (
-        escape_resp(resp) == 'SELECT DISTINCT "$path" '
-        'FROM "amazonreviews"."amazon_reviews_parquet" '
-        'WHERE ("a"."b"."c" in (\'a123456\', \'b123456\') '
-        'OR concat("user"."first_name", \'_S3F2COMP_\', "user"."last_name") '
-        "in ('John_S3F2COMP_Doe', 'Jane_S3F2COMP_Doe'))"
+            ((cast(t."a"."b"."c" as varchar)=m."queryablematchid" AND m."queryablecolumns"='a.b.c') OR
+
+            (concat(t."user"."first_name", '_S3F2COMP_', t."user"."last_name")=m."queryablematchid" AND
+            m."queryablecolumns"='user.first_name_S3F2COMP_user.last_name'))
+        """
     )
 
 

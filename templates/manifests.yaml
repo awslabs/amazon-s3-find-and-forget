@@ -1,0 +1,94 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Amazon S3 Find and Forget Manifests stack
+
+Parameters:
+  JobDetailsRetentionDays:
+    Type: Number
+
+Conditions:
+  WithoutRetentionPolicy: !Equals [!Ref JobDetailsRetentionDays, 0]
+
+Resources:
+  ManifestsBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      LifecycleConfiguration:
+        Rules:
+          - Id: ExpireDeletedManifests
+            Prefix: manifests/
+            Status: Enabled
+            ExpirationInDays: !If
+              - WithoutRetentionPolicy
+              - !Ref AWS::NoValue
+              - !Ref JobDetailsRetentionDays
+            NoncurrentVersionExpirationInDays: 1
+
+  ManifestsBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref ManifestsBucket
+      PolicyDocument:
+        Statement:
+          - Sid: HttpsOnly
+            Action: '*'
+            Effect: Deny
+            Resource: !Sub arn:aws:s3:::${ManifestsBucket}/*
+            Principal: '*'
+            Condition:
+              Bool:
+                'aws:SecureTransport': 'false'
+
+  GlueDatabase:
+    Type: AWS::Glue::Database
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseInput:
+        Description: Database used by S3 Find and Forget Solution
+
+  JobManifestsGlueTable:
+    Type: AWS::Glue::Table
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: !Ref GlueDatabase
+      TableInput:
+        Description: Table used by S3 Find and Forget Solution
+        StorageDescriptor:
+          Columns:
+            - Name: Columns
+              Type: array<string>
+            - Name: MatchId
+              Type: array<string>
+            - Name: DeletionQueueItemId
+              Type: string
+            - Name: CreatedAt
+              Type: int
+            - Name: QueryableColumns
+              Type: string
+            - Name: QueryableMatchId
+              Type: string
+          Location: !Sub s3://${ManifestsBucket}/manifests/
+          InputFormat: org.apache.hadoop.mapred.TextInputFormat
+          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+          SerdeInfo:
+            SerializationLibrary: org.openx.data.jsonserde.JsonSerDe
+        PartitionKeys:
+          - Name: JobId
+            Type: string
+          - Name: DataMapperId
+            Type: string          
+
+Outputs:
+  ManifestsBucket:
+    Value: !Ref ManifestsBucket
+  GlueDatabase:
+    Value: !Ref GlueDatabase
+  JobManifestsGlueTable:
+    Value: !Ref JobManifestsGlueTable

@@ -2,7 +2,7 @@ import logging
 from functools import lru_cache
 from urllib.parse import urlencode, quote_plus
 
-from boto_utils import paginate
+from boto_utils import fetch_job_manifest, paginate
 from botocore.exceptions import ClientError
 
 from utils import remove_none, retry_wrapper
@@ -179,6 +179,11 @@ def validate_bucket_versioning(client, bucket):
         raise ValueError("Bucket {} has MFA Delete enabled".format(bucket))
 
     return True
+
+
+@lru_cache()
+def fetch_manifest(manifest_object):
+    return fetch_job_manifest(manifest_object)
 
 
 def delete_old_versions(client, input_bucket, input_key, new_version):

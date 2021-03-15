@@ -3,21 +3,19 @@ import { apiGateway, glueGateway, stsGateway } from "./request";
 const getPaginatedList = async (endpoint, key, pageSize) => {
   const all = [];
   let watermark = undefined;
-  let contentLength = 0;
 
   while (true) {
     let qs = `?page_size=${pageSize || 10}`;
     if (watermark) qs += `&start_at=${watermark}`;
     const page = await apiGateway(`${endpoint}${qs}`, { response: true });
     all.push(...page.data[key]);
-    contentLength += parseInt(page.headers["content-length"], 10);
 
     if (page.data.NextStart)
       watermark = encodeURIComponent(page.data.NextStart);
     else break;
   }
 
-  return { contentLength, response: all };
+  return { response: all };
 };
 
 const gateway = {
@@ -159,12 +157,8 @@ const gateway = {
   },
 
   async getQueue() {
-    const { response, contentLength } = await getPaginatedList(
-      "queue",
-      "MatchIds",
-      500
-    );
-    return { MatchIds: response, ContentLength: contentLength };
+    const { response } = await getPaginatedList("queue", "MatchIds", 500);
+    return { MatchIds: response };
   },
 
   getSettings() {

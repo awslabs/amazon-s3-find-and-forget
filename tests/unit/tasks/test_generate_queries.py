@@ -1,34 +1,41 @@
+import json
 import os
 from types import SimpleNamespace
 
 import mock
 import pytest
-from mock import patch
+from mock import patch, MagicMock
 
 with patch.dict(os.environ, {"QueryQueue": "test"}):
     from backend.lambdas.tasks.generate_queries import (
-        handler,
-        get_table,
-        get_partitions,
         cast_to_type,
-        get_deletion_queue,
         generate_athena_queries,
         get_data_mappers,
+        get_deletion_queue,
         get_inner_children,
         get_nested_children,
+        get_partitions,
+        get_table,
+        handler,
+        write_partitions,
     )
 
 pytestmark = [pytest.mark.unit, pytest.mark.task]
 
 
+@patch("backend.lambdas.tasks.generate_queries.write_partitions")
 @patch("backend.lambdas.tasks.generate_queries.batch_sqs_msgs")
 @patch("backend.lambdas.tasks.generate_queries.get_deletion_queue")
 @patch("backend.lambdas.tasks.generate_queries.get_data_mappers")
 @patch("backend.lambdas.tasks.generate_queries.generate_athena_queries")
-def test_it_invokes_athena_query_generator(
-    gen_athena_queries, get_data_mappers, get_del_q, batch_sqs_msgs_mock
+def test_it_generates_queries_writes_manifests_populates_queue_and_returns_result(
+    gen_athena_queries,
+    get_data_mappers,
+    get_del_q,
+    batch_sqs_msgs_mock,
+    write_partitions_mock,
 ):
-    get_del_q.return_value = [{"MatchId": "hi"}]
+    queue = [{"MatchId": "hi", "DeletionQueueItemId": "id123"}]
     queries = [
         {
             "DataMapperId": "a",
@@ -36,29 +43,37 @@ def test_it_invokes_athena_query_generator(
             "Format": "parquet",
             "Database": "test_db",
             "Table": "test_table",
-            "Columns": [{"Column": "customer_id", "MatchIds": ["hi"]}],
+            "Columns": [{"Column": "customer_id"}],
             "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
             "DeleteOldVersions": True,
+            "Manifest": "s3://S3F2-manifests-bucket/manifests/test/a/manifest.json",
         }
     ]
+    data_mapper = {
+        "DataMapperId": "a",
+        "QueryExecutor": "athena",
+        "Columns": ["customer_id"],
+        "Format": "parquet",
+        "QueryExecutorParameters": {
+            "DataCatalogProvider": "glue",
+            "Database": "test_db",
+            "Table": "test_table",
+        },
+    }
+
+    get_del_q.return_value = queue
     gen_athena_queries.return_value = queries
-    get_data_mappers.return_value = iter(
-        [
-            {
-                "DataMapperId": "a",
-                "QueryExecutor": "athena",
-                "Columns": ["customer_id"],
-                "Format": "parquet",
-                "QueryExecutorParameters": {
-                    "DataCatalogProvider": "glue",
-                    "Database": "test_db",
-                    "Table": "test_table",
-                },
-            }
-        ]
-    )
-    handler({"ExecutionName": "test"}, SimpleNamespace())
+    get_data_mappers.return_value = iter([data_mapper])
+    result = handler({"ExecutionName": "test"}, SimpleNamespace())
+
+    gen_athena_queries.assert_called_with(data_mapper, queue, "test")
+    write_partitions_mock.assert_called_with([["test", "a"]])
     batch_sqs_msgs_mock.assert_called_with(mock.ANY, queries)
+    assert result == {
+        "GeneratedQueries": 1,
+        "DeletionQueueSize": 1,
+        "Manifests": ["s3://S3F2-manifests-bucket/manifests/test/a/manifest.json"],
+    }
 
 
 @patch("backend.lambdas.tasks.generate_queries.batch_sqs_msgs")
@@ -89,9 +104,14 @@ def test_it_raises_for_unknown_query_executor(
 
 
 class TestAthenaQueries:
+    @patch("backend.lambdas.tasks.generate_queries.s3.Bucket")
     @patch("backend.lambdas.tasks.generate_queries.get_table")
     @patch("backend.lambdas.tasks.generate_queries.get_partitions")
-    def test_it_handles_single_columns(self, get_partitions_mock, get_table_mock):
+    def test_it_handles_single_columns(
+        self, get_partitions_mock, get_table_mock, bucket_mock
+    ):
+        put_object_mock = MagicMock()
+        bucket_mock.return_value = put_object_mock
         columns = [{"Name": "customer_id"}]
         partition_keys = ["product_category"]
         partitions = [["Books"]]
@@ -111,7 +131,14 @@ class TestAthenaQueries:
                     "Table": "test_table",
                 },
             },
-            [{"MatchId": "hi"}],
+            [
+                {
+                    "MatchId": "hi",
+                    "CreatedAt": 1614698440,
+                    "DeletionQueueItemId": "id-01",
+                }
+            ],
+            "job_1234567890",
         )
         assert resp == [
             {
@@ -120,18 +147,36 @@ class TestAthenaQueries:
                 "Format": "parquet",
                 "Database": "test_db",
                 "Table": "test_table",
-                "Columns": [
-                    {"Column": "customer_id", "MatchIds": ["hi"], "Type": "Simple"}
-                ],
+                "Columns": [{"Column": "customer_id", "Type": "Simple"}],
                 "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
                 "DeleteOldVersions": True,
+                "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
             }
         ]
+        put_object_mock.put_object.assert_called_with(
+            Key="manifests/job_1234567890/a/manifest.json",
+            Body=json.dumps(
+                {
+                    "Columns": ["customer_id"],
+                    "MatchId": ["hi"],
+                    "DeletionQueueItemId": "id-01",
+                    "CreatedAt": 1614698440,
+                    "QueryableColumns": "customer_id",
+                    "QueryableMatchId": "hi",
+                }
+            )
+            + "\n",
+        )
 
+    @patch("backend.lambdas.tasks.generate_queries.s3.Bucket")
     @patch("backend.lambdas.tasks.generate_queries.get_table")
     @patch("backend.lambdas.tasks.generate_queries.get_partitions")
-    def test_it_handles_int_matches(self, get_partitions_mock, get_table_mock):
-        columns = [{"Name": "customer_id"}]
+    def test_it_handles_int_matches(
+        self, get_partitions_mock, get_table_mock, bucket_mock
+    ):
+        put_object_mock = MagicMock()
+        bucket_mock.return_value = put_object_mock
+        columns = [{"Name": "customer_id", "Type": "int"}]
         partition_keys = ["product_category"]
         partitions = [["Books"]]
         get_table_mock.return_value = table_stub(columns, partition_keys)
@@ -150,7 +195,19 @@ class TestAthenaQueries:
                     "Table": "test_table",
                 },
             },
-            [{"MatchId": 12345}, {"MatchId": 23456}],
+            [
+                {
+                    "MatchId": 12345,
+                    "CreatedAt": 1614698440,
+                    "DeletionQueueItemId": "id-01",
+                },
+                {
+                    "MatchId": 23456,
+                    "CreatedAt": 1614698440,
+                    "DeletionQueueItemId": "id-02",
+                },
+            ],
+            "job_1234567890",
         )
         assert resp == [
             {
@@ -159,21 +216,48 @@ class TestAthenaQueries:
                 "Format": "parquet",
                 "Database": "test_db",
                 "Table": "test_table",
-                "Columns": [
+                "Columns": [{"Column": "customer_id", "Type": "Simple",}],
+                "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
+                "DeleteOldVersions": True,
+                "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
+            }
+        ]
+        put_object_mock.put_object.assert_called_with(
+            Key="manifests/job_1234567890/a/manifest.json",
+            Body=(
+                json.dumps(
                     {
-                        "Column": "customer_id",
-                        "MatchIds": ["12345", "23456"],
-                        "Type": "Simple",
+                        "Columns": ["customer_id"],
+                        "MatchId": [12345],
+                        "DeletionQueueItemId": "id-01",
+                        "CreatedAt": 1614698440,
+                        "QueryableColumns": "customer_id",
+                        "QueryableMatchId": "12345",
                     }
-                ],
-                "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
-                "DeleteOldVersions": True,
-            }
-        ]
+                )
+                + "\n"
+                + json.dumps(
+                    {
+                        "Columns": ["customer_id"],
+                        "MatchId": [23456],
+                        "DeletionQueueItemId": "id-02",
+                        "CreatedAt": 1614698440,
+                        "QueryableColumns": "customer_id",
+                        "QueryableMatchId": "23456",
+                    }
+                )
+                + "\n"
+            ),
+        )
 
+    @patch("backend.lambdas.tasks.generate_queries.s3.Bucket")
     @patch("backend.lambdas.tasks.generate_queries.get_table")
     @patch("backend.lambdas.tasks.generate_queries.get_partitions")
-    def test_it_handles_int_partitions(self, get_partitions_mock, get_table_mock):
+    def test_it_handles_int_partitions(
+        self, get_partitions_mock, get_table_mock, bucket_mock
+    ):
+        put_object_mock = MagicMock()
+        bucket_mock.return_value = put_object_mock
         columns = [{"Name": "customer_id"}]
         partition_keys = ["year"]
         partitions = [["2010"]]
@@ -195,7 +279,14 @@ class TestAthenaQueries:
                     "Table": "test_table",
                 },
             },
-            [{"MatchId": "hi"}],
+            [
+                {
+                    "MatchId": "hi",
+                    "CreatedAt": 1614698440,
+                    "DeletionQueueItemId": "id-01",
+                }
+            ],
+            "job_1234567890",
         )
         assert resp == [
             {
@@ -204,17 +295,35 @@ class TestAthenaQueries:
                 "Format": "parquet",
                 "Database": "test_db",
                 "Table": "test_table",
-                "Columns": [
-                    {"Column": "customer_id", "MatchIds": ["hi"], "Type": "Simple"}
-                ],
+                "Columns": [{"Column": "customer_id", "Type": "Simple"}],
                 "PartitionKeys": [{"Key": "year", "Value": 2010}],
                 "DeleteOldVersions": True,
+                "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
             }
         ]
+        put_object_mock.put_object.assert_called_with(
+            Key="manifests/job_1234567890/a/manifest.json",
+            Body=json.dumps(
+                {
+                    "Columns": ["customer_id"],
+                    "MatchId": ["hi"],
+                    "DeletionQueueItemId": "id-01",
+                    "CreatedAt": 1614698440,
+                    "QueryableColumns": "customer_id",
+                    "QueryableMatchId": "hi",
+                }
+            )
+            + "\n",
+        )
 
+    @patch("backend.lambdas.tasks.generate_queries.s3.Bucket")
     @patch("backend.lambdas.tasks.generate_queries.get_table")
     @patch("backend.lambdas.tasks.generate_queries.get_partitions")
-    def test_it_handles_multiple_columns(self, get_partitions_mock, get_table_mock):
+    def test_it_handles_multiple_columns(
+        self, get_partitions_mock, get_table_mock, bucket_mock
+    ):
+        put_object_mock = MagicMock()
+        bucket_mock.return_value = put_object_mock
         columns = [{"Name": "customer_id"}, {"Name": "alt_customer_id"}]
         partition_keys = ["product_category"]
         partitions = [["Books"]]
@@ -234,7 +343,14 @@ class TestAthenaQueries:
                     "Table": "test_table",
                 },
             },
-            [{"MatchId": "hi"}],
+            [
+                {
+                    "MatchId": "hi",
+                    "CreatedAt": 1614698440,
+                    "DeletionQueueItemId": "id-01",
+                }
+            ],
+            "job_1234567890",
         )
 
         assert resp == [
@@ -245,17 +361,50 @@ class TestAthenaQueries:
                 "Database": "test_db",
                 "Table": "test_table",
                 "Columns": [
-                    {"Column": "customer_id", "MatchIds": ["hi"], "Type": "Simple"},
-                    {"Column": "alt_customer_id", "MatchIds": ["hi"], "Type": "Simple"},
+                    {"Column": "customer_id", "Type": "Simple"},
+                    {"Column": "alt_customer_id", "Type": "Simple"},
                 ],
                 "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
                 "DeleteOldVersions": True,
+                "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
             }
         ]
+        put_object_mock.put_object.assert_called_with(
+            Key="manifests/job_1234567890/a/manifest.json",
+            Body=(
+                json.dumps(
+                    {
+                        "Columns": ["customer_id"],
+                        "MatchId": ["hi"],
+                        "DeletionQueueItemId": "id-01",
+                        "CreatedAt": 1614698440,
+                        "QueryableColumns": "customer_id",
+                        "QueryableMatchId": "hi",
+                    }
+                )
+                + "\n"
+                + json.dumps(
+                    {
+                        "Columns": ["alt_customer_id"],
+                        "MatchId": ["hi"],
+                        "DeletionQueueItemId": "id-01",
+                        "CreatedAt": 1614698440,
+                        "QueryableColumns": "alt_customer_id",
+                        "QueryableMatchId": "hi",
+                    }
+                )
+                + "\n"
+            ),
+        )
 
+    @patch("backend.lambdas.tasks.generate_queries.s3.Bucket")
     @patch("backend.lambdas.tasks.generate_queries.get_table")
     @patch("backend.lambdas.tasks.generate_queries.get_partitions")
-    def test_it_handles_composite_columns(self, get_partitions_mock, get_table_mock):
+    def test_it_handles_composite_columns(
+        self, get_partitions_mock, get_table_mock, bucket_mock
+    ):
+        put_object_mock = MagicMock()
+        bucket_mock.return_value = put_object_mock
         columns = [
             {"Name": "first_name"},
             {"Name": "last_name"},
@@ -286,8 +435,11 @@ class TestAthenaQueries:
                     ],
                     "Type": "Composite",
                     "DataMappers": ["a"],
+                    "CreatedAt": 1614698440,
+                    "DeletionQueueItemId": "id1234",
                 }
             ],
+            "job_1234567890",
         )
 
         assert resp == [
@@ -298,20 +450,38 @@ class TestAthenaQueries:
                 "Database": "test_db",
                 "Table": "test_table",
                 "Columns": [
-                    {
-                        "Columns": ["first_name", "last_name"],
-                        "MatchIds": [["John", "Doe"]],
-                        "Type": "Composite",
-                    }
+                    {"Columns": ["first_name", "last_name"], "Type": "Composite",}
                 ],
                 "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
                 "DeleteOldVersions": True,
+                "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
             }
         ]
+        put_object_mock.put_object.assert_called_with(
+            Key="manifests/job_1234567890/a/manifest.json",
+            Body=(
+                json.dumps(
+                    {
+                        "Columns": ["first_name", "last_name"],
+                        "MatchId": ["John", "Doe"],
+                        "DeletionQueueItemId": "id1234",
+                        "CreatedAt": 1614698440,
+                        "QueryableColumns": "first_name_S3F2COMP_last_name",
+                        "QueryableMatchId": "John_S3F2COMP_Doe",
+                    }
+                )
+                + "\n"
+            ),
+        )
 
+    @patch("backend.lambdas.tasks.generate_queries.s3.Bucket")
     @patch("backend.lambdas.tasks.generate_queries.get_table")
     @patch("backend.lambdas.tasks.generate_queries.get_partitions")
-    def test_it_handles_mixed_columns(self, get_partitions_mock, get_table_mock):
+    def test_it_handles_mixed_columns(
+        self, get_partitions_mock, get_table_mock, bucket_mock
+    ):
+        put_object_mock = MagicMock()
+        bucket_mock.return_value = put_object_mock
         columns = [
             {"Name": "customer_id"},
             {"Name": "first_name"},
@@ -337,9 +507,24 @@ class TestAthenaQueries:
                 },
             },
             [
-                {"MatchId": "12345", "Type": "Simple"},
-                {"MatchId": "23456", "Type": "Simple"},
-                {"MatchId": "23456", "Type": "Simple"},  # duplicate
+                {
+                    "MatchId": "12345",
+                    "Type": "Simple",
+                    "CreatedAt": 1614698440,
+                    "DeletionQueueItemId": "id001",
+                },
+                {
+                    "MatchId": "23456",
+                    "Type": "Simple",
+                    "CreatedAt": 1614698440,
+                    "DeletionQueueItemId": "id002",
+                },
+                {
+                    "MatchId": "23456",
+                    "Type": "Simple",
+                    "CreatedAt": 1614698440,
+                    "DeletionQueueItemId": "id003",
+                },
                 {
                     "MatchId": [
                         {"Column": "first_name", "Value": "John"},
@@ -347,6 +532,8 @@ class TestAthenaQueries:
                     ],
                     "Type": "Composite",
                     "DataMappers": ["a"],
+                    "CreatedAt": 1614698440,
+                    "DeletionQueueItemId": "id004",
                 },
                 {
                     "MatchId": [
@@ -355,14 +542,18 @@ class TestAthenaQueries:
                     ],
                     "Type": "Composite",
                     "DataMappers": ["a"],
+                    "CreatedAt": 1614698440,
+                    "DeletionQueueItemId": "id005",
                 },
-                {  # duplicate
+                {
                     "MatchId": [
                         {"Column": "first_name", "Value": "Jane"},
                         {"Column": "last_name", "Value": "Doe"},
                     ],
                     "Type": "Composite",
                     "DataMappers": ["a"],
+                    "CreatedAt": 1614698440,
+                    "DeletionQueueItemId": "id006",
                 },
                 {
                     "MatchId": [
@@ -371,8 +562,11 @@ class TestAthenaQueries:
                     ],
                     "Type": "Composite",
                     "DataMappers": ["a"],
+                    "CreatedAt": 1614698440,
+                    "DeletionQueueItemId": "id007",
                 },
             ],
+            "job1234567890",
         )
 
         assert resp == [
@@ -383,43 +577,218 @@ class TestAthenaQueries:
                 "Database": "test_db",
                 "Table": "test_table",
                 "Columns": [
-                    {
-                        "Column": "customer_id",
-                        "MatchIds": ["12345", "23456"],
-                        "Type": "Simple",
-                    },
-                    {
-                        "Column": "first_name",
-                        "MatchIds": ["12345", "23456"],
-                        "Type": "Simple",
-                    },
-                    {
-                        "Column": "last_name",
-                        "MatchIds": ["12345", "23456"],
-                        "Type": "Simple",
-                    },
-                    {"Column": "age", "MatchIds": [12345, 23456], "Type": "Simple"},
-                    {
-                        "Columns": ["first_name", "last_name"],
-                        "MatchIds": [["John", "Doe"], ["Jane", "Doe"]],
-                        "Type": "Composite",
-                    },
-                    {
-                        "Columns": ["age", "last_name"],
-                        "MatchIds": [[28, "Smith"]],
-                        "Type": "Composite",
-                    },
+                    {"Column": "customer_id", "Type": "Simple",},
+                    {"Column": "first_name", "Type": "Simple",},
+                    {"Column": "last_name", "Type": "Simple",},
+                    {"Column": "age", "Type": "Simple"},
+                    {"Columns": ["first_name", "last_name"], "Type": "Composite",},
+                    {"Columns": ["age", "last_name"], "Type": "Composite",},
                 ],
                 "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
                 "DeleteOldVersions": True,
+                "Manifest": "s3://S3F2-manifests-bucket/manifests/job1234567890/a/manifest.json",
             }
         ]
+        put_object_mock.put_object.assert_called_with(
+            Key="manifests/job1234567890/a/manifest.json",
+            Body=(
+                # id001 simple on all columns
+                json.dumps(
+                    {
+                        "Columns": ["customer_id"],
+                        "MatchId": ["12345"],
+                        "DeletionQueueItemId": "id001",
+                        "CreatedAt": 1614698440,
+                        "QueryableColumns": "customer_id",
+                        "QueryableMatchId": "12345",
+                    }
+                )
+                + "\n"
+                + json.dumps(
+                    {
+                        "Columns": ["first_name"],
+                        "MatchId": ["12345"],
+                        "DeletionQueueItemId": "id001",
+                        "CreatedAt": 1614698440,
+                        "QueryableColumns": "first_name",
+                        "QueryableMatchId": "12345",
+                    }
+                )
+                + "\n"
+                + json.dumps(
+                    {
+                        "Columns": ["last_name"],
+                        "MatchId": ["12345"],
+                        "DeletionQueueItemId": "id001",
+                        "CreatedAt": 1614698440,
+                        "QueryableColumns": "last_name",
+                        "QueryableMatchId": "12345",
+                    }
+                )
+                + "\n"
+                + json.dumps(
+                    {
+                        "Columns": ["age"],
+                        "MatchId": [12345],
+                        "DeletionQueueItemId": "id001",
+                        "CreatedAt": 1614698440,
+                        "QueryableColumns": "age",
+                        "QueryableMatchId": "12345",
+                    }
+                )
+                + "\n"
+                # id002 simple on all columns
+                + json.dumps(
+                    {
+                        "Columns": ["customer_id"],
+                        "MatchId": ["23456"],
+                        "DeletionQueueItemId": "id002",
+                        "CreatedAt": 1614698440,
+                        "QueryableColumns": "customer_id",
+                        "QueryableMatchId": "23456",
+                    }
+                )
+                + "\n"
+                + json.dumps(
+                    {
+                        "Columns": ["first_name"],
+                        "MatchId": ["23456"],
+                        "DeletionQueueItemId": "id002",
+                        "CreatedAt": 1614698440,
+                        "QueryableColumns": "first_name",
+                        "QueryableMatchId": "23456",
+                    }
+                )
+                + "\n"
+                + json.dumps(
+                    {
+                        "Columns": ["last_name"],
+                        "MatchId": ["23456"],
+                        "DeletionQueueItemId": "id002",
+                        "CreatedAt": 1614698440,
+                        "QueryableColumns": "last_name",
+                        "QueryableMatchId": "23456",
+                    }
+                )
+                + "\n"
+                + json.dumps(
+                    {
+                        "Columns": ["age"],
+                        "MatchId": [23456],
+                        "DeletionQueueItemId": "id002",
+                        "CreatedAt": 1614698440,
+                        "QueryableColumns": "age",
+                        "QueryableMatchId": "23456",
+                    }
+                )
+                + "\n"
+                # id003 is a id002 clone
+                # Values are same as id002 but we cannot deduplicate
+                # as we need id003 too for the cleanup phase
+                + json.dumps(
+                    {
+                        "Columns": ["customer_id"],
+                        "MatchId": ["23456"],
+                        "DeletionQueueItemId": "id003",
+                        "CreatedAt": 1614698440,
+                        "QueryableColumns": "customer_id",
+                        "QueryableMatchId": "23456",
+                    }
+                )
+                + "\n"
+                + json.dumps(
+                    {
+                        "Columns": ["first_name"],
+                        "MatchId": ["23456"],
+                        "DeletionQueueItemId": "id003",
+                        "CreatedAt": 1614698440,
+                        "QueryableColumns": "first_name",
+                        "QueryableMatchId": "23456",
+                    }
+                )
+                + "\n"
+                + json.dumps(
+                    {
+                        "Columns": ["last_name"],
+                        "MatchId": ["23456"],
+                        "DeletionQueueItemId": "id003",
+                        "CreatedAt": 1614698440,
+                        "QueryableColumns": "last_name",
+                        "QueryableMatchId": "23456",
+                    }
+                )
+                + "\n"
+                + json.dumps(
+                    {
+                        "Columns": ["age"],
+                        "MatchId": [23456],
+                        "DeletionQueueItemId": "id003",
+                        "CreatedAt": 1614698440,
+                        "QueryableColumns": "age",
+                        "QueryableMatchId": "23456",
+                    }
+                )
+                + "\n"
+                # id004 composite multi-column
+                + json.dumps(
+                    {
+                        "Columns": ["first_name", "last_name"],
+                        "MatchId": ["John", "Doe"],
+                        "DeletionQueueItemId": "id004",
+                        "CreatedAt": 1614698440,
+                        "QueryableColumns": "first_name_S3F2COMP_last_name",
+                        "QueryableMatchId": "John_S3F2COMP_Doe",
+                    }
+                )
+                + "\n"
+                # id005 composite multi-column
+                + json.dumps(
+                    {
+                        "Columns": ["first_name", "last_name"],
+                        "MatchId": ["Jane", "Doe"],
+                        "DeletionQueueItemId": "id005",
+                        "CreatedAt": 1614698440,
+                        "QueryableColumns": "first_name_S3F2COMP_last_name",
+                        "QueryableMatchId": "Jane_S3F2COMP_Doe",
+                    }
+                )
+                + "\n"
+                # id006 is a id005 clone
+                + json.dumps(
+                    {
+                        "Columns": ["first_name", "last_name"],
+                        "MatchId": ["Jane", "Doe"],
+                        "DeletionQueueItemId": "id006",
+                        "CreatedAt": 1614698440,
+                        "QueryableColumns": "first_name_S3F2COMP_last_name",
+                        "QueryableMatchId": "Jane_S3F2COMP_Doe",
+                    }
+                )
+                + "\n"
+                # id007 composite multi-column with different types
+                # note that columns are sorted alphabetically
+                + json.dumps(
+                    {
+                        "Columns": ["age", "last_name"],
+                        "MatchId": [28, "Smith"],
+                        "DeletionQueueItemId": "id007",
+                        "CreatedAt": 1614698440,
+                        "QueryableColumns": "age_S3F2COMP_last_name",
+                        "QueryableMatchId": "28_S3F2COMP_Smith",
+                    }
+                )
+                + "\n"
+            ),
+        )
 
+    @patch("backend.lambdas.tasks.generate_queries.s3.Bucket")
     @patch("backend.lambdas.tasks.generate_queries.get_table")
     @patch("backend.lambdas.tasks.generate_queries.get_partitions")
     def test_it_handles_multiple_partition_keys(
-        self, get_partitions_mock, get_table_mock
+        self, get_partitions_mock, get_table_mock, bucket_mock
     ):
+        put_object_mock = MagicMock()
+        bucket_mock.return_value = put_object_mock
         columns = [{"Name": "customer_id"}]
         partition_keys = ["year", "month"]
         partitions = [["2019", "01"]]
@@ -440,7 +809,14 @@ class TestAthenaQueries:
                     "Table": "test_table",
                 },
             },
-            [{"MatchId": "hi"}],
+            [
+                {
+                    "MatchId": "hi",
+                    "CreatedAt": 1614698440,
+                    "DeletionQueueItemId": "id1234",
+                }
+            ],
+            "job_1234567890",
         )
 
         assert resp == [
@@ -450,22 +826,40 @@ class TestAthenaQueries:
                 "Format": "parquet",
                 "Database": "test_db",
                 "Table": "test_table",
-                "Columns": [
-                    {"Column": "customer_id", "MatchIds": ["hi"], "Type": "Simple"}
-                ],
+                "Columns": [{"Column": "customer_id", "Type": "Simple"}],
                 "PartitionKeys": [
                     {"Key": "year", "Value": "2019"},
                     {"Key": "month", "Value": "01"},
                 ],
                 "DeleteOldVersions": True,
+                "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
             }
         ]
+        put_object_mock.put_object.assert_called_with(
+            Key="manifests/job_1234567890/a/manifest.json",
+            Body=(
+                json.dumps(
+                    {
+                        "Columns": ["customer_id"],
+                        "MatchId": ["hi"],
+                        "DeletionQueueItemId": "id1234",
+                        "CreatedAt": 1614698440,
+                        "QueryableColumns": "customer_id",
+                        "QueryableMatchId": "hi",
+                    }
+                )
+                + "\n"
+            ),
+        )
 
+    @patch("backend.lambdas.tasks.generate_queries.s3.Bucket")
     @patch("backend.lambdas.tasks.generate_queries.get_table")
     @patch("backend.lambdas.tasks.generate_queries.get_partitions")
     def test_it_handles_multiple_partition_values(
-        self, get_partitions_mock, get_table_mock
+        self, get_partitions_mock, get_table_mock, bucket_mock
     ):
+        put_object_mock = MagicMock()
+        bucket_mock.return_value = put_object_mock
         columns = [{"Name": "customer_id"}]
         partition_keys = ["year", "month"]
         partitions = [["2018", "12"], ["2019", "01"], ["2019", "02"]]
@@ -486,7 +880,14 @@ class TestAthenaQueries:
                     "Table": "test_table",
                 },
             },
-            [{"MatchId": "hi"}],
+            [
+                {
+                    "MatchId": "hi",
+                    "CreatedAt": 1614698440,
+                    "DeletionQueueItemId": "item1234",
+                }
+            ],
+            "job_1234567890",
         )
 
         assert resp == [
@@ -496,14 +897,13 @@ class TestAthenaQueries:
                 "Table": "test_table",
                 "QueryExecutor": "athena",
                 "Format": "parquet",
-                "Columns": [
-                    {"Column": "customer_id", "MatchIds": ["hi"], "Type": "Simple"}
-                ],
+                "Columns": [{"Column": "customer_id", "Type": "Simple"}],
                 "PartitionKeys": [
                     {"Key": "year", "Value": "2018"},
                     {"Key": "month", "Value": "12"},
                 ],
                 "DeleteOldVersions": True,
+                "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
             },
             {
                 "DataMapperId": "a",
@@ -511,14 +911,13 @@ class TestAthenaQueries:
                 "Table": "test_table",
                 "QueryExecutor": "athena",
                 "Format": "parquet",
-                "Columns": [
-                    {"Column": "customer_id", "MatchIds": ["hi"], "Type": "Simple"}
-                ],
+                "Columns": [{"Column": "customer_id", "Type": "Simple"}],
                 "PartitionKeys": [
                     {"Key": "year", "Value": "2019"},
                     {"Key": "month", "Value": "01"},
                 ],
                 "DeleteOldVersions": True,
+                "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
             },
             {
                 "DataMapperId": "a",
@@ -526,22 +925,40 @@ class TestAthenaQueries:
                 "Table": "test_table",
                 "QueryExecutor": "athena",
                 "Format": "parquet",
-                "Columns": [
-                    {"Column": "customer_id", "MatchIds": ["hi"], "Type": "Simple"}
-                ],
+                "Columns": [{"Column": "customer_id", "Type": "Simple"}],
                 "PartitionKeys": [
                     {"Key": "year", "Value": "2019"},
                     {"Key": "month", "Value": "02"},
                 ],
                 "DeleteOldVersions": True,
+                "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
             },
         ]
+        put_object_mock.put_object.assert_called_with(
+            Key="manifests/job_1234567890/a/manifest.json",
+            Body=(
+                json.dumps(
+                    {
+                        "Columns": ["customer_id"],
+                        "MatchId": ["hi"],
+                        "DeletionQueueItemId": "item1234",
+                        "CreatedAt": 1614698440,
+                        "QueryableColumns": "customer_id",
+                        "QueryableMatchId": "hi",
+                    }
+                )
+                + "\n"
+            ),
+        )
 
+    @patch("backend.lambdas.tasks.generate_queries.s3.Bucket")
     @patch("backend.lambdas.tasks.generate_queries.get_table")
     @patch("backend.lambdas.tasks.generate_queries.get_partitions")
     def test_it_propagates_optional_properties(
-        self, get_partitions_mock, get_table_mock
+        self, get_partitions_mock, get_table_mock, bucket_mock
     ):
+        put_object_mock = MagicMock()
+        bucket_mock.return_value = put_object_mock
         columns = [{"Name": "customer_id"}]
         partition_keys = ["year", "month"]
         partitions = [["2018", "12"], ["2019", "01"]]
@@ -564,7 +981,14 @@ class TestAthenaQueries:
                 "RoleArn": "arn:aws:iam::accountid:role/rolename",
                 "DeleteOldVersions": True,
             },
-            [{"MatchId": "hi"}],
+            [
+                {
+                    "MatchId": "hi",
+                    "CreatedAt": 1614698440,
+                    "DeletionQueueItemId": "item1234",
+                }
+            ],
+            "job_1234567890",
         )
 
         assert resp == [
@@ -574,15 +998,14 @@ class TestAthenaQueries:
                 "Table": "test_table",
                 "QueryExecutor": "athena",
                 "Format": "parquet",
-                "Columns": [
-                    {"Column": "customer_id", "MatchIds": ["hi"], "Type": "Simple"}
-                ],
+                "Columns": [{"Column": "customer_id", "Type": "Simple"}],
                 "PartitionKeys": [
                     {"Key": "year", "Value": "2018"},
                     {"Key": "month", "Value": "12"},
                 ],
                 "RoleArn": "arn:aws:iam::accountid:role/rolename",
                 "DeleteOldVersions": True,
+                "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
             },
             {
                 "DataMapperId": "a",
@@ -590,23 +1013,41 @@ class TestAthenaQueries:
                 "Table": "test_table",
                 "QueryExecutor": "athena",
                 "Format": "parquet",
-                "Columns": [
-                    {"Column": "customer_id", "MatchIds": ["hi"], "Type": "Simple"}
-                ],
+                "Columns": [{"Column": "customer_id", "Type": "Simple"}],
                 "PartitionKeys": [
                     {"Key": "year", "Value": "2019"},
                     {"Key": "month", "Value": "01"},
                 ],
                 "RoleArn": "arn:aws:iam::accountid:role/rolename",
                 "DeleteOldVersions": True,
+                "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
             },
         ]
+        put_object_mock.put_object.assert_called_with(
+            Key="manifests/job_1234567890/a/manifest.json",
+            Body=(
+                json.dumps(
+                    {
+                        "Columns": ["customer_id"],
+                        "MatchId": ["hi"],
+                        "DeletionQueueItemId": "item1234",
+                        "CreatedAt": 1614698440,
+                        "QueryableColumns": "customer_id",
+                        "QueryableMatchId": "hi",
+                    }
+                )
+                + "\n"
+            ),
+        )
 
+    @patch("backend.lambdas.tasks.generate_queries.s3.Bucket")
     @patch("backend.lambdas.tasks.generate_queries.get_table")
     @patch("backend.lambdas.tasks.generate_queries.get_partitions")
     def test_it_filters_users_from_non_applicable_tables(
-        self, get_partitions_mock, get_table_mock
+        self, get_partitions_mock, get_table_mock, bucket_mock
     ):
+        put_object_mock = MagicMock()
+        bucket_mock.return_value = put_object_mock
         columns = [{"Name": "customer_id"}]
         partition_keys = ["product_category"]
         partitions = [["Books"]]
@@ -627,9 +1068,20 @@ class TestAthenaQueries:
                 },
             },
             [
-                {"MatchId": "123", "DataMappers": ["A"]},
-                {"MatchId": "456", "DataMappers": []},
+                {
+                    "MatchId": "123",
+                    "CreatedAt": 1614698440,
+                    "DataMappers": ["A"],
+                    "DeletionQueueItemId": "id1",
+                },
+                {
+                    "MatchId": "456",
+                    "CreatedAt": 1614698440,
+                    "DataMappers": [],
+                    "DeletionQueueItemId": "id2",
+                },
             ],
+            "job_1234567890",
         )
 
         assert resp == [
@@ -639,17 +1091,37 @@ class TestAthenaQueries:
                 "Table": "B",
                 "QueryExecutor": "athena",
                 "Format": "parquet",
-                "Columns": [
-                    {"Column": "customer_id", "MatchIds": ["456"], "Type": "Simple"}
-                ],
+                "Columns": [{"Column": "customer_id", "Type": "Simple"}],
                 "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
                 "DeleteOldVersions": True,
+                "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/B/manifest.json",
             }
         ]
+        put_object_mock.put_object.assert_called_with(
+            Key="manifests/job_1234567890/B/manifest.json",
+            Body=(
+                json.dumps(
+                    {
+                        "Columns": ["customer_id"],
+                        "MatchId": ["456"],
+                        "DeletionQueueItemId": "id2",
+                        "CreatedAt": 1614698440,
+                        "QueryableColumns": "customer_id",
+                        "QueryableMatchId": "456",
+                    }
+                )
+                + "\n"
+            ),
+        )
 
+    @patch("backend.lambdas.tasks.generate_queries.s3.Bucket")
     @patch("backend.lambdas.tasks.generate_queries.get_table")
     @patch("backend.lambdas.tasks.generate_queries.get_partitions")
-    def test_it_handles_unpartitioned_data(self, get_partitions_mock, get_table_mock):
+    def test_it_handles_unpartitioned_data(
+        self, get_partitions_mock, get_table_mock, bucket_mock
+    ):
+        put_object_mock = MagicMock()
+        bucket_mock.return_value = put_object_mock
         columns = [{"Name": "customer_id"}]
         get_table_mock.return_value = table_stub(columns, [])
         get_partitions_mock.return_value = []
@@ -665,7 +1137,14 @@ class TestAthenaQueries:
                     "Table": "test_table",
                 },
             },
-            [{"MatchId": "hi"}],
+            [
+                {
+                    "MatchId": "hi",
+                    "CreatedAt": 1614698440,
+                    "DeletionQueueItemId": "item1234",
+                }
+            ],
+            "job_1234567890",
         )
         assert resp == [
             {
@@ -674,19 +1153,37 @@ class TestAthenaQueries:
                 "Table": "test_table",
                 "QueryExecutor": "athena",
                 "Format": "parquet",
-                "Columns": [
-                    {"Column": "customer_id", "MatchIds": ["hi"], "Type": "Simple"}
-                ],
+                "Columns": [{"Column": "customer_id", "Type": "Simple"}],
                 "PartitionKeys": [],
                 "DeleteOldVersions": True,
+                "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
             }
         ]
+        put_object_mock.put_object.assert_called_with(
+            Key="manifests/job_1234567890/a/manifest.json",
+            Body=(
+                json.dumps(
+                    {
+                        "Columns": ["customer_id"],
+                        "MatchId": ["hi"],
+                        "DeletionQueueItemId": "item1234",
+                        "CreatedAt": 1614698440,
+                        "QueryableColumns": "customer_id",
+                        "QueryableMatchId": "hi",
+                    }
+                )
+                + "\n"
+            ),
+        )
 
+    @patch("backend.lambdas.tasks.generate_queries.s3.Bucket")
     @patch("backend.lambdas.tasks.generate_queries.get_table")
     @patch("backend.lambdas.tasks.generate_queries.get_partitions")
     def test_it_propagates_role_arn_for_unpartitioned_data(
-        self, get_partitions_mock, get_table_mock
+        self, get_partitions_mock, get_table_mock, bucket_mock
     ):
+        put_object_mock = MagicMock()
+        bucket_mock.return_value = put_object_mock
         columns = [{"Name": "customer_id"}]
         get_table_mock.return_value = table_stub(columns, [])
         get_partitions_mock.return_value = []
@@ -703,7 +1200,14 @@ class TestAthenaQueries:
                 },
                 "RoleArn": "arn:aws:iam::accountid:role/rolename",
             },
-            [{"MatchId": "hi"}],
+            [
+                {
+                    "MatchId": "hi",
+                    "CreatedAt": 1614698440,
+                    "DeletionQueueItemId": "item1234",
+                }
+            ],
+            "job_1234567890",
         )
         assert resp == [
             {
@@ -712,20 +1216,38 @@ class TestAthenaQueries:
                 "Table": "test_table",
                 "QueryExecutor": "athena",
                 "Format": "parquet",
-                "Columns": [
-                    {"Column": "customer_id", "MatchIds": ["hi"], "Type": "Simple"}
-                ],
+                "Columns": [{"Column": "customer_id", "Type": "Simple"}],
                 "PartitionKeys": [],
                 "RoleArn": "arn:aws:iam::accountid:role/rolename",
                 "DeleteOldVersions": True,
+                "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
             }
         ]
+        put_object_mock.put_object.assert_called_with(
+            Key="manifests/job_1234567890/a/manifest.json",
+            Body=(
+                json.dumps(
+                    {
+                        "Columns": ["customer_id"],
+                        "MatchId": ["hi"],
+                        "DeletionQueueItemId": "item1234",
+                        "CreatedAt": 1614698440,
+                        "QueryableColumns": "customer_id",
+                        "QueryableMatchId": "hi",
+                    }
+                )
+                + "\n"
+            ),
+        )
 
+    @patch("backend.lambdas.tasks.generate_queries.s3.Bucket")
     @patch("backend.lambdas.tasks.generate_queries.get_table")
     @patch("backend.lambdas.tasks.generate_queries.get_partitions")
     def test_it_removes_queries_with_no_applicable_matches(
-        self, get_partitions_mock, get_table_mock
+        self, get_partitions_mock, get_table_mock, bucket_mock
     ):
+        put_object_mock = MagicMock()
+        bucket_mock.return_value = put_object_mock
         columns = [{"Name": "customer_id"}]
         get_table_mock.return_value = table_stub(columns, [])
         get_partitions_mock.return_value = []
@@ -741,15 +1263,20 @@ class TestAthenaQueries:
                     "Table": "test_table",
                 },
             },
-            [{"MatchId": "123", "DataMappers": ["B"]}],
+            [{"MatchId": "123", "DataMappers": ["B"], "DeletionQueueItemId": "id1234"}],
+            "job_1234567890",
         )
         assert resp == []
+        assert not put_object_mock.put_object.called
 
+    @patch("backend.lambdas.tasks.generate_queries.s3.Bucket")
     @patch("backend.lambdas.tasks.generate_queries.get_table")
     @patch("backend.lambdas.tasks.generate_queries.get_partitions")
     def test_it_removes_queries_with_no_applicable_matches_for_partitioned_data(
-        self, get_partitions_mock, get_table_mock
+        self, get_partitions_mock, get_table_mock, bucket_mock
     ):
+        put_object_mock = MagicMock()
+        bucket_mock.return_value = put_object_mock
         columns = [{"Name": "customer_id"}]
         partition_keys = ["product_category"]
         partitions = [["Books"], ["Beauty"]]
@@ -769,9 +1296,11 @@ class TestAthenaQueries:
                     "Table": "test_table",
                 },
             },
-            [{"MatchId": "123", "DataMappers": ["C"]}],
+            [{"MatchId": "123", "DataMappers": ["C"], "DeletionQueueItemId": "id1234"}],
+            "job_1234567890",
         )
         assert resp == []
+        assert not put_object_mock.put_object.called
 
     @patch("backend.lambdas.tasks.generate_queries.glue_client")
     def test_it_returns_table(self, client):
@@ -902,15 +1431,15 @@ class TestAthenaQueries:
         assert e.value.args[0] == "Column schema is not valid"
 
 
-@patch("backend.lambdas.tasks.generate_queries.jobs_table")
-def test_it_fetches_deletion_queue_from_ddb(table_mock):
-    table_mock.get_item.return_value = {
-        "Item": {"DeletionQueueItems": [{"DataMappers": [], "MatchId": "123"}]}
-    }
+@patch("backend.lambdas.tasks.generate_queries.deserialize_item")
+@patch("backend.lambdas.tasks.generate_queries.paginate")
+def test_it_fetches_deletion_queue_from_ddb(paginate_mock, deserialize_mock):
+    item = {"DeletionQueueItems": [{"DataMappers": [], "MatchId": "123"}]}
+    deserialize_mock.return_value = item
+    paginate_mock.return_value = iter([item])
 
-    resp = get_deletion_queue("job123")
-    assert resp == [{"DataMappers": [], "MatchId": "123"}]
-    table_mock.get_item.assert_called_with(Key={"Id": "job123", "Sk": "job123"})
+    resp = get_deletion_queue()
+    assert list(resp) == [item]
 
 
 @patch("backend.lambdas.tasks.generate_queries.deserialize_item")
@@ -932,6 +1461,59 @@ def test_it_fetches_deserialized_data_mappers(paginate_mock, deserialize_mock):
 
     resp = get_data_mappers()
     assert list(resp) == [dm]
+
+
+@patch("backend.lambdas.tasks.generate_queries.glue_client")
+def test_it_writes_glue_partitions(glue_client):
+    write_partitions([["job_1234", "dm_0001"], ["job_1234", "dm_0003"]])
+    glue_client.batch_create_partition.assert_called_with(
+        DatabaseName="s3f2_manifests_database",
+        TableName="s3f2_manifests_table",
+        PartitionInputList=[
+            {
+                "Values": ["job_1234", "dm_0001"],
+                "StorageDescriptor": {
+                    "Columns": [
+                        {"Name": "columns", "Type": "array<string>"},
+                        {"Name": "matchid", "Type": "array<string>"},
+                        {"Name": "deletionqueueitemid", "Type": "string"},
+                        {"Name": "createdat", "Type": "int"},
+                        {"Name": "queryablecolumns", "Type": "string"},
+                        {"Name": "queryablematchid", "Type": "string"},
+                    ],
+                    "Location": "s3://S3F2-manifests-bucket/manifests/job_1234/dm_0001/",
+                    "InputFormat": "org.apache.hadoop.mapred.TextInputFormat",
+                    "OutputFormat": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
+                    "Compressed": False,
+                    "SerdeInfo": {
+                        "SerializationLibrary": "org.openx.data.jsonserde.JsonSerDe",
+                    },
+                    "StoredAsSubDirectories": False,
+                },
+            },
+            {
+                "Values": ["job_1234", "dm_0003"],
+                "StorageDescriptor": {
+                    "Columns": [
+                        {"Name": "columns", "Type": "array<string>"},
+                        {"Name": "matchid", "Type": "array<string>"},
+                        {"Name": "deletionqueueitemid", "Type": "string"},
+                        {"Name": "createdat", "Type": "int"},
+                        {"Name": "queryablecolumns", "Type": "string"},
+                        {"Name": "queryablematchid", "Type": "string"},
+                    ],
+                    "Location": "s3://S3F2-manifests-bucket/manifests/job_1234/dm_0003/",
+                    "InputFormat": "org.apache.hadoop.mapred.TextInputFormat",
+                    "OutputFormat": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
+                    "Compressed": False,
+                    "SerdeInfo": {
+                        "SerializationLibrary": "org.openx.data.jsonserde.JsonSerDe",
+                    },
+                    "StoredAsSubDirectories": False,
+                },
+            },
+        ],
+    )
 
 
 def partition_stub(values, columns, table_name="test_table"):

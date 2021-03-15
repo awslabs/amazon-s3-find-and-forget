@@ -1,5 +1,14 @@
 # Change Log
 
+## v0.25 (unreleased)
+
+> This version introduces breaking changes to the API and Web UI. Please consult
+> the
+> [migrating from <=v0.24 to v0.25 guide](docs/UPGRADE_GUIDE.md#migrating-from-v024-to-v025)
+
+- [#239](https://github.com/awslabs/amazon-s3-find-and-forget/pull/239): Remove
+  limit on queue size for individual jobs.
+
 ## v0.24
 
 - [#240](https://github.com/awslabs/amazon-s3-find-and-forget/pull/240): Add ECR
@@ -125,6 +134,10 @@
   duplicated query executions during Find Phase
 
 ## v0.9
+
+> This version introduces breaking changes to the CloudFormation templates.
+> Please consult the
+> [migrating from <=v0.8 to v0.9 guide](docs/UPGRADE_GUIDE.md#migrating-from-v08-to-v09)
 
 - [#189](https://github.com/awslabs/amazon-s3-find-and-forget/pull/189): UI
   Updates

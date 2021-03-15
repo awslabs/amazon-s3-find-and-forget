@@ -1,20 +1,30 @@
 """
-Task for generating Athena queries from glue catalogs
+Task for generating Athena queries from glue catalog aka Query Planning
 """
+import json
 import os
 import boto3
 
-from boto_utils import paginate, batch_sqs_msgs, deserialize_item
+from operator import itemgetter
+from boto_utils import paginate, batch_sqs_msgs, deserialize_item, DecimalEncoder
 from decorators import with_logging
 
 ddb = boto3.resource("dynamodb")
 ddb_client = boto3.client("dynamodb")
 glue_client = boto3.client("glue")
+s3 = boto3.resource("s3")
 sqs = boto3.resource("sqs")
 
 queue = sqs.Queue(os.getenv("QueryQueue"))
 jobs_table = ddb.Table(os.getenv("JobTable", "S3F2_Jobs"))
 data_mapper_table_name = os.getenv("DataMapperTable", "S3F2_DataMappers")
+deletion_queue_table_name = os.getenv("DeletionQueueTable", "S3F2_DeletionQueue")
+manifests_bucket_name = os.getenv("ManifestsBucket", "S3F2-manifests-bucket")
+glue_db = os.getenv("GlueDatabase", "s3f2_manifests_database")
+glue_table = os.getenv("JobManifestsGlueTable", "s3f2_manifests_table")
+
+COMPOSITE_JOIN_TOKEN = "_S3F2COMP_"
+MANIFEST_KEY = "manifests/{job_id}/{data_mapper_id}/manifest.json"
 
 COMPOSITE_JOIN_TOKEN = "_S3F2COMP_"
 
@@ -40,20 +50,92 @@ ALLOWED_TYPES = [
 
 @with_logging
 def handler(event, context):
-    deletion_items = get_deletion_queue(event["ExecutionName"])
-    for data_mapper in get_data_mappers():
+    job_id = event["ExecutionName"]
+    deletion_items = get_deletion_queue()
+    manifests_partitions = []
+    data_mappers = get_data_mappers()
+    total_queries = 0
+    for data_mapper in data_mappers:
         query_executor = data_mapper["QueryExecutor"]
         if query_executor == "athena":
-            queries = generate_athena_queries(data_mapper, deletion_items)
+            queries = generate_athena_queries(data_mapper, deletion_items, job_id)
+            if len(queries) > 0:
+                manifests_partitions.append([job_id, data_mapper["DataMapperId"]])
         else:
             raise NotImplementedError(
                 "Unsupported data mapper query executor: '{}'".format(query_executor)
             )
 
         batch_sqs_msgs(queue, queries)
+        total_queries += len(queries)
+    write_partitions(manifests_partitions)
+    return {
+        "GeneratedQueries": total_queries,
+        "DeletionQueueSize": len(deletion_items),
+        "Manifests": [
+            "s3://{}/{}".format(
+                manifests_bucket_name,
+                MANIFEST_KEY.format(
+                    job_id=partition_tuple[0], data_mapper_id=partition_tuple[1]
+                ),
+            )
+            for partition_tuple in manifests_partitions
+        ],
+    }
 
 
-def generate_athena_queries(data_mapper, deletion_items):
+def build_manifest_row(columns, match_id, item_id, item_createdat):
+    """
+    Function for building each row of the manifest that will be written to S3.
+
+    * What are 'queryablematchid' and 'queryablecolumns'?
+    A convenience stringified value of match_id and its column when the match
+    is simple, or a stringified joint value when composite (for instance,
+    "John_S3F2COMP_Doe" and "first_name_S3F2COMP_last_name"). The purpose of
+    these fields is optimise query execution by doing the SQL JOINs over strings only.
+    
+    * What are MatchId and Columns?
+    Original values to be used by the ECS task instead.
+    Note that the MatchId is declared as array<string> in the Glue Table as it's
+    not possible to declare it as array of generic types and the design is for
+    using a single table schema for each match/column tuple, despite
+    the current column type.
+    This means that using the "MatchId" field in Athena will always coherce its values
+    to strings, for instance [1234] => ["1234"]. That's ok because when working with
+    the manifest, the Fargate task will read and parse the JSON directly and therefore
+    will use its original type (for instance, int over strings to do the comparison).
+    """
+    is_composite = len(columns) > 1
+    iterable_match = match_id if is_composite else [match_id]
+    queryable = COMPOSITE_JOIN_TOKEN.join(str(x) for x in iterable_match)
+    queryable_cols = COMPOSITE_JOIN_TOKEN.join(str(x) for x in columns)
+    return (
+        json.dumps(
+            {
+                "Columns": columns,
+                "MatchId": iterable_match,
+                "DeletionQueueItemId": item_id,
+                "CreatedAt": item_createdat,
+                "QueryableColumns": queryable_cols,
+                "QueryableMatchId": queryable,
+            },
+            cls=DecimalEncoder,
+        )
+        + "\n"
+    )
+
+
+def generate_athena_queries(data_mapper, deletion_items, job_id):
+    """
+    For each Data Mapper, it generates a list of parameters needed for each
+    query execution. The matches for the given column are saved in an external
+    S3 object (aka manifest) to allow its size to grow into the thousands without
+    incurring in DDB Document size limit, SQS message size limit, or Athena query
+    size limit. The manifest S3 Path is finally referenced as part of the SQS message.
+    """
+    manifest_key = MANIFEST_KEY.format(
+        job_id=job_id, data_mapper_id=data_mapper["DataMapperId"]
+    )
     db = data_mapper["QueryExecutorParameters"]["Database"]
     table_name = data_mapper["QueryExecutorParameters"]["Table"]
     table = get_table(db, table_name)
@@ -74,7 +156,7 @@ def generate_athena_queries(data_mapper, deletion_items):
 
     # Workout which deletion items should be included in this query
     applicable_match_ids = [
-        item["MatchId"]
+        item
         for item in deletion_items
         if msg["DataMapperId"] in item.get("DataMappers", [])
         or len(item.get("DataMappers", [])) == 0
@@ -84,7 +166,11 @@ def generate_athena_queries(data_mapper, deletion_items):
 
     # Compile a list of MatchIds grouped by Column
     columns_with_matches = {}
-    for mid in applicable_match_ids:
+    manifest = ""
+    for item in applicable_match_ids:
+        mid, item_id, item_createdat = itemgetter(
+            "MatchId", "DeletionQueueItemId", "CreatedAt"
+        )(item)
         is_simple = not isinstance(mid, list)
         if is_simple:
             for column in msg["Columns"]:
@@ -92,11 +178,11 @@ def generate_athena_queries(data_mapper, deletion_items):
                 if column not in columns_with_matches:
                     columns_with_matches[column] = {
                         "Column": column,
-                        "MatchIds": [casted],
                         "Type": "Simple",
                     }
-                elif casted not in columns_with_matches[column]["MatchIds"]:
-                    columns_with_matches[column]["MatchIds"].append(casted)
+                manifest += build_manifest_row(
+                    [column], casted, item_id, item_createdat
+                )
         else:
             sorted_mid = sorted(mid, key=lambda x: x["Column"])
             query_columns = list(map(lambda x: x["Column"], sorted_mid))
@@ -107,12 +193,14 @@ def generate_athena_queries(data_mapper, deletion_items):
             if column_key not in columns_with_matches:
                 columns_with_matches[column_key] = {
                     "Columns": query_columns,
-                    "MatchIds": [composite_match],
                     "Type": "Composite",
                 }
-            elif composite_match not in columns_with_matches[column_key]["MatchIds"]:
-                columns_with_matches[column_key]["MatchIds"].append(composite_match)
+            manifest += build_manifest_row(
+                query_columns, composite_match, item_id, item_createdat
+            )
+    s3.Bucket(manifests_bucket_name).put_object(Body=manifest, Key=manifest_key)
     msg["Columns"] = list(columns_with_matches.values())
+    msg["Manifest"] = "s3://{}/{}".format(manifests_bucket_name, manifest_key)
 
     if len(partition_keys) == 0:
         return [msg]
@@ -135,9 +223,11 @@ def generate_athena_queries(data_mapper, deletion_items):
     )
 
 
-def get_deletion_queue(job_id):
-    resp = jobs_table.get_item(Key={"Id": job_id, "Sk": job_id})
-    return resp.get("Item").get("DeletionQueueItems")
+def get_deletion_queue():
+    results = paginate(
+        ddb_client, ddb_client.scan, "Items", TableName=deletion_queue_table_name
+    )
+    return [deserialize_item(result) for result in results]
 
 
 def get_data_mappers():
@@ -160,6 +250,47 @@ def get_partitions(db, table_name):
         DatabaseName=db,
         TableName=table_name,
     )
+
+
+def write_partitions(partitions):
+    """
+    In order for the manifests to be used by Athena in a JOIN, we make them
+    available as partitions with Job and DataMapperId tuple.
+    """
+    max_create_batch_size = 100
+    for i in range(0, len(partitions), max_create_batch_size):
+        glue_client.batch_create_partition(
+            DatabaseName=glue_db,
+            TableName=glue_table,
+            PartitionInputList=[
+                {
+                    "Values": partition_tuple,
+                    "StorageDescriptor": {
+                        "Columns": [
+                            {"Name": "columns", "Type": "array<string>"},
+                            {"Name": "matchid", "Type": "array<string>"},
+                            {"Name": "deletionqueueitemid", "Type": "string"},
+                            {"Name": "createdat", "Type": "int"},
+                            {"Name": "queryablecolumns", "Type": "string"},
+                            {"Name": "queryablematchid", "Type": "string"},
+                        ],
+                        "Location": "s3://{}/manifests/{}/{}/".format(
+                            manifests_bucket_name,
+                            partition_tuple[0],
+                            partition_tuple[1],
+                        ),
+                        "InputFormat": "org.apache.hadoop.mapred.TextInputFormat",
+                        "OutputFormat": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
+                        "Compressed": False,
+                        "SerdeInfo": {
+                            "SerializationLibrary": "org.openx.data.jsonserde.JsonSerDe",
+                        },
+                        "StoredAsSubDirectories": False,
+                    },
+                }
+                for partition_tuple in partitions[i : i + max_create_batch_size]
+            ],
+        )
 
 
 def get_inner_children(str, prefix, suffix):

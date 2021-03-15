@@ -15,6 +15,7 @@ with patch.dict(
     os.environ, {"DELETE_OBJECTS_QUEUE": "https://url/q.fifo", "DLQ": "https://url/q",}
 ):
     from backend.ecs_tasks.delete_files.main import (
+        build_matches,
         kill_handler,
         execute,
         handle_error,
@@ -52,7 +53,9 @@ def get_list_object_versions_error():
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.emit_deletion_event")
 @patch("backend.ecs_tasks.delete_files.main.save")
+@patch("backend.ecs_tasks.delete_files.main.build_matches")
 def test_happy_path_when_queue_not_empty(
+    mock_build_matches,
     mock_save,
     mock_emit,
     mock_delete,
@@ -61,8 +64,9 @@ def test_happy_path_when_queue_not_empty(
     mock_verify_integrity,
     message_stub,
 ):
-    mock_s3.S3FileSystem.return_value = mock_s3
     column = {"Column": "customer_id", "MatchIds": ["12345", "23456"]}
+    mock_build_matches.return_value = [column]
+    mock_s3.S3FileSystem.return_value = mock_s3
     mock_file = MagicMock(version_id="abc123")
     mock_save.return_value = "new_version123"
     mock_s3.open.return_value = mock_s3
@@ -101,7 +105,9 @@ def test_happy_path_when_queue_not_empty(
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.emit_deletion_event")
 @patch("backend.ecs_tasks.delete_files.main.save")
+@patch("backend.ecs_tasks.delete_files.main.build_matches")
 def test_happy_path_when_queue_not_empty_for_compressed_json(
+    mock_build_matches,
     mock_save,
     mock_emit,
     mock_delete,
@@ -110,8 +116,9 @@ def test_happy_path_when_queue_not_empty_for_compressed_json(
     mock_verify_integrity,
     message_stub,
 ):
-    mock_s3.S3FileSystem.return_value = mock_s3
     column = {"Column": "customer_id", "MatchIds": ["12345", "23456"]}
+    mock_build_matches.return_value = [column]
+    mock_s3.S3FileSystem.return_value = mock_s3
     mock_file = MagicMock(version_id="abc123")
     mock_save.return_value = "new_version123"
     mock_s3.open.return_value = mock_s3
@@ -150,6 +157,7 @@ def test_happy_path_when_queue_not_empty_for_compressed_json(
 @patch("backend.ecs_tasks.delete_files.main.get_queue", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.emit_deletion_event", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.save", MagicMock())
+@patch("backend.ecs_tasks.delete_files.main.build_matches", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.get_session")
 @patch("backend.ecs_tasks.delete_files.main.s3fs")
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
@@ -186,8 +194,9 @@ def test_it_assumes_role(mock_delete, mock_s3, mock_session, message_stub):
 @patch("backend.ecs_tasks.delete_files.main.delete_old_versions")
 @patch("backend.ecs_tasks.delete_files.main.s3fs")
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
+@patch("backend.ecs_tasks.delete_files.main.build_matches", MagicMock())
 def test_it_removes_old_versions(
-    mock_delete, mock_s3, mock_delete_versions, mock_save, message_stub
+    mock_delete, mock_s3, mock_delete_versions, mock_save, message_stub,
 ):
     mock_s3.S3FileSystem.return_value = mock_s3
     mock_s3.open.return_value = mock_s3
@@ -224,6 +233,7 @@ def test_it_removes_old_versions(
 @patch("backend.ecs_tasks.delete_files.main.s3fs")
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
+@patch("backend.ecs_tasks.delete_files.main.build_matches", MagicMock())
 def test_it_handles_old_version_delete_failures(
     mock_handle, mock_delete, mock_s3, mock_delete_versions, mock_save, message_stub,
 ):
@@ -260,11 +270,11 @@ def test_it_handles_old_version_delete_failures(
 @patch("backend.ecs_tasks.delete_files.main.emit_deletion_event")
 @patch("backend.ecs_tasks.delete_files.main.save")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
+@patch("backend.ecs_tasks.delete_files.main.build_matches", MagicMock())
 def test_it_handles_no_deletions(
-    mock_handle, mock_save, mock_emit, mock_delete, mock_s3, message_stub
+    mock_handle, mock_save, mock_emit, mock_delete, mock_s3, message_stub,
 ):
     mock_s3.S3FileSystem.return_value = mock_s3
-    column = {"Column": "customer_id", "MatchIds": ["12345", "23456"]}
     mock_delete.return_value = pa.BufferOutputStream(), {"DeletedRows": 0}
     execute(
         "https://queue/url",
@@ -293,8 +303,9 @@ def test_it_handles_no_deletions(
 @patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
+@patch("backend.ecs_tasks.delete_files.main.build_matches")
 def test_it_handles_missing_col_exceptions(
-    mock_error_handler, mock_delete, message_stub
+    mock_build_matches, mock_error_handler, mock_delete, message_stub
 ):
     # Arrange
     mock_delete.side_effect = KeyError("FAIL")
@@ -317,6 +328,7 @@ def test_it_handles_missing_col_exceptions(
 @patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
+@patch("backend.ecs_tasks.delete_files.main.build_matches", MagicMock())
 def test_it_handles_arrow_exceptions(mock_error_handler, mock_delete, message_stub):
     # Arrange
     mock_delete.side_effect = ArrowException("FAIL")
@@ -357,6 +369,7 @@ def test_it_validates_messages_with_invalid_body(mock_error_handler):
 
 @patch.dict(os.environ, {"JobTable": "test"})
 @patch("backend.ecs_tasks.delete_files.main.get_queue", MagicMock())
+@patch("backend.ecs_tasks.delete_files.main.build_matches", MagicMock())
 @patch(
     "backend.ecs_tasks.delete_files.main.validate_bucket_versioning",
     MagicMock(return_value=True),
@@ -383,6 +396,7 @@ def test_it_handles_s3_permission_issues(mock_error_handler, mock_s3, message_st
 @patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.s3fs")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
+@patch("backend.ecs_tasks.delete_files.main.build_matches", MagicMock())
 def test_it_handles_io_errors(mock_error_handler, mock_s3, message_stub):
     # Arrange
     mock_s3.S3FileSystem.return_value = mock_s3
@@ -404,6 +418,7 @@ def test_it_handles_io_errors(mock_error_handler, mock_s3, message_stub):
 @patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.s3fs")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
+@patch("backend.ecs_tasks.delete_files.main.build_matches", MagicMock())
 def test_it_handles_file_too_big(mock_error_handler, mock_s3, message_stub):
     # Arrange
     mock_s3.S3FileSystem.return_value = mock_s3
@@ -425,6 +440,7 @@ def test_it_handles_file_too_big(mock_error_handler, mock_s3, message_stub):
 @patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.s3fs")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
+@patch("backend.ecs_tasks.delete_files.main.build_matches", MagicMock())
 def test_it_handles_generic_error(mock_error_handler, mock_s3, message_stub):
     # Arrange
     mock_s3.S3FileSystem.return_value = mock_s3
@@ -468,6 +484,7 @@ def test_it_handles_unversioned_buckets(
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
 @patch("backend.ecs_tasks.delete_files.main.save")
+@patch("backend.ecs_tasks.delete_files.main.build_matches", MagicMock())
 def test_it_provides_logs_for_acl_fail(
     mock_save, mock_error_handler, mock_delete, message_stub
 ):
@@ -500,6 +517,7 @@ def test_it_provides_logs_for_acl_fail(
 @patch("backend.ecs_tasks.delete_files.main.verify_object_versions_integrity")
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
+@patch("backend.ecs_tasks.delete_files.main.build_matches", MagicMock())
 def test_it_provides_logs_for_failed_version_integrity_check_and_performs_rollback(
     mock_error_handler, mock_delete, mock_verify_integrity, rollback_mock, message_stub,
 ):
@@ -533,6 +551,7 @@ def test_it_provides_logs_for_failed_version_integrity_check_and_performs_rollba
 @patch("backend.ecs_tasks.delete_files.main.verify_object_versions_integrity")
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
+@patch("backend.ecs_tasks.delete_files.main.build_matches", MagicMock())
 def test_it_provides_logs_for_get_latest_version_fail(
     mock_error_handler, mock_delete, mock_verify_integrity, message_stub
 ):
@@ -564,6 +583,7 @@ def test_it_provides_logs_for_get_latest_version_fail(
 @patch("backend.ecs_tasks.delete_files.main.verify_object_versions_integrity")
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
+@patch("backend.ecs_tasks.delete_files.main.build_matches", MagicMock())
 def test_it_provides_logs_for_failed_rollback_client_error(
     mock_error_handler, mock_delete, mock_verify_integrity, message_stub
 ):
@@ -603,6 +623,7 @@ def test_it_provides_logs_for_failed_rollback_client_error(
 @patch("backend.ecs_tasks.delete_files.main.verify_object_versions_integrity")
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
+@patch("backend.ecs_tasks.delete_files.main.build_matches", MagicMock())
 def test_it_provides_logs_for_failed_rollback_generic_error(
     mock_error_handler, mock_delete, mock_verify_integrity, message_stub
 ):
@@ -838,3 +859,64 @@ def test_it_deletes_from_parquet_file(mock_parquet, mock_json):
     delete_matches_from_file(f, cols, "parquet")
     mock_parquet.assert_called_with(f, cols)
     mock_json.assert_not_called()
+
+
+@patch("backend.ecs_tasks.delete_files.main.fetch_manifest")
+def test_it_builds_matches_grouped_by_column_simple(mock_fetch):
+    cols = [{"Column": "customer_id"}]
+    mock_fetch.return_value = (
+        '{"Columns":["customer_id"], "MatchId": ["12345"], "QueryableColumns": "customer_id"}\n'
+        '{"Columns":["customer_id"], "MatchId": ["23456"], "QueryableColumns": "customer_id"}\n'
+    )
+
+    matches = build_matches(cols, "s3://path-to-manifest.json")
+    assert matches == [
+        {"Column": "customer_id", "MatchIds": ["12345", "23456"]},
+    ]
+
+
+@patch("backend.ecs_tasks.delete_files.main.fetch_manifest")
+def test_it_builds_matches_grouped_by_column_composite(mock_fetch):
+    cols = [
+        {"Columns": ["first_name", "last_name"]},
+    ]
+    mock_fetch.return_value = (
+        '{"Columns":["first_name", "last_name"], "MatchId": ["john", "doe"], "QueryableColumns": "first_name_S3F2COMP_last_name"}\n'
+        '{"Columns":["first_name", "last_name"], "MatchId": ["jane", "doe"], "QueryableColumns": "first_name_S3F2COMP_last_name"}\n'
+    )
+
+    matches = build_matches(cols, "s3://path-to-manifest.json")
+    assert matches == [
+        {
+            "Columns": ["first_name", "last_name"],
+            "MatchIds": [["john", "doe"], ["jane", "doe"]],
+        },
+    ]
+
+
+@patch("backend.ecs_tasks.delete_files.main.fetch_manifest")
+def test_it_builds_matches_grouped_by_column_mixed(mock_fetch):
+    # example in which first_name and last_name are the col identifiers for given Data Mapper
+    cols = [
+        {"Columns": ["first_name", "last_name"]},
+        {"Column": "first_name"},
+        {"Column": "last_name"},
+    ]
+    # Simple => "smith" value to be searched in any column, Composite => particular tuples or single value ("parker")
+    mock_fetch.return_value = (
+        '{"Columns":["first_name", "last_name"], "MatchId": ["john", "doe"], "QueryableColumns": "first_name_S3F2COMP_last_name"}\n'
+        '{"Columns":["first_name", "last_name"], "MatchId": ["jane", "doe"], "QueryableColumns": "first_name_S3F2COMP_last_name"}\n'
+        '{"Columns":["first_name"], "MatchId": ["smith"], "QueryableColumns": "first_name"}\n'
+        '{"Columns":["last_name"], "MatchId": ["smith"], "QueryableColumns": "last_name"}\n'
+        '{"Columns":["last_name"], "MatchId": ["parker"], "QueryableColumns": "last_name"}\n'
+    )
+
+    matches = build_matches(cols, "s3://path-to-manifest.json")
+    assert matches == [
+        {
+            "Columns": ["first_name", "last_name"],
+            "MatchIds": [["john", "doe"], ["jane", "doe"]],
+        },
+        {"Column": "first_name", "MatchIds": ["smith"]},
+        {"Column": "last_name", "MatchIds": ["smith", "parker"]},
+    ]

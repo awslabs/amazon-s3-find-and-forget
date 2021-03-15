@@ -38,6 +38,8 @@ Parameters:
   LogRetentionInDays:
     Type: Number
     Default: 7
+  ManifestsBucket:
+    Type: String
   ResourcePrefix:
     Type: String
   VpcSecurityGroups:
@@ -179,10 +181,13 @@ Resources:
             - logs:PutLogEvents
             Effect: Allow
             Resource: "arn:aws:logs:*:*:*"
-          - Action:
-            - sts:AssumeRole
+          - Action: sts:AssumeRole
             Effect: Allow
             Resource: !Sub "arn:${AWS::Partition}:iam::*:role/S3F2DataAccessRole"
+          - Action: s3:GetObject*
+            Effect: Allow
+            Resource: !Sub arn:aws:s3:::${ManifestsBucket}/manifests/*
+
 
   DeleteTaskLogGroup:
     Type: AWS::Logs::LogGroup

@@ -9,6 +9,9 @@ client = boto3.client("athena")
 
 COMPOSITE_JOIN_TOKEN = "_S3F2COMP_"
 
+glue_db = os.getenv("GlueDatabase", "s3f2_manifests_database")
+glue_table = os.getenv("JobManifestsGlueTable", "s3f2_manifests_table")
+
 
 @with_logging
 def handler(event, context):
@@ -21,26 +24,37 @@ def handler(event, context):
         },
         WorkGroup=os.getenv("WorkGroup", "primary"),
     )
-
     return response["QueryExecutionId"]
 
 
 def make_query(query_data):
     """
     Returns a query which will look like
-    SELECT DISTINCT $path
-    FROM "db"."table"
-    WHERE col1 in (matchid1, matchid2) OR col1 in (matchid1, matchid2) AND partition_key = value"
+    SELECT DISTINCT t."$path"
+    FROM "db"."table" t,
+        "manifests_db"."manifests_table" m
+    WHERE
+        m."jobid"='job1234' AND
+        m."datamapperid"='dm123' AND    
+        (cast(t."customer_id" as varchar)=m."queryablematchid" AND
+            m."queryablecolumns"='customer_id')
+        AND partition_key = value"
+    
+    Note: 'queryablematchid' and 'queryablecolumns' is a convenience
+    stringified value of match_id and its column when the match is simple,
+    or a stringified joint value when composite (for instance,
+    "John_S3F2COMP_Doe" and "first_name_S3F2COMP_last_name").
+    JobId and DataMapperId are both used as partitions for the manifest to
+    optimize query execution time.
 
     :param query_data: a dict which looks like
     {
       "Database":"db",
       "Table": "table",
       "Columns": [
-        {"Column": "col", "MatchIds": ["match"], "Type": "Simple"},
+        {"Column": "col", "Type": "Simple"},
         {
           "Columns": ["first_name", "last_name"],
-          "MatchIds: [["John", "Doe"]],
           "Type": "Composite"
         }
       ],
@@ -48,49 +62,58 @@ def make_query(query_data):
     }
     """
     template = """
-    SELECT DISTINCT "$path"
-    FROM "{db}"."{table}"
+    SELECT DISTINCT t."$path"
+    FROM "{db}"."{table}" t,
+        "{manifest_db}"."{manifest_table}" m
     WHERE
+        m."jobid"='{job_id}' AND
+        m."datamapperid"='{data_mapper_id}' AND
         ({column_filters})
     """
-    single_column_template = "{} in ({})"
-    multiple_columns_template = "concat({}) in ({})"
+    single_column_template = '({}=m."queryablematchid" AND m."queryablecolumns"=\'{}\')'
+    cast_as_str = "cast(t.{} as varchar)"
     columns_composite_join_token = ", '{}', ".format(COMPOSITE_JOIN_TOKEN)
 
-    db, table, columns = itemgetter("Database", "Table", "Columns")(query_data)
+    db, table, columns, data_mapper_id, job_id = itemgetter(
+        "Database", "Table", "Columns", "DataMapperId", "JobId"
+    )(query_data)
     partitions = query_data.get("PartitionKeys", [])
 
     column_filters = ""
     for i, col in enumerate(columns):
         if i > 0:
             column_filters += " OR "
-        if col["Type"] == "Simple":
-            column_filters += single_column_template.format(
-                escape_column(col["Column"]),
-                ", ".join("{0}".format(escape_item(m)) for m in col["MatchIds"]),
-            )
-        else:
-            column_template = (
-                multiple_columns_template
-                if len(col["Columns"]) > 1
-                else single_column_template
-            )
-            column_filters += column_template.format(
+        is_simple = col["Type"] == "Simple"
+        queryable_matches = (
+            cast_as_str.format(escape_column(col["Column"]))
+            if is_simple
+            else cast_as_str.format(escape_column(col["Columns"][0]))
+            if len(col["Columns"]) == 1
+            else "concat({})".format(
                 columns_composite_join_token.join(
-                    "{0}".format(escape_column(c)) for c in col["Columns"]
-                ),
-                ", ".join(
-                    "{0}".format(
-                        escape_item(COMPOSITE_JOIN_TOKEN.join(str(x) for x in m))
-                    )
-                    for m in col["MatchIds"]
-                ),
+                    "t.{0}".format(escape_column(c)) for c in col["Columns"]
+                )
             )
+        )
+        queryable_columns = (
+            col["Column"] if is_simple else COMPOSITE_JOIN_TOKEN.join(col["Columns"])
+        )
+        column_filters += single_column_template.format(
+            queryable_matches, queryable_columns
+        )
     for partition in partitions:
         template += " AND {key} = {value} ".format(
             key=escape_column(partition["Key"]), value=escape_item(partition["Value"])
         )
-    return template.format(db=db, table=table, column_filters=column_filters)
+    return template.format(
+        db=db,
+        table=table,
+        manifest_db=glue_db,
+        manifest_table=glue_table,
+        job_id=job_id,
+        data_mapper_id=data_mapper_id,
+        column_filters=column_filters,
+    )
 
 
 def escape_column(item):

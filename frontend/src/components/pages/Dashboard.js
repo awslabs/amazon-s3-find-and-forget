@@ -9,7 +9,6 @@ import {
   daysSinceDateTime,
   findMin,
   formatErrorMessage,
-  formatFileSize,
   repoUrl,
 } from "../../utils";
 
@@ -34,10 +33,6 @@ const Dashboard = ({ gateway, goToJobDetails, goToPage }) => {
           ? daysSinceDateTime(jobs.Jobs[0].JobFinishTime)
           : "n/a";
 
-        let deletionQueueSummary = queue.MatchIds.length;
-        if (anyQueueItem)
-          deletionQueueSummary += ` (≈${formatFileSize(queue.ContentLength)})`;
-
         const daysSinceOldestQueueItemAdded = anyQueueItem
           ? daysSinceDateTime(findMin(queue.MatchIds, "CreatedAt").CreatedAt)
           : "n/a";
@@ -45,7 +40,7 @@ const Dashboard = ({ gateway, goToJobDetails, goToPage }) => {
         setMetrics([
           {
             title: "Deletion Queue size",
-            value: deletionQueueSummary,
+            value: queue.MatchIds.length,
             link: 2,
           },
           {

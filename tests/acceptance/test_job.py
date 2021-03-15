@@ -54,8 +54,6 @@ def test_it_gets_jobs(
         "JobStatus": mock.ANY,
         "GSIBucket": mock.ANY,
         "CreatedAt": mock.ANY,
-        "DeletionQueueItems": mock.ANY,
-        "DeletionQueueItemsSkipped": mock.ANY,
         "AthenaConcurrencyLimit": mock.ANY,
         "DeletionTasksMaxNumber": mock.ANY,
         "QueryExecutionWaitSeconds": mock.ANY,

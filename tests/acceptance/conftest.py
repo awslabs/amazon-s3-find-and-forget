@@ -433,8 +433,6 @@ def job_factory(job_table, sf_client, stack):
             "JobStatus": status,
             "CreatedAt": created_at,
             "GSIBucket": gsib,
-            "DeletionQueueItems": del_queue_items,
-            "DeletionQueueItemsSkipped": False,
             "AthenaConcurrencyLimit": 15,
             "DeletionTasksMaxNumber": 1,
             "QueryExecutionWaitSeconds": 1,

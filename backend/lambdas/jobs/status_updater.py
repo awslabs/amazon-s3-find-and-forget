@@ -45,13 +45,21 @@ time_statuses = {
     ],
 }
 
+append_data_only_statuses = {
+    "QueryPlanningComplete": ["GeneratedQueries", "DeletionQueueSize", "Manifests"]
+}
+
 
 def update_status(job_id, events):
     attr_updates = {}
     for event in events:
-        # Ignore non status events
+        # Handle non status events
         event_name = event["EventName"]
         if event_name not in status_map:
+            if event_name in append_data_only_statuses:
+                event_data = event.get("EventData", {})
+                for attribute in append_data_only_statuses[event_name]:
+                    attr_updates[attribute] = event_data[attribute]
             continue
 
         new_status = determine_status(job_id, event_name)
