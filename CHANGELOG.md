@@ -1,6 +1,6 @@
 # Change Log
 
-## v0.25 (unreleased)
+## v0.25
 
 > This version introduces breaking changes to the API and Web UI. Please consult
 > the
