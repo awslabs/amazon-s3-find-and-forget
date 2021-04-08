@@ -17,7 +17,7 @@ This endpoint does not need any parameters.
 
 ### Return type
 
-[**Settings**](..Models/Settings.md)
+[**Settings**](../Models/Settings.md)
 
 ### Authorization
 

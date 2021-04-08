@@ -20,11 +20,11 @@ Adds an item to the deletion queue (Deprecated: use PATCH /v1/queue/matches)
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **CreateDeletionQueueItem** | [**CreateDeletionQueueItem**](..Models/CreateDeletionQueueItem.md)| Request body containing details of the Match to add to the Deletion Queue |
+ **CreateDeletionQueueItem** | [**CreateDeletionQueueItem**](../Models/CreateDeletionQueueItem.md)| Request body containing details of the Match to add to the Deletion Queue |
 
 ### Return type
 
-[**DeletionQueueItem**](..Models/DeletionQueueItem.md)
+[**DeletionQueueItem**](../Models/DeletionQueueItem.md)
 
 ### Authorization
 
@@ -44,11 +44,11 @@ Adds one or more items to the deletion queue
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **ListOfCreateDeletionQueueItems** | [**ListOfCreateDeletionQueueItems**](..Models/ListOfCreateDeletionQueueItems.md)|  |
+ **ListOfCreateDeletionQueueItems** | [**ListOfCreateDeletionQueueItems**](../Models/ListOfCreateDeletionQueueItems.md)|  |
 
 ### Return type
 
-[**ListOfDeletionQueueItem**](..Models/ListOfDeletionQueueItem.md)
+[**ListOfDeletionQueueItem**](../Models/ListOfDeletionQueueItem.md)
 
 ### Authorization
 
@@ -68,7 +68,7 @@ Removes one or more items from the deletion queue
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **ListOfMatchDeletions** | [**ListOfMatchDeletions**](..Models/ListOfMatchDeletions.md)|  |
+ **ListOfMatchDeletions** | [**ListOfMatchDeletions**](../Models/ListOfMatchDeletions.md)|  |
 
 ### Return type
 
@@ -92,12 +92,12 @@ Lists deletion queue items
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **Start\_at** | **String**| Start at watermark query string parameter | [optional] [default to 0]
- **Page\_size** | **Integer**| Page size query string parameter. Min: 1. Max: 1000 | [optional] [default to null]
+ **StartAt** | **String**| Start at watermark query string parameter | [optional] [default to 0]
+ **PageSize** | **Integer**| Page size query string parameter. Min: 1. Max: 1000 | [optional] [default to null]
 
 ### Return type
 
-[**DeletionQueue**](..Models/DeletionQueue.md)
+[**DeletionQueue**](../Models/DeletionQueue.md)
 
 ### Authorization
 
@@ -118,7 +118,7 @@ This endpoint does not need any parameters.
 
 ### Return type
 
-[**Job**](..Models/Job.md)
+[**Job**](../Models/Job.md)
 
 ### Authorization
 

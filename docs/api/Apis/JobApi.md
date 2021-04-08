@@ -18,11 +18,11 @@ Returns the details of a job
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **Job\_id** | **String**| Job ID path parameter | [default to null]
+ **JobId** | **String**| Job ID path parameter | [default to null]
 
 ### Return type
 
-[**Job**](..Models/Job.md)
+[**Job**](../Models/Job.md)
 
 ### Authorization
 
@@ -42,14 +42,14 @@ Lists all events for a job
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **Job\_id** | **String**| Job ID path parameter | [default to null]
- **Start\_at** | **String**| Start at watermark query string parameter | [optional] [default to 0]
- **Page\_size** | **Integer**| Page size query string parameter. Min: 1. Max: 1000 | [optional] [default to null]
- **Filter** | [**oneOf&lt;string,array&gt;**](..Models/.md)| Filters to apply in the format [key][operator][value]. If multiple filters are supplied, they will applied on an **AND** basis. Supported keys: EventName. Supported Operators: &#x3D;  | [optional] [default to null]
+ **JobId** | **String**| Job ID path parameter | [default to null]
+ **StartAt** | **String**| Start at watermark query string parameter | [optional] [default to 0]
+ **PageSize** | **Integer**| Page size query string parameter. Min: 1. Max: 1000 | [optional] [default to null]
+ **Filter** | [**oneOf&lt;string,array&gt;**](../Models/.md)| Filters to apply in the format [key][operator][value]. If multiple filters are supplied, they will applied on an **AND** basis. Supported keys: EventName. Supported Operators: &#x3D;  | [optional] [default to null]
 
 ### Return type
 
-[**ListOfJobEvents**](..Models/ListOfJobEvents.md)
+[**ListOfJobEvents**](../Models/ListOfJobEvents.md)
 
 ### Authorization
 
@@ -69,12 +69,12 @@ Lists all jobs
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **Start\_at** | **String**| Start at watermark query string parameter | [optional] [default to 0]
- **Page\_size** | **Integer**| Page size query string parameter. Min: 1. Max: 1000 | [optional] [default to null]
+ **StartAt** | **String**| Start at watermark query string parameter | [optional] [default to 0]
+ **PageSize** | **Integer**| Page size query string parameter. Min: 1. Max: 1000 | [optional] [default to null]
 
 ### Return type
 
-[**ListOfJobs**](..Models/ListOfJobs.md)
+[**ListOfJobs**](../Models/ListOfJobs.md)
 
 ### Authorization
 
