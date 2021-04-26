@@ -187,6 +187,11 @@ Resources:
           - Action: s3:GetObject*
             Effect: Allow
             Resource: !Sub arn:aws:s3:::${ManifestsBucket}/manifests/*
+          - Action:
+            - kms:Decrypt
+            - kms:GenerateDataKey*
+            Effect: Allow
+            Resource: !Sub arn:aws:kms:${AWS::Region}:${AWS::AccountId}:key/*
 
 
   DeleteTaskLogGroup:

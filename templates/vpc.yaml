@@ -308,6 +308,19 @@ Resources:
       VpcEndpointType: Interface
       VpcId: !Ref VPC
 
+  KMSEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      PrivateDnsEnabled: true
+      SecurityGroupIds: [!Ref SecurityGroup]
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.kms'
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+        - !If [HasThreeAZs, !Ref PrivateSubnet3, !Ref 'AWS::NoValue']
+      VpcEndpointType: Interface
+      VpcId: !Ref VPC
+
 Outputs:
   Subnets:
     Value: !If

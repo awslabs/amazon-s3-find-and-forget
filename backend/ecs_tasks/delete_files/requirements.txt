@@ -4,18 +4,51 @@
 #
 #    pip-compile --output-file=backend/ecs_tasks/delete_files/requirements.txt backend/ecs_tasks/delete_files/requirements.in
 #
-boto3==1.14.54            # via -r backend/ecs_tasks/delete_files/requirements.in, s3fs
-botocore==1.17.55         # via boto3, s3fs, s3transfer
-docutils==0.15.2          # via botocore
-fsspec==0.8.0             # via s3fs
-jmespath==0.10.0          # via boto3, botocore
-numpy==1.19.1             # via -r backend/ecs_tasks/delete_files/requirements.in, pandas, pyarrow
-pandas==1.1.1             # via -r backend/ecs_tasks/delete_files/requirements.in
-pyarrow==2.0.0            # via -r backend/ecs_tasks/delete_files/requirements.in
-python-dateutil==2.8.1    # via botocore, pandas
-python-snappy==0.5.4      # via -r backend/ecs_tasks/delete_files/requirements.in
-pytz==2020.1              # via pandas
-s3fs==0.4.0               # via -r backend/ecs_tasks/delete_files/requirements.in
-s3transfer==0.3.3         # via boto3
-six==1.15.0               # via python-dateutil
-urllib3==1.25.10          # via botocore
+boto3==1.14.54
+    # via
+    #   -r backend/ecs_tasks/delete_files/requirements.in
+    #   s3fs
+botocore==1.17.55
+    # via
+    #   boto3
+    #   s3fs
+    #   s3transfer
+cffi==1.14.5
+    # via cryptography
+cryptography==3.4.7
+    # via -r backend/ecs_tasks/delete_files/requirements.in
+docutils==0.15.2
+    # via botocore
+fsspec==0.8.0
+    # via s3fs
+jmespath==0.10.0
+    # via
+    #   boto3
+    #   botocore
+numpy==1.19.1
+    # via
+    #   -r backend/ecs_tasks/delete_files/requirements.in
+    #   pandas
+    #   pyarrow
+pandas==1.1.1
+    # via -r backend/ecs_tasks/delete_files/requirements.in
+pyarrow==2.0.0
+    # via -r backend/ecs_tasks/delete_files/requirements.in
+pycparser==2.20
+    # via cffi
+python-dateutil==2.8.1
+    # via
+    #   botocore
+    #   pandas
+python-snappy==0.5.4
+    # via -r backend/ecs_tasks/delete_files/requirements.in
+pytz==2020.1
+    # via pandas
+s3fs==0.4.0
+    # via -r backend/ecs_tasks/delete_files/requirements.in
+s3transfer==0.3.3
+    # via boto3
+six==1.15.0
+    # via python-dateutil
+urllib3==1.25.10
+    # via botocore

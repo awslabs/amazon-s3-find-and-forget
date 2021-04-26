@@ -308,7 +308,7 @@ def test_it_applies_settings_when_saving(
     mock_file = MagicMock(version_id="abc123")
     mock_s3.open.return_value = mock_s3
     mock_s3.__enter__.return_value = mock_file
-    resp = save(mock_s3, mock_client, buf, "bucket", "key", "abc123")
+    resp = save(mock_s3, mock_client, buf, "bucket", "key", {}, "abc123")
     mock_file.write.assert_called_with(b"")
     assert "abc123" == resp
     mock_client.put_object_acl.assert_not_called()
@@ -330,7 +330,7 @@ def test_it_passes_through_version(
     mock_acl.return_value = ({}, {})
     mock_grantees.return_value = ""
     buf = BytesIO()
-    save(mock_s3, mock_client, buf, "bucket", "key", "abc123")
+    save(mock_s3, mock_client, buf, "bucket", "key", {}, "abc123")
     mock_acl.assert_called_with(mock_client, "bucket", "key", "abc123")
     mock_tagging.assert_called_with(mock_client, "bucket", "key", "abc123")
     mock_standard.assert_called_with(mock_client, "bucket", "key", "abc123")
