@@ -8,6 +8,8 @@ import pyarrow.json as pj
 import pyarrow.parquet as pq
 from cfn_flip import load
 
+from backend.ecs_tasks.delete_files.cse import decrypt
+
 logger = logging.getLogger()
 
 
@@ -63,3 +65,12 @@ def empty_table(table, pk, sk=None):
             if sk:
                 key[sk] = item[sk]
             batch.delete_item(Key=key)
+
+
+def download_and_decrypt(bucket, object_key, kms_client):
+    encrypted = tempfile.NamedTemporaryFile()
+    bucket.download_file(object_key, encrypted.name)
+    metadata = bucket.Object(object_key).metadata
+    with open(encrypted.name, "rb") as f:
+        content = decrypt(f, metadata, kms_client)
+    return content.read(), metadata
