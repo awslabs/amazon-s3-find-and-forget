@@ -25,7 +25,15 @@ HEADER_WRAP_ALG = "x-amz-wrap-alg"
 
 
 def is_kms_cse_encrypted(s3_metadata):
-    return HEADER_KEY in s3_metadata and s3_metadata.get(HEADER_WRAP_ALG, None) == "kms"
+    if HEADER_KEY in s3_metadata:
+        if s3_metadata.get(HEADER_WRAP_ALG, None) != "kms":
+            raise ValueError("Unsupported Encryption strategy")
+        if s3_metadata.get(HEADER_ALG, None) not in [ALG_CBC, ALG_GCM]:
+            raise ValueError("Unsupported Encryption algorithm")
+        return True
+    elif "x-amz-key" in s3_metadata:
+        raise ValueError("Unsupported Encryption SDK version")
+    return False
 
 
 def get_encryption_aes_key(key, kms_client):
@@ -33,7 +41,6 @@ def get_encryption_aes_key(key, kms_client):
     response = kms_client.generate_data_key(
         KeyId=key, EncryptionContext=encryption_context, KeySpec="AES_256"
     )
-
     return (
         response["Plaintext"],
         encryption_context,
@@ -57,23 +64,20 @@ def encrypt(buf, s3_metadata, kms_client):
     """
     logger.info("Encrypting Object with CSE-KMS")
     content = buf.read()
-    alg = s3_metadata.get(HEADER_ALG, ALG_CBC)
+    alg = s3_metadata.get(HEADER_ALG, None)
     matdesc = json.loads(s3_metadata[HEADER_MATDESC])
     aes_key, matdesc_metadata, key_metadata = get_encryption_aes_key(
         matdesc["kms_cmk_id"], kms_client
     )
-
     s3_metadata[HEADER_UE_CLENGHT] = str(len(content))
     s3_metadata[HEADER_WRAP_ALG] = "kms"
     s3_metadata[HEADER_KEY] = key_metadata
     s3_metadata[HEADER_ALG] = alg
-
     if alg == ALG_GCM:
         s3_metadata[HEADER_TAG_LEN] = str(AES_BLOCK_SIZE)
         result, iv = encrypt_gcm(aes_key, content)
     else:
         result, iv = encrypt_cbc(aes_key, content)
-
     s3_metadata[HEADER_IV] = base64.b64encode(iv).decode()
     return BytesIO(result), s3_metadata
 
@@ -84,11 +88,8 @@ def decrypt(file_input, s3_metadata, kms_client):
     The object's metadata is used to fetch the encryption envelope such as 
     the KMS key ID and the algorithm. 
     """
-    if not is_kms_cse_encrypted(s3_metadata):
-        return file_input
-
     logger.info("Decrypting Object with CSE-KMS")
-    alg = s3_metadata.get(HEADER_ALG, ALG_CBC)
+    alg = s3_metadata.get(HEADER_ALG, None)
     iv = base64.b64decode(s3_metadata[HEADER_IV])
     material_description = json.loads(s3_metadata[HEADER_MATDESC])
     key = s3_metadata[HEADER_KEY]
