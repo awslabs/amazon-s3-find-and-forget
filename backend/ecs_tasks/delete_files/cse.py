@@ -32,7 +32,7 @@ def is_kms_cse_encrypted(s3_metadata):
             raise ValueError("Unsupported Encryption algorithm")
         return True
     elif "x-amz-key" in s3_metadata:
-        raise ValueError("Unsupported Encryption SDK version")
+        raise ValueError("Unsupported Amazon S3 Encryption Client Version")
     return False
 
 
