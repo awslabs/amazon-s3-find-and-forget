@@ -51,6 +51,8 @@ Endpoints]:
   (interface endpoint _com.amazonaws.**region**.ecr.dkr_)
 - Amazon SQS (interface endpoint _com.amazonaws.**region**.sqs_)
 - AWS STS (interface endpoint _com.amazonaws.**region**.sts_)
+- AWS KMS (interface endpoint _com.amazonaws.**region**.kms_) - **required only
+  if S3 Objects are encrypted using AWS KMS**
 
 #### Creating a New VPC
 
@@ -242,6 +244,8 @@ resources.
      you are using a customised version of these artefacts.
    - **ResourcePrefix:** (Default: S3F2) Resource prefix to apply to resource
      names when creating statically named resources.
+   - **WithKMSEndpoint** (Default: false) Whether or not to deploy a KMS VPC
+     Endpoint. Select true if your data is encrypted with KMS.
 
    When completed, click _Next_
 
