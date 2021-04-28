@@ -72,7 +72,7 @@ def test_it_throws_exception_for_encryption_sdk_v1():
     }
     with pytest.raises(ValueError) as e:
         is_kms_cse_encrypted(old_sdk)
-    assert e.value.args[0] == "Unsupported Encryption SDK version"
+    assert e.value.args[0] == "Unsupported Amazon S3 Encryption Client Version"
 
 
 def test_it_throws_exception_for_unsupported_encryption_algorithm():
