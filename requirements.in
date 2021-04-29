@@ -1,9 +1,10 @@
 pip-tools>=6.0.1
-pytest==5.3.5
+pytest==6.2.3
 cfn-lint==0.48.1
 cfn-flip==1.2.3
 mock==4.0.1
-pytest-cov==2.10.0
+pytest-cov==2.11.1
+py>=1.10.0
 pre-commit==2.12.1
 black>=19.10b0,<20.0
 pyyaml>=5.4.1

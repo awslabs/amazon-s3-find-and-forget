@@ -2,6 +2,8 @@
 
 ## v0.27 (unreleased)
 
+- [#246](https://github.com/awslabs/amazon-s3-find-and-forget/pull/246): Upgrade
+  build dependencies
 - [#245](https://github.com/awslabs/amazon-s3-find-and-forget/pull/245): CSE-KMS
   support
 
