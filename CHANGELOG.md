@@ -1,7 +1,9 @@
 # Change Log
 
-## v0.27 (unreleased)
+## v0.27
 
+- [#248](https://github.com/awslabs/amazon-s3-find-and-forget/pull/248): Fix for
+  a bug affecting Deletion Jobs running for cross-account buckets
 - [#246](https://github.com/awslabs/amazon-s3-find-and-forget/pull/246): Upgrade
   build dependencies
 - [#245](https://github.com/awslabs/amazon-s3-find-and-forget/pull/245): CSE-KMS
