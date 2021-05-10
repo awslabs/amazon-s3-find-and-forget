@@ -573,7 +573,7 @@ def policy_changer(dummy_lake):
 
 @pytest.fixture
 def kms_factory(stack):
-    key_id_arn = stack["KMSKeyIdArns"]
+    key_id_arn = stack["KMSKeyArns"]
     return key_id_arn.split(",")[0].split("/")[1]
 
 
