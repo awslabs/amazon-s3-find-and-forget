@@ -779,6 +779,7 @@ Resources:
           Resource: !Sub "arn:${AWS::Partition}:athena:${AWS::Region}:${AWS::AccountId}:workgroup/${AthenaWorkGroup}"
         - Action:
           - "s3:GetObject*"
+          - "s3:ListBucket*"
           - "lakeformation:GetDataAccess"
           Effect: "Allow"
           Resource: "*"
