@@ -35,7 +35,7 @@ deploy-cfn:
 	aws cloudformation deploy --template-file ./packaged.yaml --stack-name S3F2 --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND \
 		--parameter-overrides CreateCloudFrontDistribution=false EnableContainerInsights=true AdminEmail=$(ADMIN_EMAIL) \
 		AccessControlAllowOriginOverride=* PreBuiltArtefactsBucketOverride=$(TEMP_BUCKET) \
-		AthenaWorkGroup=AmazonAthenaPreviewFunctionality WithKMSEndpoint=true
+		AthenaWorkGroup=AmazonAthenaPreviewFunctionality KMSKeyArns=$(KMS_KEYARNS)
 
 deploy-artefacts:
 	$(eval VERSION := $(shell $(MAKE) -s version))

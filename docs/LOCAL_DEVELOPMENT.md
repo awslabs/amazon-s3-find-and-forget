@@ -35,6 +35,10 @@ make deploy \
   TEMP_BUCKET=<temp-bucket-name>
 ```
 
+If you use KMS for client-side encryption you'll also need to pass a
+`KMS_KEYARNS` environment variable to the `make deploy` script, containing the
+comma-delimited list of KMS Key Arns used for client-side Encryption.
+
 > For information on how to obtain your subnet and security group IDs, see
 > [Configuring a VPC for the Solution](USER_GUIDE.md#configuring-a-vpc-for-the-solution).
 
@@ -106,6 +110,9 @@ The following commands are available for running tests:
 - `make test-cfn`: Run CloudFormation related unit tests
 - `make test-unit`: Run all backend task unit tests
 - `make test-frontend`: Run all frontend tests
+
+> Note: some acceptance tests require a KMS Symmetric Key to be created in
+> advance and specified during the solution's deployment.
 
 #### Updating Python Library Dependencies
 

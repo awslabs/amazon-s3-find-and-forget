@@ -572,60 +572,9 @@ def policy_changer(dummy_lake):
 
 
 @pytest.fixture
-def kms_factory(kms_client, stack, data_access_role):
-    roles = [stack["AthenaExecutionRoleArn"], data_access_role["Arn"]]
-    root = data_access_role["Arn"].replace("role/S3F2DataAccessRole", "root")
-    response = kms_client.create_key(
-        Policy=json.dumps(
-            {
-                "Version": "2012-10-17",
-                "Id": "acceptance-tests-policy",
-                "Statement": [
-                    {
-                        "Sid": "Enable IAM User Permissions",
-                        "Effect": "Allow",
-                        "Principal": {"AWS": [root]},
-                        "Action": "kms:*",
-                        "Resource": "*",
-                    },
-                    {
-                        "Sid": "AllowS3F2Usage",
-                        "Effect": "Allow",
-                        "Principal": {"AWS": roles},
-                        "Action": [
-                            "kms:Encrypt",
-                            "kms:Decrypt",
-                            "kms:ReEncrypt*",
-                            "kms:GenerateDataKey*",
-                            "kms:DescribeKey",
-                        ],
-                        "Resource": "*",
-                    },
-                    {
-                        "Sid": "AllowS3F2Grants",
-                        "Effect": "Allow",
-                        "Principal": {"AWS": roles},
-                        "Action": [
-                            "kms:CreateGrant",
-                            "kms:ListGrants",
-                            "kms:RevokeGrant",
-                        ],
-                        "Resource": "*",
-                        "Condition": {"Bool": {"kms:GrantIsForAWSResource": "true"}},
-                    },
-                ],
-            }
-        ),
-        Description="KMS Key for S3F2 Acceptance Tests",
-        KeyUsage="ENCRYPT_DECRYPT",
-        CustomerMasterKeySpec="SYMMETRIC_DEFAULT",
-        Origin="AWS_KMS",
-    )
-    key_id = response["KeyMetadata"]["KeyId"]
-    yield key_id
-
-    kms_client.disable_key(KeyId=key_id)
-    kms_client.schedule_key_deletion(KeyId=key_id, PendingWindowInDays=7)
+def kms_factory(stack):
+    key_id_arn = stack["KMSKeyIdArns"]
+    return key_id_arn.split(",")[0].split("/")[1]
 
 
 @pytest.fixture

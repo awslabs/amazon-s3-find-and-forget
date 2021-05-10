@@ -57,8 +57,8 @@ supported:
   master key (CMK) is stored in AWS Key Management Service (AWS KMS) and
   encrypted using one of the [AWS supported SDKs].
 - If the bucket targeted by a data mapper belongs to an account other than the
-  account that the Amazon S3 Find and Forget Solution is deployed in,
-  only SSE-KMS with a customer master key (CMK) may be used for encryption
+  account that the Amazon S3 Find and Forget Solution is deployed in, only
+  SSE-KMS with a customer master key (CMK) may be used for encryption
 - After a deletion occurs, the S3 object owner will always be the account that
   the Amazon S3 Find and Forget solution is deployed in. The previous owner will
   also be granted `FULL_ACCESS`

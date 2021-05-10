@@ -8,6 +8,10 @@ Parameters:
   FlowLogsRoleArn:
     Type: String
     Default: ""
+  KMSKeyArns:
+    Description: Comma-delimited list of KMS Key Id Arns used for Client-side Encryption. Leave list empty if data is not encrypted with CSE-KMS
+    Type: String
+    Default: ""
   PrivateSubnetIpBlocks:
     Description: Comma-delimited list of CIDR blocks for the private subnets
     Type: CommaDelimitedList
@@ -17,13 +21,6 @@ Parameters:
     Type: String
     Default: 10.0.0.0/16
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
-  WithKMSEndpoint:
-    Description: Whether or not to deploy the KMS VPC endpoint
-    Type: String
-    Default: "false"
-    AllowedValues:
-      - "true"
-      - "false"    
 
 Mappings:
   Regions:
@@ -65,7 +62,7 @@ Conditions:
   EnableFlowLogs: !And
     - !Not [!Equals [!Ref FlowLogsGroup, ""]]
     - !Not [!Equals [!Ref FlowLogsRoleArn, ""]]
-  WithKMS: !Equals [!Ref WithKMSEndpoint, "true"]
+  WithKMS: !Not [!Equals [!Ref KMSKeyArns, ""]]
 
 Resources:
   VPC:

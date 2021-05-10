@@ -95,6 +95,10 @@ Parameters:
     Description: How log to retain Job Record logs. Use 0 for indefinite. Default is 0
     Type: Number
     Default: 0
+  KMSKeyArns:
+    Description: Comma-delimited list of KMS Key Arns used for client-side Encryption. Leave empty if data is not client-side encrypted with KMS
+    Type: String
+    Default: ""
   PreBuiltArtefactsBucketOverride:
     Description: Overrides the default Bucket containing Front-end and Back-end pre-built artefacts. When false, the default is used for the given region (for example solution-builders-us-west-1)
     Type: String
@@ -127,13 +131,6 @@ Parameters:
     Description: Comma-delimited list of subnets to deploy Fargate tasks in. This parameter must be set if the DeployVpc parameter is "false", otherwise it is ignored.
     Type: CommaDelimitedList
     Default: ""
-  WithKMSEndpoint:
-    Description: Whether or not to deploy the KMS VPC endpoint
-    Type: String
-    Default: "false"
-    AllowedValues:
-      - "true"
-      - "false"
 
 Conditions:
   DefaultPreBuiltArtefactsBucket: !Equals [!Ref PreBuiltArtefactsBucketOverride, "false"]
@@ -262,6 +259,7 @@ Resources:
         DeletionTaskMemory: !Ref DeletionTaskMemory
         EnableContainerInsights: !Ref EnableContainerInsights
         JobTableName: !GetAtt DDBStack.Outputs.JobTable
+        KMSKeyArns: !Ref KMSKeyArns
         ManifestsBucket: !GetAtt ManifestsStack.Outputs.ManifestsBucket
         ResourcePrefix: !Ref ResourcePrefix
         VpcSecurityGroups: !If [ShouldDeployVpc, !GetAtt VpcStack.Outputs.SecurityGroup, !Join [",", !Ref VpcSecurityGroups]]
@@ -347,7 +345,7 @@ Resources:
       Parameters:
         FlowLogsGroup: !Ref FlowLogsGroup
         FlowLogsRoleArn: !Ref FlowLogsRoleArn
-        WithKMSEndpoint: !Ref WithKMSEndpoint
+        KMSKeyArns: !Ref KMSKeyArns
   WebUIStack:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -400,6 +398,8 @@ Outputs:
     Value: !GetAtt StateMachineStack.Outputs.GenerateQueriesRole
   JobTable:
     Value: !GetAtt DDBStack.Outputs.JobTable
+  KMSKeyArns:
+    Value: !Ref KMSKeyArns
   PutDataMapperRole:
     Value: !GetAtt APIStack.Outputs.PutDataMapperRole
   QueryQueueUrl:
@@ -436,7 +436,6 @@ Metadata:
           - FlowLogsRoleArn
           - CreateCloudFrontDistribution
           - AccessControlAllowOriginOverride
-          - WithKMSEndpoint
       - Label:
           default: "Performance Configuration"
         Parameters:
@@ -466,3 +465,4 @@ Metadata:
           - AthenaWorkGroup
           - PreBuiltArtefactsBucketOverride
           - ResourcePrefix
+          - KMSKeyArns

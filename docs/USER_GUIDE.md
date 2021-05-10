@@ -244,8 +244,9 @@ resources.
      you are using a customised version of these artefacts.
    - **ResourcePrefix:** (Default: S3F2) Resource prefix to apply to resource
      names when creating statically named resources.
-   - **WithKMSEndpoint** (Default: false) Whether or not to deploy a KMS VPC
-     Endpoint. Select true if your data is client-side encrypted with KMS.
+   - **KMSKeyArns** (Default: "") Comma-delimited list of KMS Key Arns used for
+     Client-side Encryption. Leave empty if data is not client-side encrypted
+     with KMS.
 
    When completed, click _Next_
 
