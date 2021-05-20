@@ -252,19 +252,18 @@ resources.
    - "_I acknowledge that AWS CloudFormation might create IAM resources_"
    - "_I acknowledge that AWS CloudFormation might create IAM resources with
      custom names_"
+   - "_I acknowledge that AWS CloudFormation might require the following
+     capability: CAPABILITY_AUTO_EXPAND_"
 
    These are required to allow CloudFormation to create a Role to allow access
    to resources needed by the stack and name the resources in a dynamic way.
 
-7. Choose _Create Change Set_
-8. On the _Change Set_ screen, click _Execute_ to launch your stack.
-   - You may need to wait for the _Execution status_ of the change set to become
-     "_AVAILABLE_" before the "_Execute_" button becomes available.
-9. Wait for the CloudFormation stack to launch. Completion is indicated when the
+7. Choose _Create Stack_
+8. Wait for the CloudFormation stack to launch. Completion is indicated when the
    "Stack status" is "_CREATE_COMPLETE_".
    - You can monitor the stack creation progress in the "Events" tab.
-10. Note the _WebUIUrl_ displayed in the _Outputs_ tab for the stack. This is
-    used to access the application.
+9. Note the _WebUIUrl_ displayed in the _Outputs_ tab for the stack. This is
+   used to access the application.
 
 ## Accessing the application
 
