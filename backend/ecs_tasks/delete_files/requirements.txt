@@ -6,7 +6,7 @@
 #
 boto3==1.17.85
     # via
-    #   -r backend/ecs_tasks/delete_files/requirements.in
+    #   -r requirements.in
     #   s3fs
 botocore==1.20.85
     # via
@@ -21,26 +21,26 @@ jmespath==0.10.0
     #   botocore
 numpy==1.19.1
     # via
-    #   -r backend/ecs_tasks/delete_files/requirements.in
+    #   -r requirements.in
     #   pandas
     #   pyarrow
 pandas==1.1.1
-    # via -r backend/ecs_tasks/delete_files/requirements.in
+    # via -r requirements.in
 pyarrow==2.0.0
-    # via -r backend/ecs_tasks/delete_files/requirements.in
+    # via -r requirements.in
 python-dateutil==2.8.1
     # via
     #   botocore
     #   pandas
 python-snappy==0.5.4
-    # via -r backend/ecs_tasks/delete_files/requirements.in
+    # via -r requirements.in
 pytz==2020.1
     # via pandas
 s3fs==0.4.0
-    # via -r backend/ecs_tasks/delete_files/requirements.in
+    # via -r requirements.in
 s3transfer==0.4.2
     # via boto3
 six==1.15.0
     # via python-dateutil
-urllib3==1.25.10
+urllib3==1.26.5
     # via botocore
