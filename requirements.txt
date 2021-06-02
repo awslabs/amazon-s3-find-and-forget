@@ -18,23 +18,21 @@ aws-sam-translator==1.35.0
     # via cfn-lint
 black==19.10b0
     # via -r requirements.in
-boto3==1.14.54
+boto3==1.17.85
     # via
     #   -r ./backend/ecs_tasks/delete_files/requirements.txt
     #   -r ./backend/lambda_layers/aws_sdk/requirements.txt
     #   aws-sam-translator
     #   s3fs
-botocore==1.17.55
+botocore==1.20.85
     # via
     #   -r ./backend/ecs_tasks/delete_files/requirements.txt
     #   -r ./backend/lambda_layers/aws_sdk/requirements.txt
     #   boto3
     #   s3fs
     #   s3transfer
-certifi==2020.6.20
-    # via
-    #   -r ./backend/lambda_layers/cr_helper/requirements.txt
-    #   requests
+certifi==2021.5.30
+    # via requests
 cfgv==3.2.0
     # via pre-commit
 cfn-flip==1.2.3
@@ -42,9 +40,7 @@ cfn-flip==1.2.3
 cfn-lint==0.48.1
     # via -r requirements.in
 chardet==3.0.4
-    # via
-    #   -r ./backend/lambda_layers/cr_helper/requirements.txt
-    #   requests
+    # via requests
 click==7.1.2
     # via
     #   black
@@ -52,17 +48,12 @@ click==7.1.2
     #   pip-tools
 coverage==5.2.1
     # via pytest-cov
-crhelper==2.0.5
+crhelper==2.0.10
     # via -r ./backend/lambda_layers/cr_helper/requirements.txt
 decorator==4.4.2
     # via networkx
 distlib==0.3.1
     # via virtualenv
-docutils==0.15.2
-    # via
-    #   -r ./backend/ecs_tasks/delete_files/requirements.txt
-    #   -r ./backend/lambda_layers/aws_sdk/requirements.txt
-    #   botocore
 filelock==3.0.12
     # via virtualenv
 fsspec==0.8.0
@@ -72,9 +63,7 @@ fsspec==0.8.0
 identify==1.4.30
     # via pre-commit
 idna==2.10
-    # via
-    #   -r ./backend/lambda_layers/cr_helper/requirements.txt
-    #   requests
+    # via requests
 importlib-metadata==1.7.0
     # via
     #   -r ./backend/lambda_layers/decorators/requirements.txt
@@ -167,12 +156,10 @@ pyyaml==5.4.1
 regex==2020.7.14
     # via black
 requests==2.24.0
-    # via
-    #   -r ./backend/lambda_layers/cr_helper/requirements.txt
-    #   crhelper
+    # via -r requirements.in
 s3fs==0.4.0
     # via -r ./backend/ecs_tasks/delete_files/requirements.txt
-s3transfer==0.3.3
+s3transfer==0.4.2
     # via
     #   -r ./backend/ecs_tasks/delete_files/requirements.txt
     #   -r ./backend/lambda_layers/aws_sdk/requirements.txt
@@ -203,7 +190,6 @@ urllib3==1.25.10
     # via
     #   -r ./backend/ecs_tasks/delete_files/requirements.txt
     #   -r ./backend/lambda_layers/aws_sdk/requirements.txt
-    #   -r ./backend/lambda_layers/cr_helper/requirements.txt
     #   botocore
     #   requests
 virtualenv==20.0.31

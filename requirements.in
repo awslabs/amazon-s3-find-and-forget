@@ -8,6 +8,7 @@ py>=1.10.0
 pre-commit==2.12.1
 black>=19.10b0,<20.0
 pyyaml>=5.4.1
+requests==2.24.0
 -r ./backend/ecs_tasks/delete_files/requirements.txt
 -r ./backend/lambda_layers/aws_sdk/requirements.txt
 -r ./backend/lambda_layers/cr_helper/requirements.txt
