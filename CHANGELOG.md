@@ -3,7 +3,7 @@
 ## v0.28
 
 - [#252](https://github.com/awslabs/amazon-s3-find-and-forget/pull/252): Upgrade
-  frontend dependencies
+  frontend and backend dependencies
 
 ## v0.27
 
