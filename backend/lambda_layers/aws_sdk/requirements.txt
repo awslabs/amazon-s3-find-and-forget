@@ -5,7 +5,7 @@
 #    pip-compile --output-file=backend/lambda_layers/aws_sdk/requirements.txt backend/lambda_layers/aws_sdk/requirements.in
 #
 boto3==1.17.85
-    # via -r backend/lambda_layers/aws_sdk/requirements.in
+    # via -r requirements.in
 botocore==1.20.85
     # via
     #   boto3
@@ -20,5 +20,5 @@ s3transfer==0.4.2
     # via boto3
 six==1.15.0
     # via python-dateutil
-urllib3==1.25.10
+urllib3==1.26.5
     # via botocore
