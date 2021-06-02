@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
-Description: Amazon S3 Find and Forget (uksb-1q2j8beb0) (version:v0.27)
+Description: Amazon S3 Find and Forget (uksb-1q2j8beb0) (version:v0.28)
 
 Parameters:
   AccessControlAllowOriginOverride:
@@ -135,7 +135,7 @@ Conditions:
 Mappings:
   Solution:
     Constants:
-      Version: 'v0.27'
+      Version: 'v0.28'
 
 Resources:
   TempBucket:
