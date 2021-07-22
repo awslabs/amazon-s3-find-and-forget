@@ -169,7 +169,16 @@ const gateway = {
     return apiGateway("queue", { method: "del" });
   },
 
-  putDataMapper(id, db, table, columns, roleArn, deleteOldVersions, format) {
+  putDataMapper(
+    id,
+    db,
+    table,
+    columns,
+    partitionKeys,
+    roleArn,
+    deleteOldVersions,
+    format
+  ) {
     return apiGateway(`data_mappers/${id}`, {
       method: "put",
       data: {
@@ -179,7 +188,8 @@ const gateway = {
         QueryExecutorParameters: {
           DataCatalogProvider: "glue",
           Database: db,
-          Table: table
+          Table: table,
+          PartitionKeys: partitionKeys
         },
         Format: format,
         RoleArn: roleArn,

@@ -51,12 +51,39 @@ const ColumnsViewer = ({
     </Fragment>
   ));
 
+const PartitionKeysViewer = ({ partitionKeys, setPartitionKeys }) =>
+  partitionKeys.map((pk, index) => (
+    <Fragment key={`pkv-${index}`}>
+      <Form.Check
+        type="checkbox"
+        id={`cb-pkv-${index}`}
+        name="partition-key"
+        label={pk}
+        onChange={(e) =>
+          setPartitionKeys({
+            type: e.target.checked ? "add" : "remove",
+            partitionKey: pk,
+          })
+        }
+      ></Form.Check>
+    </Fragment>
+  ));
+
 const NewDataMapper = ({ gateway, goToDataMappers }) => {
   const [columns, setColumns] = useReducer((state, action) => {
     if (action.type === "add" && !state.includes(action.column))
       return [...state, action.column];
     if (action.type === "remove" && state.includes(action.column))
       return state.filter((x) => x !== action.column);
+    if (action.type === "reset") return [];
+    return state;
+  }, []);
+
+  const [partitionKeys, setPartitionKeys] = useReducer((state, action) => {
+    if (action.type === "add" && !state.includes(action.partitionKey))
+      return [...state, action.partitionKey];
+    if (action.type === "remove" && state.includes(action.partitionKey))
+      return state.filter((x) => x !== action.partitionKey);
     if (action.type === "reset") return [];
     return state;
   }, []);
@@ -98,9 +125,13 @@ const NewDataMapper = ({ gateway, goToDataMappers }) => {
     tableRef.selectedIndex = 0;
   };
 
-  const resetGlueColumns = () => {
+  const resetGlueColumnsAndPartitionKeys = () => {
     setColumns({ type: "reset" });
     let checkboxes = document.getElementsByName("column");
+    for (let i = 0; i < checkboxes.length; i++) checkboxes[i].checked = false;
+
+    setPartitionKeys({ type: "reset" });
+    checkboxes = document.getElementsByName("partition-key");
     for (let i = 0; i < checkboxes.length; i++) checkboxes[i].checked = false;
   };
 
@@ -120,6 +151,7 @@ const NewDataMapper = ({ gateway, goToDataMappers }) => {
           glueDatabase,
           glueTable,
           columns,
+          partitionKeys,
           roleArn,
           deletePreviousVersions,
           selectedTable.format
@@ -145,6 +177,9 @@ const NewDataMapper = ({ gateway, goToDataMappers }) => {
     : [];
 
   const columnsForSelectedTable = selectedTable ? selectedTable.columns : [];
+  const partitionKeysForSelectedTable = selectedTable
+    ? selectedTable.partitionKeys
+    : [];
   const noTables = !glueData || isEmpty(glueData.databases);
 
   useEffect(() => {
@@ -282,7 +317,7 @@ const NewDataMapper = ({ gateway, goToDataMappers }) => {
                   onChange={(e) => {
                     setGlueDatabase(e.target.value);
                     resetGlueTable();
-                    resetGlueColumns();
+                    resetGlueColumnsAndPartitionKeys();
                   }}
                   {...validationAttributes(isGlueDatabaseValid)}
                 >
@@ -304,7 +339,7 @@ const NewDataMapper = ({ gateway, goToDataMappers }) => {
                   as="select"
                   onChange={(e) => {
                     setGlueTable(e.target.value);
-                    resetGlueColumns();
+                    resetGlueColumnsAndPartitionKeys();
                   }}
                   {...validationAttributes(isGlueTableValid)}
                 >
@@ -325,6 +360,25 @@ const NewDataMapper = ({ gateway, goToDataMappers }) => {
                     ? "No table selected"
                     : selectedTable.format}
                 </Form.Text>
+              </Form.Group>
+              <Form.Group>
+                <Form.Label>Partition Keys used to generate queries</Form.Label>
+                <Form.Text className="text-muted">
+                  In order to control the granularity of each query, you can
+                  select none or more partition keys to be used. If you select
+                  none, only one query will be performed for the data mapper. If
+                  you select all, you'll have the higher amount of smaller
+                  queries.
+                </Form.Text>
+                <PartitionKeysViewer
+                  partitionKeys={partitionKeysForSelectedTable}
+                  setPartitionKeys={setPartitionKeys}
+                />
+                {isEmpty(partitionKeysForSelectedTable) && (
+                  <Form.Text className="text-muted">
+                    No table selected
+                  </Form.Text>
+                )}
               </Form.Group>
               <Form.Group>
                 <Form.Label>Columns used to query for matches</Form.Label>

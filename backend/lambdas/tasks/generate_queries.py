@@ -139,7 +139,10 @@ def generate_athena_queries(data_mapper, deletion_items, job_id):
     db = data_mapper["QueryExecutorParameters"]["Database"]
     table_name = data_mapper["QueryExecutorParameters"]["Table"]
     table = get_table(db, table_name)
-    partition_keys = [p["Name"] for p in table.get("PartitionKeys", [])]
+    all_partition_keys = [p["Name"] for p in table.get("PartitionKeys", [])]
+    partition_keys = data_mapper["QueryExecutorParameters"].get(
+        "PartitionKeys", all_partition_keys
+    )
     columns = [c for c in data_mapper["Columns"]]
     msg = {
         "DataMapperId": data_mapper["DataMapperId"],
@@ -206,21 +209,22 @@ def generate_athena_queries(data_mapper, deletion_items, job_id):
         return [msg]
 
     # For every partition combo of every table, create a query
-    return list(
-        map(
-            lambda x: {
-                **msg,
-                "PartitionKeys": [
+    partitions = []
+    for partition in get_partitions(db, table_name):
+        current = []
+        for i, v in enumerate(partition["Values"]):
+            if all_partition_keys[i] in partition_keys:
+                current.append(
                     {
-                        "Key": partition_keys[i],
-                        "Value": cast_to_type(v, partition_keys[i], table, True),
+                        "Key": all_partition_keys[i],
+                        "Value": cast_to_type(v, all_partition_keys[i], table, True),
                     }
-                    for i, v in enumerate(x["Values"])
-                ],
-            },
-            get_partitions(db, table_name),
-        )
-    )
+                )
+        duplicate = next((x for x in partitions if x == current), None)
+        if not duplicate:
+            partitions.append(current)
+
+    return [{**msg, "PartitionKeys": x} for x in partitions]
 
 
 def get_deletion_queue():
