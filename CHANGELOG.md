@@ -1,9 +1,14 @@
 # Change Log
 
-## v0.29 (unreleased)
+## v0.30 (unreleased)
 
 - [#245](https://github.com/awslabs/amazon-s3-find-and-forget/pull/245): CSE-KMS
   support
+
+## v0.29
+
+- [#256](https://github.com/awslabs/amazon-s3-find-and-forget/pull/256): Upgrade
+  backend dependencies
 
 ## v0.28
 

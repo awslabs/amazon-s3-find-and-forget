@@ -43,7 +43,7 @@ cfn-flip==1.2.3
     # via -r requirements.in
 cfn-lint==0.48.1
     # via -r requirements.in
-chardet==3.0.4
+charset-normalizer==2.0.3
     # via requests
 click==7.1.2
     # via
@@ -60,8 +60,6 @@ decorator==4.4.2
     # via networkx
 distlib==0.3.1
     # via virtualenv
-docutils==0.15.2
-    # via -r ./backend/ecs_tasks/delete_files/requirements.txt
 filelock==3.0.12
     # via virtualenv
 fsspec==0.8.0
@@ -167,7 +165,7 @@ pyyaml==5.4.1
     #   pre-commit
 regex==2020.7.14
     # via black
-requests==2.24.0
+requests==2.26.0
     # via -r requirements.in
 s3fs==0.4.0
     # via -r ./backend/ecs_tasks/delete_files/requirements.txt
@@ -198,10 +196,11 @@ toml==0.10.1
     #   pytest
 typed-ast==1.4.1
     # via black
-urllib3==1.25.10
+urllib3==1.26.6
     # via
     #   -r ./backend/ecs_tasks/delete_files/requirements.txt
     #   -r ./backend/lambda_layers/aws_sdk/requirements.txt
+    #   -r requirements.in
     #   botocore
     #   requests
 virtualenv==20.0.31

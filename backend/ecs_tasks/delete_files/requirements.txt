@@ -17,8 +17,6 @@ cffi==1.14.5
     # via cryptography
 cryptography==3.4.7
     # via -r backend/ecs_tasks/delete_files/requirements.in
-docutils==0.15.2
-    # via botocore
 fsspec==0.8.0
     # via s3fs
 jmespath==0.10.0
@@ -50,5 +48,7 @@ s3transfer==0.4.2
     # via boto3
 six==1.15.0
     # via python-dateutil
-urllib3==1.25.10
-    # via botocore
+urllib3==1.26.6
+    # via
+    #   -r backend/ecs_tasks/delete_files/requirements.in
+    #   botocore
