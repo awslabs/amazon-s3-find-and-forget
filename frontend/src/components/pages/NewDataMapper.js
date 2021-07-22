@@ -53,20 +53,19 @@ const ColumnsViewer = ({
 
 const PartitionKeysViewer = ({ partitionKeys, setPartitionKeys }) =>
   partitionKeys.map((pk, index) => (
-    <Fragment key={`pkv-${index}`}>
-      <Form.Check
-        type="checkbox"
-        id={`cb-pkv-${index}`}
-        name="partition-key"
-        label={pk}
-        onChange={(e) =>
-          setPartitionKeys({
-            type: e.target.checked ? "add" : "remove",
-            partitionKey: pk,
-          })
-        }
-      ></Form.Check>
-    </Fragment>
+    <Form.Check
+      type="checkbox"
+      key={`pkv-${index}`}
+      id={`cb-pkv-${index}`}
+      name="partition-key"
+      label={pk}
+      onChange={(e) =>
+        setPartitionKeys({
+          type: e.target.checked ? "add" : "remove",
+          partitionKey: pk,
+        })
+      }
+    />
   ));
 
 const NewDataMapper = ({ gateway, goToDataMappers }) => {

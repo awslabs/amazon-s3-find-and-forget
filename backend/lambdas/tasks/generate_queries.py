@@ -211,19 +211,16 @@ def generate_athena_queries(data_mapper, deletion_items, job_id):
     # For every partition combo of every table, create a query
     partitions = []
     for partition in get_partitions(db, table_name):
-        current = []
-        for i, v in enumerate(partition["Values"]):
-            if all_partition_keys[i] in partition_keys:
-                current.append(
-                    {
-                        "Key": all_partition_keys[i],
-                        "Value": cast_to_type(v, all_partition_keys[i], table, True),
-                    }
-                )
-        duplicate = next((x for x in partitions if x == current), None)
-        if not duplicate:
+        current = [
+            {
+                "Key": all_partition_keys[i],
+                "Value": cast_to_type(v, all_partition_keys[i], table, True),
+            }
+            for i, v in enumerate(partition["Values"])
+            if all_partition_keys[i] in partition_keys
+        ]
+        if not next((x for x in partitions if x == current), None):
             partitions.append(current)
-
     return [{**msg, "PartitionKeys": x} for x in partitions]
 
 
