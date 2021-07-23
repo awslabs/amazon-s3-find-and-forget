@@ -203,7 +203,7 @@ const DataMappers = ({ gateway, onPageChange }) => {
                       <Form.Check
                         inline
                         type="radio"
-                        id={`inline-${index}`}
+                        id={`dm-${index}`}
                         name="item"
                         onClick={() => selectRow(index)}
                       />
