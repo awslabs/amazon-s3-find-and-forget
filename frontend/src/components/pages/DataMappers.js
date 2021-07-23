@@ -191,38 +191,43 @@ const DataMappers = ({ gateway, onPageChange }) => {
           </thead>
           <tbody>
             {dataMappers &&
-              dataMappers.map((dataMapper, index) => (
-                <tr
-                  key={index}
-                  className={selectedRow === index ? "selected" : undefined}
-                >
-                  <td style={{ textAlign: "center" }}>
-                    <Form.Check
-                      inline
-                      type="radio"
-                      id={`inline-${index}`}
-                      name="item"
-                      onClick={() => selectRow(index)}
-                    />
-                  </td>
-                  <td>{dataMapper.DataMapperId}</td>
-                  <td>{dataMapper.Columns.join(", ")}</td>
-                  <td>{dataMapper.Format}</td>
-                  <td>{dataMapper.QueryExecutor}</td>
-                  <td>
-                    {dataMapper.QueryExecutorParameters.Database}/
-                    {dataMapper.QueryExecutorParameters.Table} (
-                    {dataMapper.QueryExecutorParameters.DataCatalogProvider})
-                  </td>
-                  <td>
-                    {getBucket(index).error ? (
-                      <CellError error={getBucket(index).error} />
-                    ) : (
-                      getBucket(index).location
-                    )}
-                  </td>
-                </tr>
-              ))}
+              dataMappers.map((dataMapper, index) => {
+                const qep = dataMapper.QueryExecutorParameters;
+                const pk = qep.PartitionKeys;
+                return (
+                  <tr
+                    key={index}
+                    className={selectedRow === index ? "selected" : undefined}
+                  >
+                    <td style={{ textAlign: "center" }}>
+                      <Form.Check
+                        inline
+                        type="radio"
+                        id={`inline-${index}`}
+                        name="item"
+                        onClick={() => selectRow(index)}
+                      />
+                    </td>
+                    <td>{dataMapper.DataMapperId}</td>
+                    <td>{dataMapper.Columns.join(", ")}</td>
+                    <td>{dataMapper.Format}</td>
+                    <td>{dataMapper.QueryExecutor}</td>
+                    <td>
+                      {qep.DataCatalogProvider}: {qep.Database}/{qep.Table}
+                      <br />
+                      (partition keys:{" "}
+                      {pk ? (isEmpty(pk) ? `None` : pk.join(", ")) : "ALL"})
+                    </td>
+                    <td>
+                      {getBucket(index).error ? (
+                        <CellError error={getBucket(index).error} />
+                      ) : (
+                        getBucket(index).location
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
           </tbody>
         </Table>
         {isEmpty(dataMappers) && formState !== "initial" && (
