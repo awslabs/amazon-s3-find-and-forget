@@ -398,8 +398,23 @@ To grant these permissions in Lake Formation:
    have a greater number of smaller queries (the same query will be repeated
    with a `WHERE` additional clause for each combination of partition values).
    If you have a lot of small partitions, it may be more efficient to choose
-   none or a subset of partition keys from the list. If instead you have very
-   big partitions you may want to select all the partition keys.
+   none or a subset of partition keys from the list in order to increase speed
+   of execution. If instead you have very big partitions, it may be more
+   efficient to choose all the partition keys in order to reduce probability of
+   failure caused by query timeout. As a rule of thumb, we recommend the average
+   query size to be between 100GB and 1TB.
+
+   > As an example, let's consider 10 years of daily data with partition keys of
+   > `year`, `month` and `day` with total size of `100TB`. By declaring
+   > PartitionKeys=`[]` (none) a single query of 100TB would run during the Find
+   > phase, and that may be too much to complete within the 30m limit of Athena
+   > execution time. On the other hand, using all the combinations of the
+   > partition keys we would have approximately `3650` queries, each being
+   > probably very small, and given the default Athena concurrency limit of
+   > `20`, it may take very long to execute all of them. The best in this
+   > scenario is possibly the `['year','month']` combination, which would result
+   > in `120` queries.
+
 6. From the columns list, choose the column(s) the solution should use to to
    find items in the data which should be deleted. For example, if your table
    has three columns named **customer_id**, **description** and **created_at**
