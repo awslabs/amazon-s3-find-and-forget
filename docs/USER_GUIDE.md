@@ -395,9 +395,9 @@ To grant these permissions in Lake Formation:
 5. From the Partition Keys list, select the partition key(s) that you want the
    solution to use when generating the queries. If you select none, only one
    query will be performed for the data mapper. If you select any or all, you'll
-   have a bigger number of smaller queries (the same query will be repeated with
+   have a greater number of smaller queries (the same query will be repeated with
    a `WHERE` additional clause for each combination of partition values). If you
-   have a lot of small partitions, you may choose none or few partition keys
+   have a lot of small partitions, it may be more efficient to choose none or a subset of partition keys
    from the list. If instead you have very big partitions you may want to select
    all the partition keys.
 6. From the columns list, choose the column(s) the solution should use to to

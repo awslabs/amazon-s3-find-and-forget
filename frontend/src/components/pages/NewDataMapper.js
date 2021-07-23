@@ -364,7 +364,7 @@ const NewDataMapper = ({ gateway, goToDataMappers }) => {
                     : isEmpty(partitionKeysForSelectedTable)
                     ? `None - the table is not partitioned`
                     : `In order to control the granularity of each query, you can
-                      select none or more partition keys to be used. If you
+                      select the partition keys to be used in the query phase. If you
                       select none, only one query will be performed for the data
                       mapper. If you select all, you'll have the higher amount
                       of smaller queries.`}
@@ -378,7 +378,7 @@ const NewDataMapper = ({ gateway, goToDataMappers }) => {
                 <Form.Label>Columns used to query for matches</Form.Label>
                 <Form.Text className="text-muted">
                   {!isEmpty(columnsForSelectedTable)
-                    ? `Select one or more column from the table`
+                    ? `Select one or more columns from the table`
                     : `No table selected`}
                 </Form.Text>
                 <ColumnsViewer
