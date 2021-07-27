@@ -401,15 +401,15 @@ To grant these permissions in Lake Formation:
    none or a subset of partition keys from the list in order to increase speed
    of execution. If instead you have very big partitions, it may be more
    efficient to choose all the partition keys in order to reduce probability of
-   failure caused by query timeout. We recommend the average query size to be
-   between 100GB and 1TB.
+   failure caused by query timeout. We recommend the average query size not to
+   exceed the hundreds of GBs and not to take more than 5 minutes.
 
    > As an example, let's consider 10 years of daily data with partition keys of
-   > `year`, `month` and `day` with total size of `100TB`. By declaring
-   > PartitionKeys=`[]` (none) a single query of 100TB would run during the Find
-   > phase, and that may be too much to complete within the 30m limit of Athena
-   > execution time. On the other hand, using all the combinations of the
-   > partition keys we would have approximately `3650` queries, each being
+   > `year`, `month` and `day` with total size of `10TB`. By declaring
+   > PartitionKeys=`[]` (none) a single query of `10TB` would run during the
+   > Find phase, and that may be too much to complete within the 30m limit of
+   > Athena execution time. On the other hand, using all the combinations of the
+   > partition keys we would have approximately `3652` queries, each being
    > probably very small, and given the default Athena concurrency limit of
    > `20`, it may take very long to execute all of them. The best in this
    > scenario is possibly the `['year','month']` combination, which would result
