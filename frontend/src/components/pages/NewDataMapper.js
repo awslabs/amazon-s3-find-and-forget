@@ -9,6 +9,7 @@ import {
   isIdValid,
   isRoleArnValid,
   isUndefined,
+  multiValueArrayReducer,
 } from "../../utils";
 
 import { glueSerializer } from "../../utils/glueSerializer";
@@ -16,45 +17,56 @@ import { glueSerializer } from "../../utils/glueSerializer";
 const region = window.s3f2Settings.region;
 
 const ColumnsViewer = ({
+  allColumns,
   columns,
   prefix = "",
   depth = 0,
   setColumns,
   extraAttributes,
 }) =>
-  columns.map((c, index) => (
-    <Fragment key={`cv-${prefix}${c.name}-${index}`}>
-      <Form.Check
-        type="checkbox"
-        id={`cb-${prefix}${c.name}`}
-        name="column"
-        label={`${c.name} (${c.type})`}
-        onChange={(e) =>
-          setColumns({
-            type: e.target.checked ? "add" : "remove",
-            column: `${prefix}${c.name}`,
-          })
-        }
-        {...extraAttributes}
-        style={{ marginLeft: `${depth * 10}px` }}
-        disabled={!c.canBeIdentifier}
-      />
-      {c.children && (
-        <ColumnsViewer
-          columns={c.children}
-          prefix={`${prefix}${c.name}.`}
-          depth={depth + 1}
-          key={`n-${depth}`}
-          setColumns={setColumns}
-          extraAttributes={extraAttributes}
+  allColumns.map((c, index) => {
+    const column = `${prefix}${c.name}`;
+    return (
+      <Fragment key={`cv-${column}-${index}`}>
+        <Form.Check
+          type="checkbox"
+          id={`cb-${column}`}
+          checked={columns.includes(column)}
+          name="column"
+          label={`${c.name} (${c.type})`}
+          onChange={(e) =>
+            setColumns({
+              type: e.target.checked ? "add" : "remove",
+              value: column,
+            })
+          }
+          {...extraAttributes}
+          style={{ marginLeft: `${depth * 10}px` }}
+          disabled={!c.canBeIdentifier}
         />
-      )}
-    </Fragment>
-  ));
+        {c.children && (
+          <ColumnsViewer
+            allColumns={c.children}
+            columns={columns}
+            prefix={`${column}.`}
+            depth={depth + 1}
+            key={`n-${depth}`}
+            setColumns={setColumns}
+            extraAttributes={extraAttributes}
+          />
+        )}
+      </Fragment>
+    );
+  });
 
-const PartitionKeysViewer = ({ partitionKeys, setPartitionKeys }) =>
-  partitionKeys.map((pk, index) => (
+const PartitionKeysViewer = ({
+  allPartitionKeys,
+  partitionKeys,
+  setPartitionKeys,
+}) =>
+  allPartitionKeys.map((pk, index) => (
     <Form.Check
+      checked={partitionKeys.includes(pk)}
       type="checkbox"
       key={`pkv-${index}`}
       id={`cb-pkv-${index}`}
@@ -63,30 +75,18 @@ const PartitionKeysViewer = ({ partitionKeys, setPartitionKeys }) =>
       onChange={(e) =>
         setPartitionKeys({
           type: e.target.checked ? "add" : "remove",
-          partitionKey: pk,
+          value: pk,
         })
       }
     />
   ));
 
 const NewDataMapper = ({ gateway, goToDataMappers }) => {
-  const [columns, setColumns] = useReducer((state, action) => {
-    if (action.type === "add" && !state.includes(action.column))
-      return [...state, action.column];
-    if (action.type === "remove" && state.includes(action.column))
-      return state.filter((x) => x !== action.column);
-    if (action.type === "reset") return [];
-    return state;
-  }, []);
-
-  const [partitionKeys, setPartitionKeys] = useReducer((state, action) => {
-    if (action.type === "add" && !state.includes(action.partitionKey))
-      return [...state, action.partitionKey];
-    if (action.type === "remove" && state.includes(action.partitionKey))
-      return state.filter((x) => x !== action.partitionKey);
-    if (action.type === "reset") return action.value;
-    return state;
-  }, []);
+  const [columns, setColumns] = useReducer(multiValueArrayReducer, []);
+  const [partitionKeys, setPartitionKeys] = useReducer(
+    multiValueArrayReducer,
+    []
+  );
 
   const [dataMapperId, setDataMapperId] = useState(undefined);
   const [errorDetails, setErrorDetails] = useState(undefined);
@@ -173,15 +173,8 @@ const NewDataMapper = ({ gateway, goToDataMappers }) => {
   }, [glueDatabase, setGlueTable]);
 
   useEffect(() => {
+    setPartitionKeys({ type: "reset", value: selectedTable?.partitionKeys });
     setColumns({ type: "reset" });
-    let checkboxes = document.getElementsByName("column");
-    for (let i = 0; i < checkboxes.length; i++) checkboxes[i].checked = false;
-
-    const partitionKeys = selectedTable?.partitionKeys || [];
-    setPartitionKeys({ type: "reset", value: partitionKeys });
-    checkboxes = document.getElementsByName("partition-key");
-    for (let i = 0; i < checkboxes.length; i++)
-      checkboxes[i].checked = !isEmpty(partitionKeys);
   }, [selectedTable, setColumns, setPartitionKeys]);
 
   useEffect(() => {
@@ -370,7 +363,8 @@ const NewDataMapper = ({ gateway, goToDataMappers }) => {
                       of the data separately.`}
                 </Form.Text>
                 <PartitionKeysViewer
-                  partitionKeys={partitionKeysForSelectedTable}
+                  allPartitionKeys={partitionKeysForSelectedTable}
+                  partitionKeys={partitionKeys}
                   setPartitionKeys={setPartitionKeys}
                 />
               </Form.Group>
@@ -382,7 +376,8 @@ const NewDataMapper = ({ gateway, goToDataMappers }) => {
                     : `No table selected`}
                 </Form.Text>
                 <ColumnsViewer
-                  columns={columnsForSelectedTable}
+                  allColumns={columnsForSelectedTable}
+                  columns={columns}
                   setColumns={setColumns}
                   extraAttributes={validationAttributes(isColumnsValid)}
                 />
