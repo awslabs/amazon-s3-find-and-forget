@@ -363,11 +363,11 @@ const NewDataMapper = ({ gateway, goToDataMappers }) => {
                     ? `No table selected`
                     : isEmpty(partitionKeysForSelectedTable)
                     ? `None - the table is not partitioned`
-                    : `In order to control the granularity of each query, you can
+                    : `To control the granularity of each query, you can
                       select the partition keys to be used in the query phase. If you
                       select none, only one query will be performed for the data
-                      mapper. If you select all, you'll have the higher amount
-                      of smaller queries.`}
+                      mapper. If you select all, more queries will be run to scan each partition
+                      of the data separately.`}
                 </Form.Text>
                 <PartitionKeysViewer
                   partitionKeys={partitionKeysForSelectedTable}

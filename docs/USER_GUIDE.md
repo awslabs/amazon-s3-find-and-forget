@@ -401,8 +401,8 @@ To grant these permissions in Lake Formation:
    none or a subset of partition keys from the list in order to increase speed
    of execution. If instead you have very big partitions, it may be more
    efficient to choose all the partition keys in order to reduce probability of
-   failure caused by query timeout. As a rule of thumb, we recommend the average
-   query size to be between 100GB and 1TB.
+   failure caused by query timeout. We recommend the average query size to be
+   between 100GB and 1TB.
 
    > As an example, let's consider 10 years of daily data with partition keys of
    > `year`, `month` and `day` with total size of `100TB`. By declaring
