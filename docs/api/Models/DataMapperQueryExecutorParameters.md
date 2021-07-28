@@ -6,6 +6,7 @@ Name | Type | Description | Notes
 **DataCatalogProvider** | [**String**](string.md) | The data catalog provider which contains the database table with metadata about your S3 data lake | [optional] [default to null] [enum: glue]
 **Database** | [**String**](string.md) | The database in the data catalog which contains the metatadata table | [default to null]
 **Table** | [**String**](string.md) | The table in the data catalog database containing the metatadata for your data lake | [default to null]
+**PartitionKeys** | [**List**](string.md) | The partition keys to use on each query. This allows to control the number and the size of the queries. When omitted, all the table partitions are used. | [optional] [default to null]
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

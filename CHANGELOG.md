@@ -1,5 +1,11 @@
 # Change Log
 
+## v0.30 (unreleased)
+
+- [#257](https://github.com/awslabs/amazon-s3-find-and-forget/pull/257):
+  Introduce data mapper setting to specify the partition keys to be used when
+  querying the data during the Find Phase
+
 ## v0.29
 
 - [#256](https://github.com/awslabs/amazon-s3-find-and-forget/pull/256): Upgrade

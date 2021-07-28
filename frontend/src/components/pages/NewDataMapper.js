@@ -8,6 +8,8 @@ import {
   isEmpty,
   isIdValid,
   isRoleArnValid,
+  isUndefined,
+  multiValueArrayReducer,
 } from "../../utils";
 
 import { glueSerializer } from "../../utils/glueSerializer";
@@ -15,51 +17,76 @@ import { glueSerializer } from "../../utils/glueSerializer";
 const region = window.s3f2Settings.region;
 
 const ColumnsViewer = ({
+  allColumns,
   columns,
   prefix = "",
   depth = 0,
   setColumns,
   extraAttributes,
 }) =>
-  columns.map((c, index) => (
-    <Fragment key={`cv-${prefix}${c.name}-${index}`}>
-      <Form.Check
-        type="checkbox"
-        id={`cb-${prefix}${c.name}`}
-        name="column"
-        label={`${c.name} (${c.type})`}
-        onChange={(e) =>
-          setColumns({
-            type: e.target.checked ? "add" : "remove",
-            column: `${prefix}${c.name}`,
-          })
-        }
-        {...extraAttributes}
-        style={{ marginLeft: `${depth * 10}px` }}
-        disabled={!c.canBeIdentifier}
-      />
-      {c.children && (
-        <ColumnsViewer
-          columns={c.children}
-          prefix={`${prefix}${c.name}.`}
-          depth={depth + 1}
-          key={`n-${depth}`}
-          setColumns={setColumns}
-          extraAttributes={extraAttributes}
+  allColumns.map((c, index) => {
+    const column = `${prefix}${c.name}`;
+    return (
+      <Fragment key={`cv-${column}-${index}`}>
+        <Form.Check
+          type="checkbox"
+          id={`cb-${column}`}
+          checked={columns.includes(column)}
+          name="column"
+          label={`${c.name} (${c.type})`}
+          onChange={(e) =>
+            setColumns({
+              type: e.target.checked ? "add" : "remove",
+              value: column,
+            })
+          }
+          {...extraAttributes}
+          style={{ marginLeft: `${depth * 10}px` }}
+          disabled={!c.canBeIdentifier}
         />
-      )}
-    </Fragment>
+        {c.children && (
+          <ColumnsViewer
+            allColumns={c.children}
+            columns={columns}
+            prefix={`${column}.`}
+            depth={depth + 1}
+            key={`n-${depth}`}
+            setColumns={setColumns}
+            extraAttributes={extraAttributes}
+          />
+        )}
+      </Fragment>
+    );
+  });
+
+const PartitionKeysViewer = ({
+  allPartitionKeys,
+  partitionKeys,
+  setPartitionKeys,
+}) =>
+  allPartitionKeys.map((pk, index) => (
+    <Form.Check
+      checked={partitionKeys.includes(pk)}
+      type="checkbox"
+      key={`pkv-${index}`}
+      id={`cb-pkv-${index}`}
+      name="partition-key"
+      label={pk}
+      onChange={(e) =>
+        setPartitionKeys({
+          type: e.target.checked ? "add" : "remove",
+          value: pk,
+        })
+      }
+    />
   ));
 
 const NewDataMapper = ({ gateway, goToDataMappers }) => {
-  const [columns, setColumns] = useReducer((state, action) => {
-    if (action.type === "add" && !state.includes(action.column))
-      return [...state, action.column];
-    if (action.type === "remove" && state.includes(action.column))
-      return state.filter((x) => x !== action.column);
-    if (action.type === "reset") return [];
-    return state;
-  }, []);
+  const [columns, setColumns] = useReducer(multiValueArrayReducer, []);
+  const [partitionKeys, setPartitionKeys] = useReducer(
+    multiValueArrayReducer,
+    []
+  );
 
   const [dataMapperId, setDataMapperId] = useState(undefined);
   const [errorDetails, setErrorDetails] = useState(undefined);
@@ -92,17 +119,23 @@ const NewDataMapper = ({ gateway, goToDataMappers }) => {
     isColumnsValid &&
     isRoleValid;
 
-  const resetGlueTable = () => {
-    setGlueTable("-1");
-    const tableRef = document.getElementById("glueTable");
-    tableRef.selectedIndex = 0;
-  };
+  const selectedDatabase = glueDatabase
+    ? glueData.databases.find((x) => x.name === glueDatabase)
+    : undefined;
 
-  const resetGlueColumns = () => {
-    setColumns({ type: "reset" });
-    let checkboxes = document.getElementsByName("column");
-    for (let i = 0; i < checkboxes.length; i++) checkboxes[i].checked = false;
-  };
+  const selectedTable = selectedDatabase
+    ? selectedDatabase.tables.find((t) => t.name === glueTable)
+    : undefined;
+
+  const tablesForSelectedDatabase = selectedDatabase
+    ? selectedDatabase.tables
+    : [];
+
+  const columnsForSelectedTable = selectedTable ? selectedTable.columns : [];
+  const partitionKeysForSelectedTable = selectedTable
+    ? selectedTable.partitionKeys
+    : [];
+  const noTables = !glueData || isEmpty(glueData.databases);
 
   const submitForm = async () => {
     setSubmitClicked(true);
@@ -120,6 +153,7 @@ const NewDataMapper = ({ gateway, goToDataMappers }) => {
           glueDatabase,
           glueTable,
           columns,
+          partitionKeys,
           roleArn,
           deletePreviousVersions,
           selectedTable.format
@@ -132,20 +166,16 @@ const NewDataMapper = ({ gateway, goToDataMappers }) => {
     }
   };
 
-  const selectedDatabase = glueDatabase
-    ? glueData.databases.find((x) => x.name === glueDatabase)
-    : undefined;
+  useEffect(() => {
+    setGlueTable("-1");
+    const tableRef = document.getElementById("glueTable");
+    if (tableRef) tableRef.selectedIndex = 0;
+  }, [glueDatabase, setGlueTable]);
 
-  const selectedTable = selectedDatabase
-    ? selectedDatabase.tables.find((t) => t.name === glueTable)
-    : undefined;
-
-  const tablesForSelectedDatabase = selectedDatabase
-    ? selectedDatabase.tables
-    : [];
-
-  const columnsForSelectedTable = selectedTable ? selectedTable.columns : [];
-  const noTables = !glueData || isEmpty(glueData.databases);
+  useEffect(() => {
+    setPartitionKeys({ type: "reset", value: selectedTable?.partitionKeys });
+    setColumns({ type: "reset" });
+  }, [selectedTable, setColumns, setPartitionKeys]);
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -279,11 +309,7 @@ const NewDataMapper = ({ gateway, goToDataMappers }) => {
                 </Form.Text>
                 <Form.Control
                   as="select"
-                  onChange={(e) => {
-                    setGlueDatabase(e.target.value);
-                    resetGlueTable();
-                    resetGlueColumns();
-                  }}
+                  onChange={(e) => setGlueDatabase(e.target.value)}
                   {...validationAttributes(isGlueDatabaseValid)}
                 >
                   <option value="-1">Select a Glue Database</option>
@@ -302,10 +328,7 @@ const NewDataMapper = ({ gateway, goToDataMappers }) => {
                 </Form.Text>
                 <Form.Control
                   as="select"
-                  onChange={(e) => {
-                    setGlueTable(e.target.value);
-                    resetGlueColumns();
-                  }}
+                  onChange={(e) => setGlueTable(e.target.value)}
                   {...validationAttributes(isGlueTableValid)}
                 >
                   <option value="-1" defaultValue>
@@ -327,20 +350,37 @@ const NewDataMapper = ({ gateway, goToDataMappers }) => {
                 </Form.Text>
               </Form.Group>
               <Form.Group>
+                <Form.Label>Partition Keys used to generate queries</Form.Label>
+                <Form.Text className="text-muted">
+                  {isUndefined(selectedTable)
+                    ? `No table selected`
+                    : isEmpty(partitionKeysForSelectedTable)
+                    ? `None - the table is not partitioned`
+                    : `To control the granularity of each query, you can
+                      select the partition keys to be used in the query phase. If you
+                      select none, only one query will be performed for the data
+                      mapper. If you select all, more queries will be run to scan each partition
+                      of the data separately.`}
+                </Form.Text>
+                <PartitionKeysViewer
+                  allPartitionKeys={partitionKeysForSelectedTable}
+                  partitionKeys={partitionKeys}
+                  setPartitionKeys={setPartitionKeys}
+                />
+              </Form.Group>
+              <Form.Group>
                 <Form.Label>Columns used to query for matches</Form.Label>
                 <Form.Text className="text-muted">
-                  Select one or more column from the table
+                  {!isEmpty(columnsForSelectedTable)
+                    ? `Select one or more columns from the table`
+                    : `No table selected`}
                 </Form.Text>
                 <ColumnsViewer
-                  columns={columnsForSelectedTable}
+                  allColumns={columnsForSelectedTable}
+                  columns={columns}
                   setColumns={setColumns}
                   extraAttributes={validationAttributes(isColumnsValid)}
                 />
-                {isEmpty(columnsForSelectedTable) && (
-                  <Form.Text className="text-muted">
-                    No table selected
-                  </Form.Text>
-                )}
               </Form.Group>
               <Form.Group controlId="roleArn">
                 <Form.Label>AWS IAM Role ARN</Form.Label>

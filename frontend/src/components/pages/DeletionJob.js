@@ -245,18 +245,38 @@ const DeletionJob = ({ gateway, jobId }) => {
               )}
               <span>{withDefault(job.TotalQueryFailedCount)}</span>
             </DetailsBox>
-            <DetailsBox label="Total Query Time">
+            <DetailsBox label="Total Query Time" noSeparator>
               {withDefault(
                 job.TotalQueryTimeInMillis,
                 (x) => `${(x / 1000).toFixed(0)}s`
               )}
             </DetailsBox>
-            <DetailsBox label="Total Query Scanned Bytes">
+            <DetailsBox label="Total Query Scanned Bytes" noSeparator>
               {withDefault(
                 job.TotalQueryScannedInBytes,
                 (x) => `${x} ${x > 0 ? "(" + formatFileSize(x) + ")" : ""}`
               )}
             </DetailsBox>
+            <DetailsBox label="Individual Query Time Average">
+              {isUndefined(job.GeneratedQueries)
+                ? "-"
+                : withDefault(
+                    job.TotalQueryTimeInMillis / job.GeneratedQueries,
+                    (x) => `${(x / 1000).toFixed(0)}s`
+                  )}
+            </DetailsBox>
+            <DetailsBox label="Individual Query Scanned Bytes Average">
+              {isUndefined(job.GeneratedQueries)
+                ? "-"
+                : withDefault(
+                    job.TotalQueryScannedInBytes / job.GeneratedQueries,
+                    (x) =>
+                      `${x.toFixed(0)} ${
+                        x > 0 ? "(" + formatFileSize(x) + ")" : ""
+                      }`
+                  )}
+            </DetailsBox>
+
             <DetailsBox label="Total Object Updated Count" noSeparator>
               {withDefault(job.TotalObjectUpdatedCount)}
             </DetailsBox>

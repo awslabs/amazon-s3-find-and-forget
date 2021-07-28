@@ -506,6 +506,11 @@ components:
             Table:
               description: "The table in the data catalog database containing the metatadata for your data lake"
               type: "string"
+            PartitionKeys:
+              description: "The partition keys to use on each query. This allows to control the number and the size of the queries. When omitted, all the table partitions are used."
+              type: "array"
+              items:
+                type: "string"
           required:
             - "Database"
             - "Table"
