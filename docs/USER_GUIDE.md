@@ -397,24 +397,47 @@ To grant these permissions in Lake Formation:
 4. Select a **Query Executor Type** then choose the **Database** and **Table**
    in your data catalog which describes the target data in S3. A list of columns
    will be displayed for the chosen Table.
-5. From the list, choose the column(s) the solution should use to to find items
-   in the data which should be deleted. For example, if your table has three
-   columns named **customer_id**, **description** and **created_at** and you
-   want to search for items using the **customer_id**, you should choose only
-   the **customer_id** column from this list.
-6. Enter the ARN of the role for Fargate to assume when modifying objects in S3
+5. From the Partition Keys list, select the partition key(s) that you want the
+   solution to use when generating the queries. If you select none, only one
+   query will be performed for the data mapper. If you select any or all, you'll
+   have a greater number of smaller queries (the same query will be repeated
+   with a `WHERE` additional clause for each combination of partition values).
+   If you have a lot of small partitions, it may be more efficient to choose
+   none or a subset of partition keys from the list in order to increase speed
+   of execution. If instead you have very big partitions, it may be more
+   efficient to choose all the partition keys in order to reduce probability of
+   failure caused by query timeout. We recommend the average query size not to
+   exceed the hundreds of GBs and not to take more than 5 minutes.
+
+   > As an example, let's consider 10 years of daily data with partition keys of
+   > `year`, `month` and `day` with total size of `10TB`. By declaring
+   > PartitionKeys=`[]` (none) a single query of `10TB` would run during the
+   > Find phase, and that may be too much to complete within the 30m limit of
+   > Athena execution time. On the other hand, using all the combinations of the
+   > partition keys we would have approximately `3652` queries, each being
+   > probably very small, and given the default Athena concurrency limit of
+   > `20`, it may take very long to execute all of them. The best in this
+   > scenario is possibly the `['year','month']` combination, which would result
+   > in `120` queries.
+
+6. From the columns list, choose the column(s) the solution should use to to
+   find items in the data which should be deleted. For example, if your table
+   has three columns named **customer_id**, **description** and **created_at**
+   and you want to search for items using the **customer_id**, you should choose
+   only the **customer_id** column from this list.
+7. Enter the ARN of the role for Fargate to assume when modifying objects in S3
    buckets. This role should already exist if you have followed the
    [Provisioning Data Access IAM Roles](#provisioning-data-access-iam-roles)
    steps.
-7. If you do not want the solution to delete all older versions except the
+8. If you do not want the solution to delete all older versions except the
    latest created object version, deselect _Delete previous object versions
    after update_. By default the solution will delete all previous of versions
    after creating a new version.
-8. Choose **Create Data Mapper**.
-9. A message is displayed advising you to update the S3 Bucket Policy for the S3
-   Bucket referenced by the newly created data mapper. See
-   [Granting Access to Data](#granting-access-to-data) for more information on
-   how to do this. Choose **Return to Data Mappers**.
+9. Choose **Create Data Mapper**.
+10. A message is displayed advising you to update the S3 Bucket Policy for the
+    S3 Bucket referenced by the newly created data mapper. See
+    [Granting Access to Data](#granting-access-to-data) for more information on
+    how to do this. Choose **Return to Data Mappers**.
 
 You can also create Data Mappers directly via the API. For more information, see
 the [API Documentation].

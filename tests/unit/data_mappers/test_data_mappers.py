@@ -204,6 +204,7 @@ def test_it_supports_optionals(validate_mapper, table):
                         "DataCatalogProvider": "glue",
                         "Database": "test",
                         "Table": "test",
+                        "PartitionKeys": ["year"],
                     },
                     "RoleArn": "arn:aws:iam::accountid:role/S3F2DataAccessRole",
                 }
@@ -222,6 +223,7 @@ def test_it_supports_optionals(validate_mapper, table):
             "DataCatalogProvider": "glue",
             "Database": "test",
             "Table": "test",
+            "PartitionKeys": ["year"],
         },
         "Format": "parquet",
         "DeleteOldVersions": True,
@@ -556,7 +558,38 @@ def test_it_gets_details_for_table(mock_client):
     mock_client.get_table.assert_called_with(DatabaseName="db", Name="table")
 
 
-def get_table_stub(storage_descriptor={}):
+@patch("backend.lambdas.data_mappers.handlers.get_existing_s3_locations")
+@patch("backend.lambdas.data_mappers.handlers.get_glue_table_location")
+@patch("backend.lambdas.data_mappers.handlers.get_glue_table_format")
+@patch("backend.lambdas.data_mappers.handlers.get_table_details_from_mapper")
+def test_it_rejects_non_existent_partition(
+    mock_get_details, mock_get_format, mock_get_location, get_existing_s3_locations
+):
+    mock_get_details.return_value = get_table_stub(
+        {"Location": "s3://bucket/prefix/"},
+        [{"Name": "a", "Type": "string"}, {"Name": "b", "Type": "string"}],
+    )
+    get_existing_s3_locations.return_value = []
+    mock_get_location.return_value = "s3://bucket/prefix/"
+    mock_get_format.return_value = "org.openx.data.jsonserde.JsonSerDe", {}
+    with pytest.raises(ValueError) as e:
+        handlers.validate_mapper(
+            {
+                "DataMapperId": "1234",
+                "Columns": ["column"],
+                "QueryExecutor": "athena",
+                "QueryExecutorParameters": {
+                    "DataCatalogProvider": "glue",
+                    "Database": "test",
+                    "Table": "test",
+                    "PartitionKeys": ["a", "c"],
+                },
+            }
+        )
+    assert e.value.args[0] == "Partition Key c doesn't exist"
+
+
+def get_table_stub(storage_descriptor={}, partition_keys=[]):
     sd = {
         "Location": "s3://bucket/",
         "InputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
@@ -567,4 +600,4 @@ def get_table_stub(storage_descriptor={}):
         },
     }
     sd.update(storage_descriptor)
-    return {"Table": {"StorageDescriptor": sd}}
+    return {"Table": {"StorageDescriptor": sd, "PartitionKeys": partition_keys}}

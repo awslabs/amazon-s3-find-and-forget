@@ -108,6 +108,9 @@ def validate_mapper(mapper):
         table_details = get_table_details_from_mapper(mapper)
         new_location = get_glue_table_location(table_details)
         serde_lib, serde_params = get_glue_table_format(table_details)
+        for partition in mapper["QueryExecutorParameters"].get("PartitionKeys", []):
+            if partition not in get_glue_table_partition_keys(table_details):
+                raise ValueError("Partition Key {} doesn't exist".format(partition))
         if any([is_overlap(new_location, e) for e in existing_s3_locations]):
             raise ValueError(
                 "A data mapper already exists which covers this S3 location"
@@ -164,6 +167,10 @@ def get_glue_table_format(t):
         t["Table"]["StorageDescriptor"]["SerdeInfo"]["SerializationLibrary"],
         t["Table"]["StorageDescriptor"]["SerdeInfo"]["Parameters"],
     )
+
+
+def get_glue_table_partition_keys(t):
+    return [x["Name"] for x in t["Table"]["PartitionKeys"]]
 
 
 def is_overlap(a, b):

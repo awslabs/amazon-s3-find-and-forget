@@ -16,6 +16,9 @@ Object {
           ],
           "format": "parquet",
           "name": "table1",
+          "partitionKeys": Array [
+            "product_category",
+          ],
         },
         Object {
           "columns": Array [
@@ -27,6 +30,7 @@ Object {
           ],
           "format": "parquet",
           "name": "table2",
+          "partitionKeys": Array [],
         },
       ],
     },
@@ -43,6 +47,9 @@ Object {
           ],
           "format": "parquet",
           "name": "table5",
+          "partitionKeys": Array [
+            "product_category",
+          ],
         },
         Object {
           "columns": Array [
@@ -91,6 +98,11 @@ Object {
           ],
           "format": "json",
           "name": "table3",
+          "partitionKeys": Array [
+            "partition_0",
+            "partition_1",
+            "partition_2",
+          ],
         },
       ],
     },
@@ -286,6 +298,7 @@ Object {
           ],
           "format": "parquet",
           "name": "complex",
+          "partitionKeys": Array [],
         },
       ],
     },
