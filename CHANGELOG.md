@@ -1,9 +1,15 @@
 # Change Log
 
-## v0.30 (unreleased)
+## v0.31 (unreleased)
 
 - [#245](https://github.com/awslabs/amazon-s3-find-and-forget/pull/245): CSE-KMS
   support
+
+## v0.30
+
+- [#257](https://github.com/awslabs/amazon-s3-find-and-forget/pull/257):
+  Introduce data mapper setting to specify the partition keys to be used when
+  querying the data during the Find Phase
 
 ## v0.29
 

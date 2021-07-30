@@ -91,3 +91,12 @@ export const docsUrl = x => repoUrl(`blob/master/docs/${trimLeadingSlash(x)}`);
 
 export const findMin = (arr, key) =>
   arr.reduce((prev, curr) => (prev[key] < curr[key] ? prev : curr));
+
+export const multiValueArrayReducer = (state, action) => {
+  if (action.type === "add" && !state.includes(action.value))
+    return [...state, action.value];
+  if (action.type === "remove" && state.includes(action.value))
+    return state.filter(x => x !== action.value);
+  if (action.type === "reset") return action.value || [];
+  return state;
+};

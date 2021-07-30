@@ -1430,6 +1430,86 @@ class TestAthenaQueries:
             )
         assert e.value.args[0] == "Column schema is not valid"
 
+    @patch("backend.lambdas.tasks.generate_queries.s3.Bucket")
+    @patch("backend.lambdas.tasks.generate_queries.get_table")
+    @patch("backend.lambdas.tasks.generate_queries.get_partitions")
+    def test_it_handles_partition_filtering(
+        self, get_partitions_mock, get_table_mock, bucket_mock
+    ):
+        put_object_mock = MagicMock()
+        bucket_mock.return_value = put_object_mock
+        columns = [{"Name": "customer_id"}]
+        partition_keys = ["year", "month"]
+        partitions = [["2018", "12"], ["2019", "01"], ["2019", "02"]]
+        get_table_mock.return_value = table_stub(columns, partition_keys)
+        get_partitions_mock.return_value = [
+            partition_stub(p, columns) for p in partitions
+        ]
+
+        resp = generate_athena_queries(
+            {
+                "DataMapperId": "a",
+                "QueryExecutor": "athena",
+                "Columns": [col["Name"] for col in columns],
+                "Format": "parquet",
+                "QueryExecutorParameters": {
+                    "DataCatalogProvider": "glue",
+                    "Database": "test_db",
+                    "Table": "test_table",
+                    "PartitionKeys": ["year"],
+                },
+            },
+            [
+                {
+                    "MatchId": "hi",
+                    "CreatedAt": 1614698440,
+                    "DeletionQueueItemId": "id1234",
+                }
+            ],
+            "job_1234567890",
+        )
+
+        assert resp == [
+            {
+                "DataMapperId": "a",
+                "QueryExecutor": "athena",
+                "Format": "parquet",
+                "Database": "test_db",
+                "Table": "test_table",
+                "Columns": [{"Column": "customer_id", "Type": "Simple"}],
+                "PartitionKeys": [{"Key": "year", "Value": "2018"}],
+                "DeleteOldVersions": True,
+                "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
+            },
+            {
+                "DataMapperId": "a",
+                "QueryExecutor": "athena",
+                "Format": "parquet",
+                "Database": "test_db",
+                "Table": "test_table",
+                "Columns": [{"Column": "customer_id", "Type": "Simple"}],
+                "PartitionKeys": [{"Key": "year", "Value": "2019"}],
+                "DeleteOldVersions": True,
+                "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
+            },
+        ]
+        put_object_mock.put_object.assert_called_with(
+            Key="manifests/job_1234567890/a/manifest.json",
+            Body=(
+                json.dumps(
+                    {
+                        "Columns": ["customer_id"],
+                        "MatchId": ["hi"],
+                        "DeletionQueueItemId": "id1234",
+                        "CreatedAt": 1614698440,
+                        "QueryableColumns": "customer_id",
+                        "QueryableMatchId": "hi",
+                    }
+                )
+                + "\n"
+            ),
+        )
+
 
 @patch("backend.lambdas.tasks.generate_queries.deserialize_item")
 @patch("backend.lambdas.tasks.generate_queries.paginate")

@@ -22,6 +22,7 @@
   },
   "scripts": {
     "build": "REACT_APP_REPO_URL=$npm_package_repository_url SKIP_PREFLIGHT_CHECK=true react-scripts build",
+    "dev": "SKIP_PREFLIGHT_CHECK=true react-scripts test",
     "eject": "react-scripts eject",
     "package": "cd build && zip -r ../../frontend.zip . -x *settings.js",
     "start": "HTTPS=true SKIP_PREFLIGHT_CHECK=true REACT_APP_REPO_URL=$npm_package_repository_url react-scripts start",
