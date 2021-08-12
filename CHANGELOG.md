@@ -5,6 +5,9 @@
 - [#245](https://github.com/awslabs/amazon-s3-find-and-forget/pull/245): CSE-KMS
   support
 
+- [#259](https://github.com/awslabs/amazon-s3-find-and-forget/pull/259): Upgrade
+  frontend dependencies
+
 ## v0.30
 
 - [#257](https://github.com/awslabs/amazon-s3-find-and-forget/pull/257):
