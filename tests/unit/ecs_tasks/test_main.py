@@ -1,4 +1,5 @@
 import os
+from io import BytesIO
 from argparse import Namespace
 
 import boto3
@@ -70,6 +71,7 @@ def test_happy_path_when_queue_not_empty(
     mock_file = MagicMock(version_id="abc123")
     mock_save.return_value = "new_version123"
     mock_s3.open.return_value = mock_s3
+    mock_s3.metadata.return_value = {}
     mock_s3.__enter__.return_value = mock_file
     mock_delete.return_value = pa.BufferOutputStream(), {"DeletedRows": 1}
     execute(
@@ -80,7 +82,7 @@ def test_happy_path_when_queue_not_empty(
     mock_s3.open.assert_called_with("s3://bucket/path/basic.parquet", "rb")
     mock_delete.assert_called_with(mock_file, [column], "parquet", False)
     mock_save.assert_called_with(
-        ANY, ANY, ANY, "bucket", "path/basic.parquet", "abc123"
+        ANY, ANY, ANY, "bucket", "path/basic.parquet", {}, "abc123"
     )
     mock_emit.assert_called()
     mock_session.assert_called_with(None)
@@ -122,6 +124,7 @@ def test_happy_path_when_queue_not_empty_for_compressed_json(
     mock_file = MagicMock(version_id="abc123")
     mock_save.return_value = "new_version123"
     mock_s3.open.return_value = mock_s3
+    mock_s3.metadata.return_value = {}
     mock_s3.__enter__.return_value = mock_file
     mock_delete.return_value = pa.BufferOutputStream(), {"DeletedRows": 1}
     execute(
@@ -132,7 +135,7 @@ def test_happy_path_when_queue_not_empty_for_compressed_json(
     mock_s3.open.assert_called_with("s3://bucket/path/basic.json.gz", "rb")
     mock_delete.assert_called_with(mock_file, [column], "json", True)
     mock_save.assert_called_with(
-        ANY, ANY, ANY, "bucket", "path/basic.json.gz", "abc123"
+        ANY, ANY, ANY, "bucket", "path/basic.json.gz", {}, "abc123"
     )
     mock_emit.assert_called()
     mock_session.assert_called_with(None)
@@ -142,6 +145,78 @@ def test_happy_path_when_queue_not_empty_for_compressed_json(
     buf = mock_save.call_args[0][2]
     assert buf.read
     assert isinstance(buf, pa.BufferReader)  # must be BufferReader for zero-copy
+
+
+@patch.dict(os.environ, {"JobTable": "test"})
+@patch(
+    "backend.ecs_tasks.delete_files.main.validate_bucket_versioning",
+    MagicMock(return_value=True),
+)
+@patch("backend.ecs_tasks.delete_files.main.validate_message", MagicMock())
+@patch("backend.ecs_tasks.delete_files.main.get_queue", MagicMock())
+@patch("backend.ecs_tasks.delete_files.main.verify_object_versions_integrity")
+@patch("backend.ecs_tasks.delete_files.main.get_session")
+@patch("backend.ecs_tasks.delete_files.main.s3fs")
+@patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
+@patch("backend.ecs_tasks.delete_files.main.emit_deletion_event")
+@patch("backend.ecs_tasks.delete_files.main.save")
+@patch("backend.ecs_tasks.delete_files.main.build_matches")
+@patch("backend.ecs_tasks.delete_files.main.is_kms_cse_encrypted")
+@patch("backend.ecs_tasks.delete_files.main.encrypt")
+@patch("backend.ecs_tasks.delete_files.main.decrypt")
+def test_cse_kms_encrypted(
+    mock_decrypt,
+    mock_encrypt,
+    mock_is_encrypted,
+    mock_build_matches,
+    mock_save,
+    mock_emit,
+    mock_delete,
+    mock_s3,
+    mock_session,
+    mock_verify_integrity,
+    message_stub,
+):
+    column = {"Column": "customer_id", "MatchIds": ["12345", "23456"]}
+    metadata = {"x-amz-wrap-alg": "kms", "x-amz-key-v2": "key123"}
+    mock_build_matches.return_value = [column]
+    mock_s3.S3FileSystem.return_value = mock_s3
+    mock_file = MagicMock(version_id="abc123")
+    mock_file_decrypted = BytesIO(b"")
+    mock_save.return_value = "new_version123"
+    mock_s3.open.return_value = mock_s3
+    mock_is_encrypted.return_value = True
+    mock_s3.metadata.return_value = metadata
+    mock_s3.__enter__.return_value = mock_file
+    redacted = pa.BufferOutputStream()
+    redacted_encrypted = BytesIO(b"")
+    mock_delete.return_value = redacted, {"DeletedRows": 1}
+    mock_decrypt.return_value = mock_file_decrypted
+    mock_encrypt.return_value = redacted_encrypted, {"new_metadata": "foo"}
+    execute(
+        "https://queue/url",
+        message_stub(Object="s3://bucket/path/basic.parquet"),
+        "receipt_handle",
+    )
+    mock_is_encrypted.assert_called_with(metadata)
+    mock_decrypt.assert_called_with(mock_file, metadata, ANY)
+    mock_s3.open.assert_called_with("s3://bucket/path/basic.parquet", "rb")
+    mock_delete.assert_called_with(mock_file_decrypted, [column], "parquet", False)
+    mock_encrypt.assert_called_with(ANY, metadata, ANY)
+    mock_save.assert_called_with(
+        mock_s3,
+        ANY,
+        redacted_encrypted,
+        "bucket",
+        "path/basic.parquet",
+        {"new_metadata": "foo"},
+        "abc123",
+    )
+    mock_emit.assert_called()
+    mock_session.assert_called_with(None)
+    mock_verify_integrity.assert_called_with(
+        ANY, "bucket", "path/basic.parquet", "abc123", "new_version123"
+    )
 
 
 @patch.dict(os.environ, {"JobTable": "test"})

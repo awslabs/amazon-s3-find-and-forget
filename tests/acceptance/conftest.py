@@ -1,6 +1,7 @@
 import datetime
 import json
 import logging
+import tempfile
 from copy import deepcopy
 from os import getenv
 from pathlib import Path
@@ -14,6 +15,7 @@ from botocore.waiter import WaiterModel, create_waiter_with_client
 from requests import Session
 
 from . import empty_table
+from backend.ecs_tasks.delete_files.cse import encrypt
 
 logger = logging.getLogger()
 
@@ -104,6 +106,11 @@ def sf_client():
 @pytest.fixture(scope="session")
 def glue_client():
     return boto3.client("glue")
+
+
+@pytest.fixture(scope="session")
+def kms_client():
+    return boto3.client("kms")
 
 
 @pytest.fixture(scope="session")
@@ -264,6 +271,7 @@ def glue_table_factory(dummy_lake, glue_client, glue_columns):
         partition_keys=[],
         partitions=[],
         partition_key_types="string",
+        encrypted=False,
     ):
         glue_client.create_database(DatabaseInput={"Name": database})
         input_format = (
@@ -302,7 +310,10 @@ def glue_table_factory(dummy_lake, glue_client, glue_columns):
                 "PartitionKeys": [
                     {"Name": pk, "Type": partition_key_types} for pk in partition_keys
                 ],
-                "Parameters": {"EXTERNAL": "TRUE"},
+                "Parameters": {
+                    "EXTERNAL": "TRUE",
+                    "has_encrypted_data": str(encrypted).lower(),
+                },
             },
         )
 
@@ -362,6 +373,7 @@ def glue_data_mapper_factory(
         delete_old_versions=False,
         column_identifiers=["customer_id"],
         partition_key_types="string",
+        encrypted=False,
     ):
         item = {
             "DataMapperId": data_mapper_id,
@@ -387,6 +399,7 @@ def glue_data_mapper_factory(
             partition_keys=partition_keys,
             partitions=partitions,
             partition_key_types=partition_key_types,
+            encrypted=encrypted,
         )
 
         items.append(item)
@@ -559,6 +572,12 @@ def policy_changer(dummy_lake):
 
 
 @pytest.fixture
+def kms_factory(stack):
+    key_id_arn = stack["KMSKeyArns"]
+    return key_id_arn.split(",")[0].split("/")[1]
+
+
+@pytest.fixture
 def data_loader(dummy_lake):
     loaded_data = []
     bucket = dummy_lake["bucket"]
@@ -573,6 +592,28 @@ def data_loader(dummy_lake):
     for d in loaded_data:
         bucket.objects.filter(Prefix=d).delete()
         bucket.object_versions.filter(Prefix=d).delete()
+
+
+@pytest.fixture
+def encrypted_data_loader(dummy_lake, kms_client, data_loader):
+    def load_data(filename, object_key, encryption_key, encryption_algorithm, **kwargs):
+        file_path = str(Path(__file__).parent.joinpath("data").joinpath(filename))
+        with open(file_path, "rb") as f:
+            encrypted, metadata = encrypt(
+                f,
+                {
+                    "x-amz-matdesc": json.dumps({"kms_cmk_id": encryption_key}),
+                    "x-amz-cek-alg": encryption_algorithm,
+                },
+                kms_client,
+            )
+        tmp = tempfile.NamedTemporaryFile()
+        with open(tmp.name, "wb") as f:
+            f.write(encrypted.read())
+
+        return data_loader(tmp.name, object_key, Metadata=metadata, **kwargs)
+
+    yield load_data
 
 
 def fetch_total_messages(q):

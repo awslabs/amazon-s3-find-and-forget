@@ -15,6 +15,7 @@ from boto_utils import get_session, json_lines_iterator, parse_s3_url
 from botocore.exceptions import ClientError
 from pyarrow.lib import ArrowException
 
+from cse import decrypt, encrypt, is_kms_cse_encrypted
 from events import sanitize_message, emit_failure_event, emit_deletion_event
 from json_handler import delete_matches_from_json_file
 from parquet_handler import delete_matches_from_parquet_file
@@ -122,6 +123,7 @@ def execute(queue_url, message_body, receipt_handle):
         body = json.loads(message_body)
         session = get_session(body.get("RoleArn"))
         client = session.client("s3")
+        kms_client = session.client("kms")
         cols, object_path, job_id, file_format, manifest_object = itemgetter(
             "Columns", "Object", "JobId", "Format", "Manifest"
         )(body)
@@ -140,13 +142,16 @@ def execute(queue_url, message_body, receipt_handle):
         )
         # Download the object in-memory and convert to PyArrow NativeFile
         logger.info("Downloading and opening %s object in-memory", object_path)
+        metadata = s3.metadata(object_path, refresh=True)
         with s3.open(object_path, "rb") as f:
             source_version = f.version_id
             logger.info("Using object version %s as source", source_version)
             # Write new file in-memory
             compressed = object_path.endswith(".gz")
+            is_encrypted = is_kms_cse_encrypted(metadata)
+            input_file = decrypt(f, metadata, kms_client) if is_encrypted else f
             out_sink, stats = delete_matches_from_file(
-                f, match_ids, file_format, compressed
+                input_file, match_ids, file_format, compressed
             )
         if stats["DeletedRows"] == 0:
             raise ValueError(
@@ -155,8 +160,16 @@ def execute(queue_url, message_body, receipt_handle):
                 )
             )
         with pa.BufferReader(out_sink.getvalue()) as output_buf:
+            if is_encrypted:
+                output_buf, metadata = encrypt(output_buf, metadata, kms_client)
             new_version = save(
-                s3, client, output_buf, input_bucket, input_key, source_version
+                s3,
+                client,
+                output_buf,
+                input_bucket,
+                input_key,
+                metadata,
+                source_version,
             )
         logger.info("New object version: %s", new_version)
         verify_object_versions_integrity(

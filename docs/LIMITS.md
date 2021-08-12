@@ -53,7 +53,9 @@ supported:
   supported and will be ignored
 - The bucket targeted by a data mapper must be in the same region as the Amazon
   S3 Find and Forget deployment
-- S3 Objects encrypted with SSE-C are not supported
+- Client-side encrypted S3 Objects are supported only when a symmetric customer
+  master key (CMK) is stored in AWS Key Management Service (AWS KMS) and
+  encrypted using one of the [AWS supported SDKs].
 - If the bucket targeted by a data mapper belongs to an account other than the
   account that the Amazon S3 Find and Forget Solution is deployed in, only
   SSE-KMS with a customer master key (CMK) may be used for encryption
@@ -91,6 +93,8 @@ service in question:
 - [Step Functions Service Quotas]
 - [DynamoDB Service Quotas]
 
+[aws supported sdks]:
+  https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingClientSideEncryption.html
 [issue tracker]: https://github.com/awslabs/amazon-s3-find-and-forget/issues
 [service quotas]:
   https://docs.aws.amazon.com/general/latest/gr/aws_service_limits.html

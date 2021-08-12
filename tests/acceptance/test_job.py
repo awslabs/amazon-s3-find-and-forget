@@ -5,7 +5,7 @@ import uuid
 import mock
 import pytest
 
-from tests.acceptance import query_json_file, query_parquet_file
+from tests.acceptance import query_json_file, query_parquet_file, download_and_decrypt
 
 pytestmark = [
     pytest.mark.acceptance,
@@ -237,6 +237,79 @@ def test_it_runs_for_parquet_happy_path(
     assert "cache" == bucket.Object(object_key).cache_control
 
 
+def test_it_runs_for_parquet_cse_kms(
+    del_queue_factory,
+    job_factory,
+    dummy_lake,
+    glue_data_mapper_factory,
+    encrypted_data_loader,
+    job_complete_waiter,
+    job_table,
+    kms_factory,
+    kms_client,
+):
+    # Arrange
+    glue_data_mapper_factory(
+        "test",
+        partition_keys=["year", "month", "day"],
+        partitions=[["2019", "08", "20"]],
+        encrypted=True,
+    )
+    item = del_queue_factory("12345")
+    encryption_key = kms_factory
+    object_key_cbc = "test/2019/08/20/test_cbc.parquet"
+    object_key_gcm = "test/2019/08/20/test_gcm.parquet"
+    encrypted_data_loader(
+        "basic.parquet",
+        object_key_cbc,
+        encryption_key,
+        "AES/CBC/PKCS5Padding",
+        CacheControl="cache",
+    )
+    encrypted_data_loader(
+        "basic.parquet",
+        object_key_gcm,
+        encryption_key,
+        "AES/GCM/NoPadding",
+        CacheControl="cache",
+    )
+    bucket = dummy_lake["bucket"]
+    job_id = job_factory(del_queue_items=[item])["Id"]
+    # Act
+    job_complete_waiter.wait(
+        TableName=job_table.name, Key={"Id": {"S": job_id}, "Sk": {"S": job_id}}
+    )
+    decrypted_cbc, metadata_cbc = download_and_decrypt(
+        bucket, object_key_cbc, kms_client
+    )
+    decrypted_gcm, metadata_gcm = download_and_decrypt(
+        bucket, object_key_gcm, kms_client
+    )
+    tmp_cbc = tempfile.NamedTemporaryFile()
+    tmp_gcm = tempfile.NamedTemporaryFile()
+    open(tmp_cbc.name, "wb").write(decrypted_cbc)
+    open(tmp_gcm.name, "wb").write(decrypted_gcm)
+    # Assert
+    assert (
+        "COMPLETED"
+        == job_table.get_item(Key={"Id": job_id, "Sk": job_id})["Item"]["JobStatus"]
+    )
+
+    assert 0 == len(query_parquet_file(tmp_cbc, "customer_id", "12345"))
+    assert 1 == len(query_parquet_file(tmp_cbc, "customer_id", "23456"))
+    assert 1 == len(query_parquet_file(tmp_cbc, "customer_id", "34567"))
+    assert metadata_cbc["x-amz-cek-alg"] == "AES/CBC/PKCS5Padding"
+    assert 2 == len(list(bucket.object_versions.filter(Prefix=object_key_cbc)))
+    assert "cache" == bucket.Object(object_key_cbc).cache_control
+
+    assert 0 == len(query_parquet_file(tmp_gcm, "customer_id", "12345"))
+    assert 1 == len(query_parquet_file(tmp_gcm, "customer_id", "23456"))
+    assert 1 == len(query_parquet_file(tmp_gcm, "customer_id", "34567"))
+    assert metadata_gcm["x-amz-cek-alg"] == "AES/GCM/NoPadding"
+    assert 2 == len(list(bucket.object_versions.filter(Prefix=object_key_gcm)))
+    assert "cache" == bucket.Object(object_key_gcm).cache_control
+
+
 def test_it_runs_for_parquet_backwards_compatible_matches(
     del_queue_factory,
     job_factory,
@@ -416,6 +489,80 @@ def test_it_runs_for_json_happy_path(
     assert 2 == len(list(bucket.object_versions.filter(Prefix=object_key)))
     assert {"foo": "bar"} == bucket.Object(object_key).metadata
     assert "cache" == bucket.Object(object_key).cache_control
+
+
+def test_it_runs_for_json_cse_kms(
+    del_queue_factory,
+    job_factory,
+    dummy_lake,
+    glue_data_mapper_factory,
+    encrypted_data_loader,
+    job_complete_waiter,
+    job_table,
+    kms_factory,
+    kms_client,
+):
+    # Arrange
+    glue_data_mapper_factory(
+        "test",
+        partition_keys=["year", "month", "day"],
+        partitions=[["2019", "08", "20"]],
+        fmt="json",
+        encrypted=True,
+    )
+    item = del_queue_factory("12345")
+    encryption_key = kms_factory
+    object_key_cbc = "test/2019/08/20/test_cbc.json"
+    object_key_gcm = "test/2019/08/20/test_gcm.json"
+    encrypted_data_loader(
+        "basic.json",
+        object_key_cbc,
+        encryption_key,
+        "AES/CBC/PKCS5Padding",
+        CacheControl="cache",
+    )
+    encrypted_data_loader(
+        "basic.json",
+        object_key_gcm,
+        encryption_key,
+        "AES/GCM/NoPadding",
+        CacheControl="cache",
+    )
+    bucket = dummy_lake["bucket"]
+    job_id = job_factory(del_queue_items=[item])["Id"]
+    # Act
+    job_complete_waiter.wait(
+        TableName=job_table.name, Key={"Id": {"S": job_id}, "Sk": {"S": job_id}}
+    )
+    decrypted_cbc, metadata_cbc = download_and_decrypt(
+        bucket, object_key_cbc, kms_client
+    )
+    decrypted_gcm, metadata_gcm = download_and_decrypt(
+        bucket, object_key_gcm, kms_client
+    )
+    tmp_cbc = tempfile.NamedTemporaryFile()
+    tmp_gcm = tempfile.NamedTemporaryFile()
+    open(tmp_cbc.name, "wb").write(decrypted_cbc)
+    open(tmp_gcm.name, "wb").write(decrypted_gcm)
+    # Assert
+    assert (
+        "COMPLETED"
+        == job_table.get_item(Key={"Id": job_id, "Sk": job_id})["Item"]["JobStatus"]
+    )
+
+    assert 0 == len(query_json_file(tmp_cbc.name, "customer_id", "12345"))
+    assert 1 == len(query_json_file(tmp_cbc.name, "customer_id", "23456"))
+    assert 1 == len(query_json_file(tmp_cbc.name, "customer_id", "34567"))
+    assert metadata_cbc["x-amz-cek-alg"] == "AES/CBC/PKCS5Padding"
+    assert 2 == len(list(bucket.object_versions.filter(Prefix=object_key_cbc)))
+    assert "cache" == bucket.Object(object_key_cbc).cache_control
+
+    assert 0 == len(query_json_file(tmp_gcm.name, "customer_id", "12345"))
+    assert 1 == len(query_json_file(tmp_gcm.name, "customer_id", "23456"))
+    assert 1 == len(query_json_file(tmp_gcm.name, "customer_id", "34567"))
+    assert metadata_gcm["x-amz-cek-alg"] == "AES/GCM/NoPadding"
+    assert 2 == len(list(bucket.object_versions.filter(Prefix=object_key_gcm)))
+    assert "cache" == bucket.Object(object_key_gcm).cache_control
 
 
 def test_it_runs_for_json_composite_matches(

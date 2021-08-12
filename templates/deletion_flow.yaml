@@ -35,6 +35,8 @@ Parameters:
   JobTableName:
     Description: Table name for Jobs Table
     Type: String
+  KMSKeyArns:
+    Type: String
   LogRetentionInDays:
     Type: Number
     Default: 7
@@ -49,6 +51,7 @@ Parameters:
 
 Conditions:
   WithContainerInsights: !Equals [!Ref EnableContainerInsights, "true"]
+  WithKMS: !Not [!Equals [!Ref KMSKeyArns, ""]]
 
 Resources:
 
@@ -187,7 +190,14 @@ Resources:
           - Action: s3:GetObject*
             Effect: Allow
             Resource: !Sub arn:aws:s3:::${ManifestsBucket}/manifests/*
-
+          - !If
+            - WithKMS
+            - Action:
+              - kms:Decrypt
+              - kms:GenerateDataKey
+              Effect: Allow
+              Resource: !Split [",", !Ref KMSKeyArns]
+            - !Ref AWS::NoValue
 
   DeleteTaskLogGroup:
     Type: AWS::Logs::LogGroup

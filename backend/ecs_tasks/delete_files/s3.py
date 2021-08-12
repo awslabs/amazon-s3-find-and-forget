@@ -10,7 +10,7 @@ from utils import remove_none, retry_wrapper
 logger = logging.getLogger(__name__)
 
 
-def save(s3, client, buf, bucket, key, source_version=None):
+def save(s3, client, buf, bucket, key, metadata, source_version=None):
     """
     Save a buffer to S3, preserving any existing properties on the object
     """
@@ -19,7 +19,13 @@ def save(s3, client, buf, bucket, key, source_version=None):
     object_info_args, _ = get_object_info(client, bucket, key, source_version)
     tagging_args, _ = get_object_tags(client, bucket, key, source_version)
     acl_args, acl_resp = get_object_acl(client, bucket, key, source_version)
-    extra_args = {**request_payer_args, **object_info_args, **tagging_args, **acl_args}
+    extra_args = {
+        **request_payer_args,
+        **object_info_args,
+        **tagging_args,
+        **acl_args,
+        **{"Metadata": metadata},
+    }
     logger.info("Object settings: %s", extra_args)
     # Write Object Back to S3
     logger.info("Saving updated object to s3://%s/%s", bucket, key)

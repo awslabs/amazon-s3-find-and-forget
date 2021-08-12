@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
-Description: Amazon S3 Find and Forget (uksb-1q2j8beb0) (version:v0.30)
+Description: Amazon S3 Find and Forget (uksb-1q2j8beb0) (version:v0.31)
 
 Parameters:
   AccessControlAllowOriginOverride:
@@ -95,6 +95,10 @@ Parameters:
     Description: How log to retain Job Record logs. Use 0 for indefinite. Default is 0
     Type: Number
     Default: 0
+  KMSKeyArns:
+    Description: Comma-delimited list of KMS Key Arns used for client-side Encryption. Leave empty if data is not client-side encrypted with KMS
+    Type: String
+    Default: ""
   PreBuiltArtefactsBucketOverride:
     Description: Overrides the default Bucket containing Front-end and Back-end pre-built artefacts. When false, the default is used for the given region (for example solution-builders-us-west-1)
     Type: String
@@ -135,7 +139,7 @@ Conditions:
 Mappings:
   Solution:
     Constants:
-      Version: 'v0.30'
+      Version: 'v0.31'
 
 Resources:
   TempBucket:
@@ -255,6 +259,7 @@ Resources:
         DeletionTaskMemory: !Ref DeletionTaskMemory
         EnableContainerInsights: !Ref EnableContainerInsights
         JobTableName: !GetAtt DDBStack.Outputs.JobTable
+        KMSKeyArns: !Ref KMSKeyArns
         ManifestsBucket: !GetAtt ManifestsStack.Outputs.ManifestsBucket
         ResourcePrefix: !Ref ResourcePrefix
         VpcSecurityGroups: !If [ShouldDeployVpc, !GetAtt VpcStack.Outputs.SecurityGroup, !Join [",", !Ref VpcSecurityGroups]]
@@ -340,6 +345,7 @@ Resources:
       Parameters:
         FlowLogsGroup: !Ref FlowLogsGroup
         FlowLogsRoleArn: !Ref FlowLogsRoleArn
+        KMSKeyArns: !Ref KMSKeyArns
   WebUIStack:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -392,6 +398,8 @@ Outputs:
     Value: !GetAtt StateMachineStack.Outputs.GenerateQueriesRole
   JobTable:
     Value: !GetAtt DDBStack.Outputs.JobTable
+  KMSKeyArns:
+    Value: !Ref KMSKeyArns
   PutDataMapperRole:
     Value: !GetAtt APIStack.Outputs.PutDataMapperRole
   QueryQueueUrl:
@@ -457,3 +465,4 @@ Metadata:
           - AthenaWorkGroup
           - PreBuiltArtefactsBucketOverride
           - ResourcePrefix
+          - KMSKeyArns

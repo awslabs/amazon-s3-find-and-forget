@@ -8,6 +8,10 @@ Parameters:
   FlowLogsRoleArn:
     Type: String
     Default: ""
+  KMSKeyArns:
+    Description: Comma-delimited list of KMS Key Id Arns used for Client-side Encryption. Leave list empty if data is not encrypted with CSE-KMS
+    Type: String
+    Default: ""
   PrivateSubnetIpBlocks:
     Description: Comma-delimited list of CIDR blocks for the private subnets
     Type: CommaDelimitedList
@@ -58,6 +62,7 @@ Conditions:
   EnableFlowLogs: !And
     - !Not [!Equals [!Ref FlowLogsGroup, ""]]
     - !Not [!Equals [!Ref FlowLogsRoleArn, ""]]
+  WithKMS: !Not [!Equals [!Ref KMSKeyArns, ""]]
 
 Resources:
   VPC:
@@ -301,6 +306,20 @@ Resources:
       PrivateDnsEnabled: true
       SecurityGroupIds: [!Ref SecurityGroup]
       ServiceName: !Sub 'com.amazonaws.${AWS::Region}.sts'
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+        - !If [HasThreeAZs, !Ref PrivateSubnet3, !Ref 'AWS::NoValue']
+      VpcEndpointType: Interface
+      VpcId: !Ref VPC
+
+  KMSEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Condition: WithKMS
+    Properties:
+      PrivateDnsEnabled: true
+      SecurityGroupIds: [!Ref SecurityGroup]
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.kms'
       SubnetIds:
         - !Ref PrivateSubnet1
         - !Ref PrivateSubnet2
