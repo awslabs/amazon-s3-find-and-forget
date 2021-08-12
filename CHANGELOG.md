@@ -2,8 +2,8 @@
 
 ## v0.31 (unreleased)
 
-- [#TODO](https://github.com/awslabs/amazon-s3-find-and-forget/pull/TODO):
-  Upgrade frontend dependencies
+- [#259](https://github.com/awslabs/amazon-s3-find-and-forget/pull/259): Upgrade
+  frontend dependencies
 
 ## v0.30
 
