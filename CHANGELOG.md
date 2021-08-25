@@ -1,5 +1,10 @@
 # Change Log
 
+## v0.32
+
+- [#TODO](https://github.com/awslabs/amazon-s3-find-and-forget/pull/TODO): Add
+  Stockholm region
+
 ## v0.31
 
 - [#245](https://github.com/awslabs/amazon-s3-find-and-forget/pull/245): CSE-KMS
