@@ -1,5 +1,10 @@
 # Change Log
 
+## v0.33 (unreleased)
+
+- [#261](https://github.com/awslabs/amazon-s3-find-and-forget/pull/261): Upgrade
+  frontend dependencies
+
 ## v0.32
 
 - [#260](https://github.com/awslabs/amazon-s3-find-and-forget/pull/260): Add
