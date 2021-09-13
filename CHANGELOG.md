@@ -2,6 +2,9 @@
 
 ## v0.33 (unreleased)
 
+- [#263](https://github.com/awslabs/amazon-s3-find-and-forget/pull/263): Improve
+  bucket policies
+
 - [#261](https://github.com/awslabs/amazon-s3-find-and-forget/pull/261): Upgrade
   frontend dependencies
 
