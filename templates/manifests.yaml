@@ -40,7 +40,9 @@ Resources:
           - Sid: HttpsOnly
             Action: '*'
             Effect: Deny
-            Resource: !Sub arn:aws:s3:::${ManifestsBucket}/*
+            Resource:
+              - !Sub arn:aws:s3:::${ManifestsBucket}
+              - !Sub arn:aws:s3:::${ManifestsBucket}/*
             Principal: '*'
             Condition:
               Bool:

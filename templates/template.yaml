@@ -167,7 +167,9 @@ Resources:
           - Sid: HttpsOnly
             Action: '*'
             Effect: Deny
-            Resource: !Sub arn:aws:s3:::${TempBucket}/*
+            Resource:
+              - !Sub arn:aws:s3:::${TempBucket}
+              - !Sub arn:aws:s3:::${TempBucket}/*
             Principal: '*'
             Condition:
               Bool:
