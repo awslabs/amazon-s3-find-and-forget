@@ -47,7 +47,9 @@ Resources:
           - Sid: HttpsOnly
             Action: '*'
             Effect: Deny
-            Resource: !Sub arn:aws:s3:::${WebUIBucket}/*
+            Resource:
+              - !Sub arn:aws:s3:::${WebUIBucket}
+              - !Sub arn:aws:s3:::${WebUIBucket}/*
             Principal: '*'
             Condition:
               Bool:
