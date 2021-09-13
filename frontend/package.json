@@ -7,12 +7,12 @@
     "url": "https://github.com/awslabs/amazon-s3-find-and-forget"
   },
   "dependencies": {
-    "@aws-amplify/ui-components": "^1.7.5",
-    "@aws-amplify/ui-react": "^1.2.12",
+    "@aws-amplify/ui-components": "^1.7.8",
+    "@aws-amplify/ui-react": "^1.2.15",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
-    "aws-amplify": "^4.2.6",
+    "aws-amplify": "^4.2.9",
     "bootstrap": "^4.4.1",
     "react": "^16.14.0",
     "react-bootstrap": "^1.0.0",
