@@ -185,7 +185,9 @@ export const glueSerializer = tables => {
         tables: supportedTables.map(t => ({
           name: t.Name,
           columns: t.StorageDescriptor.Columns.map(columnMapper),
-          partitionKeys: t.PartitionKeys ? t.PartitionKeys.map(pk => pk.Name) : [],
+          partitionKeys: t.PartitionKeys
+            ? t.PartitionKeys.map(pk => pk.Name)
+            : [],
           format:
             t.StorageDescriptor.SerdeInfo.SerializationLibrary === PARQUET_SERDE
               ? "parquet"
