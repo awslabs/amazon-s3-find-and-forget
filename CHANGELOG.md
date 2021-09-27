@@ -1,10 +1,13 @@
 # Change Log
 
-## v0.33 (unreleased)
+## v0.33
+
+- [#266](https://github.com/awslabs/amazon-s3-find-and-forget/pull/266): Fix
+  creating data mapper bug when glue table doesn't have partition keys
 
 - [#264](https://github.com/awslabs/amazon-s3-find-and-forget/pull/264): Upgrade
   frontend dependencies
-  
+
 - [#263](https://github.com/awslabs/amazon-s3-find-and-forget/pull/263): Improve
   bucket policies
 
