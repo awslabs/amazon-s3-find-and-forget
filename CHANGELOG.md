@@ -1,5 +1,11 @@
 # Change Log
 
+## v0.34
+
+- [#270](https://github.com/awslabs/amazon-s3-find-and-forget/pull/270): Fix for
+  a bug affecting the front-end causing a 403 error when making a request to STS
+  in the Data Mappers Page
+
 ## v0.33
 
 - [#266](https://github.com/awslabs/amazon-s3-find-and-forget/pull/266): Fix
