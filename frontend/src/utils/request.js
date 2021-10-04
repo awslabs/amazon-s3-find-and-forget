@@ -1,5 +1,6 @@
 import Amplify, { API, Auth } from "aws-amplify";
 import { retryWrapper } from "./retryWrapper";
+import { isUndefined } from "./";
 
 const settings = window.s3f2Settings || {};
 const region = settings.region || "eu-west-1";
@@ -43,7 +44,7 @@ const apiWrapper = (api, endpoint, options) => {
     headers: headers || { "Content-Type": "application/json" },
     response: response || false
   };
-  if (data) reqOptions.body = data;
+  if (!isUndefined(data)) reqOptions.body = data;
   return retryWrapper(() => API[method || "get"](api, endpoint, reqOptions));
 };
 
@@ -61,4 +62,4 @@ export const glueGateway = (endpointName, data) =>
   });
 
 export const stsGateway = endpoint =>
-  apiWrapper("sts", endpoint, { method: "post" });
+  apiWrapper("sts", endpoint, { method: "post", data: {} });
