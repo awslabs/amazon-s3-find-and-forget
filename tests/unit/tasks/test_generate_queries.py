@@ -253,6 +253,88 @@ class TestAthenaQueries:
     @patch("backend.lambdas.tasks.generate_queries.s3.Bucket")
     @patch("backend.lambdas.tasks.generate_queries.get_table")
     @patch("backend.lambdas.tasks.generate_queries.get_partitions")
+    def test_it_handles_decimal_matches(
+        self, get_partitions_mock, get_table_mock, bucket_mock
+    ):
+        put_object_mock = MagicMock()
+        bucket_mock.return_value = put_object_mock
+        columns = [{"Name": "customer_id", "Type": "decimal"}]
+        partition_keys = ["product_category"]
+        partitions = [["Books"]]
+        get_table_mock.return_value = table_stub(columns, partition_keys)
+        get_partitions_mock.return_value = [
+            partition_stub(p, columns) for p in partitions
+        ]
+        resp = generate_athena_queries(
+            {
+                "DataMapperId": "a",
+                "QueryExecutor": "athena",
+                "Columns": [col["Name"] for col in columns],
+                "Format": "parquet",
+                "QueryExecutorParameters": {
+                    "DataCatalogProvider": "glue",
+                    "Database": "test_db",
+                    "Table": "test_table",
+                },
+            },
+            [
+                {
+                    "MatchId": "12.30",
+                    "CreatedAt": 1614698440,
+                    "DeletionQueueItemId": "id-01",
+                },
+                {
+                    "MatchId": "23.400",
+                    "CreatedAt": 1614698440,
+                    "DeletionQueueItemId": "id-02",
+                },
+            ],
+            "job_1234567890",
+        )
+        assert resp == [
+            {
+                "DataMapperId": "a",
+                "QueryExecutor": "athena",
+                "Format": "parquet",
+                "Database": "test_db",
+                "Table": "test_table",
+                "Columns": [{"Column": "customer_id", "Type": "Simple",}],
+                "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
+                "DeleteOldVersions": True,
+                "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
+            }
+        ]
+        put_object_mock.put_object.assert_called_with(
+            Key="manifests/job_1234567890/a/manifest.json",
+            Body=(
+                json.dumps(
+                    {
+                        "Columns": ["customer_id"],
+                        "MatchId": ["12.30"],
+                        "DeletionQueueItemId": "id-01",
+                        "CreatedAt": 1614698440,
+                        "QueryableColumns": "customer_id",
+                        "QueryableMatchId": "12.30",
+                    }
+                )
+                + "\n"
+                + json.dumps(
+                    {
+                        "Columns": ["customer_id"],
+                        "MatchId": ["23.400"],
+                        "DeletionQueueItemId": "id-02",
+                        "CreatedAt": 1614698440,
+                        "QueryableColumns": "customer_id",
+                        "QueryableMatchId": "23.400",
+                    }
+                )
+                + "\n"
+            ),
+        )
+
+    @patch("backend.lambdas.tasks.generate_queries.s3.Bucket")
+    @patch("backend.lambdas.tasks.generate_queries.get_table")
+    @patch("backend.lambdas.tasks.generate_queries.get_partitions")
     def test_it_handles_int_partitions(
         self, get_partitions_mock, get_table_mock, bucket_mock
     ):
@@ -1397,7 +1479,7 @@ class TestAthenaQueries:
                 "test_col",
                 {
                     "StorageDescriptor": {
-                        "Columns": [{"Name": "test_col", "Type": "decimal"}]
+                        "Columns": [{"Name": "test_col", "Type": "foo"}]
                     }
                 },
             )

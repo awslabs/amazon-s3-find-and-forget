@@ -1,3 +1,4 @@
+from decimal import Decimal
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pandas as pd
@@ -12,6 +13,11 @@ df = pd.DataFrame(
     {
         "customer_id": ["12345", "23456", "34567"],
         "customerId": [12345, 23456, 34567],
+        "customer_id_decimal": [
+            Decimal("123.450"),
+            Decimal("234.560"),
+            Decimal("345.670"),
+        ],
         "user_info": [
             {
                 "personal_information": {

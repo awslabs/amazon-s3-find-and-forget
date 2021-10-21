@@ -128,6 +128,7 @@ def glue_columns():
     return [
         {"Name": "customer_id", "Type": "string"},
         {"Name": "customerId", "Type": "int"},
+        {"Name": "customer_id_decimal", "Type": "decimal(6,3)"},
         {
             "Name": "user_info",
             "Type": "struct<personal_information:struct<email:string,first_name:string,last_name:string>>",
