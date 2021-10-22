@@ -79,7 +79,7 @@ def find_column(tree, column_name):
     or complex columns.
     """
     for node in tree:
-        if node.name == column_name:
+        if node.name.lower() == column_name.lower():
             return node
         flattened = node.flatten()
         #  When the end of the tree is reached, flatten() returns an array
@@ -93,7 +93,9 @@ def find_column(tree, column_name):
 
 def is_column_type_decimal(schema, column_name):
     column = find_column(schema, column_name)
-    return type(column.type) == pa.lib.Decimal128Type if column else False
+    if not column:
+        raise ValueError("Column {} not found.".format(column_name))
+    return type(column.type) == pa.lib.Decimal128Type
 
 
 def cast_column_values(column, schema):

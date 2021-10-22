@@ -363,3 +363,19 @@ def test_delete_correct_rows_from_parquet_table_with_decimal_complex_composite_t
     assert res["user_info"].values[0] == {
         "personal_information": {"name": "nick", "decimal": Decimal("23.45")}
     }
+
+
+def test_it_throws_for_invalid_schema_column_not_found():
+    with pytest.raises(ValueError) as e:
+        data = {"customer_id": [12345, 23456, 34567]}
+        columns = [
+            {
+                "Column": "user_info.personal_information.name",
+                "MatchIds": ["matteo"],
+                "Type": "Simple",
+            }
+        ]
+        df = pd.DataFrame(data)
+        table = pa.Table.from_pandas(df)
+        table, deleted_rows = delete_from_table(table, columns)
+    assert e.value.args[0] == "Column user_info.personal_information.name not found."
