@@ -74,22 +74,41 @@ def get_row_indexes_to_delete(table, identifier, to_delete):
 
 
 def find_column(tree, column_name):
+    """
+    Iterates over columns, including nested within structs, to find simple
+    or complex columns.
+    """
     for node in tree:
         if node.name == column_name:
             return node
         flattened = node.flatten()
-        if flattened[0].name != node.name:
+        #  When the end of the tree is reached, flatten() returns an array
+        # containing a self reference: self.flatten() => [self]
+        is_tail = flattened[0].name == node.name
+        if not is_tail:
             found = find_column(flattened, column_name)
             if found:
                 return found
-    return None
 
 
-def is_column_decimal(schema, column_name):
+def is_column_type_decimal(schema, column_name):
     column = find_column(schema, column_name)
-    if column:
-        return type(column.type) == pa.lib.Decimal128Type
-    return False
+    return type(column.type) == pa.lib.Decimal128Type if column else False
+
+
+def cast_column_values(column, schema):
+    """
+    Method to cast stringified MatchIds to their actual types
+    """
+    if column["Type"] == "Simple":
+        if is_column_type_decimal(schema, column["Column"]):
+            column["MatchIds"] = [Decimal(m) for m in column["MatchIds"]]
+    else:
+        for i in range(0, len(column["Columns"])):
+            if is_column_type_decimal(schema, column["Columns"][i]):
+                for composite_match in column["MatchIds"]:
+                    composite_match[i] = Decimal(composite_match[i])
+    return column
 
 
 def delete_from_table(table, to_delete):
@@ -99,14 +118,7 @@ def delete_from_table(table, to_delete):
     """
     initial_rows = table.num_rows
     for column in to_delete:
-        if column["Type"] == "Simple":
-            if is_column_decimal(table.schema, column["Column"]):
-                column["MatchIds"] = [Decimal(m) for m in column["MatchIds"]]
-        else:
-            for i in range(0, len(column["Columns"])):
-                if is_column_decimal(table.schema, column["Columns"][i]):
-                    for composite_match in column["MatchIds"]:
-                        composite_match[i] = Decimal(composite_match[i])
+        column = cast_column_values(column, table.schema)
         indexes = (
             get_row_indexes_to_delete(table, column["Column"], column["MatchIds"])
             if column["Type"] == "Simple"
