@@ -1,5 +1,6 @@
 from io import BytesIO
 from mock import patch
+from decimal import Decimal
 
 import pyarrow as pa
 import pyarrow.json as pj
@@ -277,3 +278,104 @@ def test_it_loads_parquet_files():
     df.to_parquet(buf, compression="snappy")
     resp = load_parquet(buf)
     assert 2 == resp.read().num_rows
+
+
+def test_delete_correct_rows_from_parquet_table_with_decimal_types():
+    data = {
+        "customer_id_decimal": [
+            Decimal("123.450"),
+            Decimal("234.560"),
+            Decimal("345.670"),
+        ]
+    }
+    columns = [
+        {
+            "Column": "customer_id_decimal",
+            "MatchIds": ["123.450", "234.560"],
+            "Type": "Simple",
+        },
+    ]
+    df = pd.DataFrame(data)
+    table = pa.Table.from_pandas(df)
+    table, deleted_rows = delete_from_table(table, columns)
+    res = table.to_pandas()
+    assert len(res) == 1
+    assert deleted_rows == 2
+    assert res["customer_id_decimal"].values[0] == Decimal("345.670")
+
+
+def test_delete_correct_rows_from_parquet_table_with_decimal_complex_types():
+    data = {
+        "customer_id": [12345, 23456, 34567],
+        "user_info": [
+            {"personal_information": {"name": "matteo", "decimal": Decimal("12.34")}},
+            {"personal_information": {"name": "nick", "decimal": Decimal("23.45")}},
+            {"personal_information": {"name": "chris", "decimal": Decimal("34.56")}},
+        ],
+    }
+    columns = [
+        {
+            "Column": "user_info.personal_information.decimal",
+            "MatchIds": ["12.34", "34.56"],
+            "Type": "Simple",
+        }
+    ]
+    df = pd.DataFrame(data)
+    table = pa.Table.from_pandas(df)
+    table, deleted_rows = delete_from_table(table, columns)
+    res = table.to_pandas()
+    assert len(res) == 1
+    assert deleted_rows == 2
+    assert res["customer_id"].values[0] == 23456
+    # user_info is saved preserving original schema:
+    assert res["user_info"].values[0] == {
+        "personal_information": {"name": "nick", "decimal": Decimal("23.45")}
+    }
+
+
+def test_delete_correct_rows_from_parquet_table_with_decimal_complex_composite_types():
+    data = {
+        "customer_id": [12345, 23456, 34567],
+        "user_info": [
+            {"personal_information": {"name": "matteo", "decimal": Decimal("12.34")}},
+            {"personal_information": {"name": "nick", "decimal": Decimal("23.45")}},
+            {"personal_information": {"name": "chris", "decimal": Decimal("34.56")}},
+        ],
+    }
+    columns = [
+        {
+            "Columns": [
+                "user_info.personal_information.name",
+                "user_info.personal_information.decimal",
+            ],
+            "MatchIds": [["matteo", "12.34"], ["chris", "34.56"], ["nick", "11.22"]],
+            "Type": "Composite",
+        }
+    ]
+    df = pd.DataFrame(data)
+    table = pa.Table.from_pandas(df)
+    table, deleted_rows = delete_from_table(table, columns)
+    res = table.to_pandas()
+    assert len(res) == 1
+    assert deleted_rows == 2
+    assert res["customer_id"].values[0] == 23456
+    # user_info is saved preserving original schema:
+    assert res["user_info"].values[0] == {
+        "personal_information": {"name": "nick", "decimal": Decimal("23.45")}
+    }
+
+
+def test_it_throws_for_invalid_schema_column_not_found():
+    with pytest.raises(ValueError) as e:
+        data = {"customer_id": [12345, 23456, 34567]}
+        columns = [
+            {
+                "Column": "user_info.personal_information.name",
+                "MatchIds": ["matteo"],
+                "Type": "Simple",
+            }
+        ]
+        df = pd.DataFrame(data)
+        table = pa.Table.from_pandas(df)
+        table, deleted_rows = delete_from_table(table, columns)
+    assert e.value.args[0] == "Column user_info.personal_information.name not found."

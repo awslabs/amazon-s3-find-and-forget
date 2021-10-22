@@ -38,6 +38,7 @@ SCHEMA_INVALID = "Column schema is not valid"
 ALLOWED_TYPES = [
     "bigint",
     "char",
+    "decimal",
     "double",
     "float",
     "int",
@@ -398,12 +399,14 @@ def column_mapper(col):
         suffix = STRUCT_SUFFIX
         has_children = True
 
+    type_is_decimal_with_precision = result_type.startswith("decimal(")
+
     result = {
         "Name": col["Name"],
         "Type": result_type,
         "CanBeIdentifier": col["CanBeIdentifier"]
         if "CanBeIdentifier" in col
-        else result_type in ALLOWED_TYPES,
+        else result_type in ALLOWED_TYPES or type_is_decimal_with_precision,
     }
 
     if has_children:

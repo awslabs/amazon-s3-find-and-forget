@@ -20,6 +20,7 @@ export const glueSerializer = tables => {
   const ALLOWEDTYPES = [
     "bigint",
     "char",
+    "decimal",
     "double",
     "float",
     "int",
@@ -126,12 +127,14 @@ export const glueSerializer = tables => {
       hasChildren = true;
     }
 
+    const isDecimalWithPrecision = resultType.startsWith("decimal(");
+
     const result = {
       name: c.Name,
       type: resultType,
       canBeIdentifier: !isUndefined(c.canBeIdentifier)
         ? c.canBeIdentifier
-        : ALLOWEDTYPES.includes(resultType)
+        : ALLOWEDTYPES.includes(resultType) || isDecimalWithPrecision
     };
 
     if (hasChildren) {

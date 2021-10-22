@@ -4,6 +4,7 @@ import uuid
 
 import mock
 import pytest
+from decimal import Decimal
 
 from tests.acceptance import query_json_file, query_parquet_file, download_and_decrypt
 
@@ -804,6 +805,40 @@ def test_it_runs_for_caselowered_identifier_parquet(
         == job_table.get_item(Key={"Id": job_id, "Sk": job_id})["Item"]["JobStatus"]
     )
     assert 0 == len(query_parquet_file(tmp, "customerId", 12345))
+    assert {"foo": "bar"} == bucket.Object(object_key).metadata
+    assert "cache" == bucket.Object(object_key).cache_control
+
+
+def test_it_runs_for_decimal_identifier_parquet(
+    del_queue_factory,
+    job_factory,
+    dummy_lake,
+    glue_data_mapper_factory,
+    data_loader,
+    job_complete_waiter,
+    job_table,
+):
+    # Arrange
+    glue_data_mapper_factory("test", column_identifiers=["customer_id_decimal"])
+    item = del_queue_factory("123.450")
+    object_key = "test/test.parquet"
+    data_loader(
+        "basic.parquet", object_key, Metadata={"foo": "bar"}, CacheControl="cache"
+    )
+    bucket = dummy_lake["bucket"]
+    job_id = job_factory(del_queue_items=[item])["Id"]
+    # Act
+    job_complete_waiter.wait(
+        TableName=job_table.name, Key={"Id": {"S": job_id}, "Sk": {"S": job_id}}
+    )
+    # Assert
+    tmp = tempfile.NamedTemporaryFile()
+    bucket.download_fileobj(object_key, tmp)
+    assert (
+        "COMPLETED"
+        == job_table.get_item(Key={"Id": job_id, "Sk": job_id})["Item"]["JobStatus"]
+    )
+    assert 0 == len(query_parquet_file(tmp, "customer_id_decimal", Decimal("123.450")))
     assert {"foo": "bar"} == bucket.Object(object_key).metadata
     assert "cache" == bucket.Object(object_key).cache_control
 
