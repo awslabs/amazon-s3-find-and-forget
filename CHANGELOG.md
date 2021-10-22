@@ -3,7 +3,7 @@
 ## v0.35
 
 - [#271](https://github.com/awslabs/amazon-s3-find-and-forget/pull/271): Support
-  for decimal as column identifier for Parquet
+  for decimal type column identifiers in Parquet files
 
 ## v0.34
 
