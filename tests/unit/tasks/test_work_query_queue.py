@@ -62,6 +62,7 @@ def test_it_starts_machine_as_expected(sqs_mock, read_queue_mock, sf_client_mock
             "AWS_STEP_FUNCTIONS_STARTED_BY_EXECUTION_ID": "1234",
             "JobId": "4231",
             "WaitDuration": 5,
+            "ExecutionRetriesLeft": 2,
         }
     )
 
@@ -102,6 +103,7 @@ def test_it_defaults_wait_duration(sqs_mock, read_queue_mock, sf_client_mock):
             "AWS_STEP_FUNCTIONS_STARTED_BY_EXECUTION_ID": "1234",
             "JobId": "4231",
             "WaitDuration": 15,
+            "ExecutionRetriesLeft": 2,
         }
     )
 
