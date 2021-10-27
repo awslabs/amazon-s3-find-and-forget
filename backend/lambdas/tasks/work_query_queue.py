@@ -11,14 +11,13 @@ sqs = boto3.resource("sqs")
 queue = sqs.Queue(queue_url)
 sf_client = boto3.client("stepfunctions")
 
-QUERY_EXECUTION_MAX_RETRIES = 2
-
 
 @with_logging
 @s3_state_store(offload_keys=["Data"])
 def handler(event, context):
     concurrency_limit = int(event.get("AthenaConcurrencyLimit", 15))
     wait_duration = int(event.get("QueryExecutionWaitSeconds", 15))
+    execution_retries_left = int(event.get("AthenaQueryMaxRetries", 2))
     execution_id = event["ExecutionId"]
     job_id = event["ExecutionName"]
     previously_started = event.get("RunningExecutions", {"Data": [], "Total": 0})
@@ -52,7 +51,7 @@ def handler(event, context):
             body["AWS_STEP_FUNCTIONS_STARTED_BY_EXECUTION_ID"] = execution_id
             body["JobId"] = job_id
             body["WaitDuration"] = wait_duration
-            body["ExecutionRetriesLeft"] = QUERY_EXECUTION_MAX_RETRIES
+            body["ExecutionRetriesLeft"] = execution_retries_left
             query_executor = body["QueryExecutor"]
             if query_executor == "athena":
                 resp = sf_client.start_execution(

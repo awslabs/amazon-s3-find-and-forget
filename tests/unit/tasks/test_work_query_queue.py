@@ -71,6 +71,7 @@ def test_it_starts_machine_as_expected(sqs_mock, read_queue_mock, sf_client_mock
             "ExecutionId": "1234",
             "ExecutionName": "4231",
             "AthenaConcurrencyLimit": 5,
+            "AthenaQueryMaxRetries": 2,
             "QueryExecutionWaitSeconds": 5,
         },
         SimpleNamespace(),

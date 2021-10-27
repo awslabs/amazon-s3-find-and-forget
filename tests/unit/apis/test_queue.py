@@ -206,6 +206,7 @@ def test_it_process_queue(mock_config, mock_running_job, job_table, uuid):
     mock_running_job.return_value = False
     mock_config.return_value = {
         "AthenaConcurrencyLimit": 15,
+        "AthenaQueryMaxRetries": 2,
         "DeletionTasksMaxNumber": 50,
         "QueryExecutionWaitSeconds": 5,
         "QueryQueueWaitSeconds": 5,
@@ -224,6 +225,7 @@ def test_it_process_queue(mock_config, mock_running_job, job_table, uuid):
             "GSIBucket": "0",
             "CreatedAt": ANY,
             "AthenaConcurrencyLimit": 15,
+            "AthenaQueryMaxRetries": 2,
             "DeletionTasksMaxNumber": 50,
             "QueryExecutionWaitSeconds": 5,
             "QueryQueueWaitSeconds": 5,
@@ -241,6 +243,7 @@ def test_it_process_queue(mock_config, mock_running_job, job_table, uuid):
         "GSIBucket": "0",
         "CreatedAt": ANY,
         "AthenaConcurrencyLimit": 15,
+        "AthenaQueryMaxRetries": 2,
         "DeletionTasksMaxNumber": 50,
         "QueryExecutionWaitSeconds": 5,
         "QueryQueueWaitSeconds": 5,
@@ -260,6 +263,7 @@ def test_it_applies_expiry(mock_utc, mock_config, mock_running_job, job_table, u
     mock_utc.return_value = 12346789
     mock_config.return_value = {
         "AthenaConcurrencyLimit": 15,
+        "AthenaQueryMaxRetries": 2,
         "DeletionTasksMaxNumber": 50,
         "JobDetailsRetentionDays": 30,
         "QueryExecutionWaitSeconds": 5,
@@ -281,6 +285,7 @@ def test_it_applies_expiry(mock_utc, mock_config, mock_running_job, job_table, u
             "CreatedAt": ANY,
             "Expires": 12346789,
             "AthenaConcurrencyLimit": 15,
+            "AthenaQueryMaxRetries": 2,
             "DeletionTasksMaxNumber": 50,
             "QueryExecutionWaitSeconds": 5,
             "QueryQueueWaitSeconds": 5,

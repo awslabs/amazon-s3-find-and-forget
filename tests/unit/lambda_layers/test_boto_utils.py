@@ -281,6 +281,7 @@ def test_it_retrieves_config(mock_client):
             "Value": json.dumps(
                 {
                     "AthenaConcurrencyLimit": 1,
+                    "AthenaQueryMaxRetries": 2,
                     "DeletionTasksMaxNumber": 1,
                     "QueryExecutionWaitSeconds": 1,
                     "QueryQueueWaitSeconds": 1,
@@ -293,6 +294,7 @@ def test_it_retrieves_config(mock_client):
 
     assert {
         "AthenaConcurrencyLimit": 1,
+        "AthenaQueryMaxRetries": 2,
         "DeletionTasksMaxNumber": 1,
         "QueryExecutionWaitSeconds": 1,
         "QueryQueueWaitSeconds": 1,

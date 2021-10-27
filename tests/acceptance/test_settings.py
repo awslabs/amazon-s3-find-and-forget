@@ -23,6 +23,7 @@ def test_it_gets_settings(api_client, settings_base_endpoint, stack):
     assert isinstance(response_body.get("Settings"), dict)
     assert response_body["Settings"] == {
         "AthenaConcurrencyLimit": ANY,
+        "AthenaQueryMaxRetries": ANY,
         "DeletionTasksMaxNumber": ANY,
         "JobDetailsRetentionDays": ANY,
         "ForgetQueueWaitSeconds": ANY,

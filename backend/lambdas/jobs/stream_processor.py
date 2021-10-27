@@ -78,6 +78,7 @@ def process_job(job):
         k: job[k]
         for k in [
             "AthenaConcurrencyLimit",
+            "AthenaQueryMaxRetries",
             "DeletionTasksMaxNumber",
             "ForgetQueueWaitSeconds",
             "Id",

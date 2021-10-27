@@ -13,6 +13,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.api, pytest.mark.settings]
 def test_it_process_queue(mock_config):
     mock_config.return_value = {
         "AthenaConcurrencyLimit": 15,
+        "AthenaQueryMaxRetries": 2,
         "DeletionTasksMaxNumber": 50,
         "QueryExecutionWaitSeconds": 5,
         "QueryQueueWaitSeconds": 5,
@@ -25,6 +26,7 @@ def test_it_process_queue(mock_config):
     assert {
         "Settings": {
             "AthenaConcurrencyLimit": 15,
+            "AthenaQueryMaxRetries": 2,
             "DeletionTasksMaxNumber": 50,
             "QueryExecutionWaitSeconds": 5,
             "QueryQueueWaitSeconds": 5,

@@ -241,6 +241,7 @@ def test_it_starts_state_machine(mock_client):
             "Sk": "job123",
             "Type": "Job",
             "AthenaConcurrencyLimit": 15,
+            "AthenaQueryMaxRetries": 2,
             "DeletionTasksMaxNumber": 50,
             "QueryExecutionWaitSeconds": 5,
             "QueryQueueWaitSeconds": 5,
@@ -254,6 +255,7 @@ def test_it_starts_state_machine(mock_client):
         input=json.dumps(
             {
                 "AthenaConcurrencyLimit": 15,
+                "AthenaQueryMaxRetries": 2,
                 "DeletionTasksMaxNumber": 50,
                 "ForgetQueueWaitSeconds": 30,
                 "Id": "job123",
@@ -299,6 +301,7 @@ def test_it_handles_already_existing_executions(mock_client, mock_is_record):
             "Type": "Job",
             "CreatedAt": 123.0,
             "AthenaConcurrencyLimit": 15,
+            "AthenaQueryMaxRetries": 2,
             "DeletionTasksMaxNumber": 3,
             "ForgetQueueWaitSeconds": 30,
             "QueryExecutionWaitSeconds": 5,
@@ -322,6 +325,7 @@ def test_it_handles_execution_failure(mock_emit, mock_client):
             "Type": "Job",
             "CreatedAt": 123.0,
             "AthenaConcurrencyLimit": 15,
+            "AthenaQueryMaxRetries": 2,
             "DeletionTasksMaxNumber": 3,
             "ForgetQueueWaitSeconds": 30,
             "QueryExecutionWaitSeconds": 5,

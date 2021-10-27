@@ -258,7 +258,7 @@ const DeletionJob = ({ gateway, jobId }) => {
               )}
             </DetailsBox>
             <DetailsBox label="Individual Query Time Average">
-              {isUndefined(job.GeneratedQueries)
+              {!job.GeneratedQueries
                 ? "-"
                 : withDefault(
                     job.TotalQueryTimeInMillis / job.GeneratedQueries,
@@ -266,7 +266,7 @@ const DeletionJob = ({ gateway, jobId }) => {
                   )}
             </DetailsBox>
             <DetailsBox label="Individual Query Scanned Bytes Average">
-              {isUndefined(job.GeneratedQueries)
+              {!job.GeneratedQueries
                 ? "-"
                 : withDefault(
                     job.TotalQueryScannedInBytes / job.GeneratedQueries,
@@ -338,6 +338,9 @@ const DeletionJob = ({ gateway, jobId }) => {
             <div className="details content">
               <DetailsBox label="Athena Concurrency Limit">
                 {job.AthenaConcurrencyLimit}
+              </DetailsBox>
+              <DetailsBox label="Athena Query Max Retries">
+                {job.AthenaQueryMaxRetries}
               </DetailsBox>
               <DetailsBox label="Query Execution Wait Duration (Seconds)">
                 {job.QueryExecutionWaitSeconds}
