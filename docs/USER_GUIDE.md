@@ -197,6 +197,8 @@ resources.
      API will only accept requests from the Web UI origin.
    - **AthenaConcurrencyLimit:** (Default: 20) The number of concurrent Athena
      queries the solution will run when scanning your data lake.
+   - **AthenaQueryMaxRetries:** (Default: 2) Max number of retries to each
+     Athena query after a failure
    - **DeletionTasksMaxNumber:** (Default: 3) Max number of concurrent Fargate
      tasks to run when performing deletions.
    - **DeletionTaskCPU:** (Default: 4096) Fargate task CPU limit. For more info

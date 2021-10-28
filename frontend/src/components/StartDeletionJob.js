@@ -32,6 +32,7 @@ const StartDeletionJob = ({ className, gateway, goToJobDetails }) => {
           Settings.JobDetailsRetentionDays
         ),
         "Athena Concurrency Limit": Settings.AthenaConcurrencyLimit,
+        "Athena Query Max Retries": Settings.AthenaQueryMaxRetries,
         "Query Execution Wait Duration (Seconds)":
           Settings.QueryExecutionWaitSeconds,
         "Query Queue Wait Duration (Seconds)": Settings.QueryQueueWaitSeconds,

@@ -159,8 +159,6 @@ Resources:
               "Comment": "Gets the status of the given Athena query",
               "Type": "Task",
               "Resource": "${CheckQueryStatus.Arn}",
-              "InputPath": "$.QueryId",
-              "ResultPath": "$.QueryStatus",
               "Next": "Query Complete?",
               "Catch": [{
                  "ErrorEquals": ["States.ALL"],
@@ -173,30 +171,42 @@ Resources:
               "Type": "Choice",
               "Choices": [
               {
-                "Variable": "$.QueryStatus.State",
+                "Variable": "$.State",
                 "StringEquals": "SUCCEEDED",
                 "Next": "Submit Query Results"
               },
               {
                 "Or": [
                   {
-                    "Variable": "$.QueryStatus.State",
+                    "Variable": "$.State",
                     "StringEquals": "FAILED"
                   },
                   {
-                    "Variable": "$.QueryStatus.State",
+                    "Variable": "$.State",
                     "StringEquals": "CANCELLED"
                   }
                 ],
-                "Next": "Raise Query Error"
+                "Next": "Retriable?"
               }
               ],
               "Default": "Wait for Query"
             },
+            "Retriable?": {
+              "Comment": "Check if the Athena query can be retried",
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.ExecutionRetriesLeft",
+                  "NumericGreaterThan": 0,
+                  "Next": "Execute Query"
+                }
+              ],
+              "Default": "Raise Query Error"
+            },
             "Raise Query Error": {
               "Type": "Pass",
               "Parameters": {
-                "Cause.$": "$.QueryStatus.Reason",
+                "Cause.$": "$.Reason",
                 "Error": "Query Failed"
               },
               "ResultPath": "$.ErrorDetails",
@@ -251,7 +261,7 @@ Resources:
                 "JobId.$": "$.JobId",
                 "QueryId.$": "$.QueryId",
                 "PartitionKeys.$": "$.PartitionKeys",
-                "Statistics.$": "$.QueryStatus.Statistics",
+                "Statistics.$": "$.Statistics",
                 "DataMapperId.$": "$.DataMapperId",
                 "Table.$": "$.Table"
               },

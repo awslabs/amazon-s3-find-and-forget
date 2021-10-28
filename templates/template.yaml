@@ -19,6 +19,11 @@ Parameters:
     Description: How many Athena queries should be scheduled concurrently
     Type: Number
     Default: 20
+  AthenaQueryMaxRetries:
+    Description: Max number of retries to each Athena query after a failure
+    Type: Number
+    Default: 2
+    MinValue: 0
   AthenaWorkGroup:
     Description: WorkGroup to use for Athena queries
     Type: String
@@ -183,6 +188,7 @@ Resources:
       Value: !Sub |
         {
           "AthenaConcurrencyLimit": ${AthenaConcurrencyLimit},
+          "AthenaQueryMaxRetries": ${AthenaQueryMaxRetries},
           "DeletionTasksMaxNumber": ${DeletionTasksMaxNumber},
           "JobDetailsRetentionDays": ${JobDetailsRetentionDays},
           "QueryExecutionWaitSeconds": ${QueryExecutionWaitSeconds},
@@ -442,6 +448,7 @@ Metadata:
           default: "Performance Configuration"
         Parameters:
           - AthenaConcurrencyLimit
+          - AthenaQueryMaxRetries
           - DeletionTasksMaxNumber
           - DeletionTaskCPU
           - DeletionTaskMemory
