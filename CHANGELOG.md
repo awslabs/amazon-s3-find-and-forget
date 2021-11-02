@@ -1,6 +1,6 @@
 # Change Log
 
-## v0.36 (unreleased)
+## v0.36
 
 - [#272](https://github.com/awslabs/amazon-s3-find-and-forget/pull/272):
   Introduce a retry mechanism when running Athena queries
