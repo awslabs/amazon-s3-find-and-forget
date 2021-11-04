@@ -92,6 +92,22 @@ def test_delete_correct_rows_from_table():
     assert table.to_pydict() == {"customer_id": ["34567"]}
 
 
+def test_delete_handles_multiple_columns_with_no_rows_left():
+    data = [
+        {"customer_id": "12345", "other_customer_id": "23456"},
+    ]
+    columns = [
+        {"Column": "customer_id", "MatchIds": ["12345"], "Type": "Simple"},
+        {"Column": "other_customer_id", "MatchIds": ["23456"], "Type": "Simple"},
+    ]
+    df = pd.DataFrame(data)
+    table = pa.Table.from_pandas(df)
+    table, deleted_rows = delete_from_table(table, columns)
+    res = table.to_pandas()
+    assert len(res) == 0
+    assert deleted_rows == 1
+
+
 def test_handles_lower_cased_column_names():
     data = [
         {"userData": {"customerId": "12345"}},
