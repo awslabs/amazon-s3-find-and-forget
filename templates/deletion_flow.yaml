@@ -136,6 +136,8 @@ Resources:
               awslogs-region: !Ref 'AWS::Region'
               awslogs-stream-prefix: !Ref 'AWS::StackName'
           Environment:
+            - Name: AWS_STS_REGIONAL_ENDPOINTS
+              Value: regional
             - Name: DELETE_OBJECTS_QUEUE
               Value: !Ref DelObjQ
             - Name: ECS_ENABLE_CONTAINER_METADATA

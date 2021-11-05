@@ -6,3 +6,4 @@ boto3==1.17.85
 numpy==1.19.1
 cryptography==3.4.7
 urllib3>=1.26.5
+aws-assume-role-lib>=2.9.0

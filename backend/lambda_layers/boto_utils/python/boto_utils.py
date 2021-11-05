@@ -10,6 +10,7 @@ import boto3
 from boto3.dynamodb.conditions import Key
 from boto3.dynamodb.types import TypeDeserializer
 from botocore.exceptions import ClientError
+from aws_assume_role_lib import assume_role
 
 deserializer = TypeDeserializer()
 logger = logging.getLogger()
@@ -22,12 +23,6 @@ ddb = boto3.resource("dynamodb")
 table = ddb.Table(os.getenv("JobTable", "S3F2_Jobs"))
 index = os.getenv("JobTableDateGSI", "Date-GSI")
 bucket_count = int(os.getenv("GSIBucketCount", 1))
-sts = boto3.client(
-    "sts",
-    endpoint_url="https://sts.{}.amazonaws.com".format(
-        os.getenv("AWS_DEFAULT_REGION", os.getenv("AWS_REGION", None))
-    ),
-)
 
 
 def paginate(client, method, iter_keys, **kwargs):
@@ -227,16 +222,10 @@ def get_user_info(event):
 
 
 def get_session(assume_role_arn=None, role_session_name="s3f2"):
+    session = boto3.session.Session()
     if assume_role_arn:
-        response = sts.assume_role(
-            RoleArn=assume_role_arn, RoleSessionName=role_session_name
-        )
-        return boto3.session.Session(
-            aws_access_key_id=response["Credentials"]["AccessKeyId"],
-            aws_secret_access_key=response["Credentials"]["SecretAccessKey"],
-            aws_session_token=response["Credentials"]["SessionToken"],
-        )
-    return boto3.session.Session()
+        return assume_role(session, assume_role_arn, RoleSessionName=role_session_name)
+    return session
 
 
 def fetch_job_manifest(path):
