@@ -129,6 +129,8 @@ def delete_from_table(table, to_delete):
             )
         )
         table = table.filter(~indexes)
+        if not table.num_rows:
+            break
     deleted_rows = initial_rows - table.num_rows
     return table, deleted_rows
 

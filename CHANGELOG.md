@@ -1,5 +1,11 @@
 # Change Log
 
+## v0.37 (unreleased)
+
+- [#274](https://github.com/awslabs/amazon-s3-find-and-forget/pull/274):
+  Fix for a bug that causes deletion to fail in parquet files when a data
+  mapper has multiple column identifiers.
+
 ## v0.36
 
 - [#272](https://github.com/awslabs/amazon-s3-find-and-forget/pull/272):
