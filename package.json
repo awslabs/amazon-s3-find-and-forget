@@ -4,7 +4,7 @@
   "private": true,
   "devDependencies": {
     "@openapitools/openapi-generator-cli": "1.0.18-4.3.1",
-    "prettier-eslint-cli": "^5.0.0"
+    "prettier-eslint-cli": "^5.0.1"
   },
   "scripts": {},
   "repository": {
