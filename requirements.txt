@@ -14,6 +14,10 @@ attrs==20.1.0
     #   black
     #   jsonschema
     #   pytest
+aws-assume-role-lib==2.9.0
+    # via
+    #   -r ./backend/ecs_tasks/delete_files/requirements.txt
+    #   -r ./backend/lambda_layers/aws_sdk/requirements.txt
 aws-sam-translator==1.35.0
     # via cfn-lint
 black==19.10b0
@@ -22,6 +26,7 @@ boto3==1.17.85
     # via
     #   -r ./backend/ecs_tasks/delete_files/requirements.txt
     #   -r ./backend/lambda_layers/aws_sdk/requirements.txt
+    #   aws-assume-role-lib
     #   aws-sam-translator
     #   s3fs
 botocore==1.20.85

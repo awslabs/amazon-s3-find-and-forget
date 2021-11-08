@@ -4,9 +4,12 @@
 #
 #    pip-compile --output-file=backend/ecs_tasks/delete_files/requirements.txt backend/ecs_tasks/delete_files/requirements.in
 #
+aws-assume-role-lib==2.9.0
+    # via -r backend/ecs_tasks/delete_files/requirements.in
 boto3==1.17.85
     # via
     #   -r backend/ecs_tasks/delete_files/requirements.in
+    #   aws-assume-role-lib
     #   s3fs
 botocore==1.20.85
     # via

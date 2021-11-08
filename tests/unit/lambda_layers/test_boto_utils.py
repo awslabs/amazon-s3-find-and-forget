@@ -393,29 +393,19 @@ def test_it_fetches_userinfo_from_lambda_event_with_failover_in_place():
     assert result == {"Username": "N/A", "Sub": "N/A"}
 
 
-@patch("boto_utils.sts")
-def test_it_returns_default_session(mock_sts):
+@patch("boto_utils.assume_role")
+def test_it_returns_default_session(mock_assume_role):
     resp = get_session()
-    mock_sts.assume_role.assert_not_called()
+    mock_assume_role.assert_not_called()
     assert isinstance(resp, Session)
 
 
 @patch("boto_utils.boto3")
-@patch("boto_utils.sts")
-def test_it_assumes_role_for_session_where_given(mock_sts, mock_boto):
-    mock_sts.assume_role.return_value = {
-        "Credentials": {
-            "AccessKeyId": "a",
-            "SecretAccessKey": "b",
-            "SessionToken": "c",
-        }
-    }
+@patch("boto_utils.assume_role")
+def test_it_assumes_role_for_session_where_given(mock_assume_role, mock_boto):
     get_session(assume_role_arn="arn:aws:iam:accountid::role/rolename")
-    mock_sts.assume_role.assert_called_with(
-        RoleArn="arn:aws:iam:accountid::role/rolename", RoleSessionName=ANY
-    )
-    mock_boto.session.Session.assert_called_with(
-        aws_access_key_id="a", aws_secret_access_key="b", aws_session_token="c",
+    mock_assume_role.assert_called_with(
+        ANY, "arn:aws:iam:accountid::role/rolename", RoleSessionName=ANY
     )
 
 
