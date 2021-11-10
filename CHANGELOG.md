@@ -1,10 +1,16 @@
 # Change Log
 
-## v0.37
+## v0.38
 
-- [#276](https://github.com/awslabs/amazon-s3-find-and-forget/pull/276): Fix for
+- [#278](https://github.com/awslabs/amazon-s3-find-and-forget/pull/278): Fix for
   a bug that causes the access token to expire and cause a Job to fail if
   processing of an object takes more than an hour
+
+## v0.37
+
+- [#276](https://github.com/awslabs/amazon-s3-find-and-forget/pull/276): First
+  attempt for fixing a bug that causes the access token to expire and cause a
+  Job to fail if processing of an object takes more than an hour
 
 - [#275](https://github.com/awslabs/amazon-s3-find-and-forget/pull/275): Upgrade
   JavaScript dependencies
