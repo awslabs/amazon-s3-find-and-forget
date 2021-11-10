@@ -130,11 +130,8 @@ def execute(queue_url, message_body, receipt_handle):
         input_bucket, input_key = parse_s3_url(object_path)
         validate_bucket_versioning(client, input_bucket)
         match_ids = build_matches(cols, manifest_object)
-        creds = session.get_credentials().get_frozen_credentials()
         s3 = s3fs.S3FileSystem(
-            key=creds.access_key,
-            secret=creds.secret_key,
-            token=creds.token,
+            session=session,
             default_cache_type="none",
             requester_pays=True,
             default_fill_cache=False,
