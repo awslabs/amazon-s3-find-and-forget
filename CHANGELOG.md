@@ -3,8 +3,8 @@
 ## v0.38
 
 - [#278](https://github.com/awslabs/amazon-s3-find-and-forget/pull/278): Fix for
-  a bug that causes the access token to expire and cause a Job to fail if
-  processing of an object takes more than an hour
+  a bug that caused a job to fail if the processing of an object took longer
+  than the lifetime of its IAM temporary access credentials.
 
 ## v0.37
 
