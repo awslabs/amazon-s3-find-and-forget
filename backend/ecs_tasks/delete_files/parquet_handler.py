@@ -69,6 +69,7 @@ def get_row_indexes_to_delete(table, identifier, to_delete):
     can be simple like "customer_id" or complex like "user.info.id"
     """
     indexes = []
+    to_delete_set = set(to_delete)
     segments = identifier.split(".")
     column_identifier = case_insensitive_getter(table.column_names, segments[0])
     for obj in table.column(column_identifier).to_pylist():
@@ -76,7 +77,7 @@ def get_row_indexes_to_delete(table, identifier, to_delete):
         for i in range(1, len(segments)):
             next_segment = case_insensitive_getter(list(current.keys()), segments[i])
             current = current[next_segment]
-        indexes.append(current in to_delete)
+        indexes.append(current in to_delete_set)
     return np.array(indexes)
 
 
@@ -129,7 +130,7 @@ def delete_from_table(table, to_delete):
     for column in to_delete:
         column = cast_column_values(column, table.schema)
         indexes = (
-            get_row_indexes_to_delete(table, column["Column"], set(column["MatchIds"]))
+            get_row_indexes_to_delete(table, column["Column"], column["MatchIds"])
             if column["Type"] == "Simple"
             else get_row_indexes_to_delete_for_composite(
                 table, column["Columns"], column["MatchIds"]

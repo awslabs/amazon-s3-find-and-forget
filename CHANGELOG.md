@@ -3,7 +3,7 @@
 ## v0.39
 
 - [#279](https://github.com/awslabs/amazon-s3-find-and-forget/pull/279): Improve
-  performance for large queues of simple matches
+  performance for large queues of simple matches and logging additions
 
 ## v0.38
 
