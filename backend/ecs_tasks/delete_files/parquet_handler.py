@@ -1,5 +1,7 @@
 from decimal import Decimal
 import logging
+import os
+import sys
 from collections import Counter
 
 import numpy as np
@@ -7,6 +9,11 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 logger = logging.getLogger(__name__)
+logger.setLevel(os.getenv("LOG_LEVEL", logging.INFO))
+formatter = logging.Formatter("[%(levelname)s] %(message)s")
+handler = logging.StreamHandler(stream=sys.stdout)
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 
 def load_parquet(f):
@@ -122,7 +129,7 @@ def delete_from_table(table, to_delete):
     for column in to_delete:
         column = cast_column_values(column, table.schema)
         indexes = (
-            get_row_indexes_to_delete(table, column["Column"], column["MatchIds"])
+            get_row_indexes_to_delete(table, column["Column"], set(column["MatchIds"]))
             if column["Type"] == "Simple"
             else get_row_indexes_to_delete_for_composite(
                 table, column["Columns"], column["MatchIds"]
