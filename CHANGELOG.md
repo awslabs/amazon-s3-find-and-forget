@@ -1,5 +1,10 @@
 # Change Log
 
+## v0.40
+
+- [#280](https://github.com/awslabs/amazon-s3-find-and-forget/pull/280): Improve
+  performance for large queues of composite matches
+
 ## v0.39
 
 - [#279](https://github.com/awslabs/amazon-s3-find-and-forget/pull/279): Improve

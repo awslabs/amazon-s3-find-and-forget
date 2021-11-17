@@ -40,6 +40,7 @@ def get_row_indexes_to_delete_for_composite(table, identifiers, to_delete):
     """
     indexes = []
     data = {}
+    to_delete_set = set(map(tuple, to_delete))
     for identifier in identifiers:
         column_first_level = identifier.split(".")[0].lower()
         if not column_first_level in data:
@@ -58,7 +59,7 @@ def get_row_indexes_to_delete_for_composite(table, identifiers, to_delete):
                 )
                 current = current[next_segment]
             values_array.append(current)
-        indexes.append(values_array in to_delete)
+        indexes.append(tuple(values_array) in to_delete_set)
     return np.array(indexes)
 
 
