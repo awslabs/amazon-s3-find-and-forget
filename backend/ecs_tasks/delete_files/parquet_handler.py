@@ -40,9 +40,7 @@ def get_row_indexes_to_delete_for_composite(table, identifiers, to_delete):
     """
     indexes = []
     data = {}
-    to_delete_set = set()
-    for composite_match in to_delete:
-        to_delete_set.add(tuple(composite_match))
+    to_delete_set = {tuple(composite_match) for composite_match in to_delete}
     for identifier in identifiers:
         column_first_level = identifier.split(".")[0].lower()
         if not column_first_level in data:
