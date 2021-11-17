@@ -1,10 +1,15 @@
 # Change Log
 
+## v0.39
+
+- [#279](https://github.com/awslabs/amazon-s3-find-and-forget/pull/279): Improve
+  performance for large queues of simple matches and logging additions
+
 ## v0.38
 
 - [#278](https://github.com/awslabs/amazon-s3-find-and-forget/pull/278): Fix for
   a bug that caused a job to fail if the processing of an object took longer
-  than the lifetime of its IAM temporary access credentials.
+  than the lifetime of its IAM temporary access credentials
 
 ## v0.37
 
@@ -17,7 +22,7 @@
 
 - [#274](https://github.com/awslabs/amazon-s3-find-and-forget/pull/274): Fix for
   a bug that causes deletion to fail in parquet files when a data mapper has
-  multiple column identifiers.
+  multiple column identifiers
 
 ## v0.36
 

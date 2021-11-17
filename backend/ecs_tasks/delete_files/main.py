@@ -159,6 +159,7 @@ def execute(queue_url, message_body, receipt_handle):
         with pa.BufferReader(out_sink.getvalue()) as output_buf:
             if is_encrypted:
                 output_buf, metadata = encrypt(output_buf, metadata, kms_client)
+            logger.info("Uploading new object version to S3")
             new_version = save(
                 s3,
                 client,

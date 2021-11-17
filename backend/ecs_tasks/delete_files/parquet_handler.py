@@ -1,5 +1,7 @@
 from decimal import Decimal
 import logging
+import os
+import sys
 from collections import Counter
 
 import numpy as np
@@ -7,6 +9,11 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 logger = logging.getLogger(__name__)
+logger.setLevel(os.getenv("LOG_LEVEL", logging.INFO))
+formatter = logging.Formatter("[%(levelname)s] %(message)s")
+handler = logging.StreamHandler(stream=sys.stdout)
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 
 def load_parquet(f):
@@ -62,6 +69,7 @@ def get_row_indexes_to_delete(table, identifier, to_delete):
     can be simple like "customer_id" or complex like "user.info.id"
     """
     indexes = []
+    to_delete_set = set(to_delete)
     segments = identifier.split(".")
     column_identifier = case_insensitive_getter(table.column_names, segments[0])
     for obj in table.column(column_identifier).to_pylist():
@@ -69,7 +77,7 @@ def get_row_indexes_to_delete(table, identifier, to_delete):
         for i in range(1, len(segments)):
             next_segment = case_insensitive_getter(list(current.keys()), segments[i])
             current = current[next_segment]
-        indexes.append(current in to_delete)
+        indexes.append(current in to_delete_set)
     return np.array(indexes)
 
 
