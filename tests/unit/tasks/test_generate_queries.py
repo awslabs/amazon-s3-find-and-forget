@@ -23,6 +23,16 @@ with patch.dict(os.environ, {"QueryQueue": "test"}):
 pytestmark = [pytest.mark.unit, pytest.mark.task]
 
 
+def lists_equal_ignoring_order(a, b):
+    a = a.copy()
+    try:
+        for item in b:
+            a.remove(item)
+    except ValueError:
+        return False
+    return not a
+
+
 @patch("backend.lambdas.tasks.generate_queries.write_partitions")
 @patch("backend.lambdas.tasks.generate_queries.batch_sqs_msgs")
 @patch("backend.lambdas.tasks.generate_queries.get_deletion_queue")
@@ -972,50 +982,53 @@ class TestAthenaQueries:
             "job_1234567890",
         )
 
-        assert resp == [
-            {
-                "DataMapperId": "a",
-                "Database": "test_db",
-                "Table": "test_table",
-                "QueryExecutor": "athena",
-                "Format": "parquet",
-                "Columns": [{"Column": "customer_id", "Type": "Simple"}],
-                "PartitionKeys": [
-                    {"Key": "year", "Value": "2018"},
-                    {"Key": "month", "Value": "12"},
-                ],
-                "DeleteOldVersions": True,
-                "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
-            },
-            {
-                "DataMapperId": "a",
-                "Database": "test_db",
-                "Table": "test_table",
-                "QueryExecutor": "athena",
-                "Format": "parquet",
-                "Columns": [{"Column": "customer_id", "Type": "Simple"}],
-                "PartitionKeys": [
-                    {"Key": "year", "Value": "2019"},
-                    {"Key": "month", "Value": "01"},
-                ],
-                "DeleteOldVersions": True,
-                "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
-            },
-            {
-                "DataMapperId": "a",
-                "Database": "test_db",
-                "Table": "test_table",
-                "QueryExecutor": "athena",
-                "Format": "parquet",
-                "Columns": [{"Column": "customer_id", "Type": "Simple"}],
-                "PartitionKeys": [
-                    {"Key": "year", "Value": "2019"},
-                    {"Key": "month", "Value": "02"},
-                ],
-                "DeleteOldVersions": True,
-                "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
-            },
-        ]
+        assert lists_equal_ignoring_order(
+            resp,
+            [
+                {
+                    "DataMapperId": "a",
+                    "Database": "test_db",
+                    "Table": "test_table",
+                    "QueryExecutor": "athena",
+                    "Format": "parquet",
+                    "Columns": [{"Column": "customer_id", "Type": "Simple"}],
+                    "PartitionKeys": [
+                        {"Key": "year", "Value": "2018"},
+                        {"Key": "month", "Value": "12"},
+                    ],
+                    "DeleteOldVersions": True,
+                    "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
+                },
+                {
+                    "DataMapperId": "a",
+                    "Database": "test_db",
+                    "Table": "test_table",
+                    "QueryExecutor": "athena",
+                    "Format": "parquet",
+                    "Columns": [{"Column": "customer_id", "Type": "Simple"}],
+                    "PartitionKeys": [
+                        {"Key": "year", "Value": "2019"},
+                        {"Key": "month", "Value": "01"},
+                    ],
+                    "DeleteOldVersions": True,
+                    "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
+                },
+                {
+                    "DataMapperId": "a",
+                    "Database": "test_db",
+                    "Table": "test_table",
+                    "QueryExecutor": "athena",
+                    "Format": "parquet",
+                    "Columns": [{"Column": "customer_id", "Type": "Simple"}],
+                    "PartitionKeys": [
+                        {"Key": "year", "Value": "2019"},
+                        {"Key": "month", "Value": "02"},
+                    ],
+                    "DeleteOldVersions": True,
+                    "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
+                },
+            ],
+        )
         put_object_mock.put_object.assert_called_with(
             Key="manifests/job_1234567890/a/manifest.json",
             Body=(
@@ -1073,38 +1086,41 @@ class TestAthenaQueries:
             "job_1234567890",
         )
 
-        assert resp == [
-            {
-                "DataMapperId": "a",
-                "Database": "test_db",
-                "Table": "test_table",
-                "QueryExecutor": "athena",
-                "Format": "parquet",
-                "Columns": [{"Column": "customer_id", "Type": "Simple"}],
-                "PartitionKeys": [
-                    {"Key": "year", "Value": "2018"},
-                    {"Key": "month", "Value": "12"},
-                ],
-                "RoleArn": "arn:aws:iam::accountid:role/rolename",
-                "DeleteOldVersions": True,
-                "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
-            },
-            {
-                "DataMapperId": "a",
-                "Database": "test_db",
-                "Table": "test_table",
-                "QueryExecutor": "athena",
-                "Format": "parquet",
-                "Columns": [{"Column": "customer_id", "Type": "Simple"}],
-                "PartitionKeys": [
-                    {"Key": "year", "Value": "2019"},
-                    {"Key": "month", "Value": "01"},
-                ],
-                "RoleArn": "arn:aws:iam::accountid:role/rolename",
-                "DeleteOldVersions": True,
-                "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
-            },
-        ]
+        assert lists_equal_ignoring_order(
+            resp,
+            [
+                {
+                    "DataMapperId": "a",
+                    "Database": "test_db",
+                    "Table": "test_table",
+                    "QueryExecutor": "athena",
+                    "Format": "parquet",
+                    "Columns": [{"Column": "customer_id", "Type": "Simple"}],
+                    "PartitionKeys": [
+                        {"Key": "year", "Value": "2018"},
+                        {"Key": "month", "Value": "12"},
+                    ],
+                    "RoleArn": "arn:aws:iam::accountid:role/rolename",
+                    "DeleteOldVersions": True,
+                    "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
+                },
+                {
+                    "DataMapperId": "a",
+                    "Database": "test_db",
+                    "Table": "test_table",
+                    "QueryExecutor": "athena",
+                    "Format": "parquet",
+                    "Columns": [{"Column": "customer_id", "Type": "Simple"}],
+                    "PartitionKeys": [
+                        {"Key": "year", "Value": "2019"},
+                        {"Key": "month", "Value": "01"},
+                    ],
+                    "RoleArn": "arn:aws:iam::accountid:role/rolename",
+                    "DeleteOldVersions": True,
+                    "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
+                },
+            ],
+        )
         put_object_mock.put_object.assert_called_with(
             Key="manifests/job_1234567890/a/manifest.json",
             Body=(
@@ -1551,30 +1567,33 @@ class TestAthenaQueries:
             "job_1234567890",
         )
 
-        assert resp == [
-            {
-                "DataMapperId": "a",
-                "QueryExecutor": "athena",
-                "Format": "parquet",
-                "Database": "test_db",
-                "Table": "test_table",
-                "Columns": [{"Column": "customer_id", "Type": "Simple"}],
-                "PartitionKeys": [{"Key": "year", "Value": "2018"}],
-                "DeleteOldVersions": True,
-                "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
-            },
-            {
-                "DataMapperId": "a",
-                "QueryExecutor": "athena",
-                "Format": "parquet",
-                "Database": "test_db",
-                "Table": "test_table",
-                "Columns": [{"Column": "customer_id", "Type": "Simple"}],
-                "PartitionKeys": [{"Key": "year", "Value": "2019"}],
-                "DeleteOldVersions": True,
-                "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
-            },
-        ]
+        assert lists_equal_ignoring_order(
+            resp,
+            [
+                {
+                    "DataMapperId": "a",
+                    "QueryExecutor": "athena",
+                    "Format": "parquet",
+                    "Database": "test_db",
+                    "Table": "test_table",
+                    "Columns": [{"Column": "customer_id", "Type": "Simple"}],
+                    "PartitionKeys": [{"Key": "year", "Value": "2018"}],
+                    "DeleteOldVersions": True,
+                    "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
+                },
+                {
+                    "DataMapperId": "a",
+                    "QueryExecutor": "athena",
+                    "Format": "parquet",
+                    "Database": "test_db",
+                    "Table": "test_table",
+                    "Columns": [{"Column": "customer_id", "Type": "Simple"}],
+                    "PartitionKeys": [{"Key": "year", "Value": "2019"}],
+                    "DeleteOldVersions": True,
+                    "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
+                },
+            ],
+        )
         put_object_mock.put_object.assert_called_with(
             Key="manifests/job_1234567890/a/manifest.json",
             Body=(
