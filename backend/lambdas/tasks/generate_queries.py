@@ -210,19 +210,19 @@ def generate_athena_queries(data_mapper, deletion_items, job_id):
         return [msg]
 
     # For every partition combo of every table, create a query
-    partitions = []
+    partitions = set()
     for partition in get_partitions(db, table_name):
-        current = [
-            {
-                "Key": all_partition_keys[i],
-                "Value": cast_to_type(v, all_partition_keys[i], table, True),
-            }
+        current = tuple(
+            (all_partition_keys[i], cast_to_type(v, all_partition_keys[i], table, True))
             for i, v in enumerate(partition["Values"])
             if all_partition_keys[i] in partition_keys
-        ]
-        if not next((x for x in partitions if x == current), None):
-            partitions.append(current)
-    return [{**msg, "PartitionKeys": x} for x in partitions]
+        )
+        partitions.add(current)
+    ret = []
+    for current in partitions:
+        current_dict = [{"Key": k, "Value": v} for k, v in current]
+        ret.append({**msg, "PartitionKeys": current_dict})
+    return ret
 
 
 def get_deletion_queue():
