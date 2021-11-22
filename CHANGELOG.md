@@ -1,6 +1,9 @@
 # Change Log
 
-## v0.41 (unreleased)
+## v0.41
+
+- [#282](https://github.com/awslabs/amazon-s3-find-and-forget/pull/282): Upgrade
+  dependencies and fix some broken links in the API documentation
 
 - [#281](https://github.com/awslabs/amazon-s3-find-and-forget/pull/281): Improve
   performance of query generation step for tables with many partitions
