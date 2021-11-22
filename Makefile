@@ -72,7 +72,7 @@ format-python: | $(VENV)
 	; done
 
 generate-api-docs:
-	npx openapi-generator generate -i ./templates/api.definition.yml -g markdown -t ./docs/templates/ -o docs/api
+	npx openapi-generator-cli generate -i ./templates/api.definition.yml -g markdown -t ./docs/templates/ -o docs/api
 	git add docs/api
 
 .PHONY: generate-pip-requirements

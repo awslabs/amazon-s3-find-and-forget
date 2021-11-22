@@ -27,7 +27,7 @@ API | Operation | HTTP request | Description
 
  - [CreateDeletionQueueItem](./Models/CreateDeletionQueueItem.md)
  - [DataMapper](./Models/DataMapper.md)
- - [DataMapperQueryExecutorParameters](./Models/DataMapperQueryExecutorParameters.md)
+ - [DataMapper_QueryExecutorParameters](./Models/DataMapper_QueryExecutorParameters.md)
  - [DeletionQueue](./Models/DeletionQueue.md)
  - [DeletionQueueItem](./Models/DeletionQueueItem.md)
  - [Error](./Models/Error.md)
