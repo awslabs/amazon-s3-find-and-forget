@@ -84,7 +84,6 @@ Resources:
           - Effect: Allow
             Action: "lambda:InvokeFunction"
             Resource:
-              - !GetAtt ParseStateMachineOutput.Arn
               - !GetAtt CheckQueueSize.Arn
               - !GetAtt ExecuteQuery.Arn
               - !GetAtt CheckQueryStatus.Arn
@@ -723,12 +722,6 @@ Resources:
       VisibilityTimeout: 1800
 
   # Tasks
-  ParseStateMachineOutput:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: parse_output.handler
-      CodeUri: ../backend/lambdas/tasks/
-
   CheckQueueSize:
     Type: AWS::Serverless::Function
     Properties:
@@ -827,6 +820,7 @@ Resources:
     Properties:
       Handler: submit_query_results.handler
       CodeUri: ../backend/lambdas/tasks/
+      MemorySize: 512
       Environment:
         Variables:
           QueueUrl: !Ref DeleteQueueUrl

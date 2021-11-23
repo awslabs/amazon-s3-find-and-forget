@@ -19,7 +19,7 @@ Removes a data mapper
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **DataMapperId** | **String**| Data Mapper ID path parameter | [default to null]
+ **Data\_mapper\_id** | **String**| Data Mapper ID path parameter | [default to null]
 
 ### Return type
 
@@ -43,11 +43,11 @@ Returns the details of a data mapper
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **DataMapperId** | **String**| Data Mapper ID path parameter | [default to null]
+ **Data\_mapper\_id** | **String**| Data Mapper ID path parameter | [default to null]
 
 ### Return type
 
-[**DataMapper**](../Models/DataMapper.md)
+[**DataMapper**](..Models/DataMapper.md)
 
 ### Authorization
 
@@ -67,12 +67,12 @@ Lists data mappers
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **StartAt** | **String**| Start at watermark query string parameter | [optional] [default to 0]
- **PageSize** | **Integer**| Page size query string parameter. Min: 1. Max: 1000 | [optional] [default to null]
+ **Start\_at** | **String**| Start at watermark query string parameter | [optional] [default to 0]
+ **Page\_size** | **Integer**| Page size query string parameter. Min: 1. Max: 1000 | [optional] [default to null]
 
 ### Return type
 
-[**ListOfDataMappers**](../Models/ListOfDataMappers.md)
+[**ListOfDataMappers**](..Models/ListOfDataMappers.md)
 
 ### Authorization
 
@@ -92,12 +92,12 @@ Creates or modifies a data mapper
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **DataMapperId** | **String**| Data Mapper ID path parameter | [default to null]
- **DataMapper** | [**DataMapper**](../Models/DataMapper.md)| Request body containing details of the Data Mapper to create or modify |
+ **Data\_mapper\_id** | **String**| Data Mapper ID path parameter | [default to null]
+ **DataMapper** | [**DataMapper**](..Models/DataMapper.md)| Request body containing details of the Data Mapper to create or modify |
 
 ### Return type
 
-[**DataMapper**](../Models/DataMapper.md)
+[**DataMapper**](..Models/DataMapper.md)
 
 ### Authorization
 
