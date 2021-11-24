@@ -1,6 +1,10 @@
 # Change Log
 
-## v0.41 (unreleased)
+## v0.41
+
+- [#283](https://github.com/awslabs/amazon-s3-find-and-forget/pull/283): Fix for
+  a bug that caused a job to fail with `Runtime.ExitError` when processing a
+  large queue of objects to be modified
 
 - [#281](https://github.com/awslabs/amazon-s3-find-and-forget/pull/281): Improve
   performance of query generation step for tables with many partitions
