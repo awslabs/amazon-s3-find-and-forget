@@ -1,11 +1,14 @@
 # Change Log
 
-## v0.42 (unreleased)
+## v0.42
 
 - [#285](https://github.com/awslabs/amazon-s3-find-and-forget/pull/285): Fix for
   a bug that caused a job to fail with a false positive
   `The object s3://<REDACTED> was processed successfully but no rows required deletion`
   when processing a job with queries running for more than 30m
+
+- [#284](https://github.com/awslabs/amazon-s3-find-and-forget/pull/284): Improve
+  performance of find query for data mappers with multiple column identifiers
 
 ## v0.41
 
