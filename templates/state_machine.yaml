@@ -454,6 +454,7 @@ Resources:
                 "ExecutionId.$": "$$.Execution.Id",
                 "ExecutionName.$": "$$.Execution.Name",
                 "AthenaConcurrencyLimit.$": "$.AthenaConcurrencyLimit",
+                "AthenaQueryMaxRetries.$": "$.AthenaQueryMaxRetries",
                 "DeletionTasksMaxNumber.$": "$.DeletionTasksMaxNumber",
                 "ForgetQueueWaitSeconds.$": "$.ForgetQueueWaitSeconds",
                 "QueryExecutionWaitSeconds.$": "$.QueryExecutionWaitSeconds",

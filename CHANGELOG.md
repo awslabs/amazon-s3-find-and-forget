@@ -2,6 +2,9 @@
 
 ## v0.42 (unreleased)
 
+- [#286](https://github.com/awslabs/amazon-s3-find-and-forget/pull/286): Fix for
+  a bug that causes `AthenaQueryMaxRetries` setting to be ignored
+
 - [#286](https://github.com/awslabs/amazon-s3-find-and-forget/pull/286): Make
   state machine more resilient to transient failures by adding retry
 
