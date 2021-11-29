@@ -719,7 +719,9 @@ Resources:
     Type: AWS::SQS::Queue
     Properties:
       KmsMasterKeyId: alias/aws/sqs
-      VisibilityTimeout: 1800
+      VisibilityTimeout: 43200
+      ContentBasedDeduplication: true
+      FifoQueue: true
 
   # Tasks
   CheckQueueSize:
