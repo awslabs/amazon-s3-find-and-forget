@@ -1,5 +1,10 @@
 # Change Log
 
+## v0.42 (unreleased)
+
+- [#284](https://github.com/awslabs/amazon-s3-find-and-forget/pull/284): Improve
+  performance of find query for data mappers with multiple column identifiers
+
 ## v0.41
 
 - [#283](https://github.com/awslabs/amazon-s3-find-and-forget/pull/283): Fix for

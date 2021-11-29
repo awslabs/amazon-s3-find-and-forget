@@ -63,15 +63,16 @@ def test_it_generates_query_with_partition():
     )
     assert escape_resp(resp) == escape_resp(
         """
-            SELECT DISTINCT t."$path"
-            FROM "amazonreviews"."amazon_reviews_parquet" t,
-                "s3f2_manifests_database"."s3f2_manifests_table" m
-            WHERE m."jobid"='job_1234567890'
-            AND m."datamapperid"='dm_1234' AND
-
-            ((cast(t."customer_id" as varchar)=m."queryablematchid" AND m."queryablecolumns"='customer_id'))
-
-            AND "product_category" = 'Books'
+            SELECT DISTINCT "$path" FROM (
+                SELECT t."$path"
+                FROM "amazonreviews"."amazon_reviews_parquet" t,
+                    "s3f2_manifests_database"."s3f2_manifests_table" m
+                WHERE
+                    m."jobid"='job_1234567890' AND
+                    m."datamapperid"='dm_1234' AND
+                    cast(t."customer_id" as varchar)=m."queryablematchid" AND m."queryablecolumns"='customer_id'
+                    AND "product_category" = 'Books'
+            )
         """
     )
 
@@ -89,15 +90,16 @@ def test_it_generates_query_with_int_partition():
     )
     assert escape_resp(resp) == escape_resp(
         """
-            SELECT DISTINCT t."$path"
-            FROM "amazonreviews"."amazon_reviews_parquet" t,
-                "s3f2_manifests_database"."s3f2_manifests_table" m
-            WHERE m."jobid"='job_1234567890'
-            AND m."datamapperid"='dm_1234' AND
-
-            ((cast(t."customer_id" as varchar)=m."queryablematchid" AND m."queryablecolumns"='customer_id'))
-
-            AND "year" = 2010
+            SELECT DISTINCT "$path" FROM (
+                SELECT t."$path"
+                FROM "amazonreviews"."amazon_reviews_parquet" t,
+                    "s3f2_manifests_database"."s3f2_manifests_table" m
+                WHERE
+                    m."jobid"='job_1234567890' AND
+                    m."datamapperid"='dm_1234' AND
+                    cast(t."customer_id" as varchar)=m."queryablematchid" AND m."queryablecolumns"='customer_id'
+                    AND "year" = 2010
+            )
         """
     )
 
@@ -118,15 +120,16 @@ def test_it_generates_query_with_multiple_partitions():
     )
     assert escape_resp(resp) == escape_resp(
         """
-            SELECT DISTINCT t."$path"
-            FROM "amazonreviews"."amazon_reviews_parquet" t,
-                "s3f2_manifests_database"."s3f2_manifests_table" m
-            WHERE m."jobid"='job_1234567890'
-            AND m."datamapperid"='dm_1234' AND
-
-            ((cast(t."customer_id" as varchar)=m."queryablematchid" AND m."queryablecolumns"='customer_id'))
-
-            AND "product_category" = 'Books' AND "published" = '2019'
+            SELECT DISTINCT "$path" FROM (
+                SELECT t."$path"
+                FROM "amazonreviews"."amazon_reviews_parquet" t,
+                    "s3f2_manifests_database"."s3f2_manifests_table" m
+                WHERE
+                    m."jobid"='job_1234567890' AND
+                    m."datamapperid"='dm_1234' AND
+                    cast(t."customer_id" as varchar)=m."queryablematchid" AND m."queryablecolumns"='customer_id'
+                    AND "product_category" = 'Books'  AND "published" = '2019'
+            )
         """
     )
 
@@ -143,13 +146,15 @@ def test_it_generates_query_without_partition():
     )
     assert escape_resp(resp) == escape_resp(
         """
-            SELECT DISTINCT t."$path"
-            FROM "amazonreviews"."amazon_reviews_parquet" t,
-                "s3f2_manifests_database"."s3f2_manifests_table" m
-            WHERE m."jobid"='job_1234567890'
-            AND m."datamapperid"='dm_1234' AND
-
-            ((cast(t."customer_id" as varchar)=m."queryablematchid" AND m."queryablecolumns"='customer_id'))
+            SELECT DISTINCT "$path" FROM (
+                SELECT t."$path"
+                FROM "amazonreviews"."amazon_reviews_parquet" t,
+                    "s3f2_manifests_database"."s3f2_manifests_table" m
+                WHERE
+                    m."jobid"='job_1234567890' AND
+                    m."datamapperid"='dm_1234' AND
+                    cast(t."customer_id" as varchar)=m."queryablematchid" AND m."queryablecolumns"='customer_id'
+            )
         """
     )
 
@@ -169,14 +174,25 @@ def test_it_generates_query_with_multiple_columns():
     )
     assert escape_resp(resp) == escape_resp(
         """
-            SELECT DISTINCT t."$path"
-            FROM "amazonreviews"."amazon_reviews_parquet" t,
-                "s3f2_manifests_database"."s3f2_manifests_table" m
-            WHERE m."jobid"='job_1234567890'
-            AND m."datamapperid"='dm_1234' AND
+            SELECT DISTINCT "$path" FROM (
+                SELECT t."$path"
+                FROM "amazonreviews"."amazon_reviews_parquet" t,
+                    "s3f2_manifests_database"."s3f2_manifests_table" m
+                WHERE
+                    m."jobid"='job_1234567890' AND
+                    m."datamapperid"='dm_1234' AND
+                    cast(t."a" as varchar)=m."queryablematchid" AND m."queryablecolumns"='a'
 
-            ((cast(t."a" as varchar)=m."queryablematchid" AND m."queryablecolumns"='a') OR
-            (cast(t."b" as varchar)=m."queryablematchid" AND m."queryablecolumns"='b'))
+                UNION ALL
+
+                SELECT t."$path"
+                FROM "amazonreviews"."amazon_reviews_parquet" t,
+                    "s3f2_manifests_database"."s3f2_manifests_table" m
+                WHERE
+                    m."jobid"='job_1234567890' AND
+                    m."datamapperid"='dm_1234' AND
+                    cast(t."b" as varchar)=m."queryablematchid" AND m."queryablecolumns"='b'
+            )
         """
     )
 
@@ -193,13 +209,15 @@ def test_it_generates_query_with_columns_of_complex_type():
     )
     assert escape_resp(resp) == escape_resp(
         """
-            SELECT DISTINCT t."$path"
-            FROM "amazonreviews"."amazon_reviews_parquet" t,
-                "s3f2_manifests_database"."s3f2_manifests_table" m
-            WHERE m."jobid"='job_1234567890'
-            AND m."datamapperid"='dm_1234' AND
-
-            ((cast(t."a"."b"."c" as varchar)=m."queryablematchid" AND m."queryablecolumns"='a.b.c'))
+            SELECT DISTINCT "$path" FROM (
+                SELECT t."$path"
+                FROM "amazonreviews"."amazon_reviews_parquet" t,
+                    "s3f2_manifests_database"."s3f2_manifests_table" m
+                WHERE
+                    m."jobid"='job_1234567890' AND
+                    m."datamapperid"='dm_1234' AND
+                    cast(t."a"."b"."c" as varchar)=m."queryablematchid" AND m."queryablecolumns"='a.b.c'
+            )
         """
     )
 
@@ -223,19 +241,37 @@ def test_it_generates_query_with_composite_matches():
     )
     assert escape_resp(resp) == escape_resp(
         """
-            SELECT DISTINCT t."$path"
-            FROM "amazonreviews"."amazon_reviews_parquet" t,
-                "s3f2_manifests_database"."s3f2_manifests_table" m
-            WHERE m."jobid"='job_1234567890'
-            AND m."datamapperid"='dm_1234' AND
+            SELECT DISTINCT "$path" FROM (
+                SELECT t."$path"
+                FROM "amazonreviews"."amazon_reviews_parquet" t,
+                    "s3f2_manifests_database"."s3f2_manifests_table" m
+                WHERE
+                    m."jobid"='job_1234567890' AND
+                    m."datamapperid"='dm_1234' AND
+                    concat(t."user"."first_name", '_S3F2COMP_', t."user"."last_name")=m."queryablematchid" AND
+                    m."queryablecolumns"='user.first_name_S3F2COMP_user.last_name'
 
-            ((concat(t."user"."first_name", '_S3F2COMP_', t."user"."last_name")=m."queryablematchid" AND
-            m."queryablecolumns"='user.first_name_S3F2COMP_user.last_name') OR
+                UNION ALL
 
-            (concat(t."user"."age", '_S3F2COMP_', t."user"."last_name")=m."queryablematchid" AND
-            m."queryablecolumns"='user.age_S3F2COMP_user.last_name') OR
+                SELECT t."$path"
+                FROM "amazonreviews"."amazon_reviews_parquet" t,
+                    "s3f2_manifests_database"."s3f2_manifests_table" m
+                WHERE
+                    m."jobid"='job_1234567890' AND
+                    m."datamapperid"='dm_1234' AND
+                    concat(t."user"."age", '_S3F2COMP_', t."user"."last_name")=m."queryablematchid" AND
+                    m."queryablecolumns"='user.age_S3F2COMP_user.last_name'
 
-            (cast(t."user"."userid" as varchar)=m."queryablematchid" AND m."queryablecolumns"='user.userid'))
+                UNION ALL
+
+                SELECT t."$path"
+                FROM "amazonreviews"."amazon_reviews_parquet" t,
+                    "s3f2_manifests_database"."s3f2_manifests_table" m
+                WHERE
+                    m."jobid"='job_1234567890' AND
+                    m."datamapperid"='dm_1234' AND
+                    cast(t."user"."userid" as varchar)=m."queryablematchid" AND m."queryablecolumns"='user.userid'
+            )
         """
     )
 
@@ -258,16 +294,26 @@ def test_it_generates_query_with_simple_and_composite_matches():
     )
     assert escape_resp(resp) == escape_resp(
         """
-            SELECT DISTINCT t."$path"
-            FROM "amazonreviews"."amazon_reviews_parquet" t,
-                "s3f2_manifests_database"."s3f2_manifests_table" m
-            WHERE m."jobid"='job_1234567890'
-            AND m."datamapperid"='dm_1234' AND
+            SELECT DISTINCT "$path" FROM (
+                SELECT t."$path"
+                FROM "amazonreviews"."amazon_reviews_parquet" t,
+                    "s3f2_manifests_database"."s3f2_manifests_table" m
+                WHERE
+                    m."jobid"='job_1234567890' AND
+                    m."datamapperid"='dm_1234' AND
+                    cast(t."a"."b"."c" as varchar)=m."queryablematchid" AND m."queryablecolumns"='a.b.c'
 
-            ((cast(t."a"."b"."c" as varchar)=m."queryablematchid" AND m."queryablecolumns"='a.b.c') OR
+                UNION ALL
 
-            (concat(t."user"."first_name", '_S3F2COMP_', t."user"."last_name")=m."queryablematchid" AND
-            m."queryablecolumns"='user.first_name_S3F2COMP_user.last_name'))
+                SELECT t."$path"
+                FROM "amazonreviews"."amazon_reviews_parquet" t,
+                    "s3f2_manifests_database"."s3f2_manifests_table" m
+                WHERE
+                    m."jobid"='job_1234567890' AND
+                    m."datamapperid"='dm_1234' AND
+                    concat(t."user"."first_name", '_S3F2COMP_', t."user"."last_name")=m."queryablematchid" AND
+                    m."queryablecolumns"='user.first_name_S3F2COMP_user.last_name'
+            )
         """
     )
 
