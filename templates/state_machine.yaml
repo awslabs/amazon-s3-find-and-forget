@@ -439,10 +439,10 @@ Resources:
           }
         }
 
-  MainStateMachine:
+  StateMachine:
     Type: AWS::StepFunctions::StateMachine
     Properties:
-      StateMachineName: !Sub ${StateMachinePrefix}-MainStateMachine
+      StateMachineName: !Sub ${StateMachinePrefix}-StateMachine
       DefinitionString: !Sub |-
         {
           "Comment": "State machine for processing the S3 Find and Forget deletion queue.",
@@ -986,7 +986,7 @@ Resources:
           - "aws.states"
         detail:
           stateMachineArn:
-            - !Sub arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${StateMachinePrefix}-MainStateMachine
+            - !Sub arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${StateMachinePrefix}-StateMachine
           status:
             - "ABORTED"
             - "TIMED_OUT"
@@ -1022,6 +1022,6 @@ Outputs:
   QueryQueueUrl:
     Value: !Ref QueryQueue
   StateMachineArn:
-    Value: !Ref MainStateMachine
+    Value: !Ref StateMachine
   StateMachineRoleArn:
     Value: !GetAtt StatesExecutionRole.Arn
