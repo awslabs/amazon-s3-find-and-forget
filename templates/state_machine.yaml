@@ -116,10 +116,10 @@ Resources:
               - "states:StartExecution"
             Resource: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${StateMachinePrefix}*"
 
-  QueryStateMachine:
+  AthenaStateMachine:
     Type: AWS::StepFunctions::StateMachine
     Properties:
-      StateMachineName: !Sub ${StateMachinePrefix}-QueryStateMachine
+      StateMachineName: !Sub ${StateMachinePrefix}-AthenaStateMachine
       RoleArn: !GetAtt StatesExecutionRole.Arn
       DefinitionString: !Sub |-
         {
@@ -294,10 +294,10 @@ Resources:
           }
         }
 
-  ForgetStateMachine:
+  DeleteStateMachine:
     Type: AWS::StepFunctions::StateMachine
     Properties:
-      StateMachineName: !Sub ${StateMachinePrefix}-ForgetStateMachine
+      StateMachineName: !Sub ${StateMachinePrefix}-DeletionStateMachine
       RoleArn: !GetAtt StatesExecutionRole.Arn
       DefinitionString: !Sub |-
         {
@@ -489,7 +489,7 @@ Resources:
                 "States": {
                   "Purge Query Queue": {
                     "Parameters": {
-                      "QueueUrl": "${QueryQ}"
+                      "QueueUrl": "${QueryQueue}"
                     },
                     "Comment": "Purge the query queue",
                     "Type": "Task",
@@ -651,7 +651,7 @@ Resources:
                   "DeletionTasksMaxNumber.$": "$.DeletionTasksMaxNumber",
                   "WaitDuration.$": "$.ForgetQueueWaitSeconds"
                 },
-                "StateMachineArn":"${ForgetStateMachine}",
+                "StateMachineArn":"${DeleteStateMachine}",
                 "Name.$": "$$.Execution.Name"
               },
               "ResultPath": null,
@@ -722,13 +722,11 @@ Resources:
       RoleArn: !GetAtt StatesExecutionRole.Arn
 
   # Supporting Resources
-  QueryQ:
+  QueryQueue:
     Type: AWS::SQS::Queue
     Properties:
       KmsMasterKeyId: alias/aws/sqs
       VisibilityTimeout: 43200
-      ContentBasedDeduplication: true
-      FifoQueue: true
 
   # Tasks
   CheckQueueSize:
@@ -742,7 +740,7 @@ Resources:
           - "sqs:GetQueueAttributes"
           Effect: "Allow"
           Resource:
-          - !GetAtt QueryQ.Arn
+          - !GetAtt QueryQueue.Arn
           - !Sub
             - arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${QueueName}
             - QueueName: !Select [4, !Split ["/", !Ref DeleteQueueUrl]]
@@ -846,7 +844,7 @@ Resources:
           - "sqs:GetQueueAttributes"
           Effect: "Allow"
           Resource:
-          - !GetAtt QueryQ.Arn
+          - !GetAtt QueryQueue.Arn
           - !Sub
             - arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${QueueName}
             - QueueName: !Select [4, !Split ["/", !Ref DeleteQueueUrl]]
@@ -859,7 +857,7 @@ Resources:
       MemorySize: 512
       Environment:
         Variables:
-          QueryQueue: !Ref QueryQ
+          QueryQueue: !Ref QueryQueue
       Policies:
       - S3CrudPolicy:
           BucketName: !Ref ManifestsBucket
@@ -893,7 +891,7 @@ Resources:
           - "sqs:SendMessage*"
           - "sqs:GetQueueAttributes"
           Resource:
-          - !GetAtt QueryQ.Arn
+          - !GetAtt QueryQueue.Arn
 
   OrchestrateECSServiceScaling:
     Type: AWS::Serverless::Function
@@ -914,8 +912,8 @@ Resources:
       CodeUri: ../backend/lambdas/tasks/
       Environment:
         Variables:
-          StateMachineArn: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${StateMachinePrefix}-QueryStateMachine"
-          QueueUrl: !Ref QueryQ
+          StateMachineArn: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${StateMachinePrefix}-AthenaStateMachine"
+          QueueUrl: !Ref QueryQueue
       Policies:
       - S3CrudPolicy:
           BucketName: !Ref ResultBucket
@@ -925,8 +923,8 @@ Resources:
           - "states:DescribeExecution"
           Effect: Allow
           Resource:
-          - !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${StateMachinePrefix}-QueryStateMachine"
-          - !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:execution:${StateMachinePrefix}-QueryStateMachine:*"
+          - !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${StateMachinePrefix}-AthenaStateMachine"
+          - !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:execution:${StateMachinePrefix}-AthenaStateMachine:*"
         - Action:
           - "sqs:ReceiveMessage*"
           - "sqs:ChangeMessageVisibility"
@@ -935,7 +933,7 @@ Resources:
           - "sqs:GetQueueAttributes"
           Effect: "Allow"
           Resource:
-          - !GetAtt QueryQ.Arn
+          - !GetAtt QueryQueue.Arn
 
   DeleteQueueMessage:
     Type: AWS::Serverless::Function
@@ -944,14 +942,14 @@ Resources:
       CodeUri: ../backend/lambdas/tasks/
       Environment:
         Variables:
-          QueueUrl: !Ref QueryQ
+          QueueUrl: !Ref QueryQueue
       Policies:
       - Statement:
         - Action:
           - "sqs:DeleteMessage"
           - "sqs:GetQueueAttributes"
           Effect: "Allow"
-          Resource: !GetAtt QueryQ.Arn
+          Resource: !GetAtt QueryQueue.Arn
 
   PurgeQueue:
     Type: AWS::Serverless::Function
@@ -965,7 +963,7 @@ Resources:
           - "sqs:GetQueueAttributes"
           Effect: "Allow"
           Resource:
-          - !GetAtt QueryQ.Arn
+          - !GetAtt QueryQueue.Arn
           - !Sub
             - arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${QueueName}
             - QueueName: !Select [4, !Split ["/", !Ref DeleteQueueUrl]]
@@ -1018,11 +1016,11 @@ Outputs:
   AthenaExecutionRoleArn:
     Value: !GetAtt ExecuteQueryRole.Arn
   AthenaStateMachineArn:
-    Value: !Ref QueryStateMachine
+    Value: !Ref AthenaStateMachine
   GenerateQueriesRole:
     Value: !Ref GenerateQueriesRole
   QueryQueueUrl:
-    Value: !Ref QueryQ
+    Value: !Ref QueryQueue
   StateMachineArn:
     Value: !Ref MainStateMachine
   StateMachineRoleArn:
