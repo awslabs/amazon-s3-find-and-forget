@@ -116,9 +116,10 @@ Resources:
               - "states:StartExecution"
             Resource: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${StateMachinePrefix}*"
 
-  AthenaStateMachine:
+  QueryStateMachine:
     Type: AWS::StepFunctions::StateMachine
     Properties:
+      StateMachineName: !Sub ${StateMachinePrefix}-QueryStateMachine
       RoleArn: !GetAtt StatesExecutionRole.Arn
       DefinitionString: !Sub |-
         {
@@ -293,9 +294,10 @@ Resources:
           }
         }
 
-  DeleteStateMachine:
+  ForgetStateMachine:
     Type: AWS::StepFunctions::StateMachine
     Properties:
+      StateMachineName: !Sub ${StateMachinePrefix}-ForgetStateMachine
       RoleArn: !GetAtt StatesExecutionRole.Arn
       DefinitionString: !Sub |-
         {
@@ -437,9 +439,10 @@ Resources:
           }
         }
 
-  StateMachine:
+  MainStateMachine:
     Type: AWS::StepFunctions::StateMachine
     Properties:
+      StateMachineName: !Sub ${StateMachinePrefix}-MainStateMachine
       DefinitionString: !Sub |-
         {
           "Comment": "State machine for processing the S3 Find and Forget deletion queue.",
@@ -648,7 +651,7 @@ Resources:
                   "DeletionTasksMaxNumber.$": "$.DeletionTasksMaxNumber",
                   "WaitDuration.$": "$.ForgetQueueWaitSeconds"
                 },
-                "StateMachineArn":"${DeleteStateMachine}",
+                "StateMachineArn":"${ForgetStateMachine}",
                 "Name.$": "$$.Execution.Name"
               },
               "ResultPath": null,
@@ -911,7 +914,7 @@ Resources:
       CodeUri: ../backend/lambdas/tasks/
       Environment:
         Variables:
-          StateMachineArn: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${StateMachinePrefix}-AthenaStateMachine"
+          StateMachineArn: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${StateMachinePrefix}-QueryStateMachine"
           QueueUrl: !Ref QueryQ
       Policies:
       - S3CrudPolicy:
@@ -922,8 +925,8 @@ Resources:
           - "states:DescribeExecution"
           Effect: Allow
           Resource:
-          - !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${StateMachinePrefix}-AthenaStateMachine"
-          - !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:execution:${StateMachinePrefix}-AthenaStateMachine:*"
+          - !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${StateMachinePrefix}-QueryStateMachine"
+          - !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:execution:${StateMachinePrefix}-QueryStateMachine:*"
         - Action:
           - "sqs:ReceiveMessage*"
           - "sqs:ChangeMessageVisibility"
@@ -985,7 +988,7 @@ Resources:
           - "aws.states"
         detail:
           stateMachineArn:
-            - !Sub arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${StateMachinePrefix}-StateMachine
+            - !Sub arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${StateMachinePrefix}-MainStateMachine
           status:
             - "ABORTED"
             - "TIMED_OUT"
@@ -1015,12 +1018,12 @@ Outputs:
   AthenaExecutionRoleArn:
     Value: !GetAtt ExecuteQueryRole.Arn
   AthenaStateMachineArn:
-    Value: !Ref AthenaStateMachine
+    Value: !Ref QueryStateMachine
   GenerateQueriesRole:
     Value: !Ref GenerateQueriesRole
   QueryQueueUrl:
     Value: !Ref QueryQ
   StateMachineArn:
-    Value: !Ref StateMachine
+    Value: !Ref MainStateMachine
   StateMachineRoleArn:
     Value: !GetAtt StatesExecutionRole.Arn
