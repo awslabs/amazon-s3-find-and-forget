@@ -205,7 +205,7 @@ Resources:
       - DelStack
       - DeployStack
       - LayersStack
-      - StateMachineStack
+      - SMStack
       - StreamProcessorStack
       - WebUIStack
     Properties:
@@ -278,7 +278,7 @@ Resources:
       TemplateURL: ./deployment_helper.yaml
       Parameters:
         ApiUrl: !GetAtt APIStack.Outputs.ApiUrl
-        AthenaExecutionRole: !GetAtt StateMachineStack.Outputs.AthenaExecutionRole
+        AthenaExecutionRole: !GetAtt SMStack.Outputs.AthenaExecutionRole
         CloudFrontDistribution: !GetAtt WebUIStack.Outputs.CloudFrontDistribution
         CodeBuildArtefactBucket: !Ref TempBucket
         CognitoIdentityPoolId: !GetAtt AuthStack.Outputs.CognitoIdentityPoolId
@@ -305,7 +305,7 @@ Resources:
       TemplateURL: ./manifests.yaml
       Parameters:
         JobDetailsRetentionDays: !Ref JobDetailsRetentionDays
-  StateMachineStack:
+  SMStack:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: ./state_machine.yaml
@@ -344,7 +344,7 @@ Resources:
         JobTableName: !GetAtt DDBStack.Outputs.JobTable
         JobTableStreamArn: !GetAtt DDBStack.Outputs.JobTableStreamArn
         ManifestsBucket: !GetAtt ManifestsStack.Outputs.ManifestsBucket
-        StateMachineArn: !GetAtt StateMachineStack.Outputs.StateMachineArn
+        StateMachineArn: !GetAtt SMStack.Outputs.StateMachineArn
   VpcStack:
     Type: AWS::CloudFormation::Stack
     Condition: ShouldDeployVpc
@@ -373,9 +373,9 @@ Outputs:
     Export:
       Name: !Sub ${ResourcePrefix}-ApiUrl
   AthenaStateMachineArn:
-    Value: !GetAtt StateMachineStack.Outputs.AthenaStateMachineArn
+    Value: !GetAtt SMStack.Outputs.AthenaStateMachineArn
   AthenaExecutionRoleArn:
-    Value: !GetAtt StateMachineStack.Outputs.AthenaExecutionRoleArn
+    Value: !GetAtt SMStack.Outputs.AthenaExecutionRoleArn
   ConfigParameter:
     Value: !Ref ConfigParameter
   CognitoUserPoolClientId:
@@ -403,7 +403,7 @@ Outputs:
   ECRRepository:
     Value: !GetAtt DelStack.Outputs.ECRRepository
   GenerateQueriesRole:
-    Value: !GetAtt StateMachineStack.Outputs.GenerateQueriesRole
+    Value: !GetAtt SMStack.Outputs.GenerateQueriesRole
   JobTable:
     Value: !GetAtt DDBStack.Outputs.JobTable
   KMSKeyArns:
@@ -411,13 +411,13 @@ Outputs:
   PutDataMapperRole:
     Value: !GetAtt APIStack.Outputs.PutDataMapperRole
   QueryQueueUrl:
-    Value: !GetAtt StateMachineStack.Outputs.QueryQueueUrl
+    Value: !GetAtt SMStack.Outputs.QueryQueueUrl
   SolutionVersion:
     Value: !FindInMap [Solution, Constants, Version]
   StateMachineArn:
-    Value: !GetAtt StateMachineStack.Outputs.StateMachineArn
+    Value: !GetAtt SMStack.Outputs.StateMachineArn
   StateMachineRoleArn:
-    Value: !GetAtt StateMachineStack.Outputs.StateMachineRoleArn
+    Value: !GetAtt SMStack.Outputs.StateMachineRoleArn
   TempBucket:
     Value: !Ref TempBucket
   WebUIBucket:

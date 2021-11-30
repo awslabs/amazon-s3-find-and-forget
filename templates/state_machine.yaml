@@ -119,7 +119,6 @@ Resources:
   AthenaStateMachine:
     Type: AWS::StepFunctions::StateMachine
     Properties:
-      StateMachineName: !Sub ${StateMachinePrefix}-AthenaStateMachine
       RoleArn: !GetAtt StatesExecutionRole.Arn
       DefinitionString: !Sub |-
         {
@@ -297,7 +296,6 @@ Resources:
   DeleteStateMachine:
     Type: AWS::StepFunctions::StateMachine
     Properties:
-      StateMachineName: !Sub ${StateMachinePrefix}-DeletionStateMachine
       RoleArn: !GetAtt StatesExecutionRole.Arn
       DefinitionString: !Sub |-
         {
@@ -442,7 +440,6 @@ Resources:
   StateMachine:
     Type: AWS::StepFunctions::StateMachine
     Properties:
-      StateMachineName: !Sub ${StateMachinePrefix}-StateMachine
       DefinitionString: !Sub |-
         {
           "Comment": "State machine for processing the S3 Find and Forget deletion queue.",
@@ -489,7 +486,7 @@ Resources:
                 "States": {
                   "Purge Query Queue": {
                     "Parameters": {
-                      "QueueUrl": "${QueryQueue}"
+                      "QueueUrl": "${QueryQ}"
                     },
                     "Comment": "Purge the query queue",
                     "Type": "Task",
@@ -722,7 +719,7 @@ Resources:
       RoleArn: !GetAtt StatesExecutionRole.Arn
 
   # Supporting Resources
-  QueryQueue:
+  QueryQ:
     Type: AWS::SQS::Queue
     Properties:
       KmsMasterKeyId: alias/aws/sqs
@@ -742,7 +739,7 @@ Resources:
           - "sqs:GetQueueAttributes"
           Effect: "Allow"
           Resource:
-          - !GetAtt QueryQueue.Arn
+          - !GetAtt QueryQ.Arn
           - !Sub
             - arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${QueueName}
             - QueueName: !Select [4, !Split ["/", !Ref DeleteQueueUrl]]
@@ -846,7 +843,7 @@ Resources:
           - "sqs:GetQueueAttributes"
           Effect: "Allow"
           Resource:
-          - !GetAtt QueryQueue.Arn
+          - !GetAtt QueryQ.Arn
           - !Sub
             - arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${QueueName}
             - QueueName: !Select [4, !Split ["/", !Ref DeleteQueueUrl]]
@@ -859,7 +856,7 @@ Resources:
       MemorySize: 512
       Environment:
         Variables:
-          QueryQueue: !Ref QueryQueue
+          QueryQueue: !Ref QueryQ
       Policies:
       - S3CrudPolicy:
           BucketName: !Ref ManifestsBucket
@@ -893,7 +890,7 @@ Resources:
           - "sqs:SendMessage*"
           - "sqs:GetQueueAttributes"
           Resource:
-          - !GetAtt QueryQueue.Arn
+          - !GetAtt QueryQ.Arn
 
   OrchestrateECSServiceScaling:
     Type: AWS::Serverless::Function
@@ -915,7 +912,7 @@ Resources:
       Environment:
         Variables:
           StateMachineArn: !Sub "arn:${AWS::Partition}:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${StateMachinePrefix}-AthenaStateMachine"
-          QueueUrl: !Ref QueryQueue
+          QueueUrl: !Ref QueryQ
       Policies:
       - S3CrudPolicy:
           BucketName: !Ref ResultBucket
@@ -935,7 +932,7 @@ Resources:
           - "sqs:GetQueueAttributes"
           Effect: "Allow"
           Resource:
-          - !GetAtt QueryQueue.Arn
+          - !GetAtt QueryQ.Arn
 
   DeleteQueueMessage:
     Type: AWS::Serverless::Function
@@ -944,14 +941,14 @@ Resources:
       CodeUri: ../backend/lambdas/tasks/
       Environment:
         Variables:
-          QueueUrl: !Ref QueryQueue
+          QueueUrl: !Ref QueryQ
       Policies:
       - Statement:
         - Action:
           - "sqs:DeleteMessage"
           - "sqs:GetQueueAttributes"
           Effect: "Allow"
-          Resource: !GetAtt QueryQueue.Arn
+          Resource: !GetAtt QueryQ.Arn
 
   PurgeQueue:
     Type: AWS::Serverless::Function
@@ -965,7 +962,7 @@ Resources:
           - "sqs:GetQueueAttributes"
           Effect: "Allow"
           Resource:
-          - !GetAtt QueryQueue.Arn
+          - !GetAtt QueryQ.Arn
           - !Sub
             - arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${QueueName}
             - QueueName: !Select [4, !Split ["/", !Ref DeleteQueueUrl]]
@@ -1022,7 +1019,7 @@ Outputs:
   GenerateQueriesRole:
     Value: !Ref GenerateQueriesRole
   QueryQueueUrl:
-    Value: !Ref QueryQueue
+    Value: !Ref QueryQ
   StateMachineArn:
     Value: !Ref StateMachine
   StateMachineRoleArn:
