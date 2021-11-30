@@ -159,6 +159,12 @@ Resources:
               "Type": "Task",
               "Resource": "${CheckQueryStatus.Arn}",
               "Next": "Query Complete?",
+              "Retry": [{
+                 "ErrorEquals": [ "States.ALL" ],
+                 "IntervalSeconds": 10,
+                 "BackoffRate": 10,
+                 "MaxAttempts": 2
+              }],
               "Catch": [{
                  "ErrorEquals": ["States.ALL"],
                  "ResultPath": "$.ErrorDetails",
@@ -448,6 +454,7 @@ Resources:
                 "ExecutionId.$": "$$.Execution.Id",
                 "ExecutionName.$": "$$.Execution.Name",
                 "AthenaConcurrencyLimit.$": "$.AthenaConcurrencyLimit",
+                "AthenaQueryMaxRetries.$": "$.AthenaQueryMaxRetries",
                 "DeletionTasksMaxNumber.$": "$.DeletionTasksMaxNumber",
                 "ForgetQueueWaitSeconds.$": "$.ForgetQueueWaitSeconds",
                 "QueryExecutionWaitSeconds.$": "$.QueryExecutionWaitSeconds",
