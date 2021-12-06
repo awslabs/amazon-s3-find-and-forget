@@ -135,6 +135,7 @@ def test_it_returns_summary_fields_in_list(
                     "JobStartTime",
                     "TotalObjectRollbackFailedCount",
                     "TotalObjectUpdatedCount",
+                    "TotalObjectUpdateSkippedCount",
                     "TotalObjectUpdateFailedCount",
                     "TotalQueryCount",
                     "TotalQueryScannedInBytes",
@@ -977,6 +978,46 @@ def test_it_deletes_old_versions(
     )
     assert 0 == len(query_parquet_file(tmp, "customer_id", "12345"))
     assert 1 == len(list(bucket.object_versions.filter(Prefix=object_key)))
+
+
+def test_it_ignores_not_found_exceptions(
+    del_queue_factory,
+    job_factory,
+    dummy_lake,
+    glue_data_mapper_factory,
+    data_loader,
+    job_complete_waiter,
+    job_table,
+    data_access_role,
+    find_phase_ended_waiter,
+):
+    # Arrange
+    glue_data_mapper_factory(
+        "test",
+        partition_keys=["year", "month", "day"],
+        partitions=[["2019", "08", "20"]],
+        ignore_object_not_found_exceptions=True,
+        role_arn=data_access_role["Arn"],
+    )
+    item = del_queue_factory("12345")
+    object_key = "test/2019/08/20/test.parquet"
+    bucket = dummy_lake["bucket"]
+    data_loader("basic.parquet", object_key)
+    # Start job, wait for find phase to end, delete object
+    job_id = job_factory(del_queue_items=[item])["Id"]
+    find_phase_ended_waiter.wait(job_id)
+    bucket.Object(key=object_key).delete()
+    # Act
+    job_complete_waiter.wait(
+        TableName=job_table.name, Key={"Id": {"S": job_id}, "Sk": {"S": job_id}}
+    )
+    # Assert
+    job = job_table.get_item(Key={"Id": job_id, "Sk": job_id})["Item"]
+    assert "COMPLETED" == job["JobStatus"]
+    assert 0 == job["TotalObjectUpdatedCount"]
+    assert 1 == job["TotalObjectUpdateSkippedCount"]
+    assert 0 == job["TotalObjectUpdateFailedCount"]
+    assert 0 == job["TotalObjectRollbackFailedCount"]
 
 
 def test_it_handles_find_permission_issues(

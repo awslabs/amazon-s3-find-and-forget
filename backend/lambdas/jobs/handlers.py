@@ -38,6 +38,7 @@ job_summary_attributes = [
     "JobStartTime",
     "TotalObjectRollbackFailedCount",
     "TotalObjectUpdatedCount",
+    "TotalObjectUpdateSkippedCount",
     "TotalObjectUpdateFailedCount",
     "TotalQueryCount",
     "TotalQueryFailedCount",

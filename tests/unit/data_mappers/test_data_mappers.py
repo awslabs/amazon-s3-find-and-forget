@@ -65,6 +65,7 @@ def test_it_creates_data_mapper(validate_mapper, table):
                     "Format": "parquet",
                     "RoleArn": "arn:aws:iam::accountid:role/S3F2DataAccessRole",
                     "DeleteOldVersions": False,
+                    "IgnoreObjectNotFoundExceptions": True,
                 }
             ),
             "requestContext": autorization_mock,
@@ -86,6 +87,7 @@ def test_it_creates_data_mapper(validate_mapper, table):
         "CreatedBy": {"Username": "cognitoUsername", "Sub": "cognitoSub"},
         "RoleArn": "arn:aws:iam::accountid:role/S3F2DataAccessRole",
         "DeleteOldVersions": False,
+        "IgnoreObjectNotFoundExceptions": True,
     } == json.loads(response["body"])
 
 
@@ -104,6 +106,7 @@ def test_it_gets_data_mapper(validate_mapper, table):
         "Format": "parquet",
         "RoleArn": "arn:aws:iam::accountid:role/S3F2DataAccessRole",
         "DeleteOldVersions": False,
+        "IgnoreObjectNotFoundExceptions": True,
     }
     table.get_item.return_value = {"Item": mock_dm}
     get_response = handlers.get_data_mapper_handler(
@@ -152,6 +155,7 @@ def test_it_modifies_data_mapper(validate_mapper, table):
                 "Format": "parquet",
                 "RoleArn": "arn:aws:iam::accountid:role/S3F2DataAccessRole",
                 "DeleteOldVersions": False,
+                "IgnoreObjectNotFoundExceptions": True,
             }
         )
 
@@ -187,6 +191,7 @@ def test_it_modifies_data_mapper(validate_mapper, table):
         "CreatedBy": {"Username": "cognitoUsername", "Sub": "cognitoSub"},
         "RoleArn": "arn:aws:iam::accountid:role/S3F2DataAccessRole",
         "DeleteOldVersions": False,
+        "IgnoreObjectNotFoundExceptions": True,
     } == json.loads(edit_response["body"])
 
 
@@ -227,6 +232,7 @@ def test_it_supports_optionals(validate_mapper, table):
         },
         "Format": "parquet",
         "DeleteOldVersions": True,
+        "IgnoreObjectNotFoundExceptions": False,
         "RoleArn": "arn:aws:iam::accountid:role/S3F2DataAccessRole",
         "CreatedBy": {"Username": "cognitoUsername", "Sub": "cognitoSub"},
     } == json.loads(response["body"])

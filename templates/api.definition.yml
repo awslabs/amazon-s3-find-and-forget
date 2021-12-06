@@ -522,6 +522,10 @@ components:
           type: "boolean"
           description: "Toggles deleting all non-latest versions of an object after a new redacted version is created"
           default: "true"
+        IgnoreObjectNotFoundExceptions:
+          type: "boolean"
+          description: "Toggles ignoring Object Not Found errors during deletion"
+          default: "false"
     DeletionQueueItem:
       description: "A Deletion Queue Item object"
       type: "object"
@@ -642,6 +646,10 @@ components:
           type: "integer"
           description: "Total number of successfully updated objects"
           default: 0
+        TotalObjectUpdateSkippedCount:
+          type: "integer"
+          description: "Total number of skipped objects"
+          default: 0
         TotalObjectUpdateFailedCount:
           type: "integer"
           description: "Total number of objects which could not be successfully updated"
@@ -735,6 +743,10 @@ components:
         TotalObjectUpdatedCount:
           type: "integer"
           description: "Total number of successfully updated objects"
+          default: 0
+        TotalObjectUpdateSkippedCount:
+          type: "integer"
+          description: "Total number of skipped objects"
           default: 0
         TotalObjectUpdateFailedCount:
           type: "integer"

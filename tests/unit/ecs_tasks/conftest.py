@@ -13,6 +13,7 @@ def message_stub():
                 "Columns": [{"Column": "customer_id"}],
                 "CompositeColumns": [],
                 "DeleteOldVersions": False,
+                "IgnoreObjectNotFoundExceptions": False,
                 "Format": "parquet",
                 "Manifest": "s3://temp-bucket/manifests/1234/dm54321/manifest.json",
                 **kwargs,

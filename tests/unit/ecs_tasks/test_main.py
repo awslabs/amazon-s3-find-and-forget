@@ -20,6 +20,7 @@ with patch.dict(
         kill_handler,
         execute,
         handle_error,
+        handle_skip,
         get_queue,
         main,
         parse_args,
@@ -508,6 +509,56 @@ def test_it_handles_file_too_big(mock_error_handler, mock_s3, message_stub):
 
 @patch.dict(os.environ, {"JobTable": "test"})
 @patch("backend.ecs_tasks.delete_files.main.get_queue", MagicMock())
+@patch("backend.ecs_tasks.delete_files.main.build_matches", MagicMock())
+@patch(
+    "backend.ecs_tasks.delete_files.main.validate_bucket_versioning",
+    MagicMock(return_value=True),
+)
+@patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
+@patch("backend.ecs_tasks.delete_files.main.s3fs")
+@patch("backend.ecs_tasks.delete_files.main.handle_error")
+def test_it_does_not_ignore_not_found_error_by_default(
+    mock_error_handler, mock_s3, message_stub
+):
+    mock_s3.S3FileSystem.return_value = mock_s3
+    mock_s3.open.side_effect = ClientError({"Error": {"Code": "404"}}, "HeadObject")
+    # Act
+    execute("https://queue/url", message_stub(), "receipt_handle")
+    # Assert
+    msg = mock_error_handler.call_args[0][2]
+    assert msg.startswith("ClientError:")
+
+
+@patch.dict(os.environ, {"JobTable": "test"})
+@patch("backend.ecs_tasks.delete_files.main.get_queue", MagicMock())
+@patch("backend.ecs_tasks.delete_files.main.build_matches", MagicMock())
+@patch(
+    "backend.ecs_tasks.delete_files.main.validate_bucket_versioning",
+    MagicMock(return_value=True),
+)
+@patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
+@patch("backend.ecs_tasks.delete_files.main.s3fs")
+@patch("backend.ecs_tasks.delete_files.main.handle_error")
+@patch("backend.ecs_tasks.delete_files.main.handle_skip")
+def test_it_ignores_not_found_error_if_param_is_true(
+    mock_skip_handler, mock_error_handler, mock_s3, message_stub
+):
+    mock_s3.S3FileSystem.return_value = mock_s3
+    mock_s3.open.side_effect = ClientError({"Error": {"Code": "404"}}, "HeadObject")
+    # Act
+    execute(
+        "https://queue/url",
+        message_stub(IgnoreObjectNotFoundExceptions=True),
+        "receipt_handle",
+    )
+    # Assert
+    mock_error_handler.assert_not_called()
+    msg = mock_skip_handler.call_args[0][2]
+    assert msg.startswith("Ignored error: ClientError:")
+
+
+@patch.dict(os.environ, {"JobTable": "test"})
+@patch("backend.ecs_tasks.delete_files.main.get_queue", MagicMock())
 @patch(
     "backend.ecs_tasks.delete_files.main.validate_bucket_versioning",
     MagicMock(return_value=True),
@@ -795,6 +846,20 @@ def test_error_handler(mock_emit):
     handle_error(msg, "{}", "Test Error")
     mock_emit.assert_called_with("{}", "Test Error", "ObjectUpdateFailed")
     msg.change_visibility.assert_called_with(VisibilityTimeout=0)
+
+
+@patch("backend.ecs_tasks.delete_files.main.sanitize_message")
+@patch("backend.ecs_tasks.delete_files.main.emit_skipped_event")
+def test_skip_handler(mock_emit, mock_sanitize):
+    sqs_message = MagicMock()
+    handle_skip(
+        sqs_message, {"Object": "s3://bucket/path/basic.parquet"}, "Ignored error"
+    )
+    # Verify it deletes the message
+    sqs_message.delete.assert_called()
+    # Verify it emits the skip event
+    mock_sanitize.assert_called()
+    mock_emit.assert_called()
 
 
 @patch("backend.ecs_tasks.delete_files.main.handle_error")

@@ -9,6 +9,7 @@ Name | Type | Description | Notes
 **JobStartTime** | [**Integer**](integer.md) | Job start date as Epoch timestamp | [optional] [default to null]
 **JobFinishTime** | [**Integer**](integer.md) | Job finish date as Epoch timestamp | [optional] [default to null]
 **TotalObjectUpdatedCount** | [**Integer**](integer.md) | Total number of successfully updated objects | [optional] [default to 0]
+**TotalObjectUpdateSkippedCount** | [**Integer**](integer.md) | Total number of skipped objects | [optional] [default to 0]
 **TotalObjectUpdateFailedCount** | [**Integer**](integer.md) | Total number of objects which could not be successfully updated | [optional] [default to 0]
 **TotalObjectRollbackFailedCount** | [**Integer**](integer.md) | Total number of objects which could not be successfully rolled back after detecting an integrity conflict | [optional] [default to 0]
 **TotalQueryCount** | [**Integer**](integer.md) | Total number of queries executed during the find phase | [optional] [default to 0]

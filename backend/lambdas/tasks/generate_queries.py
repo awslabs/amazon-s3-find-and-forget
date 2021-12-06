@@ -154,6 +154,9 @@ def generate_athena_queries(data_mapper, deletion_items, job_id):
         "Columns": columns,
         "PartitionKeys": [],
         "DeleteOldVersions": data_mapper.get("DeleteOldVersions", True),
+        "IgnoreObjectNotFoundExceptions": data_mapper.get(
+            "IgnoreObjectNotFoundExceptions", False
+        ),
     }
     if data_mapper.get("RoleArn", None):
         msg["RoleArn"] = data_mapper["RoleArn"]

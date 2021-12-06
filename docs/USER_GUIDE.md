@@ -436,8 +436,19 @@ To grant these permissions in Lake Formation:
    latest created object version, deselect _Delete previous object versions
    after update_. By default the solution will delete all previous of versions
    after creating a new version.
-9. Choose **Create Data Mapper**.
-10. A message is displayed advising you to update the S3 Bucket Policy for the
+9. If you want the solution to ignore Object Not Found exceptions, select
+   _Ignore object not found exceptions during deletion_. By default deletion
+   jobs will fail if any objects that are found by the Find phase don't exist in
+   the Delete phase. This setting can be useful if you have some other system
+   deleting objects from the bucket, for example S3 lifecycle policies.
+
+   Note that the solution **will not** delete old versions for these objects.
+   This can cause data to be **retained longer than intended**. Make sure there
+   is some mechanism to handle old versions. One option would be to configure
+   [S3 lifecycle policies] on non-current versions.
+
+10. Choose **Create Data Mapper**.
+11. A message is displayed advising you to update the S3 Bucket Policy for the
     S3 Bucket referenced by the newly created data mapper. See
     [Granting Access to Data](#granting-access-to-data) for more information on
     how to do this. Choose **Return to Data Mappers**.
@@ -888,3 +899,5 @@ To delete a stack via the AWS CLI
   https://docs.aws.amazon.com/lake-formation/latest/dg/granting-catalog-permissions.html
 [exporting stack output values]:
   https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-stack-exports.html
+[s3 lifecycle policies]:
+  https://docs.aws.amazon.com/AmazonS3/latest/userguide/intro-lifecycle-rules.html

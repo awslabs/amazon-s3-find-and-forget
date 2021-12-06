@@ -177,6 +177,7 @@ const gateway = {
     partitionKeys,
     roleArn,
     deleteOldVersions,
+    ignoreObjectNotFoundExceptions,
     format
   ) {
     return apiGateway(`data_mappers/${id}`, {
@@ -193,7 +194,8 @@ const gateway = {
         },
         Format: format,
         RoleArn: roleArn,
-        DeleteOldVersions: deleteOldVersions
+        DeleteOldVersions: deleteOldVersions,
+        IgnoreObjectNotFoundExceptions: ignoreObjectNotFoundExceptions
       }
     });
   }

@@ -69,6 +69,10 @@ supported:
   that reads from the data lake unless it has been designed to handle temporary
   inconsistencies between objects
 - Buckets with MFA Delete enabled are not supported
+- When the _Ignore object not found exceptions during deletion_ setting is
+  enabled, the solution will not delete old versions for ignored objects. Make
+  sure there is some mechanism for deleting these old versions to avoid
+  **retaining data longer than intended**.
 
 ## Service Quotas
 

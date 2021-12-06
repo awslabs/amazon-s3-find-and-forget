@@ -47,6 +47,7 @@ def _aggregate_stats(events):
             )
         if event_name in [
             "ObjectUpdated",
+            "ObjectUpdateSkipped",
             "ObjectUpdateFailed",
             "ObjectRollbackFailed",
         ]:
@@ -54,6 +55,9 @@ def _aggregate_stats(events):
                 {
                     "TotalObjectUpdatedCount": 1
                     if event_name == "ObjectUpdated"
+                    else 0,
+                    "TotalObjectUpdateSkippedCount": 1
+                    if event_name == "ObjectUpdateSkipped"
                     else 0,
                     "TotalObjectUpdateFailedCount": 1
                     if event_name == "ObjectUpdateFailed"
@@ -78,6 +82,7 @@ def _update_job(job_id, stats):
             "#qb = if_not_exists(#qb, :z) + :qb, "
             "#qm = if_not_exists(#qm, :z) + :qm, "
             "#ou = if_not_exists(#ou, :z) + :ou, "
+            "#os = if_not_exists(#os, :z) + :os, "
             "#of = if_not_exists(#of, :z) + :of, "
             "#or = if_not_exists(#or, :z) + :or",
             ExpressionAttributeNames={
@@ -89,6 +94,7 @@ def _update_job(job_id, stats):
                 "#qb": "TotalQueryScannedInBytes",
                 "#qm": "TotalQueryTimeInMillis",
                 "#ou": "TotalObjectUpdatedCount",
+                "#os": "TotalObjectUpdateSkippedCount",
                 "#of": "TotalObjectUpdateFailedCount",
                 "#or": "TotalObjectRollbackFailedCount",
             },
@@ -101,6 +107,7 @@ def _update_job(job_id, stats):
                 ":qb": stats.get("TotalQueryScannedInBytes", 0),
                 ":qm": stats.get("TotalQueryTimeInMillis", 0),
                 ":ou": stats.get("TotalObjectUpdatedCount", 0),
+                ":os": stats.get("TotalObjectUpdateSkippedCount", 0),
                 ":of": stats.get("TotalObjectUpdateFailedCount", 0),
                 ":or": stats.get("TotalObjectRollbackFailedCount", 0),
                 ":z": 0,

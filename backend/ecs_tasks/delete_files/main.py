@@ -16,7 +16,12 @@ from botocore.exceptions import ClientError
 from pyarrow.lib import ArrowException
 
 from cse import decrypt, encrypt, is_kms_cse_encrypted
-from events import sanitize_message, emit_failure_event, emit_deletion_event
+from events import (
+    sanitize_message,
+    emit_failure_event,
+    emit_deletion_event,
+    emit_skipped_event,
+)
 from json_handler import delete_matches_from_json_file
 from parquet_handler import delete_matches_from_parquet_file
 from s3 import (
@@ -63,6 +68,12 @@ def handle_error(
             sqs_msg.meta.client.exceptions.ReceiptHandleIsInvalid,
         ) as e:
             logger.error("Unable to change message visibility: %s", str(e))
+
+
+def handle_skip(sqs_msg, message_body, skip_reason):
+    sqs_msg.delete()
+    logger.info(sanitize_message(skip_reason, message_body))
+    emit_skipped_event(message_body, skip_reason)
 
 
 def validate_message(message):
@@ -192,12 +203,19 @@ def execute(queue_url, message_body, receipt_handle):
         err_message = "Insufficient memory to work on object: {}".format(str(e))
         handle_error(msg, message_body, err_message)
     except ClientError as e:
+        ignore_error = False
         err_message = "ClientError: {}".format(str(e))
         if e.operation_name == "PutObjectAcl":
             err_message += ". Redacted object uploaded successfully but unable to restore WRITE ACL"
         if e.operation_name == "ListObjectVersions":
             err_message += ". Could not verify redacted object version integrity"
-        handle_error(msg, message_body, err_message)
+        if e.operation_name == "HeadObject" and e.response["Error"]["Code"] == "404":
+            ignore_error = body.get("IgnoreObjectNotFoundExceptions", False)
+        if ignore_error:
+            skip_reason = "Ignored error: {}".format(err_message)
+            handle_skip(msg, body, skip_reason)
+        else:
+            handle_error(msg, message_body, err_message)
     except ValueError as e:
         err_message = "Unprocessable message: {}".format(str(e))
         handle_error(msg, message_body, err_message)

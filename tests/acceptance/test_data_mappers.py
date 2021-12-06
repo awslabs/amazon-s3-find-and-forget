@@ -47,6 +47,7 @@ def test_it_creates_data_mapper(
         "Format": "parquet",
         "RoleArn": "arn:aws:iam::123456789012:role/S3F2DataAccessRole",
         "DeleteOldVersions": False,
+        "IgnoreObjectNotFoundExceptions": True,
     }
     # Act
     response = api_client.put(
@@ -93,6 +94,7 @@ def test_it_modifies_data_mapper(
         "Format": "parquet",
         "RoleArn": "arn:aws:iam::123456789012:role/S3F2DataAccessRole",
         "DeleteOldVersions": False,
+        "IgnoreObjectNotFoundExceptions": False,
     }
     # Act
     create_response = api_client.put(
@@ -148,6 +150,7 @@ def test_it_creates_without_optionals(
         "Sub": mock.ANY,
     }
     expected["DeleteOldVersions"] = True
+    expected["IgnoreObjectNotFoundExceptions"] = False
     # Check the response is ok
     assert 201 == response.status_code
     assert expected == response_body

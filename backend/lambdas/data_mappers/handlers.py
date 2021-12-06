@@ -83,6 +83,9 @@ def put_data_mapper_handler(event, context):
         "RoleArn": body["RoleArn"],
         "Format": body.get("Format", "parquet"),
         "DeleteOldVersions": body.get("DeleteOldVersions", True),
+        "IgnoreObjectNotFoundExceptions": body.get(
+            "IgnoreObjectNotFoundExceptions", False
+        ),
     }
     table.put_item(Item=item)
 

@@ -2,14 +2,17 @@ import datetime
 import json
 import logging
 import tempfile
+import time
 from copy import deepcopy
 from os import getenv
 from pathlib import Path
+from types import SimpleNamespace
 from urllib.parse import urljoin
 from uuid import uuid4
 
 import boto3
 import pytest
+from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
 from botocore.waiter import WaiterModel, create_waiter_with_client
 from requests import Session
@@ -372,6 +375,7 @@ def glue_data_mapper_factory(
         partitions=[],
         role_arn=None,
         delete_old_versions=False,
+        ignore_object_not_found_exceptions=False,
         column_identifiers=["customer_id"],
         partition_key_types="string",
         encrypted=False,
@@ -387,6 +391,7 @@ def glue_data_mapper_factory(
             },
             "Format": fmt,
             "DeleteOldVersions": delete_old_versions,
+            "IgnoreObjectNotFoundExceptions": ignore_object_not_found_exceptions,
         }
         if role_arn:
             item["RoleArn"] = role_arn
@@ -508,6 +513,22 @@ def job_finished_waiter(ddb_client):
 def job_exists_waiter(ddb_client):
     waiter_model = get_waiter_model("jobs.json")
     return create_waiter_with_client("JobExists", waiter_model, ddb_client)
+
+
+@pytest.fixture
+def find_phase_ended_waiter(job_table):
+    def wait(job_id):
+        for _ in range(100):
+            items = job_table.query(KeyConditionExpression=Key("Id").eq(job_id))
+            for item in items["Items"]:
+                if item.get("EventName") == "FindPhaseEnded":
+                    return
+            time.sleep(3)
+        assert False, "Timed out while waiting for find phase to end"
+
+    ns = SimpleNamespace()
+    ns.wait = wait
+    return ns
 
 
 @pytest.fixture(scope="module")
