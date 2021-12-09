@@ -57,12 +57,14 @@ def test_it_submits_results_to_be_batched(paginate_mock, batch_sqs_msgs_mock):
                 "Columns": columns,
                 "Object": "s3://mybucket/mykey1",
                 "DeleteOldVersions": True,
+                "IgnoreObjectNotFoundExceptions": False,
             },
             {
                 "JobId": "1234",
                 "Columns": columns,
                 "Object": "s3://mybucket/mykey2",
                 "DeleteOldVersions": True,
+                "IgnoreObjectNotFoundExceptions": False,
             },
         ],
     )
@@ -86,6 +88,7 @@ def test_it_propagates_optional_properties(paginate_mock, batch_sqs_msgs_mock):
             "JobId": "1234",
             "QueryId": "123",
             "Columns": columns,
+            "IgnoreObjectNotFoundExceptions": True,
         },
         SimpleNamespace(),
     )
@@ -98,6 +101,7 @@ def test_it_propagates_optional_properties(paginate_mock, batch_sqs_msgs_mock):
                 "Object": "s3://mybucket/mykey1",
                 "RoleArn": "arn:aws:iam:accountid:role/rolename",
                 "DeleteOldVersions": False,
+                "IgnoreObjectNotFoundExceptions": True,
             },
         ],
     )

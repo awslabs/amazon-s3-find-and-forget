@@ -46,7 +46,7 @@ def test_it_determines_job_has_errors_for_failed_queries(table):
 
 
 @patch("backend.lambdas.jobs.status_updater.table")
-def test_it_determines_job_has_errors_for_failed_object_updates(table):
+def test_it_determines_job_does_not_have_errors_for_failed_object_updates(table):
     table.get_item.return_value = {
         "Item": {"TotalObjectUpdateFailedCount": 0, "TotalQueryFailedCount": 0,}
     }

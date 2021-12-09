@@ -1,5 +1,11 @@
 # Change Log
 
+## v0.43 (unreleased)
+
+- [#287](https://github.com/awslabs/amazon-s3-find-and-forget/pull/287): Add
+  data mapper parameter for ignoring Object Not Found exceptions encountered
+  during deletion
+
 ## v0.42
 
 - [#285](https://github.com/awslabs/amazon-s3-find-and-forget/pull/285): Fix for

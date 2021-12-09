@@ -97,6 +97,7 @@ const NewDataMapper = ({ gateway, goToDataMappers }) => {
   const [glueTable, setGlueTable] = useState(undefined);
   const [roleArn, setRoleArn] = useState(undefined);
   const [deletePreviousVersions, setDeletePreviousVersions] = useState(true);
+  const [ignoreObjectNotFoundExceptions, setIgnoreObjectNotFoundExceptions] = useState(false);
   const [submitClicked, setSubmitClicked] = useState(false);
 
   const validationAttributes = (isValid) =>
@@ -156,6 +157,7 @@ const NewDataMapper = ({ gateway, goToDataMappers }) => {
           partitionKeys,
           roleArn,
           deletePreviousVersions,
+          ignoreObjectNotFoundExceptions,
           selectedTable.format
         );
         setFormState("saved");
@@ -404,6 +406,18 @@ const NewDataMapper = ({ gateway, goToDataMappers }) => {
                   label="Delete previous object versions after update"
                   onChange={(e) =>
                     setDeletePreviousVersions(!deletePreviousVersions)
+                  }
+                />
+              </Form.Group>
+              <Form.Group>
+                <Form.Check
+                  type="checkbox"
+                  id="ignore-object-not-found-exceptions"
+                  name="column"
+                  checked={ignoreObjectNotFoundExceptions}
+                  label="Ignore object not found exceptions during deletion"
+                  onChange={(e) =>
+                    setIgnoreObjectNotFoundExceptions(!ignoreObjectNotFoundExceptions)
                   }
                 />
               </Form.Group>

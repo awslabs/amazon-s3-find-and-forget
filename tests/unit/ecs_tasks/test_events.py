@@ -9,6 +9,7 @@ from backend.ecs_tasks.delete_files.events import (
     sanitize_message,
     emit_deletion_event,
     emit_failure_event,
+    emit_skipped_event,
     get_emitter_id,
 )
 
@@ -26,6 +27,21 @@ def test_it_emits_deletions(mock_get_id, mock_emit, message_stub):
         "1234",
         "ObjectUpdated",
         {"Statistics": stats_stub, "Object": "s3://bucket/path/basic.parquet",},
+        "ECSTask_4567",
+    )
+
+
+@patch("backend.ecs_tasks.delete_files.events.emit_event")
+@patch("backend.ecs_tasks.delete_files.events.get_emitter_id")
+def test_it_emits_skips(mock_get_id, mock_emit, message_stub):
+    mock_get_id.return_value = "ECSTask_4567"
+    reason_stub = "Object not found"
+    msg = json.loads(message_stub())
+    emit_skipped_event(msg, reason_stub)
+    mock_emit.assert_called_with(
+        "1234",
+        "ObjectUpdateSkipped",
+        {"Reason": reason_stub, "Object": "s3://bucket/path/basic.parquet",},
         "ECSTask_4567",
     )
 

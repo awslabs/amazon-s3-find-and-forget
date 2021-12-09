@@ -280,6 +280,9 @@ const DeletionJob = ({ gateway, jobId }) => {
             <DetailsBox label="Total Object Updated Count" noSeparator>
               {withDefault(job.TotalObjectUpdatedCount)}
             </DetailsBox>
+            <DetailsBox label="Total Object Update Skipped Count" noSeparator>
+              {withDefault(job.TotalObjectUpdateSkippedCount)}
+            </DetailsBox>
             <DetailsBox
               label="Total Object Update Failed Count"
               className={`status-label ${errorCountClass(

@@ -39,6 +39,9 @@ def handler(event, context):
             "Columns": event["Columns"],
             "RoleArn": event.get("RoleArn", None),
             "DeleteOldVersions": event.get("DeleteOldVersions", True),
+            "IgnoreObjectNotFoundExceptions": event.get(
+                "IgnoreObjectNotFoundExceptions", False
+            ),
             "Format": event.get("Format"),
             "Manifest": event.get("Manifest"),
         }

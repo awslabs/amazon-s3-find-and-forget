@@ -36,6 +36,7 @@ def test_it_handles_successful_queries(table):
         "#qb = if_not_exists(#qb, :z) + :qb, "
         "#qm = if_not_exists(#qm, :z) + :qm, "
         "#ou = if_not_exists(#ou, :z) + :ou, "
+        "#os = if_not_exists(#os, :z) + :os, "
         "#of = if_not_exists(#of, :z) + :of, "
         "#or = if_not_exists(#or, :z) + :or",
         ExpressionAttributeNames={
@@ -47,6 +48,7 @@ def test_it_handles_successful_queries(table):
             "#qb": "TotalQueryScannedInBytes",
             "#qm": "TotalQueryTimeInMillis",
             "#ou": "TotalObjectUpdatedCount",
+            "#os": "TotalObjectUpdateSkippedCount",
             "#of": "TotalObjectUpdateFailedCount",
             "#or": "TotalObjectRollbackFailedCount",
         },
@@ -59,6 +61,7 @@ def test_it_handles_successful_queries(table):
             ":qb": 10,
             ":qm": 100,
             ":ou": 0,
+            ":os": 0,
             ":of": 0,
             ":or": 0,
             ":z": 0,
@@ -91,6 +94,7 @@ def test_it_handles_failed_queries(table):
         "#qb = if_not_exists(#qb, :z) + :qb, "
         "#qm = if_not_exists(#qm, :z) + :qm, "
         "#ou = if_not_exists(#ou, :z) + :ou, "
+        "#os = if_not_exists(#os, :z) + :os, "
         "#of = if_not_exists(#of, :z) + :of, "
         "#or = if_not_exists(#or, :z) + :or",
         ExpressionAttributeNames={
@@ -102,6 +106,7 @@ def test_it_handles_failed_queries(table):
             "#qb": "TotalQueryScannedInBytes",
             "#qm": "TotalQueryTimeInMillis",
             "#ou": "TotalObjectUpdatedCount",
+            "#os": "TotalObjectUpdateSkippedCount",
             "#of": "TotalObjectUpdateFailedCount",
             "#or": "TotalObjectRollbackFailedCount",
         },
@@ -114,6 +119,7 @@ def test_it_handles_failed_queries(table):
             ":qb": 0,
             ":qm": 0,
             ":ou": 0,
+            ":os": 0,
             ":of": 0,
             ":or": 0,
             ":z": 0,
@@ -146,6 +152,7 @@ def test_it_handles_successful_updates(table):
         "#qb = if_not_exists(#qb, :z) + :qb, "
         "#qm = if_not_exists(#qm, :z) + :qm, "
         "#ou = if_not_exists(#ou, :z) + :ou, "
+        "#os = if_not_exists(#os, :z) + :os, "
         "#of = if_not_exists(#of, :z) + :of, "
         "#or = if_not_exists(#or, :z) + :or",
         ExpressionAttributeNames={
@@ -157,6 +164,7 @@ def test_it_handles_successful_updates(table):
             "#qb": "TotalQueryScannedInBytes",
             "#qm": "TotalQueryTimeInMillis",
             "#ou": "TotalObjectUpdatedCount",
+            "#os": "TotalObjectUpdateSkippedCount",
             "#of": "TotalObjectUpdateFailedCount",
             "#or": "TotalObjectRollbackFailedCount",
         },
@@ -169,6 +177,7 @@ def test_it_handles_successful_updates(table):
             ":qb": 0,
             ":qm": 0,
             ":ou": 1,
+            ":os": 0,
             ":of": 0,
             ":or": 0,
             ":z": 0,
@@ -201,6 +210,7 @@ def test_it_handles_failed_updates(table):
         "#qb = if_not_exists(#qb, :z) + :qb, "
         "#qm = if_not_exists(#qm, :z) + :qm, "
         "#ou = if_not_exists(#ou, :z) + :ou, "
+        "#os = if_not_exists(#os, :z) + :os, "
         "#of = if_not_exists(#of, :z) + :of, "
         "#or = if_not_exists(#or, :z) + :or",
         ExpressionAttributeNames={
@@ -212,6 +222,7 @@ def test_it_handles_failed_updates(table):
             "#qb": "TotalQueryScannedInBytes",
             "#qm": "TotalQueryTimeInMillis",
             "#ou": "TotalObjectUpdatedCount",
+            "#os": "TotalObjectUpdateSkippedCount",
             "#of": "TotalObjectUpdateFailedCount",
             "#or": "TotalObjectRollbackFailedCount",
         },
@@ -224,7 +235,66 @@ def test_it_handles_failed_updates(table):
             ":qb": 0,
             ":qm": 0,
             ":ou": 0,
+            ":os": 0,
             ":of": 1,
+            ":or": 0,
+            ":z": 0,
+        },
+        ReturnValues="ALL_NEW",
+    )
+
+
+@patch("backend.lambdas.jobs.stats_updater.table")
+def test_it_handles_skipped_updates(table):
+    resp = update_stats(
+        "job123",
+        [
+            {
+                "Id": "job123",
+                "Sk": "123456",
+                "Type": "JobEvent",
+                "CreatedAt": 123.0,
+                "EventName": "ObjectUpdateSkipped",
+                "EventData": {},
+            }
+        ],
+    )
+    table.update_item.assert_called_with(
+        Key={"Id": "job123", "Sk": "job123"},
+        ConditionExpression="#Id = :Id AND #Sk = :Sk",
+        UpdateExpression="set #qt = if_not_exists(#qt, :z) + :qt, "
+        "#qs = if_not_exists(#qs, :z) + :qs, "
+        "#qf = if_not_exists(#qf, :z) + :qf, "
+        "#qb = if_not_exists(#qb, :z) + :qb, "
+        "#qm = if_not_exists(#qm, :z) + :qm, "
+        "#ou = if_not_exists(#ou, :z) + :ou, "
+        "#os = if_not_exists(#os, :z) + :os, "
+        "#of = if_not_exists(#of, :z) + :of, "
+        "#or = if_not_exists(#or, :z) + :or",
+        ExpressionAttributeNames={
+            "#Id": "Id",
+            "#Sk": "Sk",
+            "#qt": "TotalQueryCount",
+            "#qs": "TotalQuerySucceededCount",
+            "#qf": "TotalQueryFailedCount",
+            "#qb": "TotalQueryScannedInBytes",
+            "#qm": "TotalQueryTimeInMillis",
+            "#ou": "TotalObjectUpdatedCount",
+            "#os": "TotalObjectUpdateSkippedCount",
+            "#of": "TotalObjectUpdateFailedCount",
+            "#or": "TotalObjectRollbackFailedCount",
+        },
+        ExpressionAttributeValues={
+            ":Id": "job123",
+            ":Sk": "job123",
+            ":qt": 0,
+            ":qs": 0,
+            ":qf": 0,
+            ":qb": 0,
+            ":qm": 0,
+            ":ou": 0,
+            ":os": 1,
+            ":of": 0,
             ":or": 0,
             ":z": 0,
         },
@@ -256,6 +326,7 @@ def test_it_handles_failed_rollbacks(table):
         "#qb = if_not_exists(#qb, :z) + :qb, "
         "#qm = if_not_exists(#qm, :z) + :qm, "
         "#ou = if_not_exists(#ou, :z) + :ou, "
+        "#os = if_not_exists(#os, :z) + :os, "
         "#of = if_not_exists(#of, :z) + :of, "
         "#or = if_not_exists(#or, :z) + :or",
         ExpressionAttributeNames={
@@ -267,6 +338,7 @@ def test_it_handles_failed_rollbacks(table):
             "#qb": "TotalQueryScannedInBytes",
             "#qm": "TotalQueryTimeInMillis",
             "#ou": "TotalObjectUpdatedCount",
+            "#os": "TotalObjectUpdateSkippedCount",
             "#of": "TotalObjectUpdateFailedCount",
             "#or": "TotalObjectRollbackFailedCount",
         },
@@ -279,6 +351,7 @@ def test_it_handles_failed_rollbacks(table):
             ":qb": 0,
             ":qm": 0,
             ":ou": 0,
+            ":os": 0,
             ":of": 0,
             ":or": 1,
             ":z": 0,
@@ -324,6 +397,7 @@ def test_it_handles_multiple_events(table):
         "#qb = if_not_exists(#qb, :z) + :qb, "
         "#qm = if_not_exists(#qm, :z) + :qm, "
         "#ou = if_not_exists(#ou, :z) + :ou, "
+        "#os = if_not_exists(#os, :z) + :os, "
         "#of = if_not_exists(#of, :z) + :of, "
         "#or = if_not_exists(#or, :z) + :or",
         ExpressionAttributeNames={
@@ -335,6 +409,7 @@ def test_it_handles_multiple_events(table):
             "#qb": "TotalQueryScannedInBytes",
             "#qm": "TotalQueryTimeInMillis",
             "#ou": "TotalObjectUpdatedCount",
+            "#os": "TotalObjectUpdateSkippedCount",
             "#of": "TotalObjectUpdateFailedCount",
             "#or": "TotalObjectRollbackFailedCount",
         },
@@ -347,6 +422,7 @@ def test_it_handles_multiple_events(table):
             ":qb": 10,
             ":qm": 100,
             ":ou": 1,
+            ":os": 0,
             ":of": 0,
             ":or": 0,
             ":z": 0,

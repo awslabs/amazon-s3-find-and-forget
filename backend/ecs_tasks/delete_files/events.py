@@ -20,6 +20,15 @@ def emit_deletion_event(message_body, stats):
     emit_event(job_id, "ObjectUpdated", event_data, get_emitter_id())
 
 
+def emit_skipped_event(message_body, skip_reason):
+    job_id = message_body["JobId"]
+    event_data = {
+        "Object": message_body["Object"],
+        "Reason": skip_reason,
+    }
+    emit_event(job_id, "ObjectUpdateSkipped", event_data, get_emitter_id())
+
+
 def emit_failure_event(message_body, err_message, event_name):
     json_body = json.loads(message_body)
     job_id = json_body.get("JobId")

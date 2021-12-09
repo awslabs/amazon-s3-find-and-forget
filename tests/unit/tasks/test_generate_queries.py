@@ -56,6 +56,7 @@ def test_it_generates_queries_writes_manifests_populates_queue_and_returns_resul
             "Columns": [{"Column": "customer_id"}],
             "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
             "DeleteOldVersions": True,
+            "IgnoreObjectNotFoundExceptions": False,
             "Manifest": "s3://S3F2-manifests-bucket/manifests/test/a/manifest.json",
         }
     ]
@@ -160,6 +161,7 @@ class TestAthenaQueries:
                 "Columns": [{"Column": "customer_id", "Type": "Simple"}],
                 "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
                 "DeleteOldVersions": True,
+                "IgnoreObjectNotFoundExceptions": False,
                 "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
             }
         ]
@@ -229,6 +231,7 @@ class TestAthenaQueries:
                 "Columns": [{"Column": "customer_id", "Type": "Simple",}],
                 "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
                 "DeleteOldVersions": True,
+                "IgnoreObjectNotFoundExceptions": False,
                 "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
             }
         ]
@@ -311,6 +314,7 @@ class TestAthenaQueries:
                 "Columns": [{"Column": "customer_id", "Type": "Simple",}],
                 "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
                 "DeleteOldVersions": True,
+                "IgnoreObjectNotFoundExceptions": False,
                 "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
             }
         ]
@@ -390,6 +394,7 @@ class TestAthenaQueries:
                 "Columns": [{"Column": "customer_id", "Type": "Simple"}],
                 "PartitionKeys": [{"Key": "year", "Value": 2010}],
                 "DeleteOldVersions": True,
+                "IgnoreObjectNotFoundExceptions": False,
                 "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
             }
         ]
@@ -458,6 +463,7 @@ class TestAthenaQueries:
                 ],
                 "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
                 "DeleteOldVersions": True,
+                "IgnoreObjectNotFoundExceptions": False,
                 "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
             }
         ]
@@ -546,6 +552,7 @@ class TestAthenaQueries:
                 ],
                 "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
                 "DeleteOldVersions": True,
+                "IgnoreObjectNotFoundExceptions": False,
                 "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
             }
         ]
@@ -678,6 +685,7 @@ class TestAthenaQueries:
                 ],
                 "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
                 "DeleteOldVersions": True,
+                "IgnoreObjectNotFoundExceptions": False,
                 "Manifest": "s3://S3F2-manifests-bucket/manifests/job1234567890/a/manifest.json",
             }
         ]
@@ -924,6 +932,7 @@ class TestAthenaQueries:
                     {"Key": "month", "Value": "01"},
                 ],
                 "DeleteOldVersions": True,
+                "IgnoreObjectNotFoundExceptions": False,
                 "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
             }
         ]
@@ -997,6 +1006,7 @@ class TestAthenaQueries:
                         {"Key": "month", "Value": "12"},
                     ],
                     "DeleteOldVersions": True,
+                    "IgnoreObjectNotFoundExceptions": False,
                     "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
                 },
                 {
@@ -1011,6 +1021,7 @@ class TestAthenaQueries:
                         {"Key": "month", "Value": "01"},
                     ],
                     "DeleteOldVersions": True,
+                    "IgnoreObjectNotFoundExceptions": False,
                     "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
                 },
                 {
@@ -1025,6 +1036,7 @@ class TestAthenaQueries:
                         {"Key": "month", "Value": "02"},
                     ],
                     "DeleteOldVersions": True,
+                    "IgnoreObjectNotFoundExceptions": False,
                     "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
                 },
             ],
@@ -1075,6 +1087,7 @@ class TestAthenaQueries:
                 },
                 "RoleArn": "arn:aws:iam::accountid:role/rolename",
                 "DeleteOldVersions": True,
+                "IgnoreObjectNotFoundExceptions": True,
             },
             [
                 {
@@ -1102,6 +1115,7 @@ class TestAthenaQueries:
                     ],
                     "RoleArn": "arn:aws:iam::accountid:role/rolename",
                     "DeleteOldVersions": True,
+                    "IgnoreObjectNotFoundExceptions": True,
                     "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
                 },
                 {
@@ -1117,6 +1131,7 @@ class TestAthenaQueries:
                     ],
                     "RoleArn": "arn:aws:iam::accountid:role/rolename",
                     "DeleteOldVersions": True,
+                    "IgnoreObjectNotFoundExceptions": True,
                     "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
                 },
             ],
@@ -1192,6 +1207,7 @@ class TestAthenaQueries:
                 "Columns": [{"Column": "customer_id", "Type": "Simple"}],
                 "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
                 "DeleteOldVersions": True,
+                "IgnoreObjectNotFoundExceptions": False,
                 "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/B/manifest.json",
             }
         ]
@@ -1254,6 +1270,7 @@ class TestAthenaQueries:
                 "Columns": [{"Column": "customer_id", "Type": "Simple"}],
                 "PartitionKeys": [],
                 "DeleteOldVersions": True,
+                "IgnoreObjectNotFoundExceptions": False,
                 "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
             }
         ]
@@ -1318,6 +1335,7 @@ class TestAthenaQueries:
                 "PartitionKeys": [],
                 "RoleArn": "arn:aws:iam::accountid:role/rolename",
                 "DeleteOldVersions": True,
+                "IgnoreObjectNotFoundExceptions": False,
                 "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
             }
         ]
@@ -1579,6 +1597,7 @@ class TestAthenaQueries:
                     "Columns": [{"Column": "customer_id", "Type": "Simple"}],
                     "PartitionKeys": [{"Key": "year", "Value": "2018"}],
                     "DeleteOldVersions": True,
+                    "IgnoreObjectNotFoundExceptions": False,
                     "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
                 },
                 {
@@ -1590,6 +1609,7 @@ class TestAthenaQueries:
                     "Columns": [{"Column": "customer_id", "Type": "Simple"}],
                     "PartitionKeys": [{"Key": "year", "Value": "2019"}],
                     "DeleteOldVersions": True,
+                    "IgnoreObjectNotFoundExceptions": False,
                     "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
                 },
             ],
