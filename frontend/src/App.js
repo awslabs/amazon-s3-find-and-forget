@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { AmplifyAuthenticator, AmplifySignIn } from "@aws-amplify/ui-react";
+import { AmplifyAuthenticator, AmplifySignIn } from "@aws-amplify/ui-react/legacy";
 import { onAuthUIStateChange } from "@aws-amplify/ui-components";
 import AppLayout from "./components/AppLayout";
 import Header from "./components/Header";
