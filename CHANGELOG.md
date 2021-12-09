@@ -1,6 +1,9 @@
 # Change Log
 
-## v0.43 (unreleased)
+## v0.43
+
+- [#289](https://github.com/awslabs/amazon-s3-find-and-forget/pull/289): Upgrade
+  frontend dependencies
 
 - [#287](https://github.com/awslabs/amazon-s3-find-and-forget/pull/287): Add
   data mapper parameter for ignoring Object Not Found exceptions encountered
