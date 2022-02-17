@@ -206,10 +206,12 @@ inconsistencies between objects.
 - [Limits]
 - [Monitoring guide]
 
-[amazon s3 data consistency model]: https://docs.aws.amazon.com/AmazonS3/latest/dev/Introduction.html#ConsistencyModel
+[amazon s3 data consistency model]:
+  https://docs.aws.amazon.com/AmazonS3/latest/dev/Introduction.html#ConsistencyModel
 [api specification]: ./api/README.md
 [cost overview guide]: COST_OVERVIEW.md
 [limits]: LIMITS.md
 [monitoring guide]: MONITORING.md
-[dynamodb ttl]: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/TTL.html
+[dynamodb ttl]:
+  https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/TTL.html
 [troubleshooting guide]: docs/TROUBLESHOOTING.md

@@ -163,11 +163,16 @@ Verify the following:
 To reprocess the objects, run a new deletion job.
 
 [user guide]: USER_GUIDE.md
-[vpc configuration]: USER_GUIDE.md#pre-requisite-configuring-a-vpc-for-the-solution
+[vpc configuration]:
+  USER_GUIDE.md#pre-requisite-configuring-a-vpc-for-the-solution
 [permissions configuration]: USER_GUIDE.md#granting-access-to-data
 [performance configuration]: USER_GUIDE.md#adjusting-performance-configuration
-[athena service quotas]: https://docs.aws.amazon.com/athena/latest/ug/service-limits.html
-[athena query history]: https://docs.aws.amazon.com/athena/latest/ug/querying.html#queries-viewing-history
-[athena troubleshooting]: https://docs.aws.amazon.com/athena/latest/ug/troubleshooting.html
+[athena service quotas]:
+  https://docs.aws.amazon.com/athena/latest/ug/service-limits.html
+[athena query history]:
+  https://docs.aws.amazon.com/athena/latest/ug/querying.html#queries-viewing-history
+[athena troubleshooting]:
+  https://docs.aws.amazon.com/athena/latest/ug/troubleshooting.html
 [solution limits]: LIMITS.md
-[cloudwatch container insights]: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContainerInsights.html
+[cloudwatch container insights]:
+  https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContainerInsights.html

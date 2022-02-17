@@ -94,16 +94,26 @@ service in question:
 - [Step Functions Service Quotas]
 - [DynamoDB Service Quotas]
 
-[aws supported sdks]: https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingClientSideEncryption.html
+[aws supported sdks]:
+  https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingClientSideEncryption.html
 [issue tracker]: https://github.com/awslabs/amazon-s3-find-and-forget/issues
-[service quotas]: https://docs.aws.amazon.com/general/latest/gr/aws_service_limits.html
-[service quotas]: https://docs.aws.amazon.com/general/latest/gr/aws_service_limits.html
-[athena service quotas]: https://docs.aws.amazon.com/athena/latest/ug/service-limits.html
-[fargate service quotas]: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/service-quotas.html
-[step functions service quotas]: https://docs.aws.amazon.com/step-functions/latest/dg/limits.html
-[sqs service quotas]: https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-quotas.html
-[dynamodb service quotas]: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Limits.html
+[service quotas]:
+  https://docs.aws.amazon.com/general/latest/gr/aws_service_limits.html
+[service quotas]:
+  https://docs.aws.amazon.com/general/latest/gr/aws_service_limits.html
+[athena service quotas]:
+  https://docs.aws.amazon.com/athena/latest/ug/service-limits.html
+[fargate service quotas]:
+  https://docs.aws.amazon.com/AmazonECS/latest/developerguide/service-quotas.html
+[step functions service quotas]:
+  https://docs.aws.amazon.com/step-functions/latest/dg/limits.html
+[sqs service quotas]:
+  https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-quotas.html
+[dynamodb service quotas]:
+  https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Limits.html
 [deletion job]: ARCHITECTURE.md#deletion-jobs
 [deletion queue]: ARCHITECTURE.md#deletion-queue
-[managing workgroups]: https://docs.aws.amazon.com/athena/latest/ug/workgroups-create-update-delete.html
-[openx json serde]: https://docs.aws.amazon.com/athena/latest/ug/json-serde.html#openx-json-serde
+[managing workgroups]:
+  https://docs.aws.amazon.com/athena/latest/ug/workgroups-create-update-delete.html
+[openx json serde]:
+  https://docs.aws.amazon.com/athena/latest/ug/json-serde.html#openx-json-serde

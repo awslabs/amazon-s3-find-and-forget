@@ -36,4 +36,5 @@ as filtering out specific traffic patterns you define.
 [aws security center]: https://aws.amazon.com/security
 [aws waf]: https://aws.amazon.com/waf
 [accessing the application]: USER_GUIDE.md#accessing-the-application
-[restricting access to amazon s3 content by using an origin access identity]: https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html
+[restricting access to amazon s3 content by using an origin access identity]:
+  https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html

@@ -342,8 +342,10 @@ This example shows how the charges would be calculated for a deletion job where:
 [amazon vpc pricing]: https://aws.amazon.com/vpc/pricing/
 [deletion job workflow]: ARCHITECTURE.md#deletion-job-workflow
 [solution persistence layer]: ARCHITECTURE.md#persistence-layer
-[using workgroups to control query access and costs]: https://docs.aws.amazon.com/athena/latest/ug/manage-queries-control-costs-with-workgroups.html
-[vpc configuration]: USER_GUIDE.md#pre-requisite-Configuring-a-vpc-for-the-solution
+[using workgroups to control query access and costs]:
+  https://docs.aws.amazon.com/athena/latest/ug/manage-queries-control-costs-with-workgroups.html
+[vpc configuration]:
+  USER_GUIDE.md#pre-requisite-Configuring-a-vpc-for-the-solution
 
 [some VPC endpoints]:
 [https://github.com/awslabs/amazon-s3-find-and-forget/blob/master/templates/vpc.yaml]

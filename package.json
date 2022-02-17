@@ -24,6 +24,7 @@
   "prettier": {
     "trailingComma": "none",
     "arrowParens": "avoid",
-    "semi": true
+    "semi": true,
+    "proseWrap": "always"
   }
 }
