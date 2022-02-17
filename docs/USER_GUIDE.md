@@ -846,58 +846,34 @@ To delete a stack via the AWS CLI
 
 [api documentation]: api/README.md
 [troubleshooting]: TROUBLESHOOTING.md
-[fargate configuration]:
-  https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html#fargate-tasks-size
-[vpc endpoints]:
-  https://docs.aws.amazon.com/vpc/latest/userguide/vpc-endpoints.html
+[fargate configuration]: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html#fargate-tasks-size
+[vpc endpoints]: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-endpoints.html
 [vpc endpoint pricing]: https://aws.amazon.com/privatelink/pricing/
 [cloudwatch logs pricing]: https://aws.amazon.com/cloudwatch/pricing/
-[dynamodb streams]:
-  https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Streams.html
-[dynamodb point-in-time recovery]:
-  https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/PointInTimeRecovery.html
+[dynamodb streams]: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Streams.html
+[dynamodb point-in-time recovery]: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/PointInTimeRecovery.html
 [dynamodb pricing]: https://aws.amazon.com/dynamodb/pricing/on-demand/
-[defining glue tables]:
-  https://docs.aws.amazon.com/glue/latest/dg/tables-described.html
-[s3 bucket policies]:
-  https://docs.aws.amazon.com/AmazonS3/latest/dev/using-iam-policies.html
-[using sse with cmks]:
-  https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingKMSEncryption.html
-[customer master keys]:
-  https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#master_keys
-[how to change a key policy]:
-  https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-modifying.html#key-policy-modifying-how-to
-[cross account s3 access]:
-  https://docs.aws.amazon.com/AmazonS3/latest/dev/example-walkthroughs-managing-access-example2.html
-[cross account kms access]:
-  https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-modifying-external-accounts.html
-[updating an ssm parameter]:
-  https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-cli.html
-[deploy using the aws cli]:
-  https://docs.aws.amazon.com/cli/latest/reference/cloudformation/deploy/index.html
-[cloudformation console page]:
-  https://console.aws.amazon.com/cloudformation/home
+[defining glue tables]: https://docs.aws.amazon.com/glue/latest/dg/tables-described.html
+[s3 bucket policies]: https://docs.aws.amazon.com/AmazonS3/latest/dev/using-iam-policies.html
+[using sse with cmks]: https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingKMSEncryption.html
+[customer master keys]: https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#master_keys
+[how to change a key policy]: https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-modifying.html#key-policy-modifying-how-to
+[cross account s3 access]: https://docs.aws.amazon.com/AmazonS3/latest/dev/example-walkthroughs-managing-access-example2.html
+[cross account kms access]: https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-modifying-external-accounts.html
+[updating an ssm parameter]: https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-cli.html
+[deploy using the aws cli]: https://docs.aws.amazon.com/cli/latest/reference/cloudformation/deploy/index.html
+[cloudformation console page]: https://console.aws.amazon.com/cloudformation/home
 [changelog]: ../CHANGELOG.md
-[on-demand backup and restore]:
-  https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/BackupRestore.html
+[on-demand backup and restore]: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/BackupRestore.html
 [aws data pipeline]: https://aws.amazon.com/datapipeline
-[cognito advanced security]:
-  https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-settings-advanced-security.html
-[cloudfront access logging permissions]:
-  https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html#AccessLogsBucketAndFileOwnership
-[s3 access logging permissions]:
-  https://docs.aws.amazon.com/AmazonS3/latest/dev/enable-logging-programming.html#grant-log-delivery-permissions-general
+[cognito advanced security]: https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-settings-advanced-security.html
+[cloudfront access logging permissions]: https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html#AccessLogsBucketAndFileOwnership
+[s3 access logging permissions]: https://docs.aws.amazon.com/AmazonS3/latest/dev/enable-logging-programming.html#grant-log-delivery-permissions-general
 [limits]: LIMITS.md
-[aws cloudformation stacksets]:
-  https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/what-is-cfnstacksets.html
+[aws cloudformation stacksets]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/what-is-cfnstacksets.html
 [cognito console]: https://console.aws.amazon.com/cognito
-[managing users in user pools guide]:
-  https://docs.aws.amazon.com/cognito/latest/developerguide/managing-users.html
-[cognito rest api integration guide]:
-  https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-invoke-api-integrated-with-cognito-user-pool.html
-[lake formation data permissions console]:
-  https://docs.aws.amazon.com/lake-formation/latest/dg/granting-catalog-permissions.html
-[exporting stack output values]:
-  https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-stack-exports.html
-[s3 lifecycle policies]:
-  https://docs.aws.amazon.com/AmazonS3/latest/userguide/intro-lifecycle-rules.html
+[managing users in user pools guide]: https://docs.aws.amazon.com/cognito/latest/developerguide/managing-users.html
+[cognito rest api integration guide]: https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-invoke-api-integrated-with-cognito-user-pool.html
+[lake formation data permissions console]: https://docs.aws.amazon.com/lake-formation/latest/dg/granting-catalog-permissions.html
+[exporting stack output values]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-stack-exports.html
+[s3 lifecycle policies]: https://docs.aws.amazon.com/AmazonS3/latest/userguide/intro-lifecycle-rules.html

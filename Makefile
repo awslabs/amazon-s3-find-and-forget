@@ -50,13 +50,13 @@ format-cfn:
 
 .PHONY: format-docs
 format-docs:
-	npx prettier-eslint ./*.md ./docs/*.md --write --prose-wrap always
+	npx prettier ./*.md ./docs/*.md --write
 	git add *.md
 	git add docs/*.md
 
 .PHONY: format-js
 format-js:
-	npx prettier-eslint $(PWD)/frontend/src/**/*.js --write --prose-wrap always
+	npx prettier $(PWD)/frontend/src/**/*.js --write
 	git add frontend/src/
 
 .PHONY: format-python

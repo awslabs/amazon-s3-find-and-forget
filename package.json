@@ -4,9 +4,8 @@
   "private": true,
   "devDependencies": {
     "@openapitools/openapi-generator-cli": "1.0.18-4.3.1",
-    "prettier-eslint-cli": "^5.0.1"
+    "prettier": "^2.5.1"
   },
-  "scripts": {},
   "repository": {
     "type": "git",
     "url": "git+https://github.com/awslabs/amazon-s3-find-and-forget.git"
@@ -21,5 +20,10 @@
   "bugs": {
     "url": "https://github.com/awslabs/amazon-s3-find-and-forget/issues"
   },
-  "homepage": "https://github.com/awslabs/amazon-s3-find-and-forget#readme"
+  "homepage": "https://github.com/awslabs/amazon-s3-find-and-forget#readme",
+  "prettier": {
+    "trailingComma": "none",
+    "arrowParens": "avoid",
+    "semi": true
+  }
 }

@@ -54,24 +54,14 @@ docs][athena metrics]. By default the solution uses the **primary** workgroup,
 however you can change this when deploying the stack using the `AthenaWorkGroup`
 parameter
 
-[lambda metrics]:
-  https://docs.aws.amazon.com/lambda/latest/dg/monitoring-functions-metrics.html
-[lambda logging]:
-  https://docs.aws.amazon.com/lambda/latest/dg/monitoring-functions-logs.html
-[ecs metrics]:
-  https://docs.aws.amazon.com/AmazonECS/latest/developerguide/cloudwatch-metrics.html
-[ecs logging]:
-  https://docs.aws.amazon.com/AmazonECS/latest/developerguide/using_awslogs.html#viewing_awslogs
-[ecs container insights]:
-  https://docs.aws.amazon.com/AmazonECS/latest/developerguide/cloudwatch-container-insights.html
-[step functions metrics]:
-  https://docs.aws.amazon.com/step-functions/latest/dg/procedure-cw-metrics.html#cloudwatch-step-functions-execution-metrics
-[athena metrics]:
-  https://docs.aws.amazon.com/athena/latest/ug/query-metrics-viewing.html
-[dynamodb metrics]:
-  https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/monitoring-cloudwatch.html
-[s3 metrics]:
-  https://docs.aws.amazon.com/AmazonS3/latest/dev/cloudwatch-monitoring.html
-[sqs metrics]:
-  https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-monitoring-using-cloudwatch.html
+[lambda metrics]: https://docs.aws.amazon.com/lambda/latest/dg/monitoring-functions-metrics.html
+[lambda logging]: https://docs.aws.amazon.com/lambda/latest/dg/monitoring-functions-logs.html
+[ecs metrics]: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/cloudwatch-metrics.html
+[ecs logging]: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/using_awslogs.html#viewing_awslogs
+[ecs container insights]: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/cloudwatch-container-insights.html
+[step functions metrics]: https://docs.aws.amazon.com/step-functions/latest/dg/procedure-cw-metrics.html#cloudwatch-step-functions-execution-metrics
+[athena metrics]: https://docs.aws.amazon.com/athena/latest/ug/query-metrics-viewing.html
+[dynamodb metrics]: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/monitoring-cloudwatch.html
+[s3 metrics]: https://docs.aws.amazon.com/AmazonS3/latest/dev/cloudwatch-monitoring.html
+[sqs metrics]: https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-monitoring-using-cloudwatch.html
 [troubleshooting]: ./TROUBLESHOOTING.md
