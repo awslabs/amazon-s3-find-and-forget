@@ -106,13 +106,11 @@ const complexColumnsTable = tableMaker({
     { Name: "arr", Type: "array<struct<field:int,n:string>>" },
     {
       Name: "nestedstruct",
-      Type:
-        "struct<a:int,b:string,c:struct<d:int,e:struct<f:int>>,g:struct<h:string>>"
+      Type: "struct<a:int,b:string,c:struct<d:int,e:struct<f:int>>,g:struct<h:string>>"
     },
     {
       Name: "structandarr",
-      Type:
-        "struct<a:int,b:string,c:struct<d:int,e:struct<f:int>>,g:struct<h:string>,i:array<struct<l:int,m:struct<n:string>>>>"
+      Type: "struct<a:int,b:string,c:struct<d:int,e:struct<f:int>>,g:struct<h:string>,i:array<struct<l:int,m:struct<n:string>>>>"
     }
   ],
   partitions: [],

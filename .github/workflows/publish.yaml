@@ -45,7 +45,7 @@ jobs:
       - name: Set up Nodejs 12
         uses: actions/setup-node@v1
         with:
-          node-version: 12
+          node-version: 14
       - name: Set up ruby 2.6
         uses: actions/setup-ruby@v1
         with:

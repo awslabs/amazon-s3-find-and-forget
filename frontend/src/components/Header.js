@@ -11,10 +11,7 @@ const Header = ({ signedIn }) => {
 
   const reload = () => window.location.reload();
 
-  const signOut = () =>
-    Auth.signOut()
-      .then(reload)
-      .catch(reload);
+  const signOut = () => Auth.signOut().then(reload).catch(reload);
 
   useEffect(() => {
     if (signedIn) {
