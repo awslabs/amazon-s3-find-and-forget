@@ -140,7 +140,7 @@ def glue_columns():
     ]
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 def cognito_token(stack):
     # Generate User in Cognito
     user_pool_id = stack["CognitoUserPoolId"]
@@ -176,7 +176,7 @@ def cognito_token(stack):
     provider_client.admin_delete_user(UserPoolId=user_pool_id, Username=username)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def api_client(cognito_token, stack):
     class ApiGwSession(Session):
         def __init__(self, base_url=None, default_headers=None):
