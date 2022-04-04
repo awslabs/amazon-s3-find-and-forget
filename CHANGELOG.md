@@ -1,5 +1,19 @@
 # Change Log
 
+## v0.45 (unreleased)
+
+- [#TODO](https://github.com/awslabs/amazon-s3-find-and-forget/pull/TODO):
+  Include table name to error when query generation fails due to an invalid
+  column type
+- Dependency version updates for:
+  - [#300](https://github.com/awslabs/amazon-s3-find-and-forget/pull/300) plist
+  - [#299](https://github.com/awslabs/amazon-s3-find-and-forget/pull/299)
+    ansi-regex
+  - [#298](https://github.com/awslabs/amazon-s3-find-and-forget/pull/298)
+    minimist
+  - [#296](https://github.com/awslabs/amazon-s3-find-and-forget/pull/296)
+    node-forge
+
 ## v0.44
 
 - [#293](https://github.com/awslabs/amazon-s3-find-and-forget/pull/293): Upgrade
