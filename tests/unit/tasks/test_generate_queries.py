@@ -1475,16 +1475,18 @@ class TestAthenaQueries:
             assert res == scenario["expected"]
 
     def test_it_throws_for_unknown_col(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as e:
             cast_to_type(
                 "mystr",
                 "doesnt_exist",
                 {
+                    "Name": "TableName",
                     "StorageDescriptor": {
                         "Columns": [{"Name": "test_col", "Type": "string"}]
-                    }
+                    },
                 },
             )
+        assert e.value.args[0] == "Column doesnt_exist not found at table TableName"
 
     def test_it_throws_for_unsupported_complex_nested_types(self):
         for scenario in [
@@ -1500,9 +1502,10 @@ class TestAthenaQueries:
                     123,
                     "user.x",
                     {
+                        "Name": "TableName",
                         "StorageDescriptor": {
                             "Columns": [{"Name": "user", "Type": scenario}]
-                        }
+                        },
                     },
                 )
 
