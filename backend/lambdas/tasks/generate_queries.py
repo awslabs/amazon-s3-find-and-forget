@@ -244,7 +244,14 @@ def get_data_mappers():
 
 
 def get_table(db, table_name):
-    return glue_client.get_table(DatabaseName=db, Name=table_name)["Table"]
+    table = glue_client.get_table(DatabaseName=db, Name=table_name)["Table"]
+    table["ColumnsTree"] = list(
+        map(column_mapper, table["StorageDescriptor"]["Columns"])
+    )
+    table["PartitionKeysTree"] = list(
+        map(column_mapper, table.get("PartitionKeys", []))
+    )
+    return table
 
 
 def get_partitions(db, table_name):
@@ -451,13 +458,10 @@ def column_mapper(col):
 
 
 def get_column_info(col, table, is_partition):
-    table_columns = (
-        table["PartitionKeys"]
-        if is_partition
-        else table["StorageDescriptor"]["Columns"]
+    serialized_cols = (
+        table["PartitionKeysTree"] if is_partition else table["ColumnsTree"]
     )
     col_array = col.split(".")
-    serialized_cols = list(map(column_mapper, table_columns))
     found = None
     for col_segment in col_array:
         found = next((x for x in serialized_cols if x["Name"] == col_segment), None)

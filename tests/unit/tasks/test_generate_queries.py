@@ -9,6 +9,7 @@ from mock import patch, MagicMock
 with patch.dict(os.environ, {"QueryQueue": "test"}):
     from backend.lambdas.tasks.generate_queries import (
         cast_to_type,
+        column_mapper,
         generate_athena_queries,
         get_data_mappers,
         get_deletion_queue,
@@ -1420,9 +1421,13 @@ class TestAthenaQueries:
 
     @patch("backend.lambdas.tasks.generate_queries.glue_client")
     def test_it_returns_table(self, client):
-        client.get_table.return_value = {"Table": {"Name": "test"}}
+        client.get_table.return_value = {
+            "Table": {
+                "Name": "test",
+                "StorageDescriptor": {"Columns": [{"Name": "column", "Type": "int"}]},
+            }
+        }
         result = get_table("test_db", "test_table")
-        assert {"Name": "test"} == result
         client.get_table.assert_called_with(DatabaseName="test_db", Name="test_table")
 
     @patch("backend.lambdas.tasks.generate_queries.paginate")
@@ -1453,9 +1458,13 @@ class TestAthenaQueries:
                 scenario["value"],
                 "test_col",
                 {
-                    "StorageDescriptor": {
-                        "Columns": [{"Name": "test_col", "Type": scenario["type"]}]
-                    }
+                    "ColumnsTree": [
+                        {
+                            "Name": "test_col",
+                            "Type": scenario["type"],
+                            "CanBeIdentifier": True,
+                        }
+                    ]
                 },
             )
 
@@ -1464,7 +1473,9 @@ class TestAthenaQueries:
     def test_it_converts_supported_types_when_nested_in_struct(self):
         column_type = "struct<type:int,x:map<string,struct<a:int>>,info:struct<user_id:int,name:string>>"
         table = {
-            "StorageDescriptor": {"Columns": [{"Name": "user", "Type": column_type}]}
+            "ColumnsTree": list(
+                map(column_mapper, [{"Name": "user", "Type": column_type}])
+            ),
         }
         for scenario in [
             {"value": "john_doe", "id": "user.info.name", "expected": "john_doe"},
@@ -1481,9 +1492,9 @@ class TestAthenaQueries:
                 "doesnt_exist",
                 {
                     "Name": "TableName",
-                    "StorageDescriptor": {
-                        "Columns": [{"Name": "test_col", "Type": "string"}]
-                    },
+                    "ColumnsTree": [
+                        {"Name": "test_col", "Type": "string", "CanBeIdentifier": True}
+                    ],
                 },
             )
         assert e.value.args[0] == "Column doesnt_exist not found at table TableName"
@@ -1503,9 +1514,9 @@ class TestAthenaQueries:
                     "user.x",
                     {
                         "Name": "TableName",
-                        "StorageDescriptor": {
-                            "Columns": [{"Name": "user", "Type": scenario}]
-                        },
+                        "ColumnsTree": list(
+                            map(column_mapper, [{"Name": "user", "Type": scenario}])
+                        ),
                     },
                 )
 
@@ -1515,9 +1526,9 @@ class TestAthenaQueries:
                 "2.56",
                 "test_col",
                 {
-                    "StorageDescriptor": {
-                        "Columns": [{"Name": "test_col", "Type": "foo"}]
-                    }
+                    "ColumnsTree": list(
+                        map(column_mapper, [{"Name": "test_col", "Type": "foo"}])
+                    )
                 },
             )
         assert (
@@ -1531,9 +1542,9 @@ class TestAthenaQueries:
                 "mystr",
                 "test_col",
                 {
-                    "StorageDescriptor": {
-                        "Columns": [{"Name": "test_col", "Type": "int"}]
-                    }
+                    "ColumnsTree": list(
+                        map(column_mapper, [{"Name": "test_col", "Type": "int"}])
+                    )
                 },
             )
 
@@ -1757,6 +1768,13 @@ def partition_stub(values, columns, table_name="test_table"):
 def table_stub(
     columns, partition_keys, table_name="test_table", partition_keys_type="string"
 ):
+    table_columns = [
+        {"Name": col["Name"], "Type": col.get("Type", "string")} for col in columns
+    ]
+    table_partition_keys = [
+        {"Name": partition_key, "Type": partition_keys_type}
+        for partition_key in partition_keys
+    ]
     return {
         "Name": table_name,
         "DatabaseName": "test",
@@ -1766,10 +1784,7 @@ def table_stub(
         "LastAccessTime": 0.0,
         "Retention": 0,
         "StorageDescriptor": {
-            "Columns": [
-                {"Name": col["Name"], "Type": col.get("Type", "string")}
-                for col in columns
-            ],
+            "Columns": table_columns,
             "Location": "s3://bucket/location",
             "InputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
             "OutputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
@@ -1789,10 +1804,9 @@ def table_stub(
             },
             "StoredAsSubDirectories": False,
         },
-        "PartitionKeys": [
-            {"Name": partition_key, "Type": partition_keys_type}
-            for partition_key in partition_keys
-        ],
+        "PartitionKeys": table_partition_keys,
         "TableType": "EXTERNAL_TABLE",
-        "Parameters": {"EXTERNAL": "TRUE",},
+        "Parameters": {"EXTERNAL": "TRUE"},
+        "ColumnsTree": list(map(column_mapper, table_columns)),
+        "PartitionKeysTree": list(map(column_mapper, table_partition_keys)),
     }
