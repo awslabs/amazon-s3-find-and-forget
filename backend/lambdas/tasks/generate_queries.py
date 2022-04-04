@@ -470,7 +470,7 @@ def get_column_info(col, table, is_partition):
 def cast_to_type(val, col, table, is_partition=False):
     col_type, can_be_identifier = get_column_info(col, table, is_partition)
     if not col_type:
-        raise ValueError("Column {} not found".format(col))
+        raise ValueError("Column {} not found at table {}".format(col, table["Name"]))
     elif not can_be_identifier:
         raise ValueError(
             "Column {} is not a supported column type for querying".format(col)
