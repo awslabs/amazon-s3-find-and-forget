@@ -5,6 +5,8 @@
 - [#301](https://github.com/awslabs/amazon-s3-find-and-forget/pull/301): Include
   table name to error when query generation fails due to an invalid column type
 - Dependency version updates for:
+  - [#302](https://github.com/awslabs/amazon-s3-find-and-forget/pull/302)
+    simple-plist
   - [#300](https://github.com/awslabs/amazon-s3-find-and-forget/pull/300) plist
   - [#299](https://github.com/awslabs/amazon-s3-find-and-forget/pull/299)
     ansi-regex
