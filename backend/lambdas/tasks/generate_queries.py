@@ -140,6 +140,7 @@ def generate_athena_queries(data_mapper, deletion_items, job_id):
     db = data_mapper["QueryExecutorParameters"]["Database"]
     table_name = data_mapper["QueryExecutorParameters"]["Table"]
     table = get_table(db, table_name)
+    columns_tree = get_columns_tree(table)
     all_partition_keys = [p["Name"] for p in table.get("PartitionKeys", [])]
     partition_keys = data_mapper["QueryExecutorParameters"].get(
         "PartitionKeys", all_partition_keys
@@ -181,7 +182,7 @@ def generate_athena_queries(data_mapper, deletion_items, job_id):
         is_simple = not isinstance(mid, list)
         if is_simple:
             for column in msg["Columns"]:
-                casted = cast_to_type(mid, column, table)
+                casted = cast_to_type(mid, column, table_name, columns_tree)
                 if column not in columns_with_matches:
                     columns_with_matches[column] = {
                         "Column": column,
@@ -195,7 +196,12 @@ def generate_athena_queries(data_mapper, deletion_items, job_id):
             query_columns = list(map(lambda x: x["Column"], sorted_mid))
             column_key = COMPOSITE_JOIN_TOKEN.join(query_columns)
             composite_match = list(
-                map(lambda x: cast_to_type(x["Value"], x["Column"], table), sorted_mid)
+                map(
+                    lambda x: cast_to_type(
+                        x["Value"], x["Column"], table_name, columns_tree
+                    ),
+                    sorted_mid,
+                )
             )
             if column_key not in columns_with_matches:
                 columns_with_matches[column_key] = {
@@ -216,7 +222,10 @@ def generate_athena_queries(data_mapper, deletion_items, job_id):
     partitions = set()
     for partition in get_partitions(db, table_name):
         current = tuple(
-            (all_partition_keys[i], cast_to_type(v, all_partition_keys[i], table, True))
+            (
+                all_partition_keys[i],
+                cast_to_type(v, all_partition_keys[i], table_name, columns_tree),
+            )
             for i, v in enumerate(partition["Values"])
             if all_partition_keys[i] in partition_keys
         )
@@ -244,14 +253,16 @@ def get_data_mappers():
 
 
 def get_table(db, table_name):
-    table = glue_client.get_table(DatabaseName=db, Name=table_name)["Table"]
-    table["ColumnsTree"] = list(
-        map(column_mapper, table["StorageDescriptor"]["Columns"])
+    return glue_client.get_table(DatabaseName=db, Name=table_name)["Table"]
+
+
+def get_columns_tree(table):
+    return list(
+        map(
+            column_mapper,
+            table["StorageDescriptor"]["Columns"] + table.get("PartitionKeys", []),
+        )
     )
-    table["PartitionKeysTree"] = list(
-        map(column_mapper, table.get("PartitionKeys", []))
-    )
-    return table
 
 
 def get_partitions(db, table_name):
@@ -457,29 +468,28 @@ def column_mapper(col):
     return result
 
 
-def get_column_info(col, table, is_partition):
-    serialized_cols = (
-        table["PartitionKeysTree"] if is_partition else table["ColumnsTree"]
-    )
+def get_column_info(col, columns_tree):
+    current = columns_tree
     col_array = col.split(".")
     found = None
     for col_segment in col_array:
-        found = next((x for x in serialized_cols if x["Name"] == col_segment), None)
+        found = next((x for x in current if x["Name"] == col_segment), None)
         if not found:
             return None, False
-        serialized_cols = found["Children"] if "Children" in found else []
+        current = found["Children"] if "Children" in found else []
     return found["Type"], found["CanBeIdentifier"]
 
 
-def cast_to_type(val, col, table, is_partition=False):
-    col_type, can_be_identifier = get_column_info(col, table, is_partition)
+def cast_to_type(val, col, table_name, columns_tree):
+    col_type, can_be_identifier = get_column_info(col, columns_tree)
     if not col_type:
-        raise ValueError("Column {} not found at table {}".format(col, table["Name"]))
+        raise ValueError("Column {} not found at table {}".format(col, table_name))
     elif not can_be_identifier:
         raise ValueError(
-            "Column {} is not a supported column type for querying".format(col)
+            "Column {} at table {} is not a supported column type for querying".format(
+                col, table_name
+            )
         )
-
     if col_type in ("bigint", "int", "smallint", "tinyint"):
         return int(val)
     if col_type in ("double", "float"):
