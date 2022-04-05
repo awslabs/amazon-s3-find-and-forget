@@ -1745,13 +1745,6 @@ def partition_stub(values, columns, table_name="test_table"):
 def table_stub(
     columns, partition_keys, table_name="test_table", partition_keys_type="string"
 ):
-    table_columns = [
-        {"Name": col["Name"], "Type": col.get("Type", "string")} for col in columns
-    ]
-    table_partition_keys = [
-        {"Name": partition_key, "Type": partition_keys_type}
-        for partition_key in partition_keys
-    ]
     return {
         "Name": table_name,
         "DatabaseName": "test",
@@ -1761,7 +1754,10 @@ def table_stub(
         "LastAccessTime": 0.0,
         "Retention": 0,
         "StorageDescriptor": {
-            "Columns": table_columns,
+            "Columns": [
+                {"Name": col["Name"], "Type": col.get("Type", "string")}
+                for col in columns
+            ],
             "Location": "s3://bucket/location",
             "InputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
             "OutputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
@@ -1781,7 +1777,10 @@ def table_stub(
             },
             "StoredAsSubDirectories": False,
         },
-        "PartitionKeys": table_partition_keys,
+        "PartitionKeys": [
+            {"Name": partition_key, "Type": partition_keys_type}
+            for partition_key in partition_keys
+        ],
         "TableType": "EXTERNAL_TABLE",
         "Parameters": {"EXTERNAL": "TRUE"},
     }
