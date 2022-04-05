@@ -9,6 +9,7 @@ from mock import patch, MagicMock
 with patch.dict(os.environ, {"QueryQueue": "test"}):
     from backend.lambdas.tasks.generate_queries import (
         cast_to_type,
+        column_mapper,
         generate_athena_queries,
         get_data_mappers,
         get_deletion_queue,
@@ -1452,26 +1453,27 @@ class TestAthenaQueries:
             res = cast_to_type(
                 scenario["value"],
                 "test_col",
-                {
-                    "StorageDescriptor": {
-                        "Columns": [{"Name": "test_col", "Type": scenario["type"]}]
+                "TableName",
+                [
+                    {
+                        "Name": "test_col",
+                        "Type": scenario["type"],
+                        "CanBeIdentifier": True,
                     }
-                },
+                ],
             )
 
             assert res == scenario["expected"]
 
     def test_it_converts_supported_types_when_nested_in_struct(self):
         column_type = "struct<type:int,x:map<string,struct<a:int>>,info:struct<user_id:int,name:string>>"
-        table = {
-            "StorageDescriptor": {"Columns": [{"Name": "user", "Type": column_type}]}
-        }
+        tree = list(map(column_mapper, [{"Name": "user", "Type": column_type}]))
         for scenario in [
             {"value": "john_doe", "id": "user.info.name", "expected": "john_doe"},
             {"value": "1234567890", "id": "user.info.user_id", "expected": 1234567890},
             {"value": "1", "id": "user.type", "expected": 1},
         ]:
-            res = cast_to_type(scenario["value"], scenario["id"], table)
+            res = cast_to_type(scenario["value"], scenario["id"], "TableName", tree)
             assert res == scenario["expected"]
 
     def test_it_throws_for_unknown_col(self):
@@ -1479,12 +1481,8 @@ class TestAthenaQueries:
             cast_to_type(
                 "mystr",
                 "doesnt_exist",
-                {
-                    "Name": "TableName",
-                    "StorageDescriptor": {
-                        "Columns": [{"Name": "test_col", "Type": "string"}]
-                    },
-                },
+                "TableName",
+                [{"Name": "test_col", "Type": "string", "CanBeIdentifier": True}],
             )
         assert e.value.args[0] == "Column doesnt_exist not found at table TableName"
 
@@ -1501,12 +1499,8 @@ class TestAthenaQueries:
                 cast_to_type(
                     123,
                     "user.x",
-                    {
-                        "Name": "TableName",
-                        "StorageDescriptor": {
-                            "Columns": [{"Name": "user", "Type": scenario}]
-                        },
-                    },
+                    "TableName",
+                    list(map(column_mapper, [{"Name": "user", "Type": scenario}])),
                 )
 
     def test_it_throws_for_unsupported_col_types(self):
@@ -1514,15 +1508,12 @@ class TestAthenaQueries:
             cast_to_type(
                 "2.56",
                 "test_col",
-                {
-                    "StorageDescriptor": {
-                        "Columns": [{"Name": "test_col", "Type": "foo"}]
-                    }
-                },
+                "TableName",
+                list(map(column_mapper, [{"Name": "test_col", "Type": "foo"}])),
             )
         assert (
             e.value.args[0]
-            == "Column test_col is not a supported column type for querying"
+            == "Column test_col at table TableName is not a supported column type for querying"
         )
 
     def test_it_throws_for_unconvertable_matches(self):
@@ -1530,11 +1521,8 @@ class TestAthenaQueries:
             cast_to_type(
                 "mystr",
                 "test_col",
-                {
-                    "StorageDescriptor": {
-                        "Columns": [{"Name": "test_col", "Type": "int"}]
-                    }
-                },
+                "TableName",
+                list(map(column_mapper, [{"Name": "test_col", "Type": "int"}])),
             )
 
     def test_it_throws_for_invalid_schema_for_inner_children(self):
@@ -1794,5 +1782,5 @@ def table_stub(
             for partition_key in partition_keys
         ],
         "TableType": "EXTERNAL_TABLE",
-        "Parameters": {"EXTERNAL": "TRUE",},
+        "Parameters": {"EXTERNAL": "TRUE"},
     }

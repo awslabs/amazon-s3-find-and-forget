@@ -2,6 +2,8 @@
 
 ## v0.45 (unreleased)
 
+- [#303](https://github.com/awslabs/amazon-s3-find-and-forget/pull/303): Improve
+  performance of Athena query generation
 - [#301](https://github.com/awslabs/amazon-s3-find-and-forget/pull/301): Include
   table name to error when query generation fails due to an invalid column type
 - Dependency version updates for:
