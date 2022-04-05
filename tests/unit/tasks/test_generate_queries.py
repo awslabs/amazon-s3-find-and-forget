@@ -1421,13 +1421,9 @@ class TestAthenaQueries:
 
     @patch("backend.lambdas.tasks.generate_queries.glue_client")
     def test_it_returns_table(self, client):
-        client.get_table.return_value = {
-            "Table": {
-                "Name": "test",
-                "StorageDescriptor": {"Columns": [{"Name": "column", "Type": "int"}]},
-            }
-        }
+        client.get_table.return_value = {"Table": {"Name": "test"}}
         result = get_table("test_db", "test_table")
+        assert {"Name": "test"} == result
         client.get_table.assert_called_with(DatabaseName="test_db", Name="test_table")
 
     @patch("backend.lambdas.tasks.generate_queries.paginate")
@@ -1788,6 +1784,4 @@ def table_stub(
         "PartitionKeys": table_partition_keys,
         "TableType": "EXTERNAL_TABLE",
         "Parameters": {"EXTERNAL": "TRUE"},
-        "ColumnsTree": list(map(column_mapper, table_columns)),
-        "PartitionKeysTree": list(map(column_mapper, table_partition_keys)),
     }
