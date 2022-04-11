@@ -7,3 +7,4 @@ numpy==1.21.5
 cryptography==3.4.7
 urllib3>=1.26.5
 aws-assume-role-lib>=2.9.0
+tenacity==8.0.1

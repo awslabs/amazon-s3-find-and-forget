@@ -1,6 +1,7 @@
 import logging
 from functools import lru_cache
 from urllib.parse import urlencode, quote_plus
+from tenacity import retry, retry_if_result, wait_exponential, stop_after_attempt
 
 from boto_utils import fetch_job_manifest, paginate
 from botocore.exceptions import ClientError
@@ -213,16 +214,11 @@ def delete_old_versions(client, input_bucket, input_key, new_version):
         errors = []
         max_deletions = 1000
         for i in range(0, len(version_ids), max_deletions):
-            resp = client.delete_objects(
-                Bucket=input_bucket,
-                Delete={
-                    "Objects": [
-                        {"Key": input_key, "VersionId": version_id}
-                        for version_id in version_ids[i : i + max_deletions]
-                    ],
-                    "Quiet": True,
-                },
-            )
+            objects = [
+                {"Key": input_key, "VersionId": version_id}
+                for version_id in version_ids[i : i + max_deletions]
+            ]
+            resp = delete_s3_objects(client, input_bucket, objects)
             errors.extend(resp.get("Errors", []))
         if len(errors) > 0:
             raise DeleteOldVersionsError(
@@ -235,6 +231,18 @@ def delete_old_versions(client, input_bucket, input_key, new_version):
             )
     except ClientError as e:
         raise DeleteOldVersionsError(errors=[str(e)])
+
+
+@retry(
+    wait=wait_exponential(multiplier=1, min=1, max=10),
+    stop=stop_after_attempt(10),
+    retry=(retry_if_result(lambda r: len(r.get("Errors", [])) > 0)),
+    retry_error_callback=lambda r: r.outcome.result(),
+)
+def delete_s3_objects(client, bucket, objects):
+    return client.delete_objects(
+        Bucket=bucket, Delete={"Objects": objects, "Quiet": True,},
+    )
 
 
 def verify_object_versions_integrity(
