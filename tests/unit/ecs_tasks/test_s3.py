@@ -617,7 +617,7 @@ def test_it_retries_for_deletion_errors(paginate_mock):
 
     delete_old_versions(s3_mock, "bucket", "key", "v4")
 
-    s3_mock.delete_objects.call_count == 2
+    assert s3_mock.delete_objects.call_count == 2
 
 
 @patch("backend.ecs_tasks.delete_files.s3.paginate")
