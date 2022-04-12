@@ -1,7 +1,13 @@
 import logging
 from functools import lru_cache
 from urllib.parse import urlencode, quote_plus
-from tenacity import retry, retry_if_result, wait_exponential, stop_after_attempt
+from tenacity import (
+    retry,
+    retry_if_result,
+    wait_exponential,
+    stop_after_attempt,
+    after_log,
+)
 
 from boto_utils import fetch_job_manifest, paginate
 from botocore.exceptions import ClientError
@@ -238,6 +244,7 @@ def delete_old_versions(client, input_bucket, input_key, new_version):
     stop=stop_after_attempt(10),
     retry=(retry_if_result(lambda r: len(r.get("Errors", [])) > 0)),
     retry_error_callback=lambda r: r.outcome.result(),
+    after=after_log(logger, logging.DEBUG),
 )
 def delete_s3_objects(client, bucket, objects):
     return client.delete_objects(
