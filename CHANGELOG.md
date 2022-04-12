@@ -2,6 +2,12 @@
 
 ## v0.45
 
+- [#306](https://github.com/awslabs/amazon-s3-find-and-forget/pull/306): Adds
+  retry behaviour for old object deletion to improve reliability against
+  transient errors from Amazon S3
+
+## v0.45
+
 - [#303](https://github.com/awslabs/amazon-s3-find-and-forget/pull/303): Improve
   performance of Athena query generation
 - [#301](https://github.com/awslabs/amazon-s3-find-and-forget/pull/301): Include
