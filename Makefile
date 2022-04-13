@@ -125,7 +125,6 @@ run-local-container:
 setup: | $(VENV) lambda-layer-deps
 	(! [[ -d .git ]] || $(VENV)/bin/pre-commit install)
 	npm i
-	cd frontend && npm i
 	gem install cfn-nag
 
 # virtualenv setup
