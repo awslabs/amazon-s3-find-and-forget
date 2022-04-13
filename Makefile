@@ -19,7 +19,7 @@ ifndef ROLE_NAME
 endif
 
 build-frontend:
-	cd frontend && npm run build
+	npm run build --workspace frontend
 
 deploy:
 	make pre-deploy
@@ -164,7 +164,7 @@ setup-predeploy:
 	pip install cfn-flip==1.2.2
 
 start-frontend-local:
-	cd frontend && npm start
+	npm start --workspace frontend
 
 start-frontend-remote:
 	$(eval WEBUI_URL := $(shell aws cloudformation describe-stacks --stack-name S3F2 --query 'Stacks[0].Outputs[?OutputKey==`WebUIUrl`].OutputValue' --output text))
@@ -174,7 +174,7 @@ test-cfn:
 	cfn_nag templates/*.yaml --blacklist-path ci/cfn_nag_blacklist.yaml
 
 test-frontend:
-	cd frontend && npm t
+	npm t --workspace frontend
 
 test-unit: | $(VENV)
 	$(VENV)/bin/pytest -m unit --log-cli-level info --cov=backend.lambdas --cov=decorators --cov=boto_utils --cov=backend.ecs_tasks --cov-report term-missing
