@@ -1,6 +1,6 @@
 # Change Log
 
-## v0.46 (unreleased)
+## v0.46
 
 - [#306](https://github.com/awslabs/amazon-s3-find-and-forget/pull/306): Adds
   retry behaviour for old object deletion to improve reliability against
