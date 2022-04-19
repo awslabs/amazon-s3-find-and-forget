@@ -66,14 +66,18 @@ def request_validator(request_schema):
                 return {
                     "statusCode": 500,
                     "body": json.dumps(
-                        {"Message": "Invalid configuration: {}".format(str(e)),}
+                        {
+                            "Message": "Invalid configuration: {}".format(str(e)),
+                        }
                     ),
                 }
             except jsonschema.ValidationError as exception:
                 return {
                     "statusCode": 422,
                     "body": json.dumps(
-                        {"Message": "Invalid Request: {}".format(exception.message),}
+                        {
+                            "Message": "Invalid Request: {}".format(exception.message),
+                        }
                     ),
                 }
 
@@ -96,18 +100,28 @@ def catch_errors(handler):
         except ClientError as e:
             return {
                 "statusCode": e.response["ResponseMetadata"].get("HTTPStatusCode", 400),
-                "body": json.dumps({"Message": "Client error: {}".format(str(e)),}),
+                "body": json.dumps(
+                    {
+                        "Message": "Client error: {}".format(str(e)),
+                    }
+                ),
             }
         except ValueError as e:
             return {
                 "statusCode": 400,
-                "body": json.dumps({"Message": "Invalid request: {}".format(str(e)),}),
+                "body": json.dumps(
+                    {
+                        "Message": "Invalid request: {}".format(str(e)),
+                    }
+                ),
             }
         except Exception as e:
             return {
                 "statusCode": 400,
                 "body": json.dumps(
-                    {"Message": "Unable to process request: {}".format(str(e)),}
+                    {
+                        "Message": "Unable to process request: {}".format(str(e)),
+                    }
                 ),
             }
 

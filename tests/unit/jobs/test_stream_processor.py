@@ -413,7 +413,12 @@ def test_it_emits_skipped_event_for_failures(
         "FAILED",
     ]
     mock_status.side_effect = [
-        {"Id": "job123", "Sk": "event123", "Type": "JobEvent", "JobStatus": status,}
+        {
+            "Id": "job123",
+            "Sk": "event123",
+            "Type": "JobEvent",
+            "JobStatus": status,
+        }
         for status in locked_statuses
     ]
     mock_is_record.side_effect = list(
@@ -468,7 +473,12 @@ def test_it_does_not_emit_skipped_event_for_non_failures(
     ]
     mock_is_record.side_effect = list(sum([(False, False, True) for _ in statuses], ()))
     mock_status.side_effect = [
-        {"Id": "job123", "Sk": "event123", "Type": "JobEvent", "JobStatus": status,}
+        {
+            "Id": "job123",
+            "Sk": "event123",
+            "Type": "JobEvent",
+            "JobStatus": status,
+        }
         for status in statuses
     ]
     for _ in statuses:

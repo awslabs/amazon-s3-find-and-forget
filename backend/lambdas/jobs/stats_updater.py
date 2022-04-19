@@ -74,7 +74,10 @@ def _aggregate_stats(events):
 def _update_job(job_id, stats):
     try:
         return table.update_item(
-            Key={"Id": job_id, "Sk": job_id,},
+            Key={
+                "Id": job_id,
+                "Sk": job_id,
+            },
             ConditionExpression="#Id = :Id AND #Sk = :Sk",
             UpdateExpression="set #qt = if_not_exists(#qt, :z) + :qt, "
             "#qs = if_not_exists(#qs, :z) + :qs, "

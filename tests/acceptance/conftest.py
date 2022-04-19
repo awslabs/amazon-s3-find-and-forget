@@ -163,7 +163,9 @@ def cognito_token(stack):
     provider_client.update_user_pool_client(
         UserPoolId=user_pool_id,
         ClientId=client_id,
-        ExplicitAuthFlows=["ADMIN_NO_SRP_AUTH",],
+        ExplicitAuthFlows=[
+            "ADMIN_NO_SRP_AUTH",
+        ],
     )
     # Get JWT token for the dummy user
     resp = provider_client.admin_initiate_auth(

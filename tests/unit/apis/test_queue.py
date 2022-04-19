@@ -95,7 +95,11 @@ def test_it_adds_composite_to_queue(table):
     response = handlers.enqueue_handler(
         {
             "body": json.dumps(
-                {"MatchId": mid, "Type": "Composite", "DataMappers": ["a"],}
+                {
+                    "MatchId": mid,
+                    "Type": "Composite",
+                    "DataMappers": ["a"],
+                }
             ),
             "requestContext": autorization_mock,
         },
@@ -155,7 +159,14 @@ def test_it_adds_batch_to_queue(table):
 @patch("backend.lambdas.queue.handlers.deletion_queue_table")
 def test_it_provides_default_data_mappers(table):
     response = handlers.enqueue_handler(
-        {"body": json.dumps({"MatchId": "test",}), "requestContext": autorization_mock},
+        {
+            "body": json.dumps(
+                {
+                    "MatchId": "test",
+                }
+            ),
+            "requestContext": autorization_mock,
+        },
         SimpleNamespace(),
     )
 
@@ -175,7 +186,13 @@ def test_it_provides_default_data_mappers(table):
 def test_it_cancels_deletions(table, mock_running_job):
     mock_running_job.return_value = False
     response = handlers.cancel_handler(
-        {"body": json.dumps({"Matches": [{"DeletionQueueItemId": "id123"}],})},
+        {
+            "body": json.dumps(
+                {
+                    "Matches": [{"DeletionQueueItemId": "id123"}],
+                }
+            )
+        },
         SimpleNamespace(),
     )
     assert {"statusCode": 204, "headers": ANY} == response
@@ -187,7 +204,14 @@ def test_it_prevents_cancelling_whilst_running_jobs(mock_running_job):
     response = handlers.cancel_handler(
         {
             "body": json.dumps(
-                {"Matches": [{"MatchId": "test", "CreatedAt": 123456789,}],}
+                {
+                    "Matches": [
+                        {
+                            "MatchId": "test",
+                            "CreatedAt": 123456789,
+                        }
+                    ],
+                }
             )
         },
         SimpleNamespace(),

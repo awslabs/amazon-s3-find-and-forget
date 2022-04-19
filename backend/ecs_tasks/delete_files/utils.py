@@ -7,7 +7,7 @@ def remove_none(d: dict):
 
 
 def retry_wrapper(fn, retry_wait_seconds=2, retry_factor=2, max_retries=5):
-    """ Exponential back-off retry wrapper for ClientError exceptions """
+    """Exponential back-off retry wrapper for ClientError exceptions"""
 
     def wrapper(*args, **kwargs):
         retry_current = 0

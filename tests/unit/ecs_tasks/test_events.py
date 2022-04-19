@@ -26,7 +26,10 @@ def test_it_emits_deletions(mock_get_id, mock_emit, message_stub):
     mock_emit.assert_called_with(
         "1234",
         "ObjectUpdated",
-        {"Statistics": stats_stub, "Object": "s3://bucket/path/basic.parquet",},
+        {
+            "Statistics": stats_stub,
+            "Object": "s3://bucket/path/basic.parquet",
+        },
         "ECSTask_4567",
     )
 
@@ -41,7 +44,10 @@ def test_it_emits_skips(mock_get_id, mock_emit, message_stub):
     mock_emit.assert_called_with(
         "1234",
         "ObjectUpdateSkipped",
-        {"Reason": reason_stub, "Object": "s3://bucket/path/basic.parquet",},
+        {
+            "Reason": reason_stub,
+            "Object": "s3://bucket/path/basic.parquet",
+        },
         "ECSTask_4567",
     )
 

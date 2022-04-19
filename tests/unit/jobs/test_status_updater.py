@@ -48,7 +48,10 @@ def test_it_determines_job_has_errors_for_failed_queries(table):
 @patch("backend.lambdas.jobs.status_updater.table")
 def test_it_determines_job_does_not_have_errors_for_failed_object_updates(table):
     table.get_item.return_value = {
-        "Item": {"TotalObjectUpdateFailedCount": 0, "TotalQueryFailedCount": 0,}
+        "Item": {
+            "TotalObjectUpdateFailedCount": 0,
+            "TotalQueryFailedCount": 0,
+        }
     }
     assert not job_has_errors("test")
 
@@ -72,7 +75,10 @@ def test_it_handles_job_started(table):
         ],
     )
     table.update_item.assert_called_with(
-        Key={"Id": "job123", "Sk": "job123",},
+        Key={
+            "Id": "job123",
+            "Sk": "job123",
+        },
         UpdateExpression="set #JobStatus = :JobStatus, #JobStartTime = :JobStartTime",
         ConditionExpression="#Id = :Id AND #Sk = :Sk AND (#JobStatus = :RUNNING OR #JobStatus = :QUEUED OR #JobStatus = :FORGET_COMPLETED_CLEANUP_IN_PROGRESS)",
         ExpressionAttributeNames={
@@ -115,10 +121,17 @@ def test_it_handles_forget_finished(table):
         ],
     )
     table.update_item.assert_called_with(
-        Key={"Id": "job123", "Sk": "job123",},
+        Key={
+            "Id": "job123",
+            "Sk": "job123",
+        },
         UpdateExpression="set #JobStatus = :JobStatus",
         ConditionExpression="#Id = :Id AND #Sk = :Sk AND (#JobStatus = :RUNNING OR #JobStatus = :QUEUED OR #JobStatus = :FORGET_COMPLETED_CLEANUP_IN_PROGRESS)",
-        ExpressionAttributeNames={"#Id": "Id", "#Sk": "Sk", "#JobStatus": "JobStatus",},
+        ExpressionAttributeNames={
+            "#Id": "Id",
+            "#Sk": "Sk",
+            "#JobStatus": "JobStatus",
+        },
         ExpressionAttributeValues={
             ":Id": "job123",
             ":Sk": "job123",
@@ -152,7 +165,10 @@ def test_it_handles_cleanup_success(table):
         ],
     )
     table.update_item.assert_called_with(
-        Key={"Id": "job123", "Sk": "job123",},
+        Key={
+            "Id": "job123",
+            "Sk": "job123",
+        },
         UpdateExpression="set #JobStatus = :JobStatus, #JobFinishTime = :JobFinishTime",
         ConditionExpression="#Id = :Id AND #Sk = :Sk AND (#JobStatus = :RUNNING OR #JobStatus = :QUEUED OR #JobStatus = :FORGET_COMPLETED_CLEANUP_IN_PROGRESS)",
         ExpressionAttributeNames={
@@ -195,7 +211,10 @@ def test_it_handles_cleanup_failed(table):
         ],
     )
     table.update_item.assert_called_with(
-        Key={"Id": "job123", "Sk": "job123",},
+        Key={
+            "Id": "job123",
+            "Sk": "job123",
+        },
         UpdateExpression="set #JobStatus = :JobStatus, #JobFinishTime = :JobFinishTime",
         ConditionExpression="#Id = :Id AND #Sk = :Sk AND (#JobStatus = :RUNNING OR #JobStatus = :QUEUED OR #JobStatus = :FORGET_COMPLETED_CLEANUP_IN_PROGRESS)",
         ExpressionAttributeNames={
@@ -238,7 +257,10 @@ def test_it_handles_find_failed(table):
         ],
     )
     table.update_item.assert_called_with(
-        Key={"Id": "job123", "Sk": "job123",},
+        Key={
+            "Id": "job123",
+            "Sk": "job123",
+        },
         UpdateExpression="set #JobStatus = :JobStatus, #JobFinishTime = :JobFinishTime",
         ConditionExpression="#Id = :Id AND #Sk = :Sk AND (#JobStatus = :RUNNING OR #JobStatus = :QUEUED OR #JobStatus = :FORGET_COMPLETED_CLEANUP_IN_PROGRESS)",
         ExpressionAttributeNames={
@@ -281,7 +303,10 @@ def test_it_handles_forget_failed(table):
         ],
     )
     table.update_item.assert_called_with(
-        Key={"Id": "job123", "Sk": "job123",},
+        Key={
+            "Id": "job123",
+            "Sk": "job123",
+        },
         UpdateExpression="set #JobStatus = :JobStatus, #JobFinishTime = :JobFinishTime",
         ConditionExpression="#Id = :Id AND #Sk = :Sk AND (#JobStatus = :RUNNING OR #JobStatus = :QUEUED OR #JobStatus = :FORGET_COMPLETED_CLEANUP_IN_PROGRESS)",
         ExpressionAttributeNames={
@@ -323,7 +348,10 @@ def test_it_handles_exception(table):
         ],
     )
     table.update_item.assert_called_with(
-        Key={"Id": "job123", "Sk": "job123",},
+        Key={
+            "Id": "job123",
+            "Sk": "job123",
+        },
         UpdateExpression="set #JobStatus = :JobStatus, #JobFinishTime = :JobFinishTime",
         ConditionExpression="#Id = :Id AND #Sk = :Sk AND (#JobStatus = :RUNNING OR #JobStatus = :QUEUED OR #JobStatus = :FORGET_COMPLETED_CLEANUP_IN_PROGRESS)",
         ExpressionAttributeNames={
@@ -429,7 +457,10 @@ def test_it_handles_query_planning_complete(table):
         ],
     )
     table.update_item.assert_called_with(
-        Key={"Id": "job123", "Sk": "job123",},
+        Key={
+            "Id": "job123",
+            "Sk": "job123",
+        },
         UpdateExpression="set #GeneratedQueries = :GeneratedQueries, #DeletionQueueSize = :DeletionQueueSize, #Manifests = :Manifests",
         ConditionExpression="#Id = :Id AND #Sk = :Sk AND (#JobStatus = :RUNNING OR #JobStatus = :QUEUED OR #JobStatus = :FORGET_COMPLETED_CLEANUP_IN_PROGRESS)",
         ExpressionAttributeNames={

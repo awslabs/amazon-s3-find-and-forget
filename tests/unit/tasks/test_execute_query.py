@@ -55,7 +55,12 @@ def test_it_generates_query_with_partition():
         {
             "Database": "amazonreviews",
             "Table": "amazon_reviews_parquet",
-            "Columns": [{"Column": "customer_id", "Type": "Simple",}],
+            "Columns": [
+                {
+                    "Column": "customer_id",
+                    "Type": "Simple",
+                }
+            ],
             "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
             "DataMapperId": "dm_1234",
             "JobId": "job_1234567890",
@@ -82,7 +87,12 @@ def test_it_generates_query_with_int_partition():
         {
             "Database": "amazonreviews",
             "Table": "amazon_reviews_parquet",
-            "Columns": [{"Column": "customer_id", "Type": "Simple",}],
+            "Columns": [
+                {
+                    "Column": "customer_id",
+                    "Type": "Simple",
+                }
+            ],
             "PartitionKeys": [{"Key": "year", "Value": 2010}],
             "DataMapperId": "dm_1234",
             "JobId": "job_1234567890",
@@ -109,7 +119,12 @@ def test_it_generates_query_with_multiple_partitions():
         {
             "Database": "amazonreviews",
             "Table": "amazon_reviews_parquet",
-            "Columns": [{"Column": "customer_id", "Type": "Simple",}],
+            "Columns": [
+                {
+                    "Column": "customer_id",
+                    "Type": "Simple",
+                }
+            ],
             "PartitionKeys": [
                 {"Key": "product_category", "Value": "Books"},
                 {"Key": "published", "Value": "2019"},
@@ -139,7 +154,12 @@ def test_it_generates_query_without_partition():
         {
             "Database": "amazonreviews",
             "Table": "amazon_reviews_parquet",
-            "Columns": [{"Column": "customer_id", "Type": "Simple",}],
+            "Columns": [
+                {
+                    "Column": "customer_id",
+                    "Type": "Simple",
+                }
+            ],
             "DataMapperId": "dm_1234",
             "JobId": "job_1234567890",
         }
@@ -232,8 +252,14 @@ def test_it_generates_query_with_composite_matches():
                     "Columns": ["user.first_name", "user.last_name"],
                     "Type": "Composite",
                 },
-                {"Columns": ["user.age", "user.last_name"], "Type": "Composite",},
-                {"Columns": ["user.userid"], "Type": "Composite",},
+                {
+                    "Columns": ["user.age", "user.last_name"],
+                    "Type": "Composite",
+                },
+                {
+                    "Columns": ["user.userid"],
+                    "Type": "Composite",
+                },
             ],
             "DataMapperId": "dm_1234",
             "JobId": "job_1234567890",
@@ -282,7 +308,10 @@ def test_it_generates_query_with_simple_and_composite_matches():
             "Database": "amazonreviews",
             "Table": "amazon_reviews_parquet",
             "Columns": [
-                {"Column": "a.b.c", "Type": "Simple",},
+                {
+                    "Column": "a.b.c",
+                    "Type": "Simple",
+                },
                 {
                     "Columns": ["user.first_name", "user.last_name"],
                     "Type": "Composite",

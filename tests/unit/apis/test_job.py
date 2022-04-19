@@ -322,7 +322,10 @@ class TestListJobEvents:
         table.get_item.return_value = {"Item": job_stub(JobStatus="RUNNING")}
         table.query.return_value = {"Items": [stub]}
         response = handlers.list_job_events_handler(
-            {"pathParameters": {"job_id": "test"},}, SimpleNamespace()
+            {
+                "pathParameters": {"job_id": "test"},
+            },
+            SimpleNamespace(),
         )
         resp_body = json.loads(response["body"])
         assert 200 == response["statusCode"]

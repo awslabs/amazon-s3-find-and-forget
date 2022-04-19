@@ -180,9 +180,20 @@ def test_it_offloads_nested_state(mock_s3):
         def my_func(event, *_):
             return event
 
-        res = my_func({"Data": {"Dict": {"test": "data"}, "List": ["data"],}}, {})
+        res = my_func(
+            {
+                "Data": {
+                    "Dict": {"test": "data"},
+                    "List": ["data"],
+                }
+            },
+            {},
+        )
         assert {
-            "Data": {"Dict": "s3://bucket/state/a", "List": "s3://bucket/state/b",}
+            "Data": {
+                "Dict": "s3://bucket/state/a",
+                "List": "s3://bucket/state/b",
+            }
         } == res
         assert ("bucket", "state/a") == mock_s3.Object.call_args_list[0][0]
         assert ("bucket", "state/b") == mock_s3.Object.call_args_list[1][0]
@@ -199,8 +210,17 @@ def test_it_offloads_all_by_default(mock_s3):
         def my_func(event, *_):
             return event
 
-        res = my_func({"Dict": {"test": "data"}, "List": ["data"],}, {})
-        assert {"Dict": "s3://bucket/state/a", "List": "s3://bucket/state/b",} == res
+        res = my_func(
+            {
+                "Dict": {"test": "data"},
+                "List": ["data"],
+            },
+            {},
+        )
+        assert {
+            "Dict": "s3://bucket/state/a",
+            "List": "s3://bucket/state/b",
+        } == res
         assert ("bucket", "state/a") == mock_s3.Object.call_args_list[0][0]
         assert ("bucket", "state/b") == mock_s3.Object.call_args_list[1][0]
         assert {"Body": '{"test": "data"}'} == mock_s3.Object().put.call_args_list[0][1]
@@ -231,8 +251,15 @@ def test_it_overrides_default_bucket_and_prefix(mock_s3):
         def my_func(event, *_):
             return event
 
-        res = my_func({"Dict": {"test": "data"},}, {})
-        assert {"Dict": "s3://otherbucket/custom/a",} == res
+        res = my_func(
+            {
+                "Dict": {"test": "data"},
+            },
+            {},
+        )
+        assert {
+            "Dict": "s3://otherbucket/custom/a",
+        } == res
         assert ("otherbucket", "custom/a") == mock_s3.Object.call_args_list[0][0]
         assert {"Body": '{"test": "data"}'} == mock_s3.Object().put.call_args_list[0][1]
 
@@ -277,8 +304,17 @@ def test_it_loads_all_by_default(mock_s3):
         {"Body": BytesIO(b'["data"]')},
     ]
 
-    res = my_func({"Dict": "s3://bucket/state/a", "List": "s3://bucket/state/b",}, {})
-    assert {"Dict": {"test": "data"}, "List": ["data"],} == res
+    res = my_func(
+        {
+            "Dict": "s3://bucket/state/a",
+            "List": "s3://bucket/state/b",
+        },
+        {},
+    )
+    assert {
+        "Dict": {"test": "data"},
+        "List": ["data"],
+    } == res
     # Start at call index 1 as Object already called during test setup
     assert ("bucket", "state/a") == mock_s3.Object.call_args_list[1][0]
     assert ("bucket", "state/b") == mock_s3.Object.call_args_list[2][0]
@@ -296,9 +332,20 @@ def test_it_loads_nested_state(mock_s3):
     ]
 
     res = my_func(
-        {"Data": {"Dict": "s3://bucket/state/a", "List": "s3://bucket/state/b",}}, {}
+        {
+            "Data": {
+                "Dict": "s3://bucket/state/a",
+                "List": "s3://bucket/state/b",
+            }
+        },
+        {},
     )
-    assert {"Data": {"Dict": {"test": "data"}, "List": ["data"],}} == res
+    assert {
+        "Data": {
+            "Dict": {"test": "data"},
+            "List": ["data"],
+        }
+    } == res
     # Start at call index 1 as Object already called during test setup
     assert ("bucket", "state/a") == mock_s3.Object.call_args_list[1][0]
     assert ("bucket", "state/b") == mock_s3.Object.call_args_list[2][0]

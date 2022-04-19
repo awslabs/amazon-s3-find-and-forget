@@ -85,8 +85,8 @@ def encrypt(buf, s3_metadata, kms_client):
 def decrypt(file_input, s3_metadata, kms_client):
     """
     Method to decrypt an S3 object with KMS based Client-side encryption (CSE).
-    The object's metadata is used to fetch the encryption envelope such as 
-    the KMS key ID and the algorithm. 
+    The object's metadata is used to fetch the encryption envelope such as
+    the KMS key ID and the algorithm.
     """
     logger.info("Decrypting Object with CSE-KMS")
     alg = s3_metadata.get(HEADER_ALG, None)

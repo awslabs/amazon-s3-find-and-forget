@@ -57,7 +57,18 @@ def test_it_supports_multiple_iter_keys():
     client.get_paginator.return_value = client
     client.some_method.__name__ = "some_method"
     client.paginate.return_value = iter(
-        [{"A": ["valA1", "valA2",], "B": ["valB1", "valB2",]}]
+        [
+            {
+                "A": [
+                    "valA1",
+                    "valA2",
+                ],
+                "B": [
+                    "valB1",
+                    "valB2",
+                ],
+            }
+        ]
     )
     result = paginate(client, client.some_method, ["A", "B"])
     assert isinstance(result, types.GeneratorType)
@@ -68,7 +79,19 @@ def test_it_supports_multiple_iter_keys_of_varying_lengths():
     client = MagicMock()
     client.get_paginator.return_value = client
     client.some_method.__name__ = "some_method"
-    client.paginate.return_value = iter([{"A": ["valA1", "valA2",], "B": ["valB1",]}])
+    client.paginate.return_value = iter(
+        [
+            {
+                "A": [
+                    "valA1",
+                    "valA2",
+                ],
+                "B": [
+                    "valB1",
+                ],
+            }
+        ]
+    )
     result = paginate(client, client.some_method, ["A", "B"])
     assert isinstance(result, types.GeneratorType)
     assert [("valA1", "valB1"), ("valA2", None)] == list(result)
@@ -79,7 +102,19 @@ def test_it_supports_nested_iter_keys():
     client.get_paginator.return_value = client
     client.some_method.__name__ = "some_method"
     client.paginate.return_value = iter(
-        [{"A": {"B": ["valAB1", "valAB2",],}, "C": ["valC1",]}]
+        [
+            {
+                "A": {
+                    "B": [
+                        "valAB1",
+                        "valAB2",
+                    ],
+                },
+                "C": [
+                    "valC1",
+                ],
+            }
+        ]
     )
     result = paginate(client, client.some_method, ["A.B", "C"])
     assert isinstance(result, types.GeneratorType)
@@ -92,10 +127,22 @@ def test_it_batches_msgs():
     msgs = list(range(0, 15))
     batch_sqs_msgs(queue, msgs)
     queue.send_messages.assert_any_call(
-        Entries=[{"Id": ANY, "MessageBody": json.dumps(x),} for x in range(0, 10)]
+        Entries=[
+            {
+                "Id": ANY,
+                "MessageBody": json.dumps(x),
+            }
+            for x in range(0, 10)
+        ]
     )
     queue.send_messages.assert_any_call(
-        Entries=[{"Id": ANY, "MessageBody": json.dumps(x),} for x in range(10, 15)]
+        Entries=[
+            {
+                "Id": ANY,
+                "MessageBody": json.dumps(x),
+            }
+            for x in range(10, 15)
+        ]
     )
 
 
@@ -105,7 +152,13 @@ def test_it_passes_through_queue_args():
     msgs = [1]
     batch_sqs_msgs(queue, msgs, DelaySeconds=60)
     queue.send_messages.assert_any_call(
-        Entries=[{"DelaySeconds": 60, "Id": ANY, "MessageBody": ANY,}]
+        Entries=[
+            {
+                "DelaySeconds": 60,
+                "Id": ANY,
+                "MessageBody": ANY,
+            }
+        ]
     )
 
 

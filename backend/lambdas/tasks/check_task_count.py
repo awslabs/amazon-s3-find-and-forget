@@ -14,7 +14,10 @@ client = boto3.client("ecs")
 def handler(event, context):
     try:
         service = client.describe_services(
-            cluster=event["Cluster"], services=[event["ServiceName"],],
+            cluster=event["Cluster"],
+            services=[
+                event["ServiceName"],
+            ],
         )["services"][0]
         pending = service["pendingCount"]
         running = service["runningCount"]

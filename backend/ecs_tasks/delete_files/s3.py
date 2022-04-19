@@ -50,7 +50,11 @@ def save(s3, client, buf, bucket, key, metadata, source_version=None):
             Bucket=bucket,
             Key=key,
             VersionId=new_version_id,
-            **{**request_payer_args, **acl_args, "GrantWrite": write_grantees,}
+            **{
+                **request_payer_args,
+                **acl_args,
+                "GrantWrite": write_grantees,
+            }
         )
     logger.info("Processing of file s3://%s/%s complete", bucket, key)
     return new_version_id
@@ -248,7 +252,11 @@ def delete_old_versions(client, input_bucket, input_key, new_version):
 )
 def delete_s3_objects(client, bucket, objects):
     return client.delete_objects(
-        Bucket=bucket, Delete={"Objects": objects, "Quiet": True,},
+        Bucket=bucket,
+        Delete={
+            "Objects": objects,
+            "Quiet": True,
+        },
     )
 
 
@@ -296,7 +304,7 @@ def verify_object_versions_integrity(
 
 
 def rollback_object_version(client, bucket, key, version, on_error):
-    """ Delete newly created object version as soon as integrity conflict is detected """
+    """Delete newly created object version as soon as integrity conflict is detected"""
     try:
         return client.delete_object(Bucket=bucket, Key=key, VersionId=version)
     except ClientError as e:
