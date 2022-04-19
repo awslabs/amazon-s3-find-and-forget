@@ -9,7 +9,7 @@ The following dependencies must be installed:
 
 - AWS CLI
 - Python >=3.7 and pip
-- node.js >= v14
+- node.js >= v16.11 and npm >= 8
 - virtualenv
 - Ruby >= 2.6
 

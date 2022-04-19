@@ -4,6 +4,8 @@
 
 - [#310](https://github.com/awslabs/amazon-s3-find-and-forget/pull/310): Improve
   performance of Athena query generation
+- [#308](https://github.com/awslabs/amazon-s3-find-and-forget/pull/308): Upgrade
+  frontend dependencies and use npm workspaces to link frontend sub-project
 
 ## v0.46
 
