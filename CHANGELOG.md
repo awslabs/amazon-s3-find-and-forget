@@ -1,5 +1,10 @@
 # Change Log
 
+## v0.47 (unreleased)
+
+- [#310](https://github.com/awslabs/amazon-s3-find-and-forget/pull/310): Improve
+  performance of Athena query generation
+
 ## v0.46
 
 - [#306](https://github.com/awslabs/amazon-s3-find-and-forget/pull/306): Adds
