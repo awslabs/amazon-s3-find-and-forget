@@ -54,7 +54,12 @@ job_summary_attributes = [
 @catch_errors
 def get_job_handler(event, context):
     job_id = event["pathParameters"]["job_id"]
-    resp = table.get_item(Key={"Id": job_id, "Sk": job_id,})
+    resp = table.get_item(
+        Key={
+            "Id": job_id,
+            "Sk": job_id,
+        }
+    )
     item = resp.get("Item")
     if not item:
         return {"statusCode": 404}
@@ -93,7 +98,11 @@ def list_jobs_handler(event, context):
     return {
         "statusCode": 200,
         "body": json.dumps(
-            {"Jobs": items, "NextStart": next_start,}, cls=DecimalEncoder
+            {
+                "Jobs": items,
+                "NextStart": next_start,
+            },
+            cls=DecimalEncoder,
         ),
     }
 
@@ -113,7 +122,12 @@ def list_job_events_handler(event, context):
     page_size = int(qs.get("page_size", 20))
     start_at = qs.get("start_at", "0")
     # Check the job exists
-    job = table.get_item(Key={"Id": job_id, "Sk": job_id,}).get("Item")
+    job = table.get_item(
+        Key={
+            "Id": job_id,
+            "Sk": job_id,
+        }
+    ).get("Item")
     if not job:
         return {"statusCode": 404}
 

@@ -229,7 +229,12 @@ class TestAthenaQueries:
                 "Format": "parquet",
                 "Database": "test_db",
                 "Table": "test_table",
-                "Columns": [{"Column": "customer_id", "Type": "Simple",}],
+                "Columns": [
+                    {
+                        "Column": "customer_id",
+                        "Type": "Simple",
+                    }
+                ],
                 "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
                 "DeleteOldVersions": True,
                 "IgnoreObjectNotFoundExceptions": False,
@@ -312,7 +317,12 @@ class TestAthenaQueries:
                 "Format": "parquet",
                 "Database": "test_db",
                 "Table": "test_table",
-                "Columns": [{"Column": "customer_id", "Type": "Simple",}],
+                "Columns": [
+                    {
+                        "Column": "customer_id",
+                        "Type": "Simple",
+                    }
+                ],
                 "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
                 "DeleteOldVersions": True,
                 "IgnoreObjectNotFoundExceptions": False,
@@ -549,7 +559,10 @@ class TestAthenaQueries:
                 "Database": "test_db",
                 "Table": "test_table",
                 "Columns": [
-                    {"Columns": ["first_name", "last_name"], "Type": "Composite",}
+                    {
+                        "Columns": ["first_name", "last_name"],
+                        "Type": "Composite",
+                    }
                 ],
                 "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
                 "DeleteOldVersions": True,
@@ -677,12 +690,27 @@ class TestAthenaQueries:
                 "Database": "test_db",
                 "Table": "test_table",
                 "Columns": [
-                    {"Column": "customer_id", "Type": "Simple",},
-                    {"Column": "first_name", "Type": "Simple",},
-                    {"Column": "last_name", "Type": "Simple",},
+                    {
+                        "Column": "customer_id",
+                        "Type": "Simple",
+                    },
+                    {
+                        "Column": "first_name",
+                        "Type": "Simple",
+                    },
+                    {
+                        "Column": "last_name",
+                        "Type": "Simple",
+                    },
                     {"Column": "age", "Type": "Simple"},
-                    {"Columns": ["first_name", "last_name"], "Type": "Composite",},
-                    {"Columns": ["age", "last_name"], "Type": "Composite",},
+                    {
+                        "Columns": ["first_name", "last_name"],
+                        "Type": "Composite",
+                    },
+                    {
+                        "Columns": ["age", "last_name"],
+                        "Type": "Composite",
+                    },
                 ],
                 "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
                 "DeleteOldVersions": True,

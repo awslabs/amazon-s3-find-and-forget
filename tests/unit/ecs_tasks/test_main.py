@@ -13,7 +13,11 @@ from pyarrow.lib import ArrowException
 from s3 import DeleteOldVersionsError, IntegrityCheckFailedError
 
 with patch.dict(
-    os.environ, {"DELETE_OBJECTS_QUEUE": "https://url/q.fifo", "DLQ": "https://url/q",}
+    os.environ,
+    {
+        "DELETE_OBJECTS_QUEUE": "https://url/q.fifo",
+        "DLQ": "https://url/q",
+    },
 ):
     from backend.ecs_tasks.delete_files.main import (
         build_matches,
@@ -272,7 +276,11 @@ def test_it_assumes_role(mock_delete, mock_s3, mock_session, message_stub):
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.build_matches", MagicMock())
 def test_it_removes_old_versions(
-    mock_delete, mock_s3, mock_delete_versions, mock_save, message_stub,
+    mock_delete,
+    mock_s3,
+    mock_delete_versions,
+    mock_save,
+    message_stub,
 ):
     mock_s3.S3FileSystem.return_value = mock_s3
     mock_s3.open.return_value = mock_s3
@@ -311,7 +319,12 @@ def test_it_removes_old_versions(
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
 @patch("backend.ecs_tasks.delete_files.main.build_matches", MagicMock())
 def test_it_handles_old_version_delete_failures(
-    mock_handle, mock_delete, mock_s3, mock_delete_versions, mock_save, message_stub,
+    mock_handle,
+    mock_delete,
+    mock_s3,
+    mock_delete_versions,
+    mock_save,
+    message_stub,
 ):
     mock_s3.S3FileSystem.return_value = mock_s3
     mock_s3.open.return_value = mock_s3
@@ -348,7 +361,12 @@ def test_it_handles_old_version_delete_failures(
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
 @patch("backend.ecs_tasks.delete_files.main.build_matches", MagicMock())
 def test_it_handles_no_deletions(
-    mock_handle, mock_save, mock_emit, mock_delete, mock_s3, message_stub,
+    mock_handle,
+    mock_save,
+    mock_emit,
+    mock_delete,
+    mock_s3,
+    message_stub,
 ):
     mock_s3.S3FileSystem.return_value = mock_s3
     mock_delete.return_value = pa.BufferOutputStream(), {"DeletedRows": 0}
@@ -645,7 +663,11 @@ def test_it_provides_logs_for_acl_fail(
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
 @patch("backend.ecs_tasks.delete_files.main.build_matches", MagicMock())
 def test_it_provides_logs_for_failed_version_integrity_check_and_performs_rollback(
-    mock_error_handler, mock_delete, mock_verify_integrity, rollback_mock, message_stub,
+    mock_error_handler,
+    mock_delete,
+    mock_verify_integrity,
+    rollback_mock,
+    message_stub,
 ):
     mock_verify_integrity.side_effect = IntegrityCheckFailedError(
         "Some error", MagicMock(), "bucket", "path/basic.parquet", "new_version"

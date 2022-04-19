@@ -53,7 +53,7 @@ def make_query(query_data):
                 m."queryablecolumns"='other_customer_id'
             AND partition_key = value
     )
-    
+
     Note: 'queryablematchid' and 'queryablecolumns' is a convenience
     stringified value of match_id and its column when the match is simple,
     or a stringified joint value when composite (for instance,
@@ -98,7 +98,8 @@ def make_query(query_data):
     partition_filters = ""
     for partition in partitions:
         partition_filters += " AND {key} = {value} ".format(
-            key=escape_column(partition["Key"]), value=escape_item(partition["Value"]),
+            key=escape_column(partition["Key"]),
+            value=escape_item(partition["Value"]),
         )
 
     column_unions = ""

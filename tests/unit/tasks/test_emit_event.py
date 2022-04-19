@@ -27,7 +27,11 @@ def test_it_logs_event(mock_emit):
 def test_it_defaults_emiiter_id(mock_uuid4, mock_emit):
     mock_uuid4.return_value = "111"
     handler(
-        {"JobId": "1234", "EventName": "QueryFailed", "EventData": {"foo": "bar"},},
+        {
+            "JobId": "1234",
+            "EventName": "QueryFailed",
+            "EventData": {"foo": "bar"},
+        },
         SimpleNamespace(),
     )
     mock_emit.assert_called_with("1234", "QueryFailed", {"foo": "bar"}, "111")

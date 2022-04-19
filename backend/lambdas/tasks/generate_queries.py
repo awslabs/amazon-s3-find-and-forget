@@ -94,7 +94,7 @@ def build_manifest_row(columns, match_id, item_id, item_createdat):
     is simple, or a stringified joint value when composite (for instance,
     "John_S3F2COMP_Doe" and "first_name_S3F2COMP_last_name"). The purpose of
     these fields is optimise query execution by doing the SQL JOINs over strings only.
-    
+
     * What are MatchId and Columns?
     Original values to be used by the ECS task instead.
     Note that the MatchId is declared as array<string> in the Glue Table as it's

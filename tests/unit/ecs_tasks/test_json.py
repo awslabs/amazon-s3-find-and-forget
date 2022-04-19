@@ -134,7 +134,11 @@ def test_delete_correct_rows_from_json_file_with_composite_types_tuple_col():
 def test_delete_correct_rows_from_json_file_with_composite_types_single_col():
     # Arrange
     to_delete = [
-        {"Columns": ["last_name"], "MatchIds": [["Doe"]], "Type": "Composite",}
+        {
+            "Columns": ["last_name"],
+            "MatchIds": [["Doe"]],
+            "Type": "Composite",
+        }
     ]
     data = (
         '{"customer_id": 12345, "first_name": "John", "last_name": "Doe"}\n'
