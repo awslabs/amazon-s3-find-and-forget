@@ -90,9 +90,13 @@ def determine_status(job_id, event_name):
 
 
 def job_has_errors(job_id):
-    item = table.get_item(Key={"Id": job_id, "Sk": job_id,}, ConsistentRead=True)[
-        "Item"
-    ]
+    item = table.get_item(
+        Key={
+            "Id": job_id,
+            "Sk": job_id,
+        },
+        ConsistentRead=True,
+    )["Item"]
     return (
         item.get("TotalObjectUpdateFailedCount", 0) > 0
         or item.get("TotalQueryFailedCount") > 0
@@ -116,7 +120,10 @@ def _update_item(job_id, attr_updates):
         )
 
         return table.update_item(
-            Key={"Id": job_id, "Sk": job_id,},
+            Key={
+                "Id": job_id,
+                "Sk": job_id,
+            },
             UpdateExpression=update_expression,
             ConditionExpression="#Id = :Id AND #Sk = :Sk AND ({})".format(
                 unlocked_states_condition

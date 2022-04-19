@@ -177,7 +177,9 @@ def test_it_gets_tagging_args():
     client.get_object_tagging.return_value = {
         "TagSet": [{"Key": "a", "Value": "b"}, {"Key": "c", "Value": "d"}]
     }
-    assert {"Tagging": "a=b&c=d",} == get_object_tags(client, "bucket", "key")[0]
+    assert {"Tagging": "a=b&c=d",} == get_object_tags(
+        client, "bucket", "key"
+    )[0]
 
 
 @patch("backend.ecs_tasks.delete_files.s3.get_requester_payment")
@@ -288,7 +290,10 @@ def test_it_applies_settings_when_saving(
         {"TagSet": [{"Key": "a", "Value": "b"}]},
     )
     mock_acl.return_value = (
-        {"GrantFullControl": "id=abc", "GrantRead": "id=123",},
+        {
+            "GrantFullControl": "id=abc",
+            "GrantRead": "id=123",
+        },
         {
             "Owner": {"ID": "owner_id"},
             "Grants": [
@@ -351,7 +356,9 @@ def test_it_restores_write_permissions(
     mock_standard.return_value = ({}, {})
     mock_tagging.return_value = ({}, {})
     mock_acl.return_value = (
-        {"GrantFullControl": "id=abc",},
+        {
+            "GrantFullControl": "id=abc",
+        },
         {
             "Owner": {"ID": "owner_id"},
             "Grants": [
@@ -612,7 +619,9 @@ def test_it_retries_for_deletion_errors(paginate_mock):
                 {"VersionId": "v1", "Key": "key", "Message": "InternalServerError"}
             ]
         },
-        {"Errors": [],},
+        {
+            "Errors": [],
+        },
     ]
 
     delete_old_versions(s3_mock, "bucket", "key", "v4")

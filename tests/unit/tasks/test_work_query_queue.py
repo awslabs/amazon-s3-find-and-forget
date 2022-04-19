@@ -108,7 +108,13 @@ def test_it_defaults_wait_duration(sqs_mock, read_queue_mock, sf_client_mock):
         }
     )
 
-    handler({"ExecutionId": "1234", "ExecutionName": "4231",}, SimpleNamespace())
+    handler(
+        {
+            "ExecutionId": "1234",
+            "ExecutionName": "4231",
+        },
+        SimpleNamespace(),
+    )
 
     sf_client_mock.start_execution.assert_called_with(
         stateMachineArn=ANY, input=expected_call
@@ -132,7 +138,13 @@ def test_it_starts_state_machine_per_message(sqs_mock, read_queue_mock, sf_clien
         ),
     ]
 
-    resp = handler({"ExecutionId": "1234", "ExecutionName": "4231",}, SimpleNamespace())
+    resp = handler(
+        {
+            "ExecutionId": "1234",
+            "ExecutionName": "4231",
+        },
+        SimpleNamespace(),
+    )
 
     assert 2 == sf_client_mock.start_execution.call_count
     assert 2 == resp["Total"]
@@ -153,7 +165,11 @@ def test_limits_calls_to_capacity(sqs_mock, read_queue_mock, sf_client_mock):
     ]
 
     handler(
-        {"ExecutionId": "1234", "ExecutionName": "4231", "AthenaConcurrencyLimit": 20,},
+        {
+            "ExecutionId": "1234",
+            "ExecutionName": "4231",
+            "AthenaConcurrencyLimit": 20,
+        },
         SimpleNamespace(),
     )
 
@@ -203,7 +219,11 @@ def test_it_abandons_when_any_query_fails_and_no_running_in_current_loop(
             {
                 "ExecutionId": "1234",
                 "ExecutionName": "4321",
-                "RunningExecutions": {"IsFailing": True, "Data": [{}], "Total": 1,},
+                "RunningExecutions": {
+                    "IsFailing": True,
+                    "Data": [{}],
+                    "Total": 1,
+                },
             },
             SimpleNamespace(),
         )
@@ -222,7 +242,11 @@ def test_it_abandons_when_previous_loop_found_failure(
             {
                 "ExecutionId": "1234",
                 "ExecutionName": "4321",
-                "RunningExecutions": {"IsFailing": True, "Data": [{}], "Total": 1,},
+                "RunningExecutions": {
+                    "IsFailing": True,
+                    "Data": [{}],
+                    "Total": 1,
+                },
             },
             SimpleNamespace(),
         )
@@ -242,7 +266,13 @@ def test_raises_error_for_invalid_executor(sqs_mock, read_queue_mock, sf_client_
         )
     ]
     with pytest.raises(NotImplementedError):
-        handler({"ExecutionId": "1234", "ExecutionName": "4231",}, SimpleNamespace())
+        handler(
+            {
+                "ExecutionId": "1234",
+                "ExecutionName": "4231",
+            },
+            SimpleNamespace(),
+        )
 
 
 @patch("backend.lambdas.tasks.work_query_queue.load_execution")
@@ -259,7 +289,11 @@ def test_it_waits_for_running_executions_before_abandoning(
         {
             "ExecutionId": "1234",
             "ExecutionName": "4321",
-            "RunningExecutions": {"IsFailing": False, "Data": [{}, {}], "Total": 2,},
+            "RunningExecutions": {
+                "IsFailing": False,
+                "Data": [{}, {}],
+                "Total": 2,
+            },
         },
         SimpleNamespace(),
     )
@@ -289,7 +323,10 @@ def test_it_clears_completed_from_sqs(mock_queue, mock_sqs):
     mock_queue.url = "someurl"
     mock_sqs.Message.return_value = mock_message
     clear_completed(
-        [{"ReceiptHandle": "handle1"}, {"ReceiptHandle": "handle2"},]
+        [
+            {"ReceiptHandle": "handle1"},
+            {"ReceiptHandle": "handle2"},
+        ]
     )
     assert 2 == mock_message.delete.call_count
 

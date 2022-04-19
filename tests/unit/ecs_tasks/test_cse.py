@@ -123,7 +123,9 @@ def test_it_encrypts_and_decrypts_data_cbc():
     assert encrypted != content
     assert decrypted.read() == content
     kms_client.generate_data_key.assert_called_with(
-        KeyId=key_id, EncryptionContext={"kms_cmk_id": key_id}, KeySpec="AES_256",
+        KeyId=key_id,
+        EncryptionContext={"kms_cmk_id": key_id},
+        KeySpec="AES_256",
     )
     kms_client.decrypt.assert_called_with(
         CiphertextBlob=base64.b64decode(new_metadata["x-amz-key-v2"]),
@@ -163,7 +165,9 @@ def test_it_encrypts_and_decrypts_data_gcm():
     assert encrypted != content
     assert decrypted.read() == content
     kms_client.generate_data_key.assert_called_with(
-        KeyId=key_id, EncryptionContext={"kms_cmk_id": key_id}, KeySpec="AES_256",
+        KeyId=key_id,
+        EncryptionContext={"kms_cmk_id": key_id},
+        KeySpec="AES_256",
     )
     kms_client.decrypt.assert_called_with(
         CiphertextBlob=base64.b64decode(new_metadata["x-amz-key-v2"]),

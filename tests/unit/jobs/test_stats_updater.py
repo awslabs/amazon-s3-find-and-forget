@@ -28,7 +28,10 @@ def test_it_handles_successful_queries(table):
         ],
     )
     table.update_item.assert_called_with(
-        Key={"Id": "job123", "Sk": "job123",},
+        Key={
+            "Id": "job123",
+            "Sk": "job123",
+        },
         ConditionExpression="#Id = :Id AND #Sk = :Sk",
         UpdateExpression="set #qt = if_not_exists(#qt, :z) + :qt, "
         "#qs = if_not_exists(#qs, :z) + :qs, "
@@ -86,7 +89,10 @@ def test_it_handles_failed_queries(table):
         ],
     )
     table.update_item.assert_called_with(
-        Key={"Id": "job123", "Sk": "job123",},
+        Key={
+            "Id": "job123",
+            "Sk": "job123",
+        },
         ConditionExpression="#Id = :Id AND #Sk = :Sk",
         UpdateExpression="set #qt = if_not_exists(#qt, :z) + :qt, "
         "#qs = if_not_exists(#qs, :z) + :qs, "
