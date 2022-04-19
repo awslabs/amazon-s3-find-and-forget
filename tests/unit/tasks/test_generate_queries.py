@@ -1435,7 +1435,11 @@ class TestAthenaQueries:
             mock.ANY,
             mock.ANY,
             ["Partitions"],
-            **{"DatabaseName": "test_db", "TableName": "test_table"}
+            **{
+                "DatabaseName": "test_db",
+                "TableName": "test_table",
+                "ExcludeColumnSchema": True,
+            }
         )
 
     def test_it_converts_supported_types(self):

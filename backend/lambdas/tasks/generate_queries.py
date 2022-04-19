@@ -272,6 +272,7 @@ def get_partitions(db, table_name):
         ["Partitions"],
         DatabaseName=db,
         TableName=table_name,
+        ExcludeColumnSchema=True,
     )
 
 
