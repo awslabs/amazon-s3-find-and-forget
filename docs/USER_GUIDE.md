@@ -167,12 +167,12 @@ resources.
      this stack in CloudFormation once deployed.
    - **AdminEmail:** The email address you wish to setup as the initial user of
      this Amazon S3 Find and Forget deployment.
-   - **DeployWebUI:** (Default: true) Choose whether to deploy the Web UI as
-     part of the solution. If you do deploy the Web UI AuthMethod must use
-     Cognito. If you do not use the Web UI interaction with the solution is done
-     through the APIs only.
-   - **AuthMethod:** (Default: Cognito) Choose which method of authentication
-     you would like to use. Cognito must be used if the Web UI is chosen.
+   - **DeployWebUI:** (Default: true) Whether to deploy the Web UI as
+     part of the solution. If set to **true**, the AuthMethod parameter must be set
+     to **Cognito**. If set to **false**, interaction with the solution is performed
+     via the API Gateway only.
+   - **AuthMethod:** (Default: Cognito) The authentication method to be
+     used for the solution. Must be set to **Cognito** if DeployWebUI is true.
 
    The following parameters are optional and allow further customisation of the
    solution if required:
@@ -317,7 +317,7 @@ To add more users to the application:
 
 To use the API directly, you will need to authenticate requests using the User
 Pool. The method for authenticating differs depending on which authentication
-option was chosen.
+option was chosen:
 
 #### Cognito
 
@@ -348,9 +348,8 @@ using the AWS CLI:
 
 #### IAM
 
-Unlike with the previous Cognito method, IAM authentication for API requests is
-done by performing the
-[Signature Version 4 signing process](https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html).
+IAM authentication for API requests uses the [Signature Version 4 signing process](https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html). Add the
+resulting signature to the **Authorization** header when making requests to the API.
 
 Use the Sigv4 process linked above to generate the Authorization header value
 and then call the API as normal:
