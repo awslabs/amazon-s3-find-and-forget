@@ -174,6 +174,10 @@ resources.
    - **AuthMethod:** (Default: Cognito) The authentication method to be used for
      the solution. Must be set to **Cognito** if DeployWebUI is true.
 
+     **Note**: Changing the AuthMethod parameter is supported. A manual
+     deployment (through the API Gateway console) of the updated API Gateway
+     Stage is required once the Stack update is complete.
+
    The following parameters are optional and allow further customisation of the
    solution if required:
 
@@ -315,9 +319,9 @@ To add more users to the application:
 
 ### Making authenticated API requests
 
-To use the API directly, you will need to authenticate requests using the User
-Pool. The method for authenticating differs depending on which authentication
-option was chosen:
+To use the API directly, you will need to authenticate requests using the
+Cognito User Pool or IAM. The method for authenticating differs depending on
+which authentication option was chosen:
 
 #### Cognito
 
