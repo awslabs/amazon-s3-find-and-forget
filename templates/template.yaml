@@ -139,14 +139,14 @@ Parameters:
   DeployWebUI:
     Description: Specify whether you would like a Web User Interface deployed. (AuthMethod must be Cognito if WebUI is deployed).
     Type: String
-    Default: "false"
+    Default: "true"
     AllowedValues:
       - "true"
       - "false"
   AuthMethod:
     Description: Authentication method to use for the API (and WebUI if deployed).
     Type: String
-    Default: "IAM"
+    Default: "Cognito"
     AllowedValues:
       - "Cognito"
       - "IAM"
