@@ -12,6 +12,9 @@ The following dependencies must be installed:
 - node.js >= v16.11 and npm >= 8
 - virtualenv
 - Ruby >= 2.6
+- libsnappy-dev/snappy-devel (debian/centos)
+- docker
+- jq
 
 Once you have installed all pre-requisites, you must run the following command
 to create a `virtualenv` and install all frontend/backend dependencies before
