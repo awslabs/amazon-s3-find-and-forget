@@ -12,17 +12,21 @@ pytestmark = [
 
 
 @pytest.mark.auth
-def test_auth(api_client, data_mapper_base_endpoint):
+def test_auth(api_client, data_mapper_base_endpoint, stack):
     headers = {"Authorization": None}
+    status_code = 403 if stack["AuthMethod"] == "IAM" else 401
     assert (
-        401
+        status_code
         == api_client.put(
             "{}/{}".format(data_mapper_base_endpoint, "a"), headers=headers
         ).status_code
     )
-    assert 401 == api_client.get(data_mapper_base_endpoint, headers=headers).status_code
     assert (
-        401
+        status_code
+        == api_client.get(data_mapper_base_endpoint, headers=headers).status_code
+    )
+    assert (
+        status_code
         == api_client.delete(
             "{}/{}".format(data_mapper_base_endpoint, "a"), headers=headers
         ).status_code
@@ -57,7 +61,9 @@ def test_it_creates_data_mapper(
     # Assert
     expected = deepcopy(data_mapper)
     expected["CreatedBy"] = {
-        "Username": "aws-uk-sa-builders@amazon.com",
+        "Username": "aws-uk-sa-builders@amazon.com"
+        if stack["AuthMethod"] != "IAM"
+        else "N/A",
         "Sub": mock.ANY,
     }
     expected["DeleteOldVersions"] = False
@@ -146,7 +152,9 @@ def test_it_creates_without_optionals(
     expected = deepcopy(data_mapper)
     expected["Format"] = "parquet"
     expected["CreatedBy"] = {
-        "Username": "aws-uk-sa-builders@amazon.com",
+        "Username": "aws-uk-sa-builders@amazon.com"
+        if stack["AuthMethod"] != "IAM"
+        else "N/A",
         "Sub": mock.ANY,
     }
     expected["DeleteOldVersions"] = True

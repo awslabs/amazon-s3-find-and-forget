@@ -52,6 +52,7 @@ Parameters:
 
 Conditions:
   WithoutCloudFront: !Equals [!Ref CloudFrontDistribution, "none"]
+  DeployWebUI: !Not [!Equals [!Ref WebUIBucket, "none"]]
 
 Resources:
   CodeBuildBackendServiceRole:
@@ -121,9 +122,12 @@ Resources:
                 Action:
                   - s3:Get*
                   - s3:List*
-              - Resource: !Sub arn:aws:s3:::${WebUIBucket}/*
-                Effect: Allow
-                Action: s3:PutObject*
+              - !If
+                - DeployWebUI
+                - Resource: !Sub arn:aws:s3:::${WebUIBucket}/*
+                  Effect: Allow
+                  Action: s3:PutObject*
+                - !Ref AWS::NoValue
               - !If
                 - WithoutCloudFront
                 - !Ref AWS::NoValue
@@ -167,6 +171,7 @@ Resources:
 
   CodeBuildFrontend:
     Type: AWS::CodeBuild::Project
+    Condition: DeployWebUI
     Properties:
       Artifacts:
         Type: CODEPIPELINE
@@ -248,10 +253,18 @@ Resources:
               - Effect: Allow
                 Resource:
                   - !Sub arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${CodeBuildBackend}
-                  - !Sub arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${CodeBuildFrontend}
                 Action:
                   - codebuild:BatchGetBuilds
                   - codebuild:StartBuild
+              - !If
+                - DeployWebUI
+                - Effect: Allow
+                  Resource:
+                    - !Sub arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${CodeBuildFrontend}
+                  Action:
+                    - codebuild:BatchGetBuilds
+                    - codebuild:StartBuild
+                - !Ref AWS::NoValue
               - Effect: Allow
                 Resource: !Sub arn:aws:s3:::${CodeBuildArtefactBucket}
                 Action:
@@ -286,21 +299,24 @@ Resources:
               OutputArtifacts:
                 - Name: S3F2
               RunOrder: 1
-        - Name: Frontend
-          Actions:
-            - Name: Build
-              ActionTypeId:
-                Category: Build
-                Owner: AWS
-                Version: "1"
-                Provider: CodeBuild
-              Configuration:
-                ProjectName: !Ref CodeBuildFrontend
-              InputArtifacts:
-                - Name: S3F2
-              OutputArtifacts:
-                - Name: BuildFrontendOutput
-              RunOrder: 1
+        - !If
+          - DeployWebUI
+          - Name: Frontend
+            Actions:
+              - Name: Build
+                ActionTypeId:
+                  Category: Build
+                  Owner: AWS
+                  Version: "1"
+                  Provider: CodeBuild
+                Configuration:
+                  ProjectName: !Ref CodeBuildFrontend
+                InputArtifacts:
+                  - Name: S3F2
+                OutputArtifacts:
+                  - Name: BuildFrontendOutput
+                RunOrder: 1
+          - !Ref AWS::NoValue
         - Name: Backend
           Actions:
             - Name: Build
@@ -399,6 +415,7 @@ Resources:
 
   CleanupWebUIBucket:
     Type: Custom::Setup
+    Condition: DeployWebUI
     Properties:
       ServiceToken: !GetAtt CleanupBucketFunction.Arn
       LogLevel: !Ref LogLevel

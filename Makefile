@@ -34,8 +34,7 @@ deploy-cfn:
 	aws cloudformation package --template-file templates/template.yaml --s3-bucket $(TEMP_BUCKET) --output-template-file packaged.yaml
 	aws cloudformation deploy --template-file ./packaged.yaml --stack-name S3F2 --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND \
 		--parameter-overrides CreateCloudFrontDistribution=false EnableContainerInsights=true AdminEmail=$(ADMIN_EMAIL) \
-		AccessControlAllowOriginOverride=* PreBuiltArtefactsBucketOverride=$(TEMP_BUCKET) \
-		AthenaWorkGroup=AmazonAthenaPreviewFunctionality KMSKeyArns=$(KMS_KEYARNS)
+		AccessControlAllowOriginOverride=* PreBuiltArtefactsBucketOverride=$(TEMP_BUCKET) KMSKeyArns=$(KMS_KEYARNS)
 
 deploy-artefacts:
 	$(eval VERSION := $(shell $(MAKE) -s version))
@@ -45,7 +44,8 @@ deploy-artefacts:
 .PHONY: format-cfn
 format-cfn:
 	$(eval VERSION := $(shell $(MAKE) -s version))
-	sed -i '' -e '3s/.*/Description: Amazon S3 Find and Forget \(uksb-1q2j8beb0\) \(version:$(VERSION)\)/' templates/template.yaml
+	sed -i.bak -e '3s/.*/Description: Amazon S3 Find and Forget \(uksb-1q2j8beb0\) \(version:$(VERSION)\)/' templates/template.yaml
+	rm -f templates/template.yaml.bak
 	git add templates/template.yaml
 
 .PHONY: format-docs
@@ -56,7 +56,7 @@ format-docs:
 
 .PHONY: format-js
 format-js:
-	npx prettier $(PWD)/frontend/src/**/*.js --write
+	npx prettier ./frontend/src/**/*.js --write
 	git add frontend/src/
 
 .PHONY: format-python
@@ -72,7 +72,9 @@ format-python: | $(VENV)
 	; done
 
 generate-api-docs:
-	npx openapi-generator generate -i ./templates/api.definition.yml -g markdown -t ./docs/templates/ -o docs/api
+	cat ./templates/api.yaml | yq -y .Resources.Api.Properties.DefinitionBody > ./templates/temp.definition.yml
+	npx openapi-generator generate -i ./templates/temp.definition.yml -g markdown -t ./docs/templates/ -o docs/api
+	rm -f ./templates/temp.definition.yml
 	git add docs/api
 
 .PHONY: generate-pip-requirements
@@ -80,7 +82,7 @@ generate-pip-requirements: $(patsubst %.in,%.txt,$(shell find . -type f -name re
 
 .PHONY: lint-cfn
 lint-cfn:
-	cfn-lint templates/* --ignore-templates=templates/api.definition.yml
+	cfn-lint templates/*
 
 package:
 	make package-artefacts
@@ -116,7 +118,7 @@ redeploy-containers:
 redeploy-frontend:
 	$(eval WEBUI_BUCKET := $(shell aws cloudformation describe-stacks --stack-name S3F2 --query 'Stacks[0].Outputs[?OutputKey==`WebUIBucket`].OutputValue' --output text))
 	make build-frontend
-	cd frontend/build && aws s3 cp --recursive . s3://$(WEBUI_BUCKET) --acl public-read --exclude *settings.js
+  $(if $(filter none, $(WEBUI_BUCKET)), @echo "WebUI not deployed so no upload possible.", cd frontend/build && aws s3 cp --recursive . s3://$(WEBUI_BUCKET) --acl public-read --exclude *settings.js)
 
 run-local-container:
 	make pre-run
@@ -156,7 +158,7 @@ backend/lambda_layers/%/requirements-installed.sentinel: backend/lambda_layers/%
 
 setup-frontend-local-dev:
 	$(eval WEBUI_BUCKET := $(shell aws cloudformation describe-stacks --stack-name S3F2 --query 'Stacks[0].Outputs[?OutputKey==`WebUIBucket`].OutputValue' --output text))
-	aws s3 cp s3://$(WEBUI_BUCKET)/settings.js frontend/public/settings.js
+	$(if $(filter none, $(WEBUI_BUCKET)), @echo "WebUI not deployed so no download possible.", aws s3 cp s3://$(WEBUI_BUCKET)/settings.js frontend/public/settings.js)
 
 setup-predeploy:
 	virtualenv venv
@@ -168,7 +170,7 @@ start-frontend-local:
 
 start-frontend-remote:
 	$(eval WEBUI_URL := $(shell aws cloudformation describe-stacks --stack-name S3F2 --query 'Stacks[0].Outputs[?OutputKey==`WebUIUrl`].OutputValue' --output text))
-	open $(WEBUI_URL)
+	$(if $(filter none, $(WEBUI_URL)), @echo "WebUI not deployed.", open $(WEBUI_URL))
 
 test-cfn:
 	cfn_nag templates/*.yaml --blacklist-path ci/cfn_nag_blacklist.yaml
@@ -194,7 +196,7 @@ test: | $(VENV)
 	make test-frontend
 
 version:
-	@echo $(shell cfn-flip templates/template.yaml | python -c 'import sys, json; print(json.load(sys.stdin)["Mappings"]["Solution"]["Constants"]["Version"])')
+	@echo $(shell $(VENV)/bin/cfn-flip templates/template.yaml | $(VENV)/bin/python -c 'import sys, json; print(json.load(sys.stdin)["Mappings"]["Solution"]["Constants"]["Version"])')
 
 %/requirements.txt: %/requirements.in | $(VENV)/bin/pip-compile
 	$(VENV)/bin/pip-compile -q -o $@ $<

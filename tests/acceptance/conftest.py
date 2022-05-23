@@ -15,6 +15,8 @@ import pytest
 from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
 from botocore.waiter import WaiterModel, create_waiter_with_client
+from botocore.auth import SigV4Auth
+from botocore.awsrequest import AWSRequest
 from requests import Session
 
 from . import empty_table
@@ -142,40 +144,43 @@ def glue_columns():
 
 @pytest.fixture(scope="module", autouse=True)
 def cognito_token(stack):
-    # Generate User in Cognito
-    user_pool_id = stack["CognitoUserPoolId"]
-    client_id = stack["CognitoUserPoolClientId"]
-    username = "aws-uk-sa-builders@amazon.com"
-    pwd = "!Acceptance1Tests2password!"
-    auth_data = {"USERNAME": username, "PASSWORD": pwd}
-    provider_client = boto3.client("cognito-idp")
-    # Create the User
-    provider_client.admin_create_user(
-        UserPoolId=user_pool_id,
-        Username=username,
-        TemporaryPassword=pwd,
-        MessageAction="SUPPRESS",
-    )
-    provider_client.admin_set_user_password(
-        UserPoolId=user_pool_id, Username=username, Password=pwd, Permanent=True
-    )
-    # Allow admin login
-    provider_client.update_user_pool_client(
-        UserPoolId=user_pool_id,
-        ClientId=client_id,
-        ExplicitAuthFlows=[
-            "ADMIN_NO_SRP_AUTH",
-        ],
-    )
-    # Get JWT token for the dummy user
-    resp = provider_client.admin_initiate_auth(
-        UserPoolId=user_pool_id,
-        AuthFlow="ADMIN_NO_SRP_AUTH",
-        AuthParameters=auth_data,
-        ClientId=client_id,
-    )
-    yield resp["AuthenticationResult"]["IdToken"]
-    provider_client.admin_delete_user(UserPoolId=user_pool_id, Username=username)
+    if stack["AuthMethod"].startswith("Cognito"):
+        # Generate User in Cognito
+        user_pool_id = stack["CognitoUserPoolId"]
+        client_id = stack["CognitoUserPoolClientId"]
+        username = "aws-uk-sa-builders@amazon.com"
+        pwd = "!Acceptance1Tests2password!"
+        auth_data = {"USERNAME": username, "PASSWORD": pwd}
+        provider_client = boto3.client("cognito-idp")
+        # Create the User
+        provider_client.admin_create_user(
+            UserPoolId=user_pool_id,
+            Username=username,
+            TemporaryPassword=pwd,
+            MessageAction="SUPPRESS",
+        )
+        provider_client.admin_set_user_password(
+            UserPoolId=user_pool_id, Username=username, Password=pwd, Permanent=True
+        )
+        # Allow admin login
+        provider_client.update_user_pool_client(
+            UserPoolId=user_pool_id,
+            ClientId=client_id,
+            ExplicitAuthFlows=[
+                "ADMIN_NO_SRP_AUTH",
+            ],
+        )
+        # Get JWT token for the dummy user
+        resp = provider_client.admin_initiate_auth(
+            UserPoolId=user_pool_id,
+            AuthFlow="ADMIN_NO_SRP_AUTH",
+            AuthParameters=auth_data,
+            ClientId=client_id,
+        )
+        yield resp["AuthenticationResult"]["IdToken"]
+        provider_client.admin_delete_user(UserPoolId=user_pool_id, Username=username)
+    else:
+        yield None
 
 
 @pytest.fixture(scope="module")
@@ -195,6 +200,20 @@ def api_client(cognito_token, stack):
             merged_headers = deepcopy(self.default_headers)
             if isinstance(headers, dict):
                 merged_headers.update(headers)
+            if (headers is None or "Authorization" not in headers.keys()) and stack[
+                "AuthMethod"
+            ] == "IAM":
+                creds = boto3.Session().get_credentials().get_frozen_credentials()
+                if "json" in kwargs:
+                    request = AWSRequest(
+                        method=method.upper(), url=url, data=json.dumps(kwargs["json"])
+                    )
+                else:
+                    request = AWSRequest(method=method.upper(), url=url)
+                SigV4Auth(
+                    creds, "execute-api", getenv("AWS_DEFAULT_REGION", "eu-west-1")
+                ).add_auth(request)
+                merged_headers.update(dict(request.headers))
             return super(ApiGwSession, self).request(
                 method, url, data, params, headers=merged_headers, *args, **kwargs
             )

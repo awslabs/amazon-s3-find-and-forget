@@ -5,34 +5,38 @@ Forget solution.
 
 ## Index
 
-- [Pre-requisite: Configuring a VPC](#pre-requisite-configuring-a-vpc-for-the-solution)
-  - [Configuring a VPC](#configuring-a-vpc-for-the-solution)
-    - [Creating a New VPC](#creating-a-new-vpc)
-    - [Using an Existing VPC](#using-an-existing-vpc)
-  - [Provisioning Data Access IAM Roles](#provisioning-data-access-iam-roles)
-- [Deploying the Solution](#deploying-the-solution)
-- [Accessing the application](#accessing-the-application)
-  - [Logging in for the first time](#logging-in-for-the-first-time)
-  - [Managing users](#managing-users)
-  - [Making authenticated API requests](#making-authenticated-api-requests)
-  - [Integrating the solution with other applications using CloudFormation stack outputs](#integrating-the-solution-with-other-applications-using-cloudformation-stack-outputs)
-- [Configuring Data Mappers](#configuring-data-mappers)
-  - [AWS Lake Formation Configuration](#aws-lake-formation-configuration)
-  - [Data Mapper Creation](#data-mapper-creation)
-- [Granting Access to Data](#granting-access-to-data)
-  - [Updating Your Bucket Policy](#updating-your-bucket-policy)
-  - [Data Encrypted with Customer Managed CMKs](#data-encrypted-with-a-customer-managed-cmk)
-- [Adding to the Deletion Queue](#adding-to-the-deletion-queue)
-- [Running a Deletion Job](#running-a-deletion-job)
-  - [Deletion Job Statuses](#deletion-job-statuses)
-  - [Deletion Job Event Types](#deletion-job-event-types)
-- [Adjusting Configuration](#adjusting-configuration)
-- [Updating the Solution](#updating-the-solution)
-  - [Identify current solution version](#identify-current-solution-version)
-  - [Identify the Stack URL to deploy](#identify-the-stack-url-to-deploy)
-  - [Minor Upgrades: Perform CloudFormation Stack Update](#minor-upgrades-perform-cloudformation-stack-update)
-  - [Major Upgrades: Manual Rolling Deployment](#major-upgrades-manual-rolling-deployment)
-- [Deleting the Solution](#deleting-the-solution)
+- [User Guide](#user-guide)
+  - [Index](#index)
+  - [Pre-requisites](#pre-requisites)
+    - [Configuring a VPC for the Solution](#configuring-a-vpc-for-the-solution)
+      - [Creating a New VPC](#creating-a-new-vpc)
+      - [Using an Existing VPC](#using-an-existing-vpc)
+    - [Provisioning Data Access IAM Roles](#provisioning-data-access-iam-roles)
+  - [Deploying the Solution](#deploying-the-solution)
+  - [Accessing the application](#accessing-the-application)
+    - [Logging in for the first time (only relevant if the Web UI is deployed)](#logging-in-for-the-first-time-only-relevant-if-the-web-ui-is-deployed)
+    - [Managing users (only relevant if Cognito is chosen for authentication)](#managing-users-only-relevant-if-cognito-is-chosen-for-authentication)
+    - [Making authenticated API requests](#making-authenticated-api-requests)
+      - [Cognito](#cognito)
+      - [IAM](#iam)
+    - [Integrating the solution with other applications using CloudFormation stack outputs](#integrating-the-solution-with-other-applications-using-cloudformation-stack-outputs)
+  - [Configuring Data Mappers](#configuring-data-mappers)
+    - [AWS Lake Formation Configuration](#aws-lake-formation-configuration)
+    - [Data Mapper Creation](#data-mapper-creation)
+  - [Granting Access to Data](#granting-access-to-data)
+    - [Updating your Bucket Policy](#updating-your-bucket-policy)
+    - [Data Encrypted with a Customer Managed CMK](#data-encrypted-with-a-customer-managed-cmk)
+  - [Adding to the Deletion Queue](#adding-to-the-deletion-queue)
+  - [Running a Deletion Job](#running-a-deletion-job)
+    - [Deletion Job Statuses](#deletion-job-statuses)
+    - [Deletion Job Event Types](#deletion-job-event-types)
+  - [Adjusting Configuration](#adjusting-configuration)
+  - [Updating the Solution](#updating-the-solution)
+    - [Identify current solution version](#identify-current-solution-version)
+    - [Identify the Stack URL to deploy](#identify-the-stack-url-to-deploy)
+    - [Minor Upgrades: Perform CloudFormation Stack Update](#minor-upgrades-perform-cloudformation-stack-update)
+    - [Major Upgrades: Manual Rolling Deployment](#major-upgrades-manual-rolling-deployment)
+  - [Deleting the Solution](#deleting-the-solution)
 
 ## Pre-requisites
 
@@ -163,6 +167,12 @@ resources.
      this stack in CloudFormation once deployed.
    - **AdminEmail:** The email address you wish to setup as the initial user of
      this Amazon S3 Find and Forget deployment.
+   - **DeployWebUI:** (Default: true) Choose whether to deploy the Web UI as
+     part of the solution. If you do deploy the Web UI AuthMethod must use
+     Cognito. If you do not use the Web UI interaction with the solution is done
+     through the APIs only.
+   - **AuthMethod:** (Default: Cognito) Choose which method of authentication
+     you would like to use. Cognito must be used if the Web UI is chosen.
 
    The following parameters are optional and allow further customisation of the
    solution if required:
@@ -276,9 +286,10 @@ resources.
 ## Accessing the application
 
 The solution provides a web user interface and a REST API to allow you to
-integrate it in your own applications.
+integrate it in your own applications. If you have chosen not to deploy the Web
+UI you will need to use the API to interface with the solution.
 
-### Logging in for the first time
+### Logging in for the first time (only relevant if the Web UI is deployed)
 
 1. Note the _WebUIUrl_ displayed in the _Outputs_ tab for the stack. This is
    used to access the application.
@@ -291,7 +302,7 @@ integrate it in your own applications.
    select "Submit".
 4. Now you should be able to access all the functionalities.
 
-### Managing users
+### Managing users (only relevant if Cognito is chosen for authentication)
 
 To add more users to the application:
 
@@ -305,8 +316,13 @@ To add more users to the application:
 ### Making authenticated API requests
 
 To use the API directly, you will need to authenticate requests using the User
-Pool. After resetting the password via the UI, you can make authenticated
-requests using the AWS CLI:
+Pool. The method for authenticating differs depending on which authentication
+option was chosen.
+
+#### Cognito
+
+After resetting the password via the UI, you can make authenticated requests
+using the AWS CLI:
 
 1. Note the _CognitoUserPoolId_, _CognitoUserPoolClientId_ and _ApiUrl_
    parameters displayed in the _Outputs_ tab for the stack.
@@ -329,6 +345,19 @@ requests using the AWS CLI:
    ```sh
    curl $API_URL/v1/queue -H "Authorization: Bearer $ID_TOKEN"
    ```
+
+#### IAM
+
+Unlike with the previous Cognito method, IAM authentication for API requests is
+done by performing the
+[Signature Version 4 signing process](https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html).
+
+Use the Sigv4 process linked above to generate the Authorization header value
+and then call the API as normal:
+
+```sh
+curl $API_URL/v1/queue -H "Authorization: $Sigv4Auth"
+```
 
 For more information, consult the [Cognito REST API integration guide].
 

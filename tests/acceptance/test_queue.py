@@ -11,20 +11,26 @@ pytestmark = [
 
 
 @pytest.mark.auth
-def test_auth(api_client, queue_base_endpoint):
+def test_auth(api_client, queue_base_endpoint, stack):
     headers = {"Authorization": None}
+    status_code = 403 if stack["AuthMethod"] == "IAM" else 401
     assert (
-        401
+        status_code
         == api_client.patch(queue_base_endpoint, json={}, headers=headers).status_code
     )
-    assert 401 == api_client.get(queue_base_endpoint, headers=headers).status_code
     assert (
-        401
+        status_code == api_client.get(queue_base_endpoint, headers=headers).status_code
+    )
+    assert (
+        status_code
         == api_client.delete(
             "{}/matches".format(queue_base_endpoint), json={}, headers=headers
         ).status_code
     )
-    assert 401 == api_client.delete(queue_base_endpoint, headers=headers).status_code
+    assert (
+        status_code
+        == api_client.delete(queue_base_endpoint, headers=headers).status_code
+    )
 
 
 def test_it_adds_to_queue(api_client, queue_base_endpoint, queue_table, stack):
@@ -39,7 +45,12 @@ def test_it_adds_to_queue(api_client, queue_base_endpoint, queue_table, stack):
         "MatchId": key,
         "CreatedAt": mock.ANY,
         "DataMappers": ["a", "b"],
-        "CreatedBy": {"Username": "aws-uk-sa-builders@amazon.com", "Sub": mock.ANY},
+        "CreatedBy": {
+            "Username": "aws-uk-sa-builders@amazon.com"
+            if stack["AuthMethod"] != "IAM"
+            else "N/A",
+            "Sub": mock.ANY,
+        },
         "Type": "Simple",
     }
     # Act
@@ -79,7 +90,12 @@ def test_it_adds_composite_to_queue(
         "MatchId": key,
         "CreatedAt": mock.ANY,
         "DataMappers": ["a"],
-        "CreatedBy": {"Username": "aws-uk-sa-builders@amazon.com", "Sub": mock.ANY},
+        "CreatedBy": {
+            "Username": "aws-uk-sa-builders@amazon.com"
+            if stack["AuthMethod"] != "IAM"
+            else "N/A",
+            "Sub": mock.ANY,
+        },
         "Type": "Composite",
     }
     # Act
@@ -118,7 +134,9 @@ def test_it_adds_batch_to_queue(api_client, queue_base_endpoint, queue_table, st
         ]
     }
     created_by_mock = {
-        "Username": "aws-uk-sa-builders@amazon.com",
+        "Username": "aws-uk-sa-builders@amazon.com"
+        if stack["AuthMethod"] != "IAM"
+        else "N/A",
         "Sub": mock.ANY,
     }
     expected = {

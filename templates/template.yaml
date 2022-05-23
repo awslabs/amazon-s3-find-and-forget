@@ -136,10 +136,33 @@ Parameters:
     Description: Comma-delimited list of subnets to deploy Fargate tasks in. This parameter must be set if the DeployVpc parameter is "false", otherwise it is ignored.
     Type: CommaDelimitedList
     Default: ""
+  DeployWebUI:
+    Description: Specify whether you would like a Web User Interface deployed. (AuthMethod must be Cognito if WebUI is deployed).
+    Type: String
+    Default: "false"
+    AllowedValues:
+      - "true"
+      - "false"
+  AuthMethod:
+    Description: Authentication method to use for the API (and WebUI if deployed).
+    Type: String
+    Default: "IAM"
+    AllowedValues:
+      - "Cognito"
+      - "IAM"
+
+Rules:
+  ValidateAuth:
+    RuleCondition: !Equals [!Ref DeployWebUI, "true"]
+    Assertions:
+      - AssertDescription: IAM Auth cannot be chosen when deploying the WebUI.
+        Assert: !Not [!Equals [!Ref AuthMethod, "IAM"]]
 
 Conditions:
   DefaultPreBuiltArtefactsBucket: !Equals [!Ref PreBuiltArtefactsBucketOverride, "false"]
   ShouldDeployVpc: !Equals [!Ref DeployVpc, "true"]
+  ShouldDeployWebUI: !Equals [!Ref DeployWebUI, "true"]
+  ShouldDeployCognito: !Not [!Equals [!Ref AuthMethod, "IAM"]]
 
 Mappings:
   Solution:
@@ -199,6 +222,7 @@ Resources:
 
   CognitoUserPoolUser:
     Type: AWS::Cognito::UserPoolUser
+    Condition: ShouldDeployCognito
     DependsOn:
       - APIStack
       - DDBStack
@@ -207,7 +231,6 @@ Resources:
       - LayersStack
       - StateMachineStack
       - StreamProcessorStack
-      - WebUIStack
     Properties:
       Username: !Ref AdminEmail
       UserPoolId: !GetAtt AuthStack.Outputs.CognitoUserPoolId
@@ -226,7 +249,7 @@ Resources:
       Parameters:
         AccessControlAllowOriginOverride: !Ref AccessControlAllowOriginOverride
         ConfigParameter: !Ref ConfigParameter
-        CognitoUserPoolArn: !GetAtt AuthStack.Outputs.CognitoUserPoolArn
+        CognitoUserPoolArn: !If [ShouldDeployCognito, !GetAtt AuthStack.Outputs.CognitoUserPoolArn, "none"]
         CommonLayers: !Join
           - ","
           - - !GetAtt LayersStack.Outputs.AWSSDKLayer
@@ -237,9 +260,11 @@ Resources:
         EnableAccessLogging: !Ref EnableAPIAccessLogging
         JobTableDateGSI: !GetAtt DDBStack.Outputs.JobTableDateGSI
         JobTableName: !GetAtt DDBStack.Outputs.JobTable
-        WebUIOrigin: !GetAtt WebUIStack.Outputs.Origin
+        WebUIOrigin: !If [ShouldDeployWebUI, !GetAtt WebUIStack.Outputs.Origin, "none"]
+        DeployCognito: !If [ShouldDeployCognito, "true", "false"]
   AuthStack:
     Type: AWS::CloudFormation::Stack
+    Condition: ShouldDeployCognito
     Properties:
       TemplateURL: ./auth.yaml
       Parameters:
@@ -279,11 +304,11 @@ Resources:
       Parameters:
         ApiUrl: !GetAtt APIStack.Outputs.ApiUrl
         AthenaExecutionRole: !GetAtt StateMachineStack.Outputs.AthenaExecutionRole
-        CloudFrontDistribution: !GetAtt WebUIStack.Outputs.CloudFrontDistribution
+        CloudFrontDistribution: !If [ShouldDeployWebUI, !GetAtt WebUIStack.Outputs.CloudFrontDistribution, "none"]
         CodeBuildArtefactBucket: !Ref TempBucket
-        CognitoIdentityPoolId: !GetAtt AuthStack.Outputs.CognitoIdentityPoolId
-        CognitoUserPoolId: !GetAtt AuthStack.Outputs.CognitoUserPoolId
-        CognitoUserPoolClientId: !GetAtt AuthStack.Outputs.CognitoUserPoolClientId
+        CognitoIdentityPoolId: !If [ShouldDeployCognito, !GetAtt AuthStack.Outputs.CognitoIdentityPoolId, "none"]
+        CognitoUserPoolId: !If [ShouldDeployCognito, !GetAtt AuthStack.Outputs.CognitoUserPoolId, "none"]
+        CognitoUserPoolClientId: !If [ShouldDeployCognito, !GetAtt AuthStack.Outputs.CognitoUserPoolClientId, "none"]
         CommonLayers: !Join
           - ","
           - - !GetAtt LayersStack.Outputs.AWSSDKLayer
@@ -294,7 +319,7 @@ Resources:
         PreBuiltArtefactsBucket: !If [DefaultPreBuiltArtefactsBucket, !Sub "solution-builders-${AWS::Region}", !Ref PreBuiltArtefactsBucketOverride]
         ResourcePrefix: !Ref ResourcePrefix
         Version: !FindInMap [Solution, Constants, Version]
-        WebUIBucket: !GetAtt WebUIStack.Outputs.WebUIBucket
+        WebUIBucket: !If [ShouldDeployWebUI, !GetAtt WebUIStack.Outputs.WebUIBucket, "none"]
   LayersStack:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -356,6 +381,7 @@ Resources:
         KMSKeyArns: !Ref KMSKeyArns
   WebUIStack:
     Type: AWS::CloudFormation::Stack
+    Condition: ShouldDeployWebUI
     Properties:
       TemplateURL: ./web_ui.yaml
       Parameters:
@@ -379,11 +405,11 @@ Outputs:
   ConfigParameter:
     Value: !Ref ConfigParameter
   CognitoUserPoolClientId:
-    Value: !GetAtt AuthStack.Outputs.CognitoUserPoolClientId
+    Value: !If [ShouldDeployCognito, !GetAtt AuthStack.Outputs.CognitoUserPoolClientId, "none"]
   CognitoUserPoolId:
-    Value: !GetAtt AuthStack.Outputs.CognitoUserPoolId
+    Value: !If [ShouldDeployCognito, !GetAtt AuthStack.Outputs.CognitoUserPoolId, "none"]
   CognitoUserPoolName:
-    Value: !GetAtt AuthStack.Outputs.CognitoUserPoolName
+    Value: !If [ShouldDeployCognito, !GetAtt AuthStack.Outputs.CognitoUserPoolName, "none"]
   DataMapperTable:
     Value: !GetAtt DDBStack.Outputs.DataMapperTable
   DDBStack:
@@ -421,11 +447,15 @@ Outputs:
   TempBucket:
     Value: !Ref TempBucket
   WebUIBucket:
-    Value: !GetAtt WebUIStack.Outputs.WebUIBucket
+    Value: !If [ShouldDeployWebUI, !GetAtt WebUIStack.Outputs.WebUIBucket, "none"]
   WebUIRole:
-    Value: !GetAtt AuthStack.Outputs.ServiceInvokeRole    
+    Value: !If [ShouldDeployCognito, !GetAtt AuthStack.Outputs.ServiceInvokeRole, "none"]
   WebUIUrl:
-    Value: !GetAtt WebUIStack.Outputs.Url
+    Value: !If [ShouldDeployWebUI, !GetAtt WebUIStack.Outputs.Url, "none"]
+  DeployWebUI:
+    Value: !Ref DeployWebUI
+  AuthMethod:
+    Value: !Ref AuthMethod
 
 Metadata:
   AWS::CloudFormation::Interface:
@@ -434,6 +464,8 @@ Metadata:
           default: "Required"
         Parameters:
           - AdminEmail
+          - DeployWebUI
+          - AuthMethod
       - Label:
           default: "Network Configuration"
         Parameters:

@@ -17,17 +17,18 @@ pytestmark = [
 
 @pytest.mark.auth
 @pytest.mark.api
-def test_auth(api_client, jobs_endpoint):
+def test_auth(api_client, jobs_endpoint, stack):
     headers = {"Authorization": None}
+    status_code = 403 if stack["AuthMethod"] == "IAM" else 401
     assert (
-        401
+        status_code
         == api_client.get(
             "{}/{}".format(jobs_endpoint, "a"), headers=headers
         ).status_code
     )
-    assert 401 == api_client.get(jobs_endpoint, headers=headers).status_code
+    assert status_code == api_client.get(jobs_endpoint, headers=headers).status_code
     assert (
-        401
+        status_code
         == api_client.get(
             "{}/{}/events".format(jobs_endpoint, "a"), headers=headers
         ).status_code
