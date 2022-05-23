@@ -114,7 +114,7 @@ Resources:
                 - DeletionQueue
               operationId: "listDeletionQueueMatches"
               security:
-                - CognitoAuthorizer: []
+                - Authorizer: []
               parameters:
                 - '$ref': '#/components/parameters/StartAtQS'
                 - '$ref': '#/components/parameters/PageSizeQS'
@@ -149,7 +149,7 @@ Resources:
                 - DeletionQueue
               operationId: "startDeletionJob"
               security:
-                - CognitoAuthorizer: []
+                - Authorizer: []
               responses:
                 '202':
                   description: "Job Started"
@@ -172,7 +172,7 @@ Resources:
                 - DeletionQueue
               operationId: "addItemToDeletionQueue"
               security:
-                - CognitoAuthorizer: []
+                - Authorizer: []
               responses:
                 '201':
                   description: "Created"
@@ -202,7 +202,7 @@ Resources:
                 - DeletionQueue
               operationId: "deleteMatches"
               security:
-                - CognitoAuthorizer: []
+                - Authorizer: []
               responses:
                 '204':
                   description: OK
@@ -241,7 +241,7 @@ Resources:
                 - DeletionQueue
               operationId: "addItemsToDeletionQueue"
               security:
-                - CognitoAuthorizer: []
+                - Authorizer: []
               responses:
                 '201':
                   description: "Created"
@@ -289,7 +289,7 @@ Resources:
                 - Job
               operationId: "listJobs"
               security:
-                - CognitoAuthorizer: []
+                - Authorizer: []
               parameters:
                 - '$ref': '#/components/parameters/StartAtQS'
                 - '$ref': '#/components/parameters/PageSizeQS'
@@ -327,7 +327,7 @@ Resources:
                 - Job
               operationId: "getJob"
               security:
-                - CognitoAuthorizer: []
+                - Authorizer: []
               responses:
                 '200':
                   description: "OK"
@@ -350,7 +350,7 @@ Resources:
                 - Job
               operationId: "getJobEvents"
               security:
-                - CognitoAuthorizer: []
+                - Authorizer: []
               parameters:
                 - '$ref': '#/components/parameters/StartAtQS'
                 - '$ref': '#/components/parameters/PageSizeQS'
@@ -401,7 +401,7 @@ Resources:
                 - DataMapper
               operationId: "listDataMappers"
               security:
-                - CognitoAuthorizer: []
+                - Authorizer: []
               parameters:
                 - '$ref': '#/components/parameters/StartAtQS'
                 - '$ref': '#/components/parameters/PageSizeQS'
@@ -439,7 +439,7 @@ Resources:
                 - DataMapper
               operationId: "getDataMapper"
               security:
-                - CognitoAuthorizer: []
+                - Authorizer: []
               responses:
                 '200':
                   description: "OK"
@@ -459,7 +459,7 @@ Resources:
                 - DataMapper
               operationId: "putDataMapper"
               security:
-                - CognitoAuthorizer: []
+                - Authorizer: []
               responses:
                 '201':
                   description: "OK"
@@ -486,7 +486,7 @@ Resources:
                 - DataMapper
               operationId: "deleteDataMapper"
               security:
-                - CognitoAuthorizer: []
+                - Authorizer: []
               responses:
                 '204':
                   description: OK
@@ -503,7 +503,7 @@ Resources:
                 - Settings
               operationId: "getSettings"
               security:
-                - CognitoAuthorizer: []
+                - Authorizer: []
               responses:
                 '200':
                   description: "OK"
@@ -958,7 +958,7 @@ Resources:
                   schema:
                     $ref: '#/components/schemas/Error'
           securitySchemes:
-            CognitoAuthorizer:
+            Authorizer:
               type: "apiKey"
               name: "Authorization"
               in: "header"
