@@ -2,9 +2,6 @@
 
 ## v0.48
 
-> This version introduces an expected error when upgrading. Please consult the
-> [migrating from <=v0.47 to v0.48 guide](docs/UPGRADE_GUIDE.md#migrating-from-v047-to-v048)
-
 - Add option to choose IAM for authentication (in place of Cognito)
 - Add option to not deploy WebUI component. Cognito auth is required for WebUI.
 

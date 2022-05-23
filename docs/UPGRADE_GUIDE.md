@@ -1,29 +1,5 @@
 # Upgrade Guide
 
-## Migrating from <=v0.47 to v0.48
-
-If you are migrating to v0.48 and choosing to remove the WebUI component (before
-this version this option did not exist), you will receive errors in the
-CloudFormation updates. _This is expected._ There are 2 expected errors:
-
-- In the `DeployStack` the `CleanupWebUIBucket` resource will fail to delete.
-  `CleanupWebUIBucket` is a custom resource which attempts to empty the WebUI S3
-  Bucket which is no longer possible as permissions to the bucket have been
-  removed.
-
-- The `WebUIStack` stack will fail to delete. This is due to the S3 bucket not
-  being empty, which is due to the previous error.
-
-To resolve these errors:
-
-1. Wait until the main S3F2 stack is at `UPDATE_COMPLETE` status.
-2. Choose the `WebUIStack` stack in the CloudFormation console and find the
-   WebUIBucket bucket name from looking at the Outputs tabs.
-3. Navigate to the S3 Console and choose the WebUIBucket with the name found
-   above, and empty it.
-4. Return to the CloudFormation console and Delete the `WebUIStack` stack. This
-   time the stack will delete as the bucket is now empty.
-
 ## Migrating from <=v0.24 to v0.25
 
 Prior to v0.25, the Deletion Queue was synchronously processed on Job Creation
