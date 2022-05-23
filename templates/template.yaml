@@ -28,6 +28,13 @@ Parameters:
     Description: WorkGroup to use for Athena queries
     Type: String
     Default: primary
+  AuthMethod:
+    Description: Authentication method to use for the API (and WebUI if deployed).
+    Type: String
+    Default: "Cognito"
+    AllowedValues:
+      - "Cognito"
+      - "IAM"
   CreateCloudFrontDistribution:
     Description: Creates a CloudFront distribution for accessing the web interface of the solution. This must be enabled if S3 Block Public Access is enabled at an account level.
     Type: String
@@ -50,6 +57,13 @@ Parameters:
     Default: '30720'
   DeployVpc:
     Description: Deploy a new dedicated VPC for this solution. To use an existing VPC, set this to "false" and provide values for the VpcSecurityGroups and VpcSubnets parameters.
+    Type: String
+    Default: "true"
+    AllowedValues:
+      - "true"
+      - "false"
+  DeployWebUI:
+    Description: Specify whether you would like a Web User Interface deployed. (AuthMethod must be Cognito if WebUI is deployed).
     Type: String
     Default: "true"
     AllowedValues:
@@ -136,20 +150,7 @@ Parameters:
     Description: Comma-delimited list of subnets to deploy Fargate tasks in. This parameter must be set if the DeployVpc parameter is "false", otherwise it is ignored.
     Type: CommaDelimitedList
     Default: ""
-  DeployWebUI:
-    Description: Specify whether you would like a Web User Interface deployed. (AuthMethod must be Cognito if WebUI is deployed).
-    Type: String
-    Default: "true"
-    AllowedValues:
-      - "true"
-      - "false"
-  AuthMethod:
-    Description: Authentication method to use for the API (and WebUI if deployed).
-    Type: String
-    Default: "Cognito"
-    AllowedValues:
-      - "Cognito"
-      - "IAM"
+
 
 Rules:
   ValidateAuth:
@@ -402,6 +403,8 @@ Outputs:
     Value: !GetAtt StateMachineStack.Outputs.AthenaStateMachineArn
   AthenaExecutionRoleArn:
     Value: !GetAtt StateMachineStack.Outputs.AthenaExecutionRoleArn
+  AuthMethod:
+    Value: !Ref AuthMethod
   ConfigParameter:
     Value: !Ref ConfigParameter
   CognitoUserPoolClientId:
@@ -424,6 +427,8 @@ Outputs:
       Name: !Sub ${ResourcePrefix}-DeletionQueueTableStreamArn
   DeletionQueueUrl:
     Value: !GetAtt DelStack.Outputs.DeleteObjectsQueueUrl
+  DeployWebUI:
+    Value: !Ref DeployWebUI
   DLQUrl:
     Value: !GetAtt DelStack.Outputs.DLQUrl
   ECRRepository:
@@ -452,10 +457,6 @@ Outputs:
     Value: !If [ShouldDeployCognito, !GetAtt AuthStack.Outputs.ServiceInvokeRole, "none"]
   WebUIUrl:
     Value: !If [ShouldDeployWebUI, !GetAtt WebUIStack.Outputs.Url, "none"]
-  DeployWebUI:
-    Value: !Ref DeployWebUI
-  AuthMethod:
-    Value: !Ref AuthMethod
 
 Metadata:
   AWS::CloudFormation::Interface:
