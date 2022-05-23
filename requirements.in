@@ -10,6 +10,7 @@ black==22.3.0
 pyyaml>=5.4.1
 requests==2.26.0
 urllib3>=1.26.5
+yq>=2.14.0
 -r ./backend/ecs_tasks/delete_files/requirements.txt
 -r ./backend/lambda_layers/aws_sdk/requirements.txt
 -r ./backend/lambda_layers/cr_helper/requirements.txt

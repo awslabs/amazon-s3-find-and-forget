@@ -72,7 +72,7 @@ format-python: | $(VENV)
 	; done
 
 generate-api-docs:
-	cat ./templates/api.yaml | yq -y .Resources.Api.Properties.DefinitionBody > ./templates/temp.definition.yml
+	cat ./templates/api.yaml | $(VENV)/bin/yq -y .Resources.Api.Properties.DefinitionBody > ./templates/temp.definition.yml
 	npx openapi-generator generate -i ./templates/temp.definition.yml -g markdown -t ./docs/templates/ -o docs/api
 	rm -f ./templates/temp.definition.yml
 	git add docs/api
