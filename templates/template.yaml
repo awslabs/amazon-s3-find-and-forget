@@ -157,7 +157,7 @@ Rules:
     RuleCondition: !Equals [!Ref DeployWebUI, "true"]
     Assertions:
       - AssertDescription: IAM Auth cannot be chosen when deploying the WebUI.
-        Assert: !Not [!Equals [!Ref AuthMethod, "IAM"]]
+        Assert: !Equals [!Ref AuthMethod, "Cognito"]
 
 Conditions:
   DefaultPreBuiltArtefactsBucket: !Equals [!Ref PreBuiltArtefactsBucketOverride, "false"]
