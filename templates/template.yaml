@@ -163,7 +163,7 @@ Conditions:
   DefaultPreBuiltArtefactsBucket: !Equals [!Ref PreBuiltArtefactsBucketOverride, "false"]
   ShouldDeployVpc: !Equals [!Ref DeployVpc, "true"]
   ShouldDeployWebUI: !Equals [!Ref DeployWebUI, "true"]
-  ShouldDeployCognito: !Not [!Equals [!Ref AuthMethod, "IAM"]]
+  ShouldDeployCognito: !Equals [!Ref AuthMethod, "Cognito"]
 
 Mappings:
   Solution:
