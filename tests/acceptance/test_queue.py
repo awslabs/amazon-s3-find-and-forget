@@ -11,31 +11,23 @@ pytestmark = [
 
 
 @pytest.mark.auth
-def test_auth(api_client, queue_base_endpoint, expected_status_code):
+def test_auth(api_client, queue_base_endpoint):
     headers = {"Authorization": None}
     assert (
-        expected_status_code
+        401
         == api_client.patch(queue_base_endpoint, json={}, headers=headers).status_code
     )
+    assert 401 == api_client.get(queue_base_endpoint, headers=headers).status_code
     assert (
-        expected_status_code
-        == api_client.get(queue_base_endpoint, headers=headers).status_code
-    )
-    assert (
-        expected_status_code
+        401
         == api_client.delete(
             "{}/matches".format(queue_base_endpoint), json={}, headers=headers
         ).status_code
     )
-    assert (
-        expected_status_code
-        == api_client.delete(queue_base_endpoint, headers=headers).status_code
-    )
+    assert 401 == api_client.delete(queue_base_endpoint, headers=headers).status_code
 
 
-def test_it_adds_to_queue(
-    api_client, queue_base_endpoint, queue_table, stack, expected_username
-):
+def test_it_adds_to_queue(api_client, queue_base_endpoint, queue_table, stack):
     # Arrange
     key = "test"
     item = {
@@ -47,10 +39,7 @@ def test_it_adds_to_queue(
         "MatchId": key,
         "CreatedAt": mock.ANY,
         "DataMappers": ["a", "b"],
-        "CreatedBy": {
-            "Username": expected_username,
-            "Sub": mock.ANY,
-        },
+        "CreatedBy": {"Username": "aws-uk-sa-builders@amazon.com", "Sub": mock.ANY},
         "Type": "Simple",
     }
     # Act
@@ -73,7 +62,7 @@ def test_it_adds_to_queue(
 
 
 def test_it_adds_composite_to_queue(
-    api_client, queue_base_endpoint, queue_table, stack, expected_username
+    api_client, queue_base_endpoint, queue_table, stack
 ):
     # Arrange
     key = [
@@ -90,10 +79,7 @@ def test_it_adds_composite_to_queue(
         "MatchId": key,
         "CreatedAt": mock.ANY,
         "DataMappers": ["a"],
-        "CreatedBy": {
-            "Username": expected_username,
-            "Sub": mock.ANY,
-        },
+        "CreatedBy": {"Username": "aws-uk-sa-builders@amazon.com", "Sub": mock.ANY},
         "Type": "Composite",
     }
     # Act
@@ -115,9 +101,7 @@ def test_it_adds_composite_to_queue(
     assert expected == query_result["Item"]
 
 
-def test_it_adds_batch_to_queue(
-    api_client, queue_base_endpoint, queue_table, stack, expected_username
-):
+def test_it_adds_batch_to_queue(api_client, queue_base_endpoint, queue_table, stack):
     # Arrange
     items = {
         "Matches": [
@@ -134,7 +118,7 @@ def test_it_adds_batch_to_queue(
         ]
     }
     created_by_mock = {
-        "Username": expected_username,
+        "Username": "aws-uk-sa-builders@amazon.com",
         "Sub": mock.ANY,
     }
     expected = {

@@ -5,9 +5,9 @@ pytestmark = [pytest.mark.acceptance, pytest.mark.api, pytest.mark.settings]
 
 
 @pytest.mark.auth
-def test_auth(api_client, settings_base_endpoint, expected_status_code):
+def test_auth(api_client, settings_base_endpoint):
     assert (
-        expected_status_code
+        401
         == api_client.get(
             settings_base_endpoint, headers={"Authorization": None}
         ).status_code

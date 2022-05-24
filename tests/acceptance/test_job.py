@@ -17,20 +17,17 @@ pytestmark = [
 
 @pytest.mark.auth
 @pytest.mark.api
-def test_auth(api_client, jobs_endpoint, expected_status_code):
+def test_auth(api_client, jobs_endpoint):
     headers = {"Authorization": None}
     assert (
-        expected_status_code
+        401
         == api_client.get(
             "{}/{}".format(jobs_endpoint, "a"), headers=headers
         ).status_code
     )
+    assert 401 == api_client.get(jobs_endpoint, headers=headers).status_code
     assert (
-        expected_status_code
-        == api_client.get(jobs_endpoint, headers=headers).status_code
-    )
-    assert (
-        expected_status_code
+        401
         == api_client.get(
             "{}/{}/events".format(jobs_endpoint, "a"), headers=headers
         ).status_code
