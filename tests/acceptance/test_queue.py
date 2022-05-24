@@ -11,29 +11,31 @@ pytestmark = [
 
 
 @pytest.mark.auth
-def test_auth(api_client, queue_base_endpoint, stack):
+def test_auth(api_client, queue_base_endpoint, expected_status_code):
     headers = {"Authorization": None}
-    status_code = 403 if stack["AuthMethod"] == "IAM" else 401
     assert (
-        status_code
+        expected_status_code
         == api_client.patch(queue_base_endpoint, json={}, headers=headers).status_code
     )
     assert (
-        status_code == api_client.get(queue_base_endpoint, headers=headers).status_code
+        expected_status_code
+        == api_client.get(queue_base_endpoint, headers=headers).status_code
     )
     assert (
-        status_code
+        expected_status_code
         == api_client.delete(
             "{}/matches".format(queue_base_endpoint), json={}, headers=headers
         ).status_code
     )
     assert (
-        status_code
+        expected_status_code
         == api_client.delete(queue_base_endpoint, headers=headers).status_code
     )
 
 
-def test_it_adds_to_queue(api_client, queue_base_endpoint, queue_table, stack):
+def test_it_adds_to_queue(
+    api_client, queue_base_endpoint, queue_table, stack, expected_username
+):
     # Arrange
     key = "test"
     item = {
@@ -46,9 +48,7 @@ def test_it_adds_to_queue(api_client, queue_base_endpoint, queue_table, stack):
         "CreatedAt": mock.ANY,
         "DataMappers": ["a", "b"],
         "CreatedBy": {
-            "Username": "aws-uk-sa-builders@amazon.com"
-            if stack["AuthMethod"] != "IAM"
-            else "N/A",
+            "Username": expected_username,
             "Sub": mock.ANY,
         },
         "Type": "Simple",
@@ -73,7 +73,7 @@ def test_it_adds_to_queue(api_client, queue_base_endpoint, queue_table, stack):
 
 
 def test_it_adds_composite_to_queue(
-    api_client, queue_base_endpoint, queue_table, stack
+    api_client, queue_base_endpoint, queue_table, stack, expected_username
 ):
     # Arrange
     key = [
@@ -91,9 +91,7 @@ def test_it_adds_composite_to_queue(
         "CreatedAt": mock.ANY,
         "DataMappers": ["a"],
         "CreatedBy": {
-            "Username": "aws-uk-sa-builders@amazon.com"
-            if stack["AuthMethod"] != "IAM"
-            else "N/A",
+            "Username": expected_username,
             "Sub": mock.ANY,
         },
         "Type": "Composite",
@@ -117,7 +115,9 @@ def test_it_adds_composite_to_queue(
     assert expected == query_result["Item"]
 
 
-def test_it_adds_batch_to_queue(api_client, queue_base_endpoint, queue_table, stack):
+def test_it_adds_batch_to_queue(
+    api_client, queue_base_endpoint, queue_table, stack, expected_username
+):
     # Arrange
     items = {
         "Matches": [
@@ -134,9 +134,7 @@ def test_it_adds_batch_to_queue(api_client, queue_base_endpoint, queue_table, st
         ]
     }
     created_by_mock = {
-        "Username": "aws-uk-sa-builders@amazon.com"
-        if stack["AuthMethod"] != "IAM"
-        else "N/A",
+        "Username": expected_username,
         "Sub": mock.ANY,
     }
     expected = {

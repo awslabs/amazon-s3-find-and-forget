@@ -12,21 +12,20 @@ pytestmark = [
 
 
 @pytest.mark.auth
-def test_auth(api_client, data_mapper_base_endpoint, stack):
+def test_auth(api_client, data_mapper_base_endpoint, expected_status_code):
     headers = {"Authorization": None}
-    status_code = 403 if stack["AuthMethod"] == "IAM" else 401
     assert (
-        status_code
+        expected_status_code
         == api_client.put(
             "{}/{}".format(data_mapper_base_endpoint, "a"), headers=headers
         ).status_code
     )
     assert (
-        status_code
+        expected_status_code
         == api_client.get(data_mapper_base_endpoint, headers=headers).status_code
     )
     assert (
-        status_code
+        expected_status_code
         == api_client.delete(
             "{}/{}".format(data_mapper_base_endpoint, "a"), headers=headers
         ).status_code
@@ -34,7 +33,12 @@ def test_auth(api_client, data_mapper_base_endpoint, stack):
 
 
 def test_it_creates_data_mapper(
-    api_client, data_mapper_base_endpoint, data_mapper_table, glue_table_factory, stack
+    api_client,
+    data_mapper_base_endpoint,
+    data_mapper_table,
+    glue_table_factory,
+    stack,
+    expected_username,
 ):
     # Arrange
     table = glue_table_factory()
@@ -61,9 +65,7 @@ def test_it_creates_data_mapper(
     # Assert
     expected = deepcopy(data_mapper)
     expected["CreatedBy"] = {
-        "Username": "aws-uk-sa-builders@amazon.com"
-        if stack["AuthMethod"] != "IAM"
-        else "N/A",
+        "Username": expected_username,
         "Sub": mock.ANY,
     }
     expected["DeleteOldVersions"] = False
@@ -127,7 +129,12 @@ def test_it_modifies_data_mapper(
 
 
 def test_it_creates_without_optionals(
-    api_client, data_mapper_base_endpoint, data_mapper_table, glue_table_factory, stack
+    api_client,
+    data_mapper_base_endpoint,
+    data_mapper_table,
+    glue_table_factory,
+    stack,
+    expected_username,
 ):
     # Arrange
     table = glue_table_factory()
@@ -152,9 +159,7 @@ def test_it_creates_without_optionals(
     expected = deepcopy(data_mapper)
     expected["Format"] = "parquet"
     expected["CreatedBy"] = {
-        "Username": "aws-uk-sa-builders@amazon.com"
-        if stack["AuthMethod"] != "IAM"
-        else "N/A",
+        "Username": expected_username,
         "Sub": mock.ANY,
     }
     expected["DeleteOldVersions"] = True

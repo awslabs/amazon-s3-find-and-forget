@@ -183,6 +183,21 @@ def cognito_token(stack):
         yield None
 
 
+@pytest.fixture(scope="session")
+def expected_status_code(stack):
+    return 403 if stack["AuthMethod"] == "IAM" else 401
+
+
+@pytest.fixture(scope="session")
+def expected_username(stack):
+    if stack["AuthMethod"] == "Cognito":
+        return "aws-uk-sa-builders@amazon.com"
+    elif stack["AuthMethod"] == "IAM":
+        return boto3.client("sts").get_caller_identity()["Arn"]
+    else:
+        return "N/A"
+
+
 @pytest.fixture(scope="module")
 def api_client(cognito_token, stack):
     class ApiGwSession(Session):

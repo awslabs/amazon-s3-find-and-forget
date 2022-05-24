@@ -5,10 +5,9 @@ pytestmark = [pytest.mark.acceptance, pytest.mark.api, pytest.mark.settings]
 
 
 @pytest.mark.auth
-def test_auth(api_client, settings_base_endpoint, stack):
-    status_code = 403 if stack["AuthMethod"] == "IAM" else 401
+def test_auth(api_client, settings_base_endpoint, expected_status_code):
     assert (
-        status_code
+        expected_status_code
         == api_client.get(
             settings_base_endpoint, headers={"Authorization": None}
         ).status_code
