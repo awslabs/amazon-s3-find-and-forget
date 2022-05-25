@@ -399,6 +399,8 @@ Outputs:
     Value: !GetAtt APIStack.Outputs.ApiUrl
     Export:
       Name: !Sub ${ResourcePrefix}-ApiUrl
+  ApiArn:
+    Value: !GetAtt APIStack.Outputs.ApiArn
   AthenaStateMachineArn:
     Value: !GetAtt StateMachineStack.Outputs.AthenaStateMachineArn
   AthenaExecutionRoleArn:

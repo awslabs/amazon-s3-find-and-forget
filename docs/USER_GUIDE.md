@@ -355,6 +355,8 @@ using the AWS CLI:
    curl $API_URL/v1/queue -H "Authorization: Bearer $ID_TOKEN"
    ```
 
+For more information, consult the [Cognito REST API integration guide].
+
 #### IAM
 
 IAM authentication for API requests uses the
@@ -369,7 +371,25 @@ and then call the API as normal:
 curl $API_URL/v1/queue -H "Authorization: $Sigv4Auth"
 ```
 
-For more information, consult the [Cognito REST API integration guide].
+IAM authentication can be used anywhere you have AWS credentials with the
+correct permissions (_least privilege access_ sample shown below). So this could
+be an IAM User or an assumed IAM Role.
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "execute-api:Invoke",
+      "Resource": "API_ARN"
+    }
+  ]
+}
+```
+
+**Note**: `API_ARN` is to be replaced with the value found in value of the
+`ApiUrl` CloudFormation Stack Output
 
 ### Integrating the solution with other applications using CloudFormation stack outputs
 
