@@ -228,10 +228,12 @@ def get_user_info(event):
             "Username": iden.get("userArn", "N/A"),
             "Sub": iden.get("user", "N/A"),
         }
+    # Default behaviour of method expected to return N/A in both fields
     else:
-        raise Exception(
-            "requestContext does not have the expected element of authorizer (for Cognito auth) or identity (for IAM auth)."
-        )
+        return {
+            "Username": "N/A",
+            "Sub": "N/A",
+        }
 
 
 def get_session(assume_role_arn=None, role_session_name="s3f2"):
