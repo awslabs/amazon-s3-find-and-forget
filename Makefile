@@ -186,8 +186,11 @@ test-unit: | $(VENV)
 test-ci: | $(VENV)
 	$(VENV)/bin/pytest -m unit --log-cli-level info --cov=backend.lambdas --cov=decorators --cov=boto_utils --cov=backend.ecs_tasks --cov-report xml
 
-test-acceptance: | $(VENV)
-	$(VENV)/bin/pytest -m acceptance --log-cli-level info
+test-acceptance-cognito: | $(VENV)
+	$(VENV)/bin/pytest -m acceptance_cognito --log-cli-level info
+
+test-acceptance-iam: | $(VENV)
+	$(VENV)/bin/pytest -m acceptance_iam --log-cli-level info
 
 test-no-state-machine: | $(VENV)
 	$(VENV)/bin/pytest -m "not state_machine" --log-cli-level info  --cov=backend.lambdas --cov=boto_utils --cov=decorators --cov=backend.ecs_tasks

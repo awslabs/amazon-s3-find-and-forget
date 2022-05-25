@@ -108,8 +108,11 @@ make run-local-container ROLE_NAME=<your-sqs-access-role-name> AWS_PROFILE=my-pr
 
 The following commands are available for running tests:
 
-- `make test`: Run all unit and acceptance tests for the backend and frontend
-- `make test-acceptance`: Run all backend task acceptance tests
+- `make test`: Run all unit and acceptance tests for the backend and frontend.
+- `make test-acceptance-cognito`: Run all backend task acceptance tests using
+  Cognito authentication
+- `make test-acceptance-iam`: Run all backend task acceptance tests using IAM
+  authentication
 - `make test-cfn`: Run CloudFormation related unit tests
 - `make test-unit`: Run all backend task unit tests
 - `make test-frontend`: Run all frontend tests

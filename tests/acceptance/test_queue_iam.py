@@ -3,7 +3,7 @@ import pytest
 from boto3.dynamodb.conditions import Key
 
 pytestmark = [
-    pytest.mark.acceptance,
+    pytest.mark.acceptance_iam,
     pytest.mark.api,
     pytest.mark.queue,
     pytest.mark.usefixtures("empty_jobs"),
@@ -11,23 +11,29 @@ pytestmark = [
 
 
 @pytest.mark.auth
-def test_auth(api_client, queue_base_endpoint):
+def test_auth(api_client_iam, queue_base_endpoint):
     headers = {"Authorization": None}
     assert (
-        401
-        == api_client.patch(queue_base_endpoint, json={}, headers=headers).status_code
+        403
+        == api_client_iam.patch(
+            queue_base_endpoint, json={}, headers=headers
+        ).status_code
     )
-    assert 401 == api_client.get(queue_base_endpoint, headers=headers).status_code
+    assert 403 == api_client_iam.get(queue_base_endpoint, headers=headers).status_code
     assert (
-        401
-        == api_client.delete(
+        403
+        == api_client_iam.delete(
             "{}/matches".format(queue_base_endpoint), json={}, headers=headers
         ).status_code
     )
-    assert 401 == api_client.delete(queue_base_endpoint, headers=headers).status_code
+    assert (
+        403 == api_client_iam.delete(queue_base_endpoint, headers=headers).status_code
+    )
 
 
-def test_it_adds_to_queue(api_client, queue_base_endpoint, queue_table, stack):
+def test_it_adds_to_queue(
+    api_client_iam, queue_base_endpoint, queue_table, stack, iam_arn
+):
     # Arrange
     key = "test"
     item = {
@@ -39,11 +45,11 @@ def test_it_adds_to_queue(api_client, queue_base_endpoint, queue_table, stack):
         "MatchId": key,
         "CreatedAt": mock.ANY,
         "DataMappers": ["a", "b"],
-        "CreatedBy": {"Username": "aws-uk-sa-builders@amazon.com", "Sub": mock.ANY},
+        "CreatedBy": {"Username": iam_arn, "Sub": mock.ANY},
         "Type": "Simple",
     }
     # Act
-    response = api_client.patch(queue_base_endpoint, json=item)
+    response = api_client_iam.patch(queue_base_endpoint, json=item)
     response_body = response.json()
     # Assert
     # Check the response is ok
@@ -62,7 +68,7 @@ def test_it_adds_to_queue(api_client, queue_base_endpoint, queue_table, stack):
 
 
 def test_it_adds_composite_to_queue(
-    api_client, queue_base_endpoint, queue_table, stack
+    api_client_iam, queue_base_endpoint, queue_table, stack, iam_arn
 ):
     # Arrange
     key = [
@@ -79,11 +85,11 @@ def test_it_adds_composite_to_queue(
         "MatchId": key,
         "CreatedAt": mock.ANY,
         "DataMappers": ["a"],
-        "CreatedBy": {"Username": "aws-uk-sa-builders@amazon.com", "Sub": mock.ANY},
+        "CreatedBy": {"Username": iam_arn, "Sub": mock.ANY},
         "Type": "Composite",
     }
     # Act
-    response = api_client.patch(queue_base_endpoint, json=item)
+    response = api_client_iam.patch(queue_base_endpoint, json=item)
     response_body = response.json()
     # Assert
     # Check the response is ok
@@ -101,7 +107,9 @@ def test_it_adds_composite_to_queue(
     assert expected == query_result["Item"]
 
 
-def test_it_adds_batch_to_queue(api_client, queue_base_endpoint, queue_table, stack):
+def test_it_adds_batch_to_queue(
+    api_client_iam, queue_base_endpoint, queue_table, stack, iam_arn
+):
     # Arrange
     items = {
         "Matches": [
@@ -118,7 +126,7 @@ def test_it_adds_batch_to_queue(api_client, queue_base_endpoint, queue_table, st
         ]
     }
     created_by_mock = {
-        "Username": "aws-uk-sa-builders@amazon.com",
+        "Username": iam_arn,
         "Sub": mock.ANY,
     }
     expected = {
@@ -153,7 +161,9 @@ def test_it_adds_batch_to_queue(api_client, queue_base_endpoint, queue_table, st
         ]
     }
     # Act
-    response = api_client.patch("{}/matches".format(queue_base_endpoint), json=items)
+    response = api_client_iam.patch(
+        "{}/matches".format(queue_base_endpoint), json=items
+    )
     response_body = response.json()
     # Assert
     # Check the response is ok
@@ -176,7 +186,7 @@ def test_it_adds_batch_to_queue(api_client, queue_base_endpoint, queue_table, st
         assert match == query_result["Item"]
 
 
-def test_it_rejects_invalid_add_to_queue(api_client, queue_base_endpoint, stack):
+def test_it_rejects_invalid_add_to_queue(api_client_iam, queue_base_endpoint, stack):
     scenarios = [
         {"INVALID": "PAYLOAD"},
         {"Type": "Composite", "DataMappers": ["a"], "MatchId": ["a"]},
@@ -185,7 +195,7 @@ def test_it_rejects_invalid_add_to_queue(api_client, queue_base_endpoint, stack)
         {"Type": "Composite", "DataMappers": ["a"], "MatchId": [{"Value": "a"}]},
     ]
     for scenario in scenarios:
-        response = api_client.patch(queue_base_endpoint, json=scenario)
+        response = api_client_iam.patch(queue_base_endpoint, json=scenario)
         assert 422 == response.status_code
         assert (
             response.headers.get("Access-Control-Allow-Origin")
@@ -193,11 +203,11 @@ def test_it_rejects_invalid_add_to_queue(api_client, queue_base_endpoint, stack)
         )
 
 
-def test_it_gets_queue(api_client, queue_base_endpoint, del_queue_factory, stack):
+def test_it_gets_queue(api_client_iam, queue_base_endpoint, del_queue_factory, stack):
     # Arrange
     del_queue_item = del_queue_factory()
     # Act
-    response = api_client.get(queue_base_endpoint)
+    response = api_client_iam.get(queue_base_endpoint)
     response_body = response.json()
     # Assert
     assert response.status_code == 200
@@ -211,13 +221,13 @@ def test_it_gets_queue(api_client, queue_base_endpoint, del_queue_factory, stack
 
 
 def test_it_rejects_invalid_deletion(
-    api_client, del_queue_factory, queue_base_endpoint, queue_table, stack
+    api_client_iam, del_queue_factory, queue_base_endpoint, queue_table, stack
 ):
     # Arrange
     del_queue_item = del_queue_factory()
     match_id = del_queue_item["MatchId"]
     # Act
-    response = api_client.delete(
+    response = api_client_iam.delete(
         "{}/matches".format(queue_base_endpoint),
         json={"Matches": [{"MatchId": match_id}]},
     )
@@ -230,13 +240,13 @@ def test_it_rejects_invalid_deletion(
 
 
 def test_it_cancels_deletion(
-    api_client, del_queue_factory, queue_base_endpoint, queue_table, stack
+    api_client_iam, del_queue_factory, queue_base_endpoint, queue_table, stack
 ):
     # Arrange
     del_queue_item = del_queue_factory()
     deletion_queue_item_id = del_queue_item["DeletionQueueItemId"]
     # Act
-    response = api_client.delete(
+    response = api_client_iam.delete(
         "{}/matches".format(queue_base_endpoint),
         json={"Matches": [{"DeletionQueueItemId": deletion_queue_item_id}]},
     )
@@ -254,12 +264,12 @@ def test_it_cancels_deletion(
 
 
 def test_it_handles_not_found(
-    api_client, del_queue_factory, queue_base_endpoint, queue_table, stack
+    api_client_iam, del_queue_factory, queue_base_endpoint, queue_table, stack
 ):
     # Arrange
     deletion_queue_item_id = "test"
     # Act
-    response = api_client.delete(
+    response = api_client_iam.delete(
         "{}/matches".format(queue_base_endpoint),
         json={"Matches": [{"DeletionQueueItemId": deletion_queue_item_id}]},
     )
@@ -277,7 +287,7 @@ def test_it_handles_not_found(
 
 
 def test_it_disables_cancel_deletion_whilst_job_in_progress(
-    api_client,
+    api_client_iam,
     queue_base_endpoint,
     sf_client,
     job_table,
@@ -290,14 +300,14 @@ def test_it_disables_cancel_deletion_whilst_job_in_progress(
     # Arrange
     del_queue_item = del_queue_factory()
     deletion_queue_item_id = del_queue_item["DeletionQueueItemId"]
-    response = api_client.delete(queue_base_endpoint)
+    response = api_client_iam.delete(queue_base_endpoint)
     response_body = response.json()
     job_id = response_body["Id"]
     execution_arn = "{}:{}".format(
         stack["StateMachineArn"].replace("stateMachine", "execution"), job_id
     )
     # Act
-    response = api_client.delete(
+    response = api_client_iam.delete(
         "{}/matches".format(queue_base_endpoint),
         json={"Matches": [{"DeletionQueueItemId": deletion_queue_item_id}]},
     )
@@ -318,7 +328,7 @@ def test_it_disables_cancel_deletion_whilst_job_in_progress(
 
 
 def test_it_processes_queue(
-    api_client,
+    api_client_iam,
     queue_base_endpoint,
     sf_client,
     job_table,
@@ -329,7 +339,7 @@ def test_it_processes_queue(
     # Arrange
     config_mutator(JobDetailsRetentionDays=0)
     # Act
-    response = api_client.delete(queue_base_endpoint)
+    response = api_client_iam.delete(queue_base_endpoint)
     response_body = response.json()
     job_id = response_body["Id"]
     execution_arn = "{}:{}".format(
@@ -356,7 +366,7 @@ def test_it_processes_queue(
 
 
 def test_it_sets_expiry(
-    api_client,
+    api_client_iam,
     queue_base_endpoint,
     sf_client,
     job_table,
@@ -367,7 +377,7 @@ def test_it_sets_expiry(
     # Arrange
     config_mutator(JobDetailsRetentionDays=1)
     # Act
-    response = api_client.delete(queue_base_endpoint)
+    response = api_client_iam.delete(queue_base_endpoint)
     response_body = response.json()
     job_id = response_body["Id"]
     execution_arn = "{}:{}".format(
@@ -393,11 +403,11 @@ def test_it_sets_expiry(
 
 
 def test_it_only_allows_one_concurrent_execution(
-    api_client, queue_base_endpoint, sf_client, stack, execution_exists_waiter
+    api_client_iam, queue_base_endpoint, sf_client, stack, execution_exists_waiter
 ):
     # Arrange
     # Start a job
-    response = api_client.delete(queue_base_endpoint)
+    response = api_client_iam.delete(queue_base_endpoint)
     response_body = response.json()
     job_id = response_body["Id"]
     execution_arn = "{}:{}".format(
@@ -405,7 +415,7 @@ def test_it_only_allows_one_concurrent_execution(
     )
     # Act
     # Start a second job
-    response = api_client.delete(queue_base_endpoint)
+    response = api_client_iam.delete(queue_base_endpoint)
     try:
         # Assert
         assert 400 == response.status_code

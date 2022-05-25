@@ -15,6 +15,8 @@ import pytest
 from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
 from botocore.waiter import WaiterModel, create_waiter_with_client
+from botocore.auth import SigV4Auth
+from botocore.awsrequest import AWSRequest
 from requests import Session
 
 from . import empty_table
@@ -127,6 +129,11 @@ def iam_client():
 
 
 @pytest.fixture(scope="session")
+def iam_arn():
+    return boto3.client("sts").get_caller_identity()["Arn"]
+
+
+@pytest.fixture(scope="session")
 def glue_columns():
     return [
         {"Name": "customer_id", "Type": "string"},
@@ -140,7 +147,7 @@ def glue_columns():
     ]
 
 
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(scope="module")
 def cognito_token(stack):
     # Generate User in Cognito
     user_pool_id = stack["CognitoUserPoolId"]
@@ -179,7 +186,7 @@ def cognito_token(stack):
 
 
 @pytest.fixture(scope="module")
-def api_client(cognito_token, stack):
+def api_client_cognito(cognito_token, stack):
     class ApiGwSession(Session):
         def __init__(self, base_url=None, default_headers=None):
             if default_headers is None:
@@ -202,6 +209,44 @@ def api_client(cognito_token, stack):
     hds = {"Content-Type": "application/json"}
     if cognito_token:
         hds.update({"Authorization": "Bearer {}".format(cognito_token)})
+
+    return ApiGwSession(stack["ApiUrl"], hds)
+
+
+@pytest.fixture(scope="module")
+def api_client_iam(stack):
+    class ApiGwSession(Session):
+        def __init__(self, base_url=None, default_headers=None):
+            if default_headers is None:
+                default_headers = {}
+            self.base_url = base_url
+            self.default_headers = default_headers
+            super(ApiGwSession, self).__init__()
+
+        def request(
+            self, method, url, data=None, params=None, headers=None, *args, **kwargs
+        ):
+            url = urljoin("{}/v1/".format(self.base_url), url)
+            merged_headers = deepcopy(self.default_headers)
+            if isinstance(headers, dict):
+                merged_headers.update(headers)
+            if headers is None or "Authorization" not in headers.keys():
+                creds = boto3.Session().get_credentials().get_frozen_credentials()
+                if "json" in kwargs:
+                    request = AWSRequest(
+                        method=method.upper(), url=url, data=json.dumps(kwargs["json"])
+                    )
+                else:
+                    request = AWSRequest(method=method.upper(), url=url)
+                SigV4Auth(
+                    creds, "execute-api", getenv("AWS_DEFAULT_REGION", "eu-west-1")
+                ).add_auth(request)
+                merged_headers.update(dict(request.headers))
+            return super(ApiGwSession, self).request(
+                method, url, data, params, headers=merged_headers, *args, **kwargs
+            )
+
+    hds = {"Content-Type": "application/json"}
 
     return ApiGwSession(stack["ApiUrl"], hds)
 
