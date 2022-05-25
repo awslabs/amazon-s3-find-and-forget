@@ -44,8 +44,10 @@ deploy-artefacts:
 .PHONY: format-cfn
 format-cfn:
 	$(eval VERSION := $(shell $(MAKE) -s version))
-	sed -i.bak -e '3s/.*/Description: Amazon S3 Find and Forget \(uksb-1q2j8beb0\) \(version:$(VERSION)\)/' templates/template.yaml
-	rm -f templates/template.yaml.bak
+	$(eval TEMP_FILE := $(shell mktemp))
+	cp templates/template.yaml $(TEMP_FILE)
+	sed -i.bak -e '3s/.*/Description: Amazon S3 Find and Forget \(uksb-1q2j8beb0\) \(version:$(VERSION)\)/' $(TEMP_FILE)
+	cp $(TEMP_FILE) templates/template.yaml 
 	git add templates/template.yaml
 
 .PHONY: format-docs
@@ -72,9 +74,9 @@ format-python: | $(VENV)
 	; done
 
 generate-api-docs:
-	cat ./templates/api.yaml | $(VENV)/bin/yq -y .Resources.Api.Properties.DefinitionBody > ./templates/temp.definition.yml
-	npx openapi-generator generate -i ./templates/temp.definition.yml -g markdown -t ./docs/templates/ -o docs/api
-	rm -f ./templates/temp.definition.yml
+	$(eval TEMP_FILE := $(shell mktemp))
+	cat ./templates/api.yaml | $(VENV)/bin/yq -y .Resources.Api.Properties.DefinitionBody > $(TEMP_FILE)
+	npx openapi-generator generate -i $(TEMP_FILE) -g markdown -t ./docs/templates/ -o docs/api
 	git add docs/api
 
 .PHONY: generate-pip-requirements
