@@ -316,11 +316,13 @@ Resources:
             - !GetAtt LayersStack.Outputs.BotoUtils
             - !GetAtt LayersStack.Outputs.CustomResourceHelper
             - !GetAtt LayersStack.Outputs.Decorators
+        DeployWebUI: !Ref DeployWebUI
+        DeployCognito: !If [ShouldDeployCognito, "true", "false"]
         ECRRepository: !GetAtt DelStack.Outputs.ECRRepository
         PreBuiltArtefactsBucket: !If [DefaultPreBuiltArtefactsBucket, !Sub "solution-builders-${AWS::Region}", !Ref PreBuiltArtefactsBucketOverride]
         ResourcePrefix: !Ref ResourcePrefix
         Version: !FindInMap [Solution, Constants, Version]
-        WebUIBucket: !If [ShouldDeployWebUI, !GetAtt WebUIStack.Outputs.WebUIBucket, "none"]
+        WebUIBucket: !GetAtt WebUIStack.Outputs.WebUIBucket
   LayersStack:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -382,12 +384,12 @@ Resources:
         KMSKeyArns: !Ref KMSKeyArns
   WebUIStack:
     Type: AWS::CloudFormation::Stack
-    Condition: ShouldDeployWebUI
     Properties:
       TemplateURL: ./web_ui.yaml
       Parameters:
         AccessLogsBucket: !Ref AccessLogsBucket
         CreateCloudFrontDistribution: !Ref CreateCloudFrontDistribution
+        DeployWebUI: !Ref DeployWebUI
         ResourcePrefix: !Ref ResourcePrefix
 
 Outputs:
@@ -454,7 +456,7 @@ Outputs:
   TempBucket:
     Value: !Ref TempBucket
   WebUIBucket:
-    Value: !If [ShouldDeployWebUI, !GetAtt WebUIStack.Outputs.WebUIBucket, "none"]
+    Value: !GetAtt WebUIStack.Outputs.WebUIBucket
   WebUIRole:
     Value: !If [ShouldDeployCognito, !GetAtt AuthStack.Outputs.ServiceInvokeRole, "none"]
   WebUIUrl:

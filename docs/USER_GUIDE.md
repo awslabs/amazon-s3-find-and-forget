@@ -171,17 +171,8 @@ resources.
      the solution. If set to **true**, the AuthMethod parameter must be set to
      **Cognito**. If set to **false**, interaction with the solution is
      performed via the API Gateway only.
-
-     _NOTE_: Changing the DeployWebUI parameter is not supported. If you wish
-     change this parameter it must be done by deploying a new CloudFormation
-     stack.
-
    - **AuthMethod:** (Default: Cognito) The authentication method to be used for
      the solution. Must be set to **Cognito** if DeployWebUI is true.
-
-     _NOTE_: Changing the AuthMethod parameter is supported. A manual deployment
-     (through the API Gateway console) of the updated API Gateway Stage is
-     required once the Stack update is complete.
 
    The following parameters are optional and allow further customisation of the
    solution if required:

@@ -119,7 +119,7 @@ redeploy-containers:
 redeploy-frontend:
 	$(eval WEBUI_BUCKET := $(shell aws cloudformation describe-stacks --stack-name S3F2 --query 'Stacks[0].Outputs[?OutputKey==`WebUIBucket`].OutputValue' --output text))
 	make build-frontend
-	$(if $(filter none, $(WEBUI_BUCKET)), @echo "WebUI not deployed so no upload possible.", cd frontend/build && aws s3 cp --recursive . s3://$(WEBUI_BUCKET) --acl public-read --exclude *settings.js)
+	cd frontend/build && aws s3 cp --recursive . s3://$(WEBUI_BUCKET) --acl public-read --exclude *settings.js
 
 run-local-container:
 	make pre-run
@@ -159,7 +159,7 @@ backend/lambda_layers/%/requirements-installed.sentinel: backend/lambda_layers/%
 
 setup-frontend-local-dev:
 	$(eval WEBUI_BUCKET := $(shell aws cloudformation describe-stacks --stack-name S3F2 --query 'Stacks[0].Outputs[?OutputKey==`WebUIBucket`].OutputValue' --output text))
-	$(if $(filter none, $(WEBUI_BUCKET)), @echo "WebUI not deployed so no download possible.", aws s3 cp s3://$(WEBUI_BUCKET)/settings.js frontend/public/settings.js)
+	aws s3 cp s3://$(WEBUI_BUCKET)/settings.js frontend/public/settings.js
 
 setup-predeploy:
 	virtualenv venv

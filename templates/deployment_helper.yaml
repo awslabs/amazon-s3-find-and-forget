@@ -28,6 +28,10 @@ Parameters:
     Type: String
   CommonLayers:
     Type: CommaDelimitedList
+  DeployWebUI:
+    Type: String
+  DeployCognito:
+    Type: String
   ECRRepository:
     Type: String
   LogLevel:
@@ -52,7 +56,7 @@ Parameters:
 
 Conditions:
   WithoutCloudFront: !Equals [!Ref CloudFrontDistribution, "none"]
-  DeployWebUI: !Not [!Equals [!Ref WebUIBucket, "none"]]
+  ShouldDeployWebUI: !Equals [!Ref DeployWebUI, "true"]
 
 Resources:
   CodeBuildBackendServiceRole:
@@ -123,7 +127,7 @@ Resources:
                   - s3:Get*
                   - s3:List*
               - !If
-                - DeployWebUI
+                - ShouldDeployWebUI
                 - Resource: !Sub arn:aws:s3:::${WebUIBucket}/*
                   Effect: Allow
                   Action: s3:PutObject*
@@ -171,7 +175,7 @@ Resources:
 
   CodeBuildFrontend:
     Type: AWS::CodeBuild::Project
-    Condition: DeployWebUI
+    Condition: ShouldDeployWebUI
     Properties:
       Artifacts:
         Type: CODEPIPELINE
@@ -257,7 +261,7 @@ Resources:
                   - codebuild:BatchGetBuilds
                   - codebuild:StartBuild
               - !If
-                - DeployWebUI
+                - ShouldDeployWebUI
                 - Effect: Allow
                   Resource:
                     - !Sub arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${CodeBuildFrontend}
@@ -300,7 +304,7 @@ Resources:
                 - Name: S3F2
               RunOrder: 1
         - !If
-          - DeployWebUI
+          - ShouldDeployWebUI
           - Name: Frontend
             Actions:
               - Name: Build
@@ -406,6 +410,39 @@ Resources:
             Action: ecr:DescribeImages
             Resource: !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ECRRepository}
 
+
+  RedeployApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: redeploy_apigw.handler
+      CodeUri: ../backend/lambdas/custom_resources/
+      Description: Custom Lambda resource for the Amazon S3 Find and Forget Cloudformation Stack
+      Policies:
+        - Statement:
+          - Effect: Allow
+            Action:
+              - apigateway:POST
+            Resource:
+              - !Sub
+                - arn:aws:apigateway:${AWS::Region}::/restapis/${ApiId}/deployments
+                - ApiId: !Select [0, !Split [".", !Select [2, !Split ["/", !Ref ApiUrl]]]]
+
+
+  RerunPipelineFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: rerun_pipeline.handler
+      CodeUri: ../backend/lambdas/custom_resources/
+      Description: Custom Lambda resource for the Amazon S3 Find and Forget Cloudformation Stack
+      Policies:
+        - Statement:
+          - Effect: Allow
+            Action:
+              - codepipeline:StartPipelineExecution
+            Resource:
+              - !Sub arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${CodePipeline}
+
+
   CleanupCodeBuildArtefactBucket:
     Type: Custom::Setup
     Properties:
@@ -415,11 +452,11 @@ Resources:
 
   CleanupWebUIBucket:
     Type: Custom::Setup
-    Condition: DeployWebUI
     Properties:
       ServiceToken: !GetAtt CleanupBucketFunction.Arn
       LogLevel: !Ref LogLevel
       Bucket: !Ref WebUIBucket
+      DeployWebUI: !Ref DeployWebUI
 
   CleanupECRRepository:
     Type: Custom::Setup
@@ -450,3 +487,22 @@ Resources:
       ECRRepository: !Ref ECRRepository
       LogLevel: !Ref LogLevel
       Version: !Ref Version
+
+
+  RedeployApi:
+    Type: Custom::Setup
+    Properties:
+      ServiceToken: !GetAtt RedeployApiFunction.Arn
+      LogLevel: !Ref LogLevel
+      ApiId: !Select [0, !Split [".", !Select [2, !Split ["/", !Ref ApiUrl]]]]
+      ApiStage: !Select [3, !Split ["/", !Ref ApiUrl]]
+      DeployCognito: !Ref DeployCognito
+
+
+  RerunPipeline:
+    Type: Custom::Setup
+    Properties:
+      ServiceToken: !GetAtt RerunPipelineFunction.Arn
+      LogLevel: !Ref LogLevel
+      PipelineName: !Ref CodePipeline
+      DeployWebUI: !Ref DeployWebUI
