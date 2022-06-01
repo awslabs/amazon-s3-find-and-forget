@@ -232,6 +232,7 @@ Resources:
       - LayersStack
       - StateMachineStack
       - StreamProcessorStack
+      - WebUIStack
     Properties:
       Username: !Ref AdminEmail
       UserPoolId: !GetAtt AuthStack.Outputs.CognitoUserPoolId
