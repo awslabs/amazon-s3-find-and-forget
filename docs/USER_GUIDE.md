@@ -380,7 +380,7 @@ be an IAM User or an assumed IAM Role.
 ```
 
 **Note**: `API_ARN` is to be replaced with the value found in value of the
-`ApiUrl` CloudFormation Stack Output
+`ApiArn` CloudFormation Stack Output
 
 ### Integrating the solution with other applications using CloudFormation stack outputs
 
