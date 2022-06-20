@@ -363,24 +363,13 @@ curl $API_URL/v1/queue -H "Authorization: $Sigv4Auth"
 ```
 
 IAM authentication can be used anywhere you have AWS credentials with the
-correct permissions (_least privilege access_ sample shown below). So this could
-be an IAM User or an assumed IAM Role.
+correct permissions, this could be an IAM User or an assumed IAM Role.
 
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": "execute-api:Invoke",
-      "Resource": "API_ARN"
-    }
-  ]
-}
-```
-
-**Note**: `API_ARN` is to be replaced with the value found in value of the
-`ApiArn` CloudFormation Stack Output
+Please refer to the documentation
+[here](https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-control-access-using-iam-policies-to-invoke-api.html)
+to understand how to define the IAM policy to match your requirements. The ARN
+for the api can be found in the value of the `ApiArn` CloudFormation Stack
+Output.
 
 ### Integrating the solution with other applications using CloudFormation stack outputs
 
