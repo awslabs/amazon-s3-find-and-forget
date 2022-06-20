@@ -2,6 +2,7 @@
 
 ## v0.47
 
+- [#314](https://github.com/awslabs/amazon-s3-find-and-forget/pull/314): Updated build_manifest_row to generate queries based on the deletion queue type
 - [#310](https://github.com/awslabs/amazon-s3-find-and-forget/pull/310): Improve
   performance of Athena query generation
 - [#308](https://github.com/awslabs/amazon-s3-find-and-forget/pull/308): Upgrade
