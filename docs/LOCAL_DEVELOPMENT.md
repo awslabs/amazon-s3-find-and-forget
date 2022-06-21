@@ -12,6 +12,9 @@ The following dependencies must be installed:
 - node.js >= v16.11 and npm >= 8
 - virtualenv
 - Ruby >= 2.6
+- libsnappy-dev/snappy-devel (debian/centos)
+- docker
+- jq
 
 Once you have installed all pre-requisites, you must run the following command
 to create a `virtualenv` and install all frontend/backend dependencies before
@@ -105,8 +108,11 @@ make run-local-container ROLE_NAME=<your-sqs-access-role-name> AWS_PROFILE=my-pr
 
 The following commands are available for running tests:
 
-- `make test`: Run all unit and acceptance tests for the backend and frontend
-- `make test-acceptance`: Run all backend task acceptance tests
+- `make test`: Run all unit and acceptance tests for the backend and frontend.
+- `make test-acceptance-cognito`: Run all backend task acceptance tests using
+  Cognito authentication
+- `make test-acceptance-iam`: Run all backend task acceptance tests using IAM
+  authentication
 - `make test-cfn`: Run CloudFormation related unit tests
 - `make test-unit`: Run all backend task unit tests
 - `make test-frontend`: Run all frontend tests

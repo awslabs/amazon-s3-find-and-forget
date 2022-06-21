@@ -4,7 +4,7 @@ from copy import deepcopy
 from boto3.dynamodb.conditions import Key
 
 pytestmark = [
-    pytest.mark.acceptance,
+    pytest.mark.acceptance_cognito,
     pytest.mark.api,
     pytest.mark.data_mappers,
     pytest.mark.usefixtures("empty_data_mappers"),
@@ -12,25 +12,34 @@ pytestmark = [
 
 
 @pytest.mark.auth
-def test_auth(api_client, data_mapper_base_endpoint):
+def test_auth(api_client_cognito, data_mapper_base_endpoint):
     headers = {"Authorization": None}
     assert (
         401
-        == api_client.put(
+        == api_client_cognito.put(
             "{}/{}".format(data_mapper_base_endpoint, "a"), headers=headers
         ).status_code
     )
-    assert 401 == api_client.get(data_mapper_base_endpoint, headers=headers).status_code
     assert (
         401
-        == api_client.delete(
+        == api_client_cognito.get(
+            data_mapper_base_endpoint, headers=headers
+        ).status_code
+    )
+    assert (
+        401
+        == api_client_cognito.delete(
             "{}/{}".format(data_mapper_base_endpoint, "a"), headers=headers
         ).status_code
     )
 
 
 def test_it_creates_data_mapper(
-    api_client, data_mapper_base_endpoint, data_mapper_table, glue_table_factory, stack
+    api_client_cognito,
+    data_mapper_base_endpoint,
+    data_mapper_table,
+    glue_table_factory,
+    stack,
 ):
     # Arrange
     table = glue_table_factory()
@@ -50,7 +59,7 @@ def test_it_creates_data_mapper(
         "IgnoreObjectNotFoundExceptions": True,
     }
     # Act
-    response = api_client.put(
+    response = api_client_cognito.put(
         "{}/{}".format(data_mapper_base_endpoint, key), json=data_mapper
     )
     response_body = response.json()
@@ -77,7 +86,11 @@ def test_it_creates_data_mapper(
 
 
 def test_it_modifies_data_mapper(
-    api_client, data_mapper_base_endpoint, data_mapper_table, glue_table_factory, stack
+    api_client_cognito,
+    data_mapper_base_endpoint,
+    data_mapper_table,
+    glue_table_factory,
+    stack,
 ):
     # Arrange
     table = glue_table_factory()
@@ -97,11 +110,11 @@ def test_it_modifies_data_mapper(
         "IgnoreObjectNotFoundExceptions": False,
     }
     # Act
-    create_response = api_client.put(
+    create_response = api_client_cognito.put(
         "{}/{}".format(data_mapper_base_endpoint, key), json=data_mapper
     )
     data_mapper["Columns"] = ["b"]
-    response = api_client.put(
+    response = api_client_cognito.put(
         "{}/{}".format(data_mapper_base_endpoint, key), json=data_mapper
     )
     response_body = response.json()
@@ -121,7 +134,11 @@ def test_it_modifies_data_mapper(
 
 
 def test_it_creates_without_optionals(
-    api_client, data_mapper_base_endpoint, data_mapper_table, glue_table_factory, stack
+    api_client_cognito,
+    data_mapper_base_endpoint,
+    data_mapper_table,
+    glue_table_factory,
+    stack,
 ):
     # Arrange
     table = glue_table_factory()
@@ -138,7 +155,7 @@ def test_it_creates_without_optionals(
         "RoleArn": "arn:aws:iam::123456789012:role/S3F2DataAccessRole",
     }
     # Act
-    response = api_client.put(
+    response = api_client_cognito.put(
         "{}/{}".format(data_mapper_base_endpoint, key), json=data_mapper
     )
     response_body = response.json()
@@ -167,7 +184,7 @@ def test_it_creates_without_optionals(
 
 
 def test_it_rejects_invalid_data_mapper(
-    api_client, data_mapper_base_endpoint, glue_table_factory, stack
+    api_client_cognito, data_mapper_base_endpoint, glue_table_factory, stack
 ):
     # Arrange
     table = glue_table_factory()
@@ -184,7 +201,7 @@ def test_it_rejects_invalid_data_mapper(
         "RoleArn": "arn:aws:iam::123456789012:role/WrongRoleName",
     }
     # Act
-    response = api_client.put(
+    response = api_client_cognito.put(
         "{}/{}".format(data_mapper_base_endpoint, key), json=data_mapper
     )
     response_body = response.json()
@@ -196,9 +213,9 @@ def test_it_rejects_invalid_data_mapper(
     )
 
 
-def test_it_rejects_invalid_role(api_client, data_mapper_base_endpoint, stack):
+def test_it_rejects_invalid_role(api_client_cognito, data_mapper_base_endpoint, stack):
     key = "test"
-    response = api_client.put(
+    response = api_client_cognito.put(
         "{}/{}".format(data_mapper_base_endpoint, key), json={"INVALID": "PAYLOAD"}
     )
     assert 422 == response.status_code
@@ -208,9 +225,11 @@ def test_it_rejects_invalid_role(api_client, data_mapper_base_endpoint, stack):
     )
 
 
-def test_it_rejects_invalid_data_source(api_client, data_mapper_base_endpoint, stack):
+def test_it_rejects_invalid_data_source(
+    api_client_cognito, data_mapper_base_endpoint, stack
+):
     key = "test"
-    response = api_client.put(
+    response = api_client_cognito.put(
         "{}/{}".format(data_mapper_base_endpoint, key),
         json={
             "Columns": ["column"],
@@ -227,10 +246,10 @@ def test_it_rejects_invalid_data_source(api_client, data_mapper_base_endpoint, s
 
 
 def test_it_rejects_invalid_data_catalog_provider(
-    api_client, data_mapper_base_endpoint, stack
+    api_client_cognito, data_mapper_base_endpoint, stack
 ):
     key = "test"
-    response = api_client.put(
+    response = api_client_cognito.put(
         "{}/{}".format(data_mapper_base_endpoint, key),
         json={
             "Columns": ["column"],
@@ -251,9 +270,11 @@ def test_it_rejects_invalid_data_catalog_provider(
     )
 
 
-def test_it_rejects_missing_glue_catalog(api_client, data_mapper_base_endpoint, stack):
+def test_it_rejects_missing_glue_catalog(
+    api_client_cognito, data_mapper_base_endpoint, stack
+):
     key = "test"
-    response = api_client.put(
+    response = api_client_cognito.put(
         "{}/{}".format(data_mapper_base_endpoint, key),
         json={
             "Columns": ["column"],
@@ -275,12 +296,12 @@ def test_it_rejects_missing_glue_catalog(api_client, data_mapper_base_endpoint, 
 
 
 def test_it_gets_all_data_mappers(
-    api_client, data_mapper_base_endpoint, glue_data_mapper_factory, stack
+    api_client_cognito, data_mapper_base_endpoint, glue_data_mapper_factory, stack
 ):
     # Arrange
     item = glue_data_mapper_factory()
     # Act
-    response = api_client.get(data_mapper_base_endpoint)
+    response = api_client_cognito.get(data_mapper_base_endpoint)
     response_body = response.json()
     # Assert
     assert response.status_code == 200
@@ -293,13 +314,13 @@ def test_it_gets_all_data_mappers(
 
 
 def test_it_gets_data_mapper(
-    api_client, data_mapper_base_endpoint, glue_data_mapper_factory, stack
+    api_client_cognito, data_mapper_base_endpoint, glue_data_mapper_factory, stack
 ):
     # Arrange
     item = glue_data_mapper_factory()
     key = item["DataMapperId"]
     # Act
-    response = api_client.get("{}/{}".format(data_mapper_base_endpoint, key))
+    response = api_client_cognito.get("{}/{}".format(data_mapper_base_endpoint, key))
     response_body = response.json()
     # Assert
     assert response.status_code == 200
@@ -311,7 +332,7 @@ def test_it_gets_data_mapper(
 
 
 def test_it_deletes_data_mapper(
-    api_client,
+    api_client_cognito,
     glue_data_mapper_factory,
     data_mapper_base_endpoint,
     data_mapper_table,
@@ -321,7 +342,7 @@ def test_it_deletes_data_mapper(
     item = glue_data_mapper_factory()
     key = item["DataMapperId"]
     # Act
-    response = api_client.delete("{}/{}".format(data_mapper_base_endpoint, key))
+    response = api_client_cognito.delete("{}/{}".format(data_mapper_base_endpoint, key))
     # Assert
     assert 204 == response.status_code
     # Check the item doesn't exist in the DDB Table

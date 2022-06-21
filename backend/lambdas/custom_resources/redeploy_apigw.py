@@ -5,18 +5,12 @@ from decorators import with_logging
 
 helper = CfnResource(json_logging=False, log_level="DEBUG", boto_level="CRITICAL")
 
-s3 = boto3.resource("s3")
-
-
-@with_logging
-def empty_bucket(bucket_name):
-    bucket = s3.Bucket(bucket_name)
-    bucket.objects.all().delete()
-    bucket.object_versions.all().delete()
+api_client = boto3.client("apigateway")
 
 
 @with_logging
 @helper.create
+@helper.delete
 def create(event, context):
     return None
 
@@ -26,16 +20,10 @@ def create(event, context):
 def update(event, context):
     props = event["ResourceProperties"]
     props_old = event["OldResourceProperties"]
-    if props_old["DeployWebUI"] == "true" and props["DeployWebUI"] == "false":
-        empty_bucket(props["Bucket"])
-    return None
-
-
-@with_logging
-@helper.delete
-def delete(event, context):
-    props = event["ResourceProperties"]
-    empty_bucket(props["Bucket"])
+    if props_old["DeployCognito"] != props["DeployCognito"]:
+        api_client.create_deployment(
+            restApiId=props["ApiId"], stageName=props["ApiStage"]
+        )
     return None
 
 

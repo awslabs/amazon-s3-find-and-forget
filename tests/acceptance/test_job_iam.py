@@ -9,7 +9,7 @@ from decimal import Decimal
 from tests.acceptance import query_json_file, query_parquet_file, download_and_decrypt
 
 pytestmark = [
-    pytest.mark.acceptance,
+    pytest.mark.acceptance_iam,
     pytest.mark.jobs,
     pytest.mark.usefixtures("empty_jobs"),
 ]
@@ -17,18 +17,18 @@ pytestmark = [
 
 @pytest.mark.auth
 @pytest.mark.api
-def test_auth(api_client, jobs_endpoint):
+def test_auth(api_client_iam, jobs_endpoint):
     headers = {"Authorization": None}
     assert (
-        401
-        == api_client.get(
+        403
+        == api_client_iam.get(
             "{}/{}".format(jobs_endpoint, "a"), headers=headers
         ).status_code
     )
-    assert 401 == api_client.get(jobs_endpoint, headers=headers).status_code
+    assert 403 == api_client_iam.get(jobs_endpoint, headers=headers).status_code
     assert (
-        401
-        == api_client.get(
+        403
+        == api_client_iam.get(
             "{}/{}/events".format(jobs_endpoint, "a"), headers=headers
         ).status_code
     )
@@ -36,7 +36,7 @@ def test_auth(api_client, jobs_endpoint):
 
 @pytest.mark.api
 def test_it_gets_jobs(
-    api_client, jobs_endpoint, job_factory, stack, job_table, job_exists_waiter
+    api_client_iam, jobs_endpoint, job_factory, stack, job_table, job_exists_waiter
 ):
     # Arrange
     job_id = job_factory()["Id"]
@@ -44,7 +44,7 @@ def test_it_gets_jobs(
         TableName=job_table.name, Key={"Id": {"S": job_id}, "Sk": {"S": job_id}}
     )
     # Act
-    response = api_client.get("{}/{}".format(jobs_endpoint, job_id))
+    response = api_client_iam.get("{}/{}".format(jobs_endpoint, job_id))
     response_body = response.json()
     # Assert
     assert response.status_code == 200
@@ -69,11 +69,11 @@ def test_it_gets_jobs(
 
 
 @pytest.mark.api
-def test_it_handles_unknown_jobs(api_client, jobs_endpoint, stack):
+def test_it_handles_unknown_jobs(api_client_iam, jobs_endpoint, stack):
     # Arrange
     job_id = "invalid"
     # Act
-    response = api_client.get("{}/{}".format(jobs_endpoint, job_id))
+    response = api_client_iam.get("{}/{}".format(jobs_endpoint, job_id))
     # Assert
     assert response.status_code == 404
     assert (
@@ -84,7 +84,7 @@ def test_it_handles_unknown_jobs(api_client, jobs_endpoint, stack):
 
 @pytest.mark.api
 def test_it_lists_jobs_by_date(
-    api_client, jobs_endpoint, job_factory, stack, job_table, job_exists_waiter
+    api_client_iam, jobs_endpoint, job_factory, stack, job_table, job_exists_waiter
 ):
     # Arrange
     job_id_1 = job_factory(job_id=str(uuid.uuid4()), created_at=1576861489)["Id"]
@@ -96,7 +96,7 @@ def test_it_lists_jobs_by_date(
         TableName=job_table.name, Key={"Id": {"S": job_id_2}, "Sk": {"S": job_id_2}}
     )
     # Act
-    response = api_client.get(jobs_endpoint)
+    response = api_client_iam.get(jobs_endpoint)
     response_body = response.json()
     # Assert
     assert response.status_code == 200
@@ -111,7 +111,7 @@ def test_it_lists_jobs_by_date(
 
 @pytest.mark.api
 def test_it_returns_summary_fields_in_list(
-    api_client, jobs_endpoint, job_factory, job_table, job_finished_waiter
+    api_client_iam, jobs_endpoint, job_factory, job_table, job_finished_waiter
 ):
     # Arrange
     job_id = job_factory(job_id=str(uuid.uuid4()), created_at=1576861489)["Id"]
@@ -119,7 +119,7 @@ def test_it_returns_summary_fields_in_list(
         TableName=job_table.name, Key={"Id": {"S": job_id}, "Sk": {"S": job_id}}
     )
     # Act
-    response = api_client.get(jobs_endpoint)
+    response = api_client_iam.get(jobs_endpoint)
     response_body = response.json()
     # Assert
     assert response.status_code == 200
@@ -148,7 +148,7 @@ def test_it_returns_summary_fields_in_list(
 
 @pytest.mark.api
 def test_it_lists_job_events_by_date(
-    api_client, jobs_endpoint, job_factory, stack, job_table, job_finished_waiter
+    api_client_iam, jobs_endpoint, job_factory, stack, job_table, job_finished_waiter
 ):
     # Arrange
     job_id = str(uuid.uuid4())
@@ -157,7 +157,7 @@ def test_it_lists_job_events_by_date(
         TableName=job_table.name, Key={"Id": {"S": job_id}, "Sk": {"S": job_id}}
     )
     # Act
-    response = api_client.get("{}/{}/events".format(jobs_endpoint, job_id))
+    response = api_client_iam.get("{}/{}/events".format(jobs_endpoint, job_id))
     response_body = response.json()
     # Assert
     assert response.status_code == 200
@@ -175,7 +175,7 @@ def test_it_lists_job_events_by_date(
 
 @pytest.mark.api
 def test_it_filters_job_events_by_event_name(
-    api_client, jobs_endpoint, job_factory, stack, job_table, job_finished_waiter
+    api_client_iam, jobs_endpoint, job_factory, stack, job_table, job_finished_waiter
 ):
     # Arrange
     job_id = str(uuid.uuid4())
@@ -184,7 +184,7 @@ def test_it_filters_job_events_by_event_name(
         TableName=job_table.name, Key={"Id": {"S": job_id}, "Sk": {"S": job_id}}
     )
     # Act
-    response = api_client.get(
+    response = api_client_iam.get(
         "{}/{}/events?filter=EventName%3DFindPhaseStarted".format(jobs_endpoint, job_id)
     )
     response_body = response.json()

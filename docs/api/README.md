@@ -47,8 +47,8 @@ API | Operation | HTTP request | Description
 <a name="documentation-for-authorization"></a>
 ## Documentation for Authorization
 
-<a name="CognitoAuthorizer"></a>
-### CognitoAuthorizer
+<a name="Authorizer"></a>
+### Authorizer
 
 - **Type**: API key
 - **API key parameter name**: Authorization

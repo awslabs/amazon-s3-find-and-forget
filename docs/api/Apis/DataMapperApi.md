@@ -27,7 +27,7 @@ null (empty response body)
 
 ### Authorization
 
-[CognitoAuthorizer](../README.md#CognitoAuthorizer)
+[Authorizer](../README.md#Authorizer)
 
 ### HTTP request headers
 
@@ -51,7 +51,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[CognitoAuthorizer](../README.md#CognitoAuthorizer)
+[Authorizer](../README.md#Authorizer)
 
 ### HTTP request headers
 
@@ -76,7 +76,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[CognitoAuthorizer](../README.md#CognitoAuthorizer)
+[Authorizer](../README.md#Authorizer)
 
 ### HTTP request headers
 
@@ -101,7 +101,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[CognitoAuthorizer](../README.md#CognitoAuthorizer)
+[Authorizer](../README.md#Authorizer)
 
 ### HTTP request headers
 

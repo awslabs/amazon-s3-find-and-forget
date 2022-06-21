@@ -34,8 +34,7 @@ deploy-cfn:
 	aws cloudformation package --template-file templates/template.yaml --s3-bucket $(TEMP_BUCKET) --output-template-file packaged.yaml
 	aws cloudformation deploy --template-file ./packaged.yaml --stack-name S3F2 --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND \
 		--parameter-overrides CreateCloudFrontDistribution=false EnableContainerInsights=true AdminEmail=$(ADMIN_EMAIL) \
-		AccessControlAllowOriginOverride=* PreBuiltArtefactsBucketOverride=$(TEMP_BUCKET) \
-		AthenaWorkGroup=AmazonAthenaPreviewFunctionality KMSKeyArns=$(KMS_KEYARNS)
+		AccessControlAllowOriginOverride=* PreBuiltArtefactsBucketOverride=$(TEMP_BUCKET) KMSKeyArns=$(KMS_KEYARNS)
 
 deploy-artefacts:
 	$(eval VERSION := $(shell $(MAKE) -s version))
@@ -45,7 +44,9 @@ deploy-artefacts:
 .PHONY: format-cfn
 format-cfn:
 	$(eval VERSION := $(shell $(MAKE) -s version))
-	sed -i '' -e '3s/.*/Description: Amazon S3 Find and Forget \(uksb-1q2j8beb0\) \(version:$(VERSION)\)/' templates/template.yaml
+	TEMP_FILE="$$(mktemp)" ; \
+		sed  -e '3s/.*/Description: Amazon S3 Find and Forget \(uksb-1q2j8beb0\) \(version:$(VERSION)\)/' templates/template.yaml > "$$TEMP_FILE" ; \
+		mv "$$TEMP_FILE" templates/template.yaml 
 	git add templates/template.yaml
 
 .PHONY: format-docs
@@ -56,7 +57,7 @@ format-docs:
 
 .PHONY: format-js
 format-js:
-	npx prettier $(PWD)/frontend/src/**/*.js --write
+	npx prettier ./frontend/src/**/*.js --write
 	git add frontend/src/
 
 .PHONY: format-python
@@ -72,7 +73,9 @@ format-python: | $(VENV)
 	; done
 
 generate-api-docs:
-	npx openapi-generator generate -i ./templates/api.definition.yml -g markdown -t ./docs/templates/ -o docs/api
+	TEMP_FILE="$$(mktemp)" ; \
+		$(VENV)/bin/yq -y .Resources.Api.Properties.DefinitionBody ./templates/api.yaml > "$$TEMP_FILE" ; \
+		npx openapi-generator generate -i "$$TEMP_FILE" -g markdown -t ./docs/templates/ -o docs/api
 	git add docs/api
 
 .PHONY: generate-pip-requirements
@@ -80,7 +83,7 @@ generate-pip-requirements: $(patsubst %.in,%.txt,$(shell find . -type f -name re
 
 .PHONY: lint-cfn
 lint-cfn:
-	cfn-lint templates/* --ignore-templates=templates/api.definition.yml
+	cfn-lint templates/*
 
 package:
 	make package-artefacts
@@ -168,7 +171,7 @@ start-frontend-local:
 
 start-frontend-remote:
 	$(eval WEBUI_URL := $(shell aws cloudformation describe-stacks --stack-name S3F2 --query 'Stacks[0].Outputs[?OutputKey==`WebUIUrl`].OutputValue' --output text))
-	open $(WEBUI_URL)
+	$(if $(filter none, $(WEBUI_URL)), @echo "WebUI not deployed.", open $(WEBUI_URL))
 
 test-cfn:
 	cfn_nag templates/*.yaml --blacklist-path ci/cfn_nag_blacklist.yaml
@@ -182,8 +185,11 @@ test-unit: | $(VENV)
 test-ci: | $(VENV)
 	$(VENV)/bin/pytest -m unit --log-cli-level info --cov=backend.lambdas --cov=decorators --cov=boto_utils --cov=backend.ecs_tasks --cov-report xml
 
-test-acceptance: | $(VENV)
-	$(VENV)/bin/pytest -m acceptance --log-cli-level info
+test-acceptance-cognito: | $(VENV)
+	$(VENV)/bin/pytest -m acceptance_cognito --log-cli-level info
+
+test-acceptance-iam: | $(VENV)
+	$(VENV)/bin/pytest -m acceptance_iam --log-cli-level info
 
 test-no-state-machine: | $(VENV)
 	$(VENV)/bin/pytest -m "not state_machine" --log-cli-level info  --cov=backend.lambdas --cov=boto_utils --cov=decorators --cov=backend.ecs_tasks
@@ -194,7 +200,7 @@ test: | $(VENV)
 	make test-frontend
 
 version:
-	@echo $(shell cfn-flip templates/template.yaml | python -c 'import sys, json; print(json.load(sys.stdin)["Mappings"]["Solution"]["Constants"]["Version"])')
+	@echo $(shell $(VENV)/bin/cfn-flip templates/template.yaml | $(VENV)/bin/python -c 'import sys, json; print(json.load(sys.stdin)["Mappings"]["Solution"]["Constants"]["Version"])')
 
 %/requirements.txt: %/requirements.in | $(VENV)/bin/pip-compile
 	$(VENV)/bin/pip-compile -q -o $@ $<
