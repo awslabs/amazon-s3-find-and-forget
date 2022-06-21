@@ -163,8 +163,7 @@ setup-frontend-local-dev:
 
 setup-predeploy:
 	virtualenv venv
-	source venv/bin/activate
-	pip install cfn-flip==1.2.2
+	source venv/bin/activate && pip install cfn-flip==1.2.2
 
 start-frontend-local:
 	npm start --workspace frontend
