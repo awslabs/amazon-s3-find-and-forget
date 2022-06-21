@@ -48,6 +48,8 @@ jobs:
         run: pip install virtualenv
       - name: Install dependencies
         run: make setup
+      - name: Set Version
+        run: make version
       # Run Tests
       - name: CloudFormation unit tests
         run: make test-cfn
