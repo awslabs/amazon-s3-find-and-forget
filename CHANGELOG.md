@@ -2,8 +2,8 @@
 
 ## v0.48
 
-- [#TODO](https://github.com/awslabs/amazon-s3-find-and-forget/pull/TODO):
-  Upgrade dependencies
+- [#316](https://github.com/awslabs/amazon-s3-find-and-forget/pull/316): Upgrade
+  dependencies
 - [#313](https://github.com/awslabs/amazon-s3-find-and-forget/pull/313): Add
   option to choose IAM for authentication (in place of Cognito)
 - [#313](https://github.com/awslabs/amazon-s3-find-and-forget/pull/313): Add
