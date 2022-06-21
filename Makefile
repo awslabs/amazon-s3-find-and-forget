@@ -199,7 +199,7 @@ test: | $(VENV)
 	$(VENV)/bin/pytest --log-cli-level info --cov=backend.lambdas --cov=decorators --cov=boto_utils --cov=backend.ecs_tasks
 	make test-frontend
 
-version:
+version: | $(VENV)
 	@echo $(shell $(VENV)/bin/cfn-flip templates/template.yaml | $(VENV)/bin/python -c 'import sys, json; print(json.load(sys.stdin)["Mappings"]["Solution"]["Constants"]["Version"])')
 
 %/requirements.txt: %/requirements.in | $(VENV)/bin/pip-compile
