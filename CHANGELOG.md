@@ -2,8 +2,14 @@
 
 ## v0.48
 
-- Add option to choose IAM for authentication (in place of Cognito)
-- Add option to not deploy WebUI component. Cognito auth is required for WebUI.
+- [#317](https://github.com/awslabs/amazon-s3-find-and-forget/pull/317):
+  Resolved issue with use of `source` in `MakeFile` file
+- [#316](https://github.com/awslabs/amazon-s3-find-and-forget/pull/316): Upgrade
+  dependencies
+- [#313](https://github.com/awslabs/amazon-s3-find-and-forget/pull/313): Add
+  option to choose IAM for authentication (in place of Cognito)
+- [#313](https://github.com/awslabs/amazon-s3-find-and-forget/pull/313): Add
+  option to not deploy WebUI component. Cognito auth is required for WebUI
 
 ## v0.47
 
