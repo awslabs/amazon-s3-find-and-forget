@@ -16,8 +16,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/* || true
       # Cache
+      - uses: actions/cache@v1
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
       - uses: actions/cache@v1
         with:
           path: ~/.cache/pip
@@ -25,23 +30,32 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
       # Setup
+      - name: Install snappy dep
+        run: sudo apt-get install libsnappy-dev
       - name: Set up Python 3.7
         uses: actions/setup-python@v1
         with:
           python-version: 3.7
+      - name: Set up Nodejs 16
+        uses: actions/setup-node@v1
+        with:
+          node-version: 16
+      - name: Set up ruby 2.6
+        uses: actions/setup-ruby@v1
+        with:
+          ruby-version: '2.6'
       - name: Install virtualenv
         run: pip install virtualenv
       - name: Install dependencies
-        run: make setup-predeploy
-      - name: ls1
-        run: ls -l
-      - name: ls2
-        run: ls -l venv/bin/
-      # Release if required
-      - name: Setup versions in env variables
-        id: version
-        run: |
-          function version { echo "$@" | awk -F. '{ printf("%d%03d%03d%03d\n", $1,$2,$3,$4); }'; }
-          echo "THIS_VERSION=$(make version | sed s/^v//)" >> $GITHUB_ENV
-          echo "THIS_VERSION_COMPARABLE=$(version $(make version | sed s/^v//))" >> $GITHUB_ENV
-          echo "LATEST_VERSION_COMPARABLE=$(version $(git describe --tags $(git rev-list --tags --max-count=1) | sed s/^v// 2> /dev/null || echo '0'))" >> $GITHUB_ENV
+        run: make setup
+      # Run Tests
+      - name: CloudFormation unit tests
+        run: make test-cfn
+      - name: Backend unit tests
+        run: make test-ci
+        env:
+          AWS_DEFAULT_REGION: eu-west-1
+      - name: Frontend unit tests
+        run: make test-frontend
+      - name: Upload unit test coverage reports to Codecov
+        uses: codecov/codecov-action@v1
