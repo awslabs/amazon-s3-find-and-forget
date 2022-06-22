@@ -28,7 +28,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[CognitoAuthorizer](../README.md#CognitoAuthorizer)
+[Authorizer](../README.md#Authorizer)
 
 ### HTTP request headers
 
@@ -52,7 +52,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[CognitoAuthorizer](../README.md#CognitoAuthorizer)
+[Authorizer](../README.md#Authorizer)
 
 ### HTTP request headers
 
@@ -76,7 +76,7 @@ null (empty response body)
 
 ### Authorization
 
-[CognitoAuthorizer](../README.md#CognitoAuthorizer)
+[Authorizer](../README.md#Authorizer)
 
 ### HTTP request headers
 
@@ -101,7 +101,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[CognitoAuthorizer](../README.md#CognitoAuthorizer)
+[Authorizer](../README.md#Authorizer)
 
 ### HTTP request headers
 
@@ -122,7 +122,7 @@ This endpoint does not need any parameters.
 
 ### Authorization
 
-[CognitoAuthorizer](../README.md#CognitoAuthorizer)
+[Authorizer](../README.md#Authorizer)
 
 ### HTTP request headers
 

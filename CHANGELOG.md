@@ -1,5 +1,14 @@
 # Change Log
 
+## v0.48
+
+- [#316](https://github.com/awslabs/amazon-s3-find-and-forget/pull/316): Upgrade
+  dependencies
+- [#313](https://github.com/awslabs/amazon-s3-find-and-forget/pull/313): Add
+  option to choose IAM for authentication (in place of Cognito)
+- [#313](https://github.com/awslabs/amazon-s3-find-and-forget/pull/313): Add
+  option to not deploy WebUI component. Cognito auth is required for WebUI
+
 ## v0.47
 
 - [#314](https://github.com/awslabs/amazon-s3-find-and-forget/pull/314): Updated build_manifest_row to generate queries based on the deletion queue type

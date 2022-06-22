@@ -7,12 +7,17 @@ Parameters:
     Default: ""
   CreateCloudFrontDistribution:
     Type: String
+  DeployWebUI:
+    Type: String
   ResourcePrefix:
     Type: String
 
 Conditions:
   WithAccessLogs: !Not [!Equals [!Ref AccessLogsBucket, ""]]
-  WithCloudFront: !Equals [!Ref CreateCloudFrontDistribution, "true"]
+  ShouldDeployWebUI: !Equals [!Ref DeployWebUI, "true"]
+  WithCloudFront: !And
+    - !Equals [!Ref CreateCloudFrontDistribution, "true"]
+    - !Condition ShouldDeployWebUI
 
 Resources:
 
@@ -40,6 +45,7 @@ Resources:
 
   WebUIBucketPolicy:
     Type: AWS::S3::BucketPolicy
+    Condition: ShouldDeployWebUI
     Properties:
       Bucket: !Ref WebUIBucket
       PolicyDocument:

@@ -412,7 +412,7 @@ def test_it_throws_for_invalid_urls():
         parse_s3_url(["s3://", "not", "string"])
 
 
-def test_it_fetches_userinfo_from_lambda_event():
+def test_it_fetches_cognito_userinfo_from_lambda_event():
     result = get_user_info(
         {
             "requestContext": {
@@ -438,6 +438,24 @@ def test_it_fetches_userinfo_from_lambda_event():
     assert result == {
         "Username": "email@test.com",
         "Sub": "12345678-1234-1234-1234-123456123456",
+    }
+
+
+def test_it_fetches_iam_userinfo_from_lambda_event():
+    result = get_user_info(
+        {
+            "requestContext": {
+                "identity": {
+                    "userArn": "arn:aws:sts::000000000000:assumed-role/role/test-user",
+                    "user": "test-user",
+                }
+            }
+        }
+    )
+
+    assert result == {
+        "Username": "arn:aws:sts::000000000000:assumed-role/role/test-user",
+        "Sub": "test-user",
     }
 
 

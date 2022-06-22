@@ -21,7 +21,7 @@ This endpoint does not need any parameters.
 
 ### Authorization
 
-[CognitoAuthorizer](../README.md#CognitoAuthorizer)
+[Authorizer](../README.md#Authorizer)
 
 ### HTTP request headers
 

@@ -213,12 +213,27 @@ def parse_s3_url(s3_url):
 
 def get_user_info(event):
     req = event.get("requestContext", {})
-    auth = req.get("authorizer", {})
-    claims = auth.get("claims", {})
-    return {
-        "Username": claims.get("cognito:username", "N/A"),
-        "Sub": claims.get("sub", "N/A"),
-    }
+    # If Cognito Auth is being used
+    if "authorizer" in req:
+        auth = req.get("authorizer", {})
+        claims = auth.get("claims", {})
+        return {
+            "Username": claims.get("cognito:username", "N/A"),
+            "Sub": claims.get("sub", "N/A"),
+        }
+    # If Cognito IAM is being used
+    elif "identity" in req:
+        iden = req.get("identity", {})
+        return {
+            "Username": iden.get("userArn", "N/A"),
+            "Sub": iden.get("user", "N/A"),
+        }
+    # Default behaviour of method expected to return N/A in both fields
+    else:
+        return {
+            "Username": "N/A",
+            "Sub": "N/A",
+        }
 
 
 def get_session(assume_role_arn=None, role_session_name="s3f2"):
