@@ -85,7 +85,7 @@ def handler(event, context):
     }
 
 
-def build_manifest_row(columns, match_id, item_id, item_createdat,is_composite):
+def build_manifest_row(columns, match_id, item_id, item_createdat, is_composite):
     """
     Function for building each row of the manifest that will be written to S3.
 
