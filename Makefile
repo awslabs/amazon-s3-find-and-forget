@@ -158,8 +158,9 @@ backend/lambda_layers/%/requirements-installed.sentinel: backend/lambda_layers/%
 	touch $@
 
 setup-frontend-local-dev:
+	$(eval WEBUI_URL := $(shell aws cloudformation describe-stacks --stack-name S3F2 --query 'Stacks[0].Outputs[?OutputKey==`WebUIUrl`].OutputValue' --output text))
 	$(eval WEBUI_BUCKET := $(shell aws cloudformation describe-stacks --stack-name S3F2 --query 'Stacks[0].Outputs[?OutputKey==`WebUIBucket`].OutputValue' --output text))
-	aws s3 cp s3://$(WEBUI_BUCKET)/settings.js frontend/public/settings.js
+	$(if $(filter none, $(WEBUI_URL)), @echo "WebUI not deployed.", aws s3 cp s3://$(WEBUI_BUCKET)/settings.js frontend/public/settings.js)
 
 setup-predeploy:
 	virtualenv venv
