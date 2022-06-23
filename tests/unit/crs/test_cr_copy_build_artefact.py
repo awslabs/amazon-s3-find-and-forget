@@ -12,6 +12,7 @@ def test_it_copies_file(mock_client):
         "ResourceProperties": {
             "ArtefactName": "build/s3f2.zip",
             "CodeBuildArtefactBucket": "codebuild-bucket",
+            "CodeBuildArtefactBucketArn": "arn:aws:s3:::codebuild-bucket",
             "PreBuiltArtefactsBucket": "source-bucket-eu-west-1",
             "Version": "1.0",
         }

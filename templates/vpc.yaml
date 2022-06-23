@@ -1,5 +1,12 @@
 AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
 Description: Amazon S3 Find and Forget VPC (uksb-1qjminsd5)
+
+Globals:
+  Function:
+    Runtime: python3.8
+    Timeout: 30
+    Layers: !Ref CommonLayers
 
 Parameters:
   FlowLogsGroup:
@@ -21,6 +28,8 @@ Parameters:
     Type: String
     Default: 10.0.0.0/16
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+  CommonLayers:
+    Type: CommaDelimitedList
 
 Mappings:
   Regions:
@@ -56,6 +65,8 @@ Mappings:
       HasThreeAZs: false
     us-west-2:
       HasThreeAZs: true
+    cn-north-1:
+      HasThreeAZs: true
 
 Conditions:
   HasThreeAZs: !Equals [!FindInMap [Regions, !Ref "AWS::Region", HasThreeAZs], true]
@@ -63,6 +74,7 @@ Conditions:
     - !Not [!Equals [!Ref FlowLogsGroup, ""]]
     - !Not [!Equals [!Ref FlowLogsRoleArn, ""]]
   WithKMS: !Not [!Equals [!Ref KMSKeyArns, ""]]
+  ChinaRegion: !Equals [!Select [0, !Split ["-", !Ref "AWS::Region"]], "cn"]
 
 Resources:
   VPC:
@@ -213,57 +225,135 @@ Resources:
           ToPort: 443
           CidrIp: !Ref VpcIpBlock
 
+  ValidateEndpointSubnetFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: validate_vpce_subnets.handler
+      CodeUri: ../backend/lambdas/custom_resources/
+      Description: Custom Lambda resource for the Amazon S3 Find and Forget Cloudformation Stack
+      Policies:
+        - Statement:
+          - Effect: Allow
+            Action:
+              - ec2:DescribeSubnets
+              - ec2:DescribeVpcEndpointServices
+            Resource: '*'
+
   # Endpoints
 
-  CloudWatchEndpoint:
-    Type: AWS::EC2::VPCEndpoint
+  CloudWatchEndpointSubnets:
+    Type: Custom::Setup
+    Condition: ChinaRegion
     Properties:
-      PrivateDnsEnabled: true
-      SecurityGroupIds: [!Ref SecurityGroup]
+      ServiceToken: !GetAtt ValidateEndpointSubnetFunction.Arn
       ServiceName: !Sub 'com.amazonaws.${AWS::Region}.monitoring'
       SubnetIds:
         - !Ref PrivateSubnet1
         - !Ref PrivateSubnet2
         - !If [HasThreeAZs, !Ref PrivateSubnet3, !Ref 'AWS::NoValue']
       VpcEndpointType: Interface
-      VpcId: !Ref VPC
-   
-  CloudWatchLogsEndpoint:
+  CloudWatchEndpoint:
     Type: AWS::EC2::VPCEndpoint
     Properties:
       PrivateDnsEnabled: true
       SecurityGroupIds: [!Ref SecurityGroup]
+      ServiceName: !If
+        - ChinaRegion
+        - !GetAtt CloudWatchEndpointSubnets.ServiceName
+        - !Sub 'com.amazonaws.${AWS::Region}.monitoring'
+      SubnetIds: !If
+        - ChinaRegion
+        - !Split [',', !Ref CloudWatchEndpointSubnets]
+        - - !Ref PrivateSubnet1
+          - !Ref PrivateSubnet2
+          - !If [HasThreeAZs, !Ref PrivateSubnet3, !Ref 'AWS::NoValue']
+      VpcEndpointType: Interface
+      VpcId: !Ref VPC
+
+  CloudWatchLogsEndpointSubnets:
+    Type: Custom::Setup
+    Condition: ChinaRegion
+    Properties:
+      ServiceToken: !GetAtt ValidateEndpointSubnetFunction.Arn
       ServiceName: !Sub 'com.amazonaws.${AWS::Region}.logs'
       SubnetIds:
         - !Ref PrivateSubnet1
         - !Ref PrivateSubnet2
         - !If [HasThreeAZs, !Ref PrivateSubnet3, !Ref 'AWS::NoValue']
       VpcEndpointType: Interface
-      VpcId: !Ref VPC
-
-  ECREndpoint:
+  CloudWatchLogsEndpoint:
     Type: AWS::EC2::VPCEndpoint
     Properties:
       PrivateDnsEnabled: true
       SecurityGroupIds: [!Ref SecurityGroup]
+      ServiceName: !If
+        - ChinaRegion
+        - !GetAtt CloudWatchLogsEndpointSubnets.ServiceName
+        - !Sub 'com.amazonaws.${AWS::Region}.logs'
+      SubnetIds: !If
+        - ChinaRegion
+        - !Split [',', !Ref CloudWatchLogsEndpointSubnets]
+        - - !Ref PrivateSubnet1
+          - !Ref PrivateSubnet2
+          - !If [HasThreeAZs, !Ref PrivateSubnet3, !Ref 'AWS::NoValue']
+      VpcEndpointType: Interface
+      VpcId: !Ref VPC
+
+  ECREndpointSubnets:
+    Type: Custom::Setup
+    Condition: ChinaRegion
+    Properties:
+      ServiceToken: !GetAtt ValidateEndpointSubnetFunction.Arn
       ServiceName: !Sub 'com.amazonaws.${AWS::Region}.ecr.dkr'
       SubnetIds:
         - !Ref PrivateSubnet1
         - !Ref PrivateSubnet2
         - !If [HasThreeAZs, !Ref PrivateSubnet3, !Ref 'AWS::NoValue']
       VpcEndpointType: Interface
-      VpcId: !Ref VPC
-
-  ECRAPIEndpoint:
+  ECREndpoint:
     Type: AWS::EC2::VPCEndpoint
     Properties:
       PrivateDnsEnabled: true
       SecurityGroupIds: [!Ref SecurityGroup]
+      ServiceName: !If
+        - ChinaRegion
+        - !GetAtt ECREndpointSubnets.ServiceName
+        - !Sub 'com.amazonaws.${AWS::Region}.ecr.dkr'
+      SubnetIds: !If
+        - ChinaRegion
+        - !Split [',', !Ref ECREndpointSubnets]
+        - - !Ref PrivateSubnet1
+          - !Ref PrivateSubnet2
+          - !If [HasThreeAZs, !Ref PrivateSubnet3, !Ref 'AWS::NoValue']
+      VpcEndpointType: Interface
+      VpcId: !Ref VPC
+
+  ECRAPIEndpointSubnets:
+    Type: Custom::Setup
+    Condition: ChinaRegion
+    Properties:
+      ServiceToken: !GetAtt ValidateEndpointSubnetFunction.Arn
       ServiceName: !Sub 'com.amazonaws.${AWS::Region}.ecr.api'
       SubnetIds:
         - !Ref PrivateSubnet1
         - !Ref PrivateSubnet2
         - !If [HasThreeAZs, !Ref PrivateSubnet3, !Ref 'AWS::NoValue']
+      VpcEndpointType: Interface
+  ECRAPIEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      PrivateDnsEnabled: true
+      SecurityGroupIds: [!Ref SecurityGroup]
+      ServiceName: !If
+        - ChinaRegion
+        - !GetAtt ECRAPIEndpointSubnets.ServiceName
+        - !Sub 'com.amazonaws.${AWS::Region}.ecr.api'
+      SubnetIds: !If
+        - ChinaRegion
+        - !Split [',', !Ref ECRAPIEndpointSubnets]
+        - - !Ref PrivateSubnet1
+          - !Ref PrivateSubnet2
+          - !If [HasThreeAZs, !Ref PrivateSubnet3, !Ref 'AWS::NoValue']
       VpcEndpointType: Interface
       VpcId: !Ref VPC
 
@@ -276,17 +366,33 @@ Resources:
         - !If [HasThreeAZs, !Ref PrivateRouteTable3, !Ref 'AWS::NoValue']
       ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
       VpcId: !Ref VPC
-  
-  SQSEndpoint:
-    Type: AWS::EC2::VPCEndpoint
+
+  SQSEndpointSubnets:
+    Type: Custom::Setup
+    Condition: ChinaRegion
     Properties:
-      PrivateDnsEnabled: true
-      SecurityGroupIds: [!Ref SecurityGroup]
+      ServiceToken: !GetAtt ValidateEndpointSubnetFunction.Arn
       ServiceName: !Sub 'com.amazonaws.${AWS::Region}.sqs'
       SubnetIds:
         - !Ref PrivateSubnet1
         - !Ref PrivateSubnet2
         - !If [HasThreeAZs, !Ref PrivateSubnet3, !Ref 'AWS::NoValue']
+      VpcEndpointType: Interface
+  SQSEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      PrivateDnsEnabled: true
+      SecurityGroupIds: [!Ref SecurityGroup]
+      ServiceName: !If
+        - ChinaRegion
+        - !GetAtt SQSEndpointSubnets.ServiceName
+        - !Sub 'com.amazonaws.${AWS::Region}.sqs'
+      SubnetIds: !If
+        - ChinaRegion
+        - !Split [',', !Ref SQSEndpointSubnets]
+        - - !Ref PrivateSubnet1
+          - !Ref PrivateSubnet2
+          - !If [HasThreeAZs, !Ref PrivateSubnet3, !Ref 'AWS::NoValue']
       VpcEndpointType: Interface
       VpcId: !Ref VPC
 
@@ -300,30 +406,62 @@ Resources:
       ServiceName: !Sub 'com.amazonaws.${AWS::Region}.dynamodb'
       VpcId: !Ref VPC
 
-  STSEndpoint:
-    Type: AWS::EC2::VPCEndpoint
+  STSEndpointSubnets:
+    Type: Custom::Setup
+    Condition: ChinaRegion
     Properties:
-      PrivateDnsEnabled: true
-      SecurityGroupIds: [!Ref SecurityGroup]
+      ServiceToken: !GetAtt ValidateEndpointSubnetFunction.Arn
       ServiceName: !Sub 'com.amazonaws.${AWS::Region}.sts'
       SubnetIds:
         - !Ref PrivateSubnet1
         - !Ref PrivateSubnet2
         - !If [HasThreeAZs, !Ref PrivateSubnet3, !Ref 'AWS::NoValue']
       VpcEndpointType: Interface
+  STSEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      PrivateDnsEnabled: true
+      SecurityGroupIds: [!Ref SecurityGroup]
+      ServiceName: !If
+        - ChinaRegion
+        - !GetAtt STSEndpointSubnets.ServiceName
+        - !Sub 'com.amazonaws.${AWS::Region}.sts'
+      SubnetIds: !If
+        - ChinaRegion
+        - !Split [',', !Ref STSEndpointSubnets]
+        - - !Ref PrivateSubnet1
+          - !Ref PrivateSubnet2
+          - !If [HasThreeAZs, !Ref PrivateSubnet3, !Ref 'AWS::NoValue']
+      VpcEndpointType: Interface
       VpcId: !Ref VPC
 
+  KMSEndpointSubnets:
+    Type: Custom::Setup
+    Condition: ChinaRegion
+    Properties:
+      ServiceToken: !GetAtt ValidateEndpointSubnetFunction.Arn
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.kms'
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+        - !If [HasThreeAZs, !Ref PrivateSubnet3, !Ref 'AWS::NoValue']
+      VpcEndpointType: Interface
   KMSEndpoint:
     Type: AWS::EC2::VPCEndpoint
     Condition: WithKMS
     Properties:
       PrivateDnsEnabled: true
       SecurityGroupIds: [!Ref SecurityGroup]
-      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.kms'
-      SubnetIds:
-        - !Ref PrivateSubnet1
-        - !Ref PrivateSubnet2
-        - !If [HasThreeAZs, !Ref PrivateSubnet3, !Ref 'AWS::NoValue']
+      ServiceName: !If
+        - ChinaRegion
+        - !GetAtt KMSEndpointSubnets.ServiceName
+        - !Sub 'com.amazonaws.${AWS::Region}.kms'
+      SubnetIds: !If
+        - ChinaRegion
+        - !Split [',', !Ref KMSEndpointSubnets]
+        - - !Ref PrivateSubnet1
+          - !Ref PrivateSubnet2
+          - !If [HasThreeAZs, !Ref PrivateSubnet3, !Ref 'AWS::NoValue']
       VpcEndpointType: Interface
       VpcId: !Ref VPC
 

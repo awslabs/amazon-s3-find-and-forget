@@ -78,17 +78,17 @@ Resources:
                 Action:
                   - logs:CreateLogGroup
                   - ecr:GetAuthorizationToken
-              - Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:*
+              - Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:*
                 Effect: Allow
                 Action:
                   - logs:CreateLogStream
                   - logs:PutLogEvents
-              - Resource: !Sub arn:aws:s3:::${CodeBuildArtefactBucket}/*
+              - Resource: !Sub arn:${AWS::Partition}:s3:::${CodeBuildArtefactBucket}/*
                 Effect: Allow
                 Action:
                   - s3:Get*
                   - s3:List*
-              - Resource: !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ECRRepository}
+              - Resource: !Sub arn:${AWS::Partition}:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ECRRepository}
                 Effect: Allow
                 Action:
                   - ecr:GetDownloadUrlForLayer
@@ -116,26 +116,26 @@ Resources:
               - Resource: "*"
                 Effect: Allow
                 Action: logs:CreateLogGroup
-              - Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:*
+              - Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:*
                 Effect: Allow
                 Action:
                   - logs:CreateLogStream
                   - logs:PutLogEvents
-              - Resource: !Sub arn:aws:s3:::${CodeBuildArtefactBucket}/*
+              - Resource: !Sub arn:${AWS::Partition}:s3:::${CodeBuildArtefactBucket}/*
                 Effect: Allow
                 Action:
                   - s3:Get*
                   - s3:List*
               - !If
                 - ShouldDeployWebUI
-                - Resource: !Sub arn:aws:s3:::${WebUIBucket}/*
+                - Resource: !Sub arn:${AWS::Partition}:s3:::${WebUIBucket}/*
                   Effect: Allow
                   Action: s3:PutObject*
                 - !Ref AWS::NoValue
               - !If
                 - WithoutCloudFront
                 - !Ref AWS::NoValue
-                - Resource: !Sub arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution}
+                - Resource: !Sub arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution}
                   Effect: Allow
                   Action: cloudfront:CreateInvalidation
 
@@ -169,7 +169,7 @@ Resources:
           - Name: AWS_DEFAULT_REGION
             Value: !Ref AWS::Region
           - Name: REPOSITORY_URI
-            Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECRRepository}
+            Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.${AWS::URLSuffix}/${ECRRepository}
       Name: !Sub ${ResourcePrefix}BackendBuild
       ServiceRole: !Ref CodeBuildBackendServiceRole
 
@@ -256,7 +256,7 @@ Resources:
                   - ecs:UpdateService
               - Effect: Allow
                 Resource:
-                  - !Sub arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${CodeBuildBackend}
+                  - !Sub arn:${AWS::Partition}:codebuild:${AWS::Region}:${AWS::AccountId}:project/${CodeBuildBackend}
                 Action:
                   - codebuild:BatchGetBuilds
                   - codebuild:StartBuild
@@ -264,18 +264,18 @@ Resources:
                 - ShouldDeployWebUI
                 - Effect: Allow
                   Resource:
-                    - !Sub arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${CodeBuildFrontend}
+                    - !Sub arn:${AWS::Partition}:codebuild:${AWS::Region}:${AWS::AccountId}:project/${CodeBuildFrontend}
                   Action:
                     - codebuild:BatchGetBuilds
                     - codebuild:StartBuild
                 - !Ref AWS::NoValue
               - Effect: Allow
-                Resource: !Sub arn:aws:s3:::${CodeBuildArtefactBucket}
+                Resource: !Sub arn:${AWS::Partition}:s3:::${CodeBuildArtefactBucket}
                 Action:
                   - s3:GetBucket*
                   - s3:List*
               - Effect: Allow
-                Resource: !Sub arn:aws:s3:::${CodeBuildArtefactBucket}/*
+                Resource: !Sub arn:${AWS::Partition}:s3:::${CodeBuildArtefactBucket}/*
                 Action:
                   - s3:GetObject
                   - s3:GetObjectVersion
@@ -347,10 +347,10 @@ Resources:
         - Statement:
           - Effect: Allow
             Action: s3:PutObject*
-            Resource: !Sub arn:aws:s3:::${CodeBuildArtefactBucket}/*
+            Resource: !Sub arn:${AWS::Partition}:s3:::${CodeBuildArtefactBucket}/*
           - Effect: Allow
             Action: s3:GetObject
-            Resource: !Sub arn:aws:s3:::${PreBuiltArtefactsBucket}/*
+            Resource: !Sub arn:${AWS::Partition}:s3:::${PreBuiltArtefactsBucket}/*
 
   CleanupBucketFunction:
     Type: AWS::Serverless::Function
@@ -367,10 +367,10 @@ Resources:
               - s3:ListBucket*
               - s3:ListObject*
             Resource:
-              - !Sub arn:aws:s3:::${CodeBuildArtefactBucket}
-              - !Sub arn:aws:s3:::${CodeBuildArtefactBucket}/*
-              - !Sub arn:aws:s3:::${WebUIBucket}
-              - !Sub arn:aws:s3:::${WebUIBucket}/*
+              - !Sub arn:${AWS::Partition}:s3:::${CodeBuildArtefactBucket}
+              - !Sub arn:${AWS::Partition}:s3:::${CodeBuildArtefactBucket}/*
+              - !Sub arn:${AWS::Partition}:s3:::${WebUIBucket}
+              - !Sub arn:${AWS::Partition}:s3:::${WebUIBucket}/*
 
   CleanupRepositoryFunction:
     Type: AWS::Serverless::Function
@@ -384,7 +384,7 @@ Resources:
             Action:
               - ecr:BatchDeleteImage
               - ecr:ListImages
-            Resource: !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ECRRepository}
+            Resource: !Sub arn:${AWS::Partition}:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ECRRepository}
 
   WaitForContainerBuildFunction:
     Type: AWS::Serverless::Function
@@ -405,10 +405,10 @@ Resources:
             Resource: "*"
           - Effect: Allow
             Action: s3:GetObject*
-            Resource: !Sub "arn:aws:s3:::${CodeBuildArtefactBucket}/*"
+            Resource: !Sub "arn:${AWS::Partition}:s3:::${CodeBuildArtefactBucket}/*"
           - Effect: Allow
             Action: ecr:DescribeImages
-            Resource: !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ECRRepository}
+            Resource: !Sub arn:${AWS::Partition}:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ECRRepository}
 
 
   RedeployApiFunction:
@@ -424,7 +424,7 @@ Resources:
               - apigateway:POST
             Resource:
               - !Sub
-                - arn:aws:apigateway:${AWS::Region}::/restapis/${ApiId}/deployments
+                - arn:${AWS::Partition}:apigateway:${AWS::Region}::/restapis/${ApiId}/deployments
                 - ApiId: !Select [0, !Split [".", !Select [2, !Split ["/", !Ref ApiUrl]]]]
 
 
@@ -440,7 +440,7 @@ Resources:
             Action:
               - codepipeline:StartPipelineExecution
             Resource:
-              - !Sub arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${CodePipeline}
+              - !Sub arn:${AWS::Partition}:codepipeline:${AWS::Region}:${AWS::AccountId}:${CodePipeline}
 
 
   CleanupCodeBuildArtefactBucket:
@@ -472,6 +472,7 @@ Resources:
       ServiceToken: !GetAtt CopyBuildArtefactFunction.Arn
       ArtefactName: !Ref ArtefactName
       CodeBuildArtefactBucket: !Ref CodeBuildArtefactBucket
+      CodeBuildArtefactBucketArn: !Sub arn:${AWS::Partition}:s3:::${CodeBuildArtefactBucket}
       LogLevel: !Ref LogLevel
       Region: !Ref AWS::Region
       PreBuiltArtefactsBucket: !Ref PreBuiltArtefactsBucket

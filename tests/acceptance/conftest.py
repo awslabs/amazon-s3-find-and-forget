@@ -104,6 +104,13 @@ def s3_resource():
 
 
 @pytest.fixture(scope="session")
+def arn_partition():
+    return boto3.session.Session().get_partition_for_region(
+        getenv("AWS_DEFAULT_REGION", "eu-west-1")
+    )
+
+
+@pytest.fixture(scope="session")
 def sf_client():
     return boto3.client("stepfunctions")
 
@@ -584,7 +591,7 @@ def empty_lake(dummy_lake):
 
 
 @pytest.fixture(scope="session")
-def dummy_lake(s3_resource, stack, data_access_role):
+def dummy_lake(s3_resource, stack, data_access_role, arn_partition):
     # Lake Config
     bucket_name = "test-" + str(uuid4())
     # Create the bucket and Glue table
@@ -610,8 +617,8 @@ def dummy_lake(s3_resource, stack, data_access_role):
                         "Principal": {"AWS": roles},
                         "Action": "s3:*",
                         "Resource": [
-                            "arn:aws:s3:::{}".format(bucket_name),
-                            "arn:aws:s3:::{}/*".format(bucket_name),
+                            "arn:{}:s3:::{}".format(arn_partition, bucket_name),
+                            "arn:{}:s3:::{}/*".format(arn_partition, bucket_name),
                         ],
                     }
                 ],

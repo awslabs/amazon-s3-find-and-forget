@@ -41,8 +41,8 @@ Resources:
             Action: '*'
             Effect: Deny
             Resource:
-              - !Sub arn:aws:s3:::${ManifestsBucket}
-              - !Sub arn:aws:s3:::${ManifestsBucket}/*
+              - !Sub arn:${AWS::Partition}:s3:::${ManifestsBucket}
+              - !Sub arn:${AWS::Partition}:s3:::${ManifestsBucket}/*
             Principal: '*'
             Condition:
               Bool:

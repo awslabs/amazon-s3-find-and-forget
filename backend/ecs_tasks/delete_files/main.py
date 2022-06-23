@@ -255,8 +255,8 @@ def kill_handler(msgs, process_pool):
 
 def get_queue(queue_url, **resource_kwargs):
     if not resource_kwargs.get("endpoint_url") and os.getenv("AWS_DEFAULT_REGION"):
-        resource_kwargs["endpoint_url"] = "https://sqs.{}.amazonaws.com".format(
-            os.getenv("AWS_DEFAULT_REGION")
+        resource_kwargs["endpoint_url"] = "https://sqs.{}.{}".format(
+            os.getenv("AWS_DEFAULT_REGION"), os.getenv("AWS_URL_SUFFIX")
         )
     sqs = boto3.resource("sqs", **resource_kwargs)
     return sqs.Queue(queue_url)

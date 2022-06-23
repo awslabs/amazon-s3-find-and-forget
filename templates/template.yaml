@@ -197,8 +197,8 @@ Resources:
             Action: '*'
             Effect: Deny
             Resource:
-              - !Sub arn:aws:s3:::${TempBucket}
-              - !Sub arn:aws:s3:::${TempBucket}/*
+              - !Sub arn:${AWS::Partition}:s3:::${TempBucket}
+              - !Sub arn:${AWS::Partition}:s3:::${TempBucket}/*
             Principal: '*'
             Condition:
               Bool:
@@ -383,6 +383,12 @@ Resources:
         FlowLogsGroup: !Ref FlowLogsGroup
         FlowLogsRoleArn: !Ref FlowLogsRoleArn
         KMSKeyArns: !Ref KMSKeyArns
+        CommonLayers: !Join
+          - ","
+          - - !GetAtt LayersStack.Outputs.AWSSDKLayer
+            - !GetAtt LayersStack.Outputs.BotoUtils
+            - !GetAtt LayersStack.Outputs.CustomResourceHelper
+            - !GetAtt LayersStack.Outputs.Decorators
   WebUIStack:
     Type: AWS::CloudFormation::Stack
     Properties:

@@ -82,7 +82,7 @@ Resources:
             Resource: !Ref StateMachineArn
           - Effect: Allow
             Action: s3:GetObject*
-            Resource: !Sub arn:aws:s3:::${ManifestsBucket}/manifests/*
+            Resource: !Sub arn:${AWS::Partition}:s3:::${ManifestsBucket}/manifests/*
           - Effect: Allow
             Action: glue:BatchDeletePartition
             Resource:

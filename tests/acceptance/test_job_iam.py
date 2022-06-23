@@ -1030,6 +1030,7 @@ def test_it_handles_find_permission_issues(
     job_table,
     policy_changer,
     stack,
+    arn_partition,
 ):
     # Arrange
     glue_data_mapper_factory(
@@ -1051,8 +1052,8 @@ def test_it_handles_find_permission_issues(
                     "Principal": {"AWS": [stack["AthenaExecutionRoleArn"]]},
                     "Action": "s3:*",
                     "Resource": [
-                        "arn:aws:s3:::{}".format(bucket_name),
-                        "arn:aws:s3:::{}/*".format(bucket_name),
+                        "arn:{}:s3:::{}".format(arn_partition, bucket_name),
+                        "arn:{}:s3:::{}/*".format(arn_partition, bucket_name),
                     ],
                 }
             ],
@@ -1081,6 +1082,7 @@ def test_it_handles_forget_permission_issues(
     job_table,
     policy_changer,
     stack,
+    arn_partition,
 ):
     # Arrange
     glue_data_mapper_factory(
@@ -1100,8 +1102,8 @@ def test_it_handles_forget_permission_issues(
             "Principal": {"AWS": [stack["DeleteTaskRoleArn"]]},
             "Action": "s3:*",
             "Resource": [
-                "arn:aws:s3:::{}".format(bucket_name),
-                "arn:aws:s3:::{}/*".format(bucket_name),
+                "arn:{}:s3:::{}".format(arn_partition, bucket_name),
+                "arn:{}:s3:::{}/*".format(arn_partition, bucket_name),
             ],
         }
     )
@@ -1127,13 +1129,14 @@ def test_it_handles_forget_invalid_role(
     data_loader,
     job_finished_waiter,
     job_table,
+    arn_partition,
 ):
     # Arrange
     glue_data_mapper_factory(
         "test",
         partition_keys=["year", "month", "day"],
         partitions=[["2019", "08", "20"]],
-        role_arn="arn:aws:iam::invalid:role/DoesntExist",
+        role_arn="arn:{}:iam::invalid:role/DoesntExist".format(arn_partition),
     )
     item = del_queue_factory("12345")
     object_key = "test/2019/08/20/test.parquet"

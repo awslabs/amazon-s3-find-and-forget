@@ -100,7 +100,7 @@ Resources:
               - "events:PutTargets"
               - "events:PutRule"
               - "events:DescribeRule"
-            Resource: !Sub arn:aws:events:${AWS::Region}:${AWS::AccountId}:rule/*
+            Resource: !Sub arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/*
           - Effect: Allow
             Action: "states:ListStateMachines"
             Resource: "*"
@@ -644,7 +644,7 @@ Resources:
             },
             "Start Fargate Workflow": {
               "Type":"Task",
-              "Resource":"arn:aws:states:::states:startExecution.sync",
+              "Resource":"arn:${AWS::Partition}:states:::states:startExecution.sync",
               "Parameters":{
                 "Input":{
                   "AWS_STEP_FUNCTIONS_STARTED_BY_EXECUTION_ID.$": "$$.Execution.Id",
@@ -796,7 +796,7 @@ Resources:
           Condition:
             ForAnyValue:StringEquals:
               aws:CalledVia:
-                - athena.amazonaws.com
+                - !Sub athena.${AWS::URLSuffix}
         - Action:
           - "kms:Encrypt"
           - "kms:Decrypt"
@@ -808,7 +808,7 @@ Resources:
           Condition:
             ForAnyValue:StringEquals:
               aws:CalledVia:
-                - athena.amazonaws.com
+                - !Sub athena.${AWS::URLSuffix}
 
   CheckQueryStatus:
     Type: AWS::Serverless::Function
@@ -1007,7 +1007,7 @@ Resources:
     Properties:
       FunctionName: !Ref EmitEvent
       Action: "lambda:InvokeFunction"
-      Principal: "events.amazonaws.com"
+      Principal: !Sub "events.${AWS::URLSuffix}"
       SourceArn: !GetAtt EventRule.Arn
 
 Outputs:

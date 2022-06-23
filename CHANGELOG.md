@@ -1,5 +1,10 @@
 # Change Log
 
+## v0.49
+
+- [#TODO](https://github.com/awslabs/amazon-s3-find-and-forget/pull/TODO): Add
+  support for deployment into AWS China.
+
 ## v0.48
 
 - [#316](https://github.com/awslabs/amazon-s3-find-and-forget/pull/316): Upgrade
