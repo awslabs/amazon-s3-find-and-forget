@@ -1,5 +1,9 @@
 # Change Log
 
+## v0.49 (unreleased)
+
+- [#314](https://github.com/awslabs/amazon-s3-find-and-forget/pull/314): Updated build_manifest_row to generate queries based on the deletion queue type
+
 ## v0.48
 
 - [#316](https://github.com/awslabs/amazon-s3-find-and-forget/pull/316): Upgrade

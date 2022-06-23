@@ -85,7 +85,7 @@ def handler(event, context):
     }
 
 
-def build_manifest_row(columns, match_id, item_id, item_createdat):
+def build_manifest_row(columns, match_id, item_id, item_createdat,is_composite):
     """
     Function for building each row of the manifest that will be written to S3.
 
@@ -106,7 +106,7 @@ def build_manifest_row(columns, match_id, item_id, item_createdat):
     the manifest, the Fargate task will read and parse the JSON directly and therefore
     will use its original type (for instance, int over strings to do the comparison).
     """
-    is_composite = len(columns) > 1
+
     iterable_match = match_id if is_composite else [match_id]
     queryable = COMPOSITE_JOIN_TOKEN.join(str(x) for x in iterable_match)
     queryable_cols = COMPOSITE_JOIN_TOKEN.join(str(x) for x in columns)
@@ -189,7 +189,7 @@ def generate_athena_queries(data_mapper, deletion_items, job_id):
                         "Type": "Simple",
                     }
                 manifest += build_manifest_row(
-                    [column], casted, item_id, item_createdat
+                    [column], casted, item_id, item_createdat, False
                 )
         else:
             sorted_mid = sorted(mid, key=lambda x: x["Column"])
@@ -209,7 +209,7 @@ def generate_athena_queries(data_mapper, deletion_items, job_id):
                     "Type": "Composite",
                 }
             manifest += build_manifest_row(
-                query_columns, composite_match, item_id, item_createdat
+                query_columns, composite_match, item_id, item_createdat, True
             )
     s3.Bucket(manifests_bucket_name).put_object(Body=manifest, Key=manifest_key)
     msg["Columns"] = list(columns_with_matches.values())
