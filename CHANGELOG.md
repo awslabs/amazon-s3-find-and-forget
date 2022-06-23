@@ -2,7 +2,7 @@
 
 ## v0.49
 
-- [#TODO](https://github.com/awslabs/amazon-s3-find-and-forget/pull/TODO): Add
+- [#318](https://github.com/awslabs/amazon-s3-find-and-forget/pull/318): Add
   support for deployment into AWS China.
 
 ## v0.48
