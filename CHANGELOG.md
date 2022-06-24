@@ -2,7 +2,7 @@
 
 ## v0.49
 
-- [#TODO](https://github.com/awslabs/amazon-s3-find-and-forget/pull/TODO): Fix
+- [#321](https://github.com/awslabs/amazon-s3-find-and-forget/pull/321): Fix
   dependabot alert for numpy version
 - [#314](https://github.com/awslabs/amazon-s3-find-and-forget/pull/314): Fix
   query generation step for Composite matches consisting of a single column
