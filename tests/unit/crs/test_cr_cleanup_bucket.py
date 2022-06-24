@@ -66,6 +66,24 @@ def test_it_removes_all_objects_from_bucket_on_update_if_required(mock_empty_buc
 
 
 @patch("backend.lambdas.custom_resources.cleanup_bucket.empty_bucket")
+def test_it_removes_all_objects_from_bucket_on_update_if_required_before_v048(
+    mock_empty_bucket,
+):
+    event = {
+        "ResourceProperties": {"DeployWebUI": "false", "Bucket": "webuibucket"},
+        "OldResourceProperties": {
+            "Bucket": "webuibucket"
+        },  # DeployWebUI wasn't passed as param prior to 0.48
+    }
+
+    resp = update(event, MagicMock())
+
+    mock_empty_bucket.assert_called_with("webuibucket")
+
+    assert not resp
+
+
+@patch("backend.lambdas.custom_resources.cleanup_bucket.empty_bucket")
 def test_it_removes_all_objects_from_bucket_on_update_if_not_required(
     mock_empty_bucket,
 ):

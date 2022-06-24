@@ -590,6 +590,81 @@ class TestAthenaQueries:
     @patch("backend.lambdas.tasks.generate_queries.s3.Bucket")
     @patch("backend.lambdas.tasks.generate_queries.get_table")
     @patch("backend.lambdas.tasks.generate_queries.get_partitions")
+    def test_it_handles_single_composite_column(
+        self, get_partitions_mock, get_table_mock, bucket_mock
+    ):
+        put_object_mock = MagicMock()
+        bucket_mock.return_value = put_object_mock
+        columns = [{"Name": "first_name"}]
+        partition_keys = ["product_category"]
+        partitions = [["Books"]]
+        get_table_mock.return_value = table_stub(columns, partition_keys)
+        get_partitions_mock.return_value = [
+            partition_stub(p, columns) for p in partitions
+        ]
+        resp = generate_athena_queries(
+            {
+                "DataMapperId": "a",
+                "QueryExecutor": "athena",
+                "Columns": [col["Name"] for col in columns],
+                "Format": "parquet",
+                "QueryExecutorParameters": {
+                    "DataCatalogProvider": "glue",
+                    "Database": "test_db",
+                    "Table": "test_table",
+                },
+            },
+            [
+                {
+                    "MatchId": [{"Column": "first_name", "Value": "John"}],
+                    "Type": "Composite",
+                    "DataMappers": ["a"],
+                    "CreatedAt": 1614698440,
+                    "DeletionQueueItemId": "id1234",
+                }
+            ],
+            "job_1234567890",
+        )
+
+        assert resp == [
+            {
+                "DataMapperId": "a",
+                "QueryExecutor": "athena",
+                "Format": "parquet",
+                "Database": "test_db",
+                "Table": "test_table",
+                "Columns": [
+                    {
+                        "Columns": ["first_name"],
+                        "Type": "Composite",
+                    }
+                ],
+                "PartitionKeys": [{"Key": "product_category", "Value": "Books"}],
+                "DeleteOldVersions": True,
+                "IgnoreObjectNotFoundExceptions": False,
+                "Manifest": "s3://S3F2-manifests-bucket/manifests/job_1234567890/a/manifest.json",
+            }
+        ]
+        put_object_mock.put_object.assert_called_with(
+            Key="manifests/job_1234567890/a/manifest.json",
+            Body=(
+                json.dumps(
+                    {
+                        "Columns": ["first_name"],
+                        "MatchId": ["John"],
+                        "DeletionQueueItemId": "id1234",
+                        "CreatedAt": 1614698440,
+                        "QueryableColumns": "first_name",
+                        "QueryableMatchId": "John",
+                    }
+                )
+                + "\n"
+            ),
+        )
+
+    @patch("backend.lambdas.tasks.generate_queries.s3.Bucket")
+    @patch("backend.lambdas.tasks.generate_queries.get_table")
+    @patch("backend.lambdas.tasks.generate_queries.get_partitions")
     def test_it_handles_mixed_columns(
         self, get_partitions_mock, get_table_mock, bucket_mock
     ):

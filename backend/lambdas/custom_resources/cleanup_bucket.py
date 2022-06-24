@@ -26,7 +26,8 @@ def create(event, context):
 def update(event, context):
     props = event["ResourceProperties"]
     props_old = event["OldResourceProperties"]
-    if props_old["DeployWebUI"] == "true" and props["DeployWebUI"] == "false":
+    web_ui_deployed = props_old.get("DeployWebUI", "true")
+    if web_ui_deployed == "true" and props["DeployWebUI"] == "false":
         empty_bucket(props["Bucket"])
     return None
 
