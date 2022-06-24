@@ -1,5 +1,10 @@
 # Change Log
 
+## v0.50
+
+- [#318](https://github.com/awslabs/amazon-s3-find-and-forget/pull/318): Added
+  support for AWS China
+
 ## v0.49
 
 - [#314](https://github.com/awslabs/amazon-s3-find-and-forget/pull/314): Fix
