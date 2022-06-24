@@ -109,12 +109,14 @@ backend/ecs_tasks/python_3.7-slim.tar:
 
 redeploy-containers:
 	$(eval ACCOUNT_ID := $(shell aws sts get-caller-identity --query Account --output text))
-	$(eval REGION := $(shell aws configure get region))
+	$(eval API_URL := $(shell aws cloudformation describe-stacks --stack-name S3F2 --query 'Stacks[0].Outputs[?OutputKey==`ApiUrl`].OutputValue' --output text))
+	$(eval REGION := $(shell echo $(API_URL) | cut -d'.' -f3))
+	$(eval URL_SUFFIX := $(shell echo $(API_URL) | cut -d'/' -f3 | grep -oP "(?<=$(REGION).).*"))
 	$(eval ECR_REPOSITORY := $(shell aws cloudformation describe-stacks --stack-name S3F2 --query 'Stacks[0].Outputs[?OutputKey==`ECRRepository`].OutputValue' --output text))
 	$(shell aws ecr get-login --no-include-email --region $(REGION))
 	docker build -t $(ECR_REPOSITORY) -f backend/ecs_tasks/delete_files/Dockerfile .
-	docker tag $(ECR_REPOSITORY):latest $(ACCOUNT_ID).dkr.ecr.$(REGION).amazonaws.com/$(ECR_REPOSITORY):latest
-	docker push $(ACCOUNT_ID).dkr.ecr.$(REGION).amazonaws.com/$(ECR_REPOSITORY):latest
+	docker tag $(ECR_REPOSITORY):latest $(ACCOUNT_ID).dkr.ecr.$(REGION).$(URL_SUFFIX)/$(ECR_REPOSITORY):latest
+	docker push $(ACCOUNT_ID).dkr.ecr.$(REGION).$(URL_SUFFIX)/$(ECR_REPOSITORY):latest
 
 redeploy-frontend:
 	$(eval WEBUI_BUCKET := $(shell aws cloudformation describe-stacks --stack-name S3F2 --query 'Stacks[0].Outputs[?OutputKey==`WebUIBucket`].OutputValue' --output text))
