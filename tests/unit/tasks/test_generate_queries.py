@@ -591,13 +591,11 @@ class TestAthenaQueries:
     @patch("backend.lambdas.tasks.generate_queries.get_table")
     @patch("backend.lambdas.tasks.generate_queries.get_partitions")
     def test_it_handles_single_composite_column(
-            self, get_partitions_mock, get_table_mock, bucket_mock
+        self, get_partitions_mock, get_table_mock, bucket_mock
     ):
         put_object_mock = MagicMock()
         bucket_mock.return_value = put_object_mock
-        columns = [
-            {"Name": "first_name"}
-        ]
+        columns = [{"Name": "first_name"}]
         partition_keys = ["product_category"]
         partitions = [["Books"]]
         get_table_mock.return_value = table_stub(columns, partition_keys)
@@ -618,9 +616,7 @@ class TestAthenaQueries:
             },
             [
                 {
-                    "MatchId": [
-                        {"Column": "first_name", "Value": "John"}
-                    ],
+                    "MatchId": [{"Column": "first_name", "Value": "John"}],
                     "Type": "Composite",
                     "DataMappers": ["a"],
                     "CreatedAt": 1614698440,
@@ -652,17 +648,17 @@ class TestAthenaQueries:
         put_object_mock.put_object.assert_called_with(
             Key="manifests/job_1234567890/a/manifest.json",
             Body=(
-                    json.dumps(
-                        {
-                            "Columns": ["first_name"],
-                            "MatchId": ["John"],
-                            "DeletionQueueItemId": "id1234",
-                            "CreatedAt": 1614698440,
-                            "QueryableColumns": "first_name",
-                            "QueryableMatchId": "John",
-                        }
-                    )
-                    + "\n"
+                json.dumps(
+                    {
+                        "Columns": ["first_name"],
+                        "MatchId": ["John"],
+                        "DeletionQueueItemId": "id1234",
+                        "CreatedAt": 1614698440,
+                        "QueryableColumns": "first_name",
+                        "QueryableMatchId": "John",
+                    }
+                )
+                + "\n"
             ),
         )
 
