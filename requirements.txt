@@ -103,7 +103,7 @@ networkx==2.8.4
     # via cfn-lint
 nodeenv==1.6.0
     # via pre-commit
-numpy==1.21.5
+numpy==1.22.0
     # via
     #   -r ./backend/ecs_tasks/delete_files/requirements.txt
     #   pandas
