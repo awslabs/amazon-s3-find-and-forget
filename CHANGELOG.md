@@ -1,9 +1,12 @@
 # Change Log
 
-## v0.50
+## v0.51
 
 - [#321](https://github.com/awslabs/amazon-s3-find-and-forget/pull/321): Fix
   dependabot alert for numpy version
+
+## v0.50
+
 - [#322](https://github.com/awslabs/amazon-s3-find-and-forget/pull/322):
   Upgraded to Python 3.9
 
