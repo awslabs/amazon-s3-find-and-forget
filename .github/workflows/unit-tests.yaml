@@ -32,10 +32,10 @@ jobs:
       # Setup
       - name: Install snappy dep
         run: sudo apt-get install libsnappy-dev
-      - name: Set up Python 3.7
+      - name: Set up Python 3.9
         uses: actions/setup-python@v1
         with:
-          python-version: 3.7
+          python-version: 3.9
       - name: Set up Nodejs 16
         uses: actions/setup-node@v1
         with:

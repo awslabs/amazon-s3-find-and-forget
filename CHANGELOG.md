@@ -1,9 +1,14 @@
 # Change Log
 
-## v0.49
+## v0.50
 
 - [#321](https://github.com/awslabs/amazon-s3-find-and-forget/pull/321): Fix
   dependabot alert for numpy version
+- [#322](https://github.com/awslabs/amazon-s3-find-and-forget/pull/322):
+  Upgraded to Python 3.9
+
+## v0.49
+
 - [#314](https://github.com/awslabs/amazon-s3-find-and-forget/pull/314): Fix
   query generation step for Composite matches consisting of a single column
 - [#320](https://github.com/awslabs/amazon-s3-find-and-forget/pull/320): Fix
