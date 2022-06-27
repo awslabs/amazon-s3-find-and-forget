@@ -4,7 +4,7 @@ Description: Amazon S3 Find and Forget Deployment helper
 
 Globals:
   Function:
-    Runtime: python3.7
+    Runtime: python3.9
     Timeout: 900
     Layers: !Ref CommonLayers
 
@@ -155,7 +155,7 @@ Resources:
                 - IMAGE_URI="${REPOSITORY_URI}"
             build:
               commands:
-                - docker load -i backend/ecs_tasks/python_3.7-slim.tar
+                - docker load -i backend/ecs_tasks/python_3.9-slim.tar
                 - docker build --tag "$IMAGE_URI" -f backend/ecs_tasks/delete_files/Dockerfile .
             post_build:
               commands:

@@ -1,9 +1,18 @@
 # Change Log
 
-## v0.50
+## v0.52
 
 - [#318](https://github.com/awslabs/amazon-s3-find-and-forget/pull/318): Added
   support for AWS China
+
+## v0.51
+
+- [#321](https://github.com/awslabs/amazon-s3-find-and-forget/pull/321): Upgrade numpy dependency
+
+## v0.50
+
+- [#322](https://github.com/awslabs/amazon-s3-find-and-forget/pull/322):
+  Upgraded to Python 3.9
 
 ## v0.49
 

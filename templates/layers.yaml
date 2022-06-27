@@ -10,7 +10,7 @@ Resources:
       Description: Latest confirmed compatible AWS SDK
       ContentUri: ../backend/lambda_layers/aws_sdk/
       CompatibleRuntimes:
-        - python3.7
+        - python3.9
       RetentionPolicy: Delete
   BotoUtils:
     Type: AWS::Serverless::LayerVersion
@@ -19,7 +19,7 @@ Resources:
       Description: Helpful boto3 utils
       ContentUri: ../backend/lambda_layers/boto_utils/
       CompatibleRuntimes:
-        - python3.7
+        - python3.9
       RetentionPolicy: Delete
   CustomResourceHelper:
     Type: AWS::Serverless::LayerVersion
@@ -28,7 +28,7 @@ Resources:
       Description: Helper for CloudFormation Custom Resources
       ContentUri: ../backend/lambda_layers/cr_helper/
       CompatibleRuntimes:
-        - python3.7
+        - python3.9
       RetentionPolicy: Delete
   Decorators:
     Type: AWS::Serverless::LayerVersion
@@ -37,7 +37,7 @@ Resources:
       Description: Helpful function decorators
       ContentUri: ../backend/lambda_layers/decorators/
       CompatibleRuntimes:
-        - python3.7
+        - python3.9
       RetentionPolicy: Delete
 
 Outputs:
