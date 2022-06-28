@@ -1,8 +1,14 @@
 # Change Log
 
+## v0.52 (unreleased)
+
+- [#324](https://github.com/awslabs/amazon-s3-find-and-forget/pull/324): Upgrade
+  frontend dependencies
+
 ## v0.51
 
-- [#321](https://github.com/awslabs/amazon-s3-find-and-forget/pull/321): Upgrade numpy dependency
+- [#321](https://github.com/awslabs/amazon-s3-find-and-forget/pull/321): Upgrade
+  numpy dependency
 
 ## v0.50
 
