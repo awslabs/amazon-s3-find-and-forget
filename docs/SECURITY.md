@@ -19,6 +19,13 @@ AWS Lambda functions access to the other AWS services used in this solution.
 Amazon Cognito is used for managing access to the web user interface and the
 API. For more information, consult [Accessing the application].
 
+Amazon Cognito offers an option to enable Multi-Factor Authentication (MFA).
+Follow the instructions found
+[here](https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-mfa.html)
+to your deployment. Do not make any changes, other than the MFA setting, to the
+User Pool as changes other than this may cause problems when upgrading or
+updating the solution in the future.
+
 ## Amazon CloudFront
 
 This solution deploys a static website hosted in an Amazon S3 bucket. To help
