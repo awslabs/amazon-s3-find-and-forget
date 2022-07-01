@@ -4,11 +4,34 @@
 #
 #    pip-compile --output-file=requirements.txt requirements.in
 #
+aiobotocore==2.3.4
+    # via
+    #   -r ./backend/ecs_tasks/delete_files/requirements.txt
+    #   s3fs
+aiohttp==3.8.1
+    # via
+    #   -r ./backend/ecs_tasks/delete_files/requirements.txt
+    #   aiobotocore
+    #   s3fs
+aioitertools==0.10.0
+    # via
+    #   -r ./backend/ecs_tasks/delete_files/requirements.txt
+    #   aiobotocore
+aiosignal==1.2.0
+    # via
+    #   -r ./backend/ecs_tasks/delete_files/requirements.txt
+    #   aiohttp
 argcomplete==2.0.0
     # via yq
+async-timeout==4.0.2
+    # via
+    #   -r ./backend/ecs_tasks/delete_files/requirements.txt
+    #   aiohttp
 attrs==21.4.0
     # via
+    #   -r ./backend/ecs_tasks/delete_files/requirements.txt
     #   -r ./backend/lambda_layers/decorators/requirements.txt
+    #   aiohttp
     #   jschema-to-python
     #   jsonschema
     #   pytest
@@ -21,19 +44,18 @@ aws-sam-translator==1.46.0
     # via cfn-lint
 black==22.3.0
     # via -r requirements.in
-boto3==1.21.40
+boto3==1.21.21
     # via
     #   -r ./backend/ecs_tasks/delete_files/requirements.txt
     #   -r ./backend/lambda_layers/aws_sdk/requirements.txt
     #   aws-assume-role-lib
     #   aws-sam-translator
-    #   s3fs
-botocore==1.24.46
+botocore==1.24.21
     # via
     #   -r ./backend/ecs_tasks/delete_files/requirements.txt
     #   -r ./backend/lambda_layers/aws_sdk/requirements.txt
+    #   aiobotocore
     #   boto3
-    #   s3fs
     #   s3transfer
 certifi==2022.6.15
     # via requests
@@ -43,12 +65,15 @@ cffi==1.15.0
     #   cryptography
 cfgv==3.3.1
     # via pre-commit
-cfn-flip==1.2.3
+cfn-flip==1.3.0
     # via -r requirements.in
-cfn-lint==0.59.0
+cfn-lint==0.61.0
     # via -r requirements.in
-charset-normalizer==2.0.12
-    # via requests
+charset-normalizer==2.1.0
+    # via
+    #   -r ./backend/ecs_tasks/delete_files/requirements.txt
+    #   aiohttp
+    #   requests
 click==8.1.3
     # via
     #   black
@@ -64,6 +89,11 @@ distlib==0.3.4
     # via virtualenv
 filelock==3.7.1
     # via virtualenv
+frozenlist==1.3.0
+    # via
+    #   -r ./backend/ecs_tasks/delete_files/requirements.txt
+    #   aiohttp
+    #   aiosignal
 fsspec==2022.5.0
     # via
     #   -r ./backend/ecs_tasks/delete_files/requirements.txt
@@ -71,7 +101,10 @@ fsspec==2022.5.0
 identify==2.5.1
     # via pre-commit
 idna==3.3
-    # via requests
+    # via
+    #   -r ./backend/ecs_tasks/delete_files/requirements.txt
+    #   requests
+    #   yarl
 iniconfig==1.1.1
     # via pytest
 jmespath==1.0.1
@@ -97,6 +130,11 @@ junit-xml==1.9
     # via cfn-lint
 mock==4.0.1
     # via -r requirements.in
+multidict==6.0.2
+    # via
+    #   -r ./backend/ecs_tasks/delete_files/requirements.txt
+    #   aiohttp
+    #   yarl
 mypy-extensions==0.4.3
     # via black
 networkx==2.8.4
@@ -134,7 +172,7 @@ py==1.11.0
     # via
     #   -r requirements.in
     #   pytest
-pyarrow==7.0.0
+pyarrow==8.0.0
     # via -r ./backend/ecs_tasks/delete_files/requirements.txt
 pycparser==2.21
     # via
@@ -171,9 +209,9 @@ pyyaml==6.0
     #   cfn-lint
     #   pre-commit
     #   yq
-requests==2.26.0
+requests==2.28.1
     # via -r requirements.in
-s3fs==0.4.0
+s3fs==2022.5.0
     # via -r ./backend/ecs_tasks/delete_files/requirements.txt
 s3transfer==0.5.2
     # via
@@ -204,7 +242,10 @@ tomli==2.0.1
     #   black
     #   pep517
 typing-extensions==4.2.0
-    # via black
+    # via
+    #   -r ./backend/ecs_tasks/delete_files/requirements.txt
+    #   aioitertools
+    #   black
 urllib3==1.26.9
     # via
     #   -r ./backend/ecs_tasks/delete_files/requirements.txt
@@ -216,8 +257,16 @@ virtualenv==20.14.1
     # via pre-commit
 wheel==0.37.1
     # via pip-tools
+wrapt==1.14.1
+    # via
+    #   -r ./backend/ecs_tasks/delete_files/requirements.txt
+    #   aiobotocore
 xmltodict==0.13.0
     # via yq
+yarl==1.7.2
+    # via
+    #   -r ./backend/ecs_tasks/delete_files/requirements.txt
+    #   aiohttp
 yq==2.14.0
     # via -r requirements.in
 

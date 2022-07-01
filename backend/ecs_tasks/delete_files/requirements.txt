@@ -4,28 +4,53 @@
 #
 #    pip-compile --output-file=backend/ecs_tasks/delete_files/requirements.txt backend/ecs_tasks/delete_files/requirements.in
 #
+aiobotocore==2.3.4
+    # via s3fs
+aiohttp==3.8.1
+    # via
+    #   aiobotocore
+    #   s3fs
+aioitertools==0.10.0
+    # via aiobotocore
+aiosignal==1.2.0
+    # via aiohttp
+async-timeout==4.0.2
+    # via aiohttp
+attrs==21.4.0
+    # via aiohttp
 aws-assume-role-lib==2.10.0
     # via -r backend/ecs_tasks/delete_files/requirements.in
-boto3==1.21.40
+boto3==1.21.21
     # via
     #   -r backend/ecs_tasks/delete_files/requirements.in
     #   aws-assume-role-lib
-    #   s3fs
-botocore==1.24.46
+botocore==1.24.21
     # via
+    #   aiobotocore
     #   boto3
-    #   s3fs
     #   s3transfer
 cffi==1.15.0
     # via cryptography
+charset-normalizer==2.1.0
+    # via aiohttp
 cryptography==3.4.7
     # via -r backend/ecs_tasks/delete_files/requirements.in
+frozenlist==1.3.0
+    # via
+    #   aiohttp
+    #   aiosignal
 fsspec==2022.5.0
     # via s3fs
+idna==3.3
+    # via yarl
 jmespath==1.0.1
     # via
     #   boto3
     #   botocore
+multidict==6.0.2
+    # via
+    #   aiohttp
+    #   yarl
 numpy==1.22.0
     # via
     #   -r backend/ecs_tasks/delete_files/requirements.in
@@ -33,7 +58,7 @@ numpy==1.22.0
     #   pyarrow
 pandas==1.4.3
     # via -r backend/ecs_tasks/delete_files/requirements.in
-pyarrow==7.0.0
+pyarrow==8.0.0
     # via -r backend/ecs_tasks/delete_files/requirements.in
 pycparser==2.21
     # via cffi
@@ -45,7 +70,7 @@ python-snappy==0.6.1
     # via -r backend/ecs_tasks/delete_files/requirements.in
 pytz==2022.1
     # via pandas
-s3fs==0.4.0
+s3fs==2022.5.0
     # via -r backend/ecs_tasks/delete_files/requirements.in
 s3transfer==0.5.2
     # via boto3
@@ -53,7 +78,13 @@ six==1.16.0
     # via python-dateutil
 tenacity==8.0.1
     # via -r backend/ecs_tasks/delete_files/requirements.in
+typing-extensions==4.2.0
+    # via aioitertools
 urllib3==1.26.9
     # via
     #   -r backend/ecs_tasks/delete_files/requirements.in
     #   botocore
+wrapt==1.14.1
+    # via aiobotocore
+yarl==1.7.2
+    # via aiohttp
