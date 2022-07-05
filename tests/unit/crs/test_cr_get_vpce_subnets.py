@@ -50,7 +50,7 @@ def test_it_returns_valid_subnets(mock_client):
     mock_client.describe_subnets.assert_called_with(
         SubnetIds=["subnet-0123456789abcdef0", "subnet-0123456789abcdef1"]
     )
-    mock_client.describe_vpc_endpoint_services(
+    mock_client.describe_vpc_endpoint_services.assert_called_with(
         Filters=[
             {
                 "Name": "service-name",
@@ -95,7 +95,7 @@ def test_it_raises_exception(mock_client):
         create(event, MagicMock())
 
     mock_client.describe_subnets.assert_called_with(SubnetIds=[])
-    mock_client.describe_vpc_endpoint_services(
+    mock_client.describe_vpc_endpoint_services.assert_called_with(
         Filters=[
             {
                 "Name": "service-name",
