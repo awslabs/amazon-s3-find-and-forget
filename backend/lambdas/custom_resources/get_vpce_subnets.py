@@ -1,3 +1,8 @@
+#############################################################
+# This Custom Resource is required since VPC Endpoint names #
+# and subnets are not consistant in the China region        #
+#############################################################
+
 import boto3
 from crhelper import CfnResource
 from decorators import with_logging
