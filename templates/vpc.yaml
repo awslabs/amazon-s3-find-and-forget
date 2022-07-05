@@ -225,10 +225,10 @@ Resources:
           ToPort: 443
           CidrIp: !Ref VpcIpBlock
 
-  ValidateEndpointSubnetFunction:
+  GetEndpointSubnetFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: validate_vpce_subnets.handler
+      Handler: get_vpce_subnets.handler
       CodeUri: ../backend/lambdas/custom_resources/
       Description: Custom Lambda resource for the Amazon S3 Find and Forget Cloudformation Stack
       Policies:
@@ -245,7 +245,7 @@ Resources:
     Type: Custom::Setup
     Condition: ChinaRegion
     Properties:
-      ServiceToken: !GetAtt ValidateEndpointSubnetFunction.Arn
+      ServiceToken: !GetAtt GetEndpointSubnetFunction.Arn
       ServiceName: !Sub 'com.amazonaws.${AWS::Region}.monitoring'
       SubnetIds:
         - !Ref PrivateSubnet1
@@ -274,7 +274,7 @@ Resources:
     Type: Custom::Setup
     Condition: ChinaRegion
     Properties:
-      ServiceToken: !GetAtt ValidateEndpointSubnetFunction.Arn
+      ServiceToken: !GetAtt GetEndpointSubnetFunction.Arn
       ServiceName: !Sub 'com.amazonaws.${AWS::Region}.logs'
       SubnetIds:
         - !Ref PrivateSubnet1
@@ -303,7 +303,7 @@ Resources:
     Type: Custom::Setup
     Condition: ChinaRegion
     Properties:
-      ServiceToken: !GetAtt ValidateEndpointSubnetFunction.Arn
+      ServiceToken: !GetAtt GetEndpointSubnetFunction.Arn
       ServiceName: !Sub 'com.amazonaws.${AWS::Region}.ecr.dkr'
       SubnetIds:
         - !Ref PrivateSubnet1
@@ -332,7 +332,7 @@ Resources:
     Type: Custom::Setup
     Condition: ChinaRegion
     Properties:
-      ServiceToken: !GetAtt ValidateEndpointSubnetFunction.Arn
+      ServiceToken: !GetAtt GetEndpointSubnetFunction.Arn
       ServiceName: !Sub 'com.amazonaws.${AWS::Region}.ecr.api'
       SubnetIds:
         - !Ref PrivateSubnet1
@@ -371,7 +371,7 @@ Resources:
     Type: Custom::Setup
     Condition: ChinaRegion
     Properties:
-      ServiceToken: !GetAtt ValidateEndpointSubnetFunction.Arn
+      ServiceToken: !GetAtt GetEndpointSubnetFunction.Arn
       ServiceName: !Sub 'com.amazonaws.${AWS::Region}.sqs'
       SubnetIds:
         - !Ref PrivateSubnet1
@@ -410,7 +410,7 @@ Resources:
     Type: Custom::Setup
     Condition: ChinaRegion
     Properties:
-      ServiceToken: !GetAtt ValidateEndpointSubnetFunction.Arn
+      ServiceToken: !GetAtt GetEndpointSubnetFunction.Arn
       ServiceName: !Sub 'com.amazonaws.${AWS::Region}.sts'
       SubnetIds:
         - !Ref PrivateSubnet1
@@ -439,7 +439,7 @@ Resources:
     Type: Custom::Setup
     Condition: ChinaRegion
     Properties:
-      ServiceToken: !GetAtt ValidateEndpointSubnetFunction.Arn
+      ServiceToken: !GetAtt GetEndpointSubnetFunction.Arn
       ServiceName: !Sub 'com.amazonaws.${AWS::Region}.kms'
       SubnetIds:
         - !Ref PrivateSubnet1

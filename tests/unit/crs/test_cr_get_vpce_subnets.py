@@ -1,7 +1,7 @@
 import pytest
 from mock import patch, MagicMock
 
-from backend.lambdas.custom_resources.validate_vpce_subnets import (
+from backend.lambdas.custom_resources.get_vpce_subnets import (
     create,
     delete,
     handler,
@@ -10,7 +10,7 @@ from backend.lambdas.custom_resources.validate_vpce_subnets import (
 pytestmark = [pytest.mark.unit, pytest.mark.task]
 
 
-@patch("backend.lambdas.custom_resources.validate_vpce_subnets.ec2_client")
+@patch("backend.lambdas.custom_resources.get_vpce_subnets.ec2_client")
 def test_it_returns_valid_subnets(mock_client):
     event = {
         "ResourceProperties": {
@@ -66,7 +66,7 @@ def test_it_returns_valid_subnets(mock_client):
     assert resp == "subnet-0123456789abcdef0,subnet-0123456789abcdef1"
 
 
-@patch("backend.lambdas.custom_resources.validate_vpce_subnets.ec2_client")
+@patch("backend.lambdas.custom_resources.get_vpce_subnets.ec2_client")
 def test_it_does_nothing_on_delete(mock_client):
     resp = delete({}, MagicMock())
 
@@ -74,7 +74,7 @@ def test_it_does_nothing_on_delete(mock_client):
     assert not resp
 
 
-@patch("backend.lambdas.custom_resources.validate_vpce_subnets.helper")
+@patch("backend.lambdas.custom_resources.get_vpce_subnets.helper")
 def test_it_delegates_to_cr_helper(cr_helper):
     handler(1, 2)
     cr_helper.assert_called_with(1, 2)
