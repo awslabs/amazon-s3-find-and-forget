@@ -55,7 +55,7 @@ def test_it_returns_valid_subnets(mock_client):
             {
                 "Name": "service-name",
                 "Values": [
-                    "cn.com.amazonaws.u-west-2.monitoring",
+                    "cn.com.amazonaws.eu-west-2.monitoring",
                     "com.amazonaws.eu-west-2.monitoring",
                 ],
             },
@@ -100,7 +100,7 @@ def test_it_raises_exception(mock_client):
             {
                 "Name": "service-name",
                 "Values": [
-                    "cn.com.amazonaws.u-west-2.dummy",
+                    "cn.com.amazonaws.eu-west-2.dummy",
                     "com.amazonaws.eu-west-2.dummy",
                 ],
             },
