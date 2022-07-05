@@ -67,6 +67,51 @@ def test_it_returns_valid_subnets(mock_client):
 
 
 @patch("backend.lambdas.custom_resources.get_vpce_subnets.ec2_client")
+def test_it_raises_exception(mock_client):
+    event = {
+        "ResourceProperties": {
+            "ServiceName": "com.amazonaws.eu-west-2.dummy",
+            "SubnetIds": [],
+            "VpcEndpointType": "Interface",
+        }
+    }
+
+    mock_client.describe_subnets.return_value = {
+        "Subnets": [
+            {
+                "AvailabilityZone": "eu-west-2a",
+                "SubnetId": "subnet-0123456789abcdef0",
+            },
+            {
+                "AvailabilityZone": "eu-west-2b",
+                "SubnetId": "subnet-0123456789abcdef1",
+            },
+        ]
+    }
+
+    mock_client.describe_vpc_endpoint_services.return_value = {"ServiceDetails": []}
+
+    with pytest.raises(Exception) as e_info:
+        create(event, MagicMock())
+
+    mock_client.describe_subnets.assert_called_with(SubnetIds=[])
+    mock_client.describe_vpc_endpoint_services(
+        Filters=[
+            {
+                "Name": "service-name",
+                "Values": [
+                    "cn.com.amazonaws.u-west-2.dummy",
+                    "com.amazonaws.eu-west-2.dummy",
+                ],
+            },
+            {"Name": "service-type", "Values": ["Interface"]},
+        ]
+    )
+
+    assert e_info.typename == "IndexError"
+
+
+@patch("backend.lambdas.custom_resources.get_vpce_subnets.ec2_client")
 def test_it_does_nothing_on_delete(mock_client):
     resp = delete({}, MagicMock())
 
