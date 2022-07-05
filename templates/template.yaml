@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
-Description: Amazon S3 Find and Forget (uksb-1q2j8beb0) (version:v0.51)
+Description: Amazon S3 Find and Forget (uksb-1q2j8beb0) (version:v0.52)
 
 Parameters:
   AccessControlAllowOriginOverride:
@@ -159,6 +159,32 @@ Rules:
       - AssertDescription: IAM Auth cannot be chosen when deploying the WebUI.
         Assert: !Equals [!Ref AuthMethod, "Cognito"]
 
+  ValidateRegion:
+    RuleCondition: !Not
+      - !Contains
+        - - ap-northeast-1
+          - ap-northeast-2
+          - ap-south-1
+          - ap-southeast-1
+          - ap-southeast-2
+          - ca-central-1
+          - eu-central-1
+          - eu-north-1
+          - eu-west-1
+          - eu-west-2
+          - eu-west-3
+          - me-south-1
+          - sa-east-1
+          - us-east-1
+          - us-east-2
+          - us-gov-west-1
+          - us-west-1
+          - us-west-2
+        - !Ref AWS::Region
+    Assertions:
+      - AssertDescription: Cognito is not supported in this region please select IAM authentication.
+        Assert: !Not [!Equals [!Ref AuthMethod, "Cognito"]]
+
 Conditions:
   DefaultPreBuiltArtefactsBucket: !Equals [!Ref PreBuiltArtefactsBucketOverride, "false"]
   ShouldDeployVpc: !Equals [!Ref DeployVpc, "true"]
@@ -168,7 +194,7 @@ Conditions:
 Mappings:
   Solution:
     Constants:
-      Version: 'v0.51'
+      Version: 'v0.52'
 
 Resources:
   TempBucket:
