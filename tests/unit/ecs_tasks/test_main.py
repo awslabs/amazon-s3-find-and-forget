@@ -934,6 +934,7 @@ def test_it_inits_arg_parser_with_defaults():
 
 @patch("backend.ecs_tasks.delete_files.main.boto3")
 @patch.dict(os.environ, {"AWS_DEFAULT_REGION": "eu-west-2"})
+@patch.dict(os.environ, {"AWS_URL_SUFFIX": "amazonaws.com"})
 def test_it_inits_queue_with_regional_url(mock_boto):
     get_queue("https://queue/rule")
     mock_boto.resource.assert_called_with(

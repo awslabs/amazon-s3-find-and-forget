@@ -81,7 +81,7 @@ Resources:
               - sts:AssumeRole
       Path: /
       ManagedPolicyArns:
-      - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
 
   DelObjQ:
     Type: AWS::SQS::Queue
@@ -128,7 +128,7 @@ Resources:
       ContainerDefinitions:
         - Name: !Sub ${ResourcePrefix}_DeleteTask
           Essential: true
-          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECRRepository}:latest
+          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.${AWS::URLSuffix}/${ECRRepository}:latest
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -138,6 +138,8 @@ Resources:
           Environment:
             - Name: AWS_STS_REGIONAL_ENDPOINTS
               Value: regional
+            - Name: AWS_URL_SUFFIX
+              Value: !Ref AWS::URLSuffix
             - Name: DELETE_OBJECTS_QUEUE
               Value: !Ref DelObjQ
             - Name: ECS_ENABLE_CONTAINER_METADATA
@@ -185,13 +187,13 @@ Resources:
             - logs:CreateLogStream
             - logs:PutLogEvents
             Effect: Allow
-            Resource: "arn:aws:logs:*:*:*"
+            Resource: !Sub "arn:${AWS::Partition}:logs:*:*:*"
           - Action: sts:AssumeRole
             Effect: Allow
             Resource: !Sub "arn:${AWS::Partition}:iam::*:role/S3F2DataAccessRole"
           - Action: s3:GetObject*
             Effect: Allow
-            Resource: !Sub arn:aws:s3:::${ManifestsBucket}/manifests/*
+            Resource: !Sub arn:${AWS::Partition}:s3:::${ManifestsBucket}/manifests/*
           - !If
             - WithKMS
             - Action:

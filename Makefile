@@ -109,12 +109,14 @@ backend/ecs_tasks/python_3.9-slim.tar:
 
 redeploy-containers:
 	$(eval ACCOUNT_ID := $(shell aws sts get-caller-identity --query Account --output text))
-	$(eval REGION := $(shell aws configure get region))
+	$(eval API_URL := $(shell aws cloudformation describe-stacks --stack-name S3F2 --query 'Stacks[0].Outputs[?OutputKey==`ApiUrl`].OutputValue' --output text))
+	$(eval REGION := $(shell echo $(API_URL) | cut -d'.' -f3))
 	$(eval ECR_REPOSITORY := $(shell aws cloudformation describe-stacks --stack-name S3F2 --query 'Stacks[0].Outputs[?OutputKey==`ECRRepository`].OutputValue' --output text))
+	$(eval REPOSITORY_URI := $(shell aws ecr describe-repositories --repository-names $(ECR_REPOSITORY) --query 'repositories[0].repositoryUri' --output text))
 	$(shell aws ecr get-login --no-include-email --region $(REGION))
 	docker build -t $(ECR_REPOSITORY) -f backend/ecs_tasks/delete_files/Dockerfile .
-	docker tag $(ECR_REPOSITORY):latest $(ACCOUNT_ID).dkr.ecr.$(REGION).amazonaws.com/$(ECR_REPOSITORY):latest
-	docker push $(ACCOUNT_ID).dkr.ecr.$(REGION).amazonaws.com/$(ECR_REPOSITORY):latest
+	docker tag $(ECR_REPOSITORY):latest $(REPOSITORY_URI):latest
+	docker push $(REPOSITORY_URI):latest
 
 redeploy-frontend:
 	$(eval WEBUI_BUCKET := $(shell aws cloudformation describe-stacks --stack-name S3F2 --query 'Stacks[0].Outputs[?OutputKey==`WebUIBucket`].OutputValue' --output text))
@@ -158,8 +160,9 @@ backend/lambda_layers/%/requirements-installed.sentinel: backend/lambda_layers/%
 	touch $@
 
 setup-frontend-local-dev:
+	$(eval WEBUI_URL := $(shell aws cloudformation describe-stacks --stack-name S3F2 --query 'Stacks[0].Outputs[?OutputKey==`WebUIUrl`].OutputValue' --output text))
 	$(eval WEBUI_BUCKET := $(shell aws cloudformation describe-stacks --stack-name S3F2 --query 'Stacks[0].Outputs[?OutputKey==`WebUIBucket`].OutputValue' --output text))
-	aws s3 cp s3://$(WEBUI_BUCKET)/settings.js frontend/public/settings.js
+	$(if $(filter none, $(WEBUI_URL)), @echo "WebUI not deployed.", aws s3 cp s3://$(WEBUI_BUCKET)/settings.js frontend/public/settings.js)
 
 setup-predeploy:
 	virtualenv venv
