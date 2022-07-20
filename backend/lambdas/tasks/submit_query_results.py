@@ -12,6 +12,8 @@ athena = boto3.client("athena")
 sqs = boto3.resource("sqs")
 queue = sqs.Queue(os.getenv("QueueUrl"))
 
+MSG_BATCH_SIZE = 500
+
 
 @with_logging
 def handler(event, context):
@@ -19,34 +21,42 @@ def handler(event, context):
     results = paginate(
         athena, athena.get_query_results, ["ResultSet.Rows"], QueryExecutionId=query_id
     )
-    rows = [result for result in results]
-    header_row = rows.pop(0)
-    path_field_index = next(
-        (
-            index
-            for (index, d) in enumerate(header_row["Data"])
-            if d["VarCharValue"] == "$path"
-        ),
-        None,
-    )
-
-    paths = [row["Data"][path_field_index]["VarCharValue"] for row in rows]
     messages = []
-    for p in paths:
-        msg = {
-            "JobId": event["JobId"],
-            "Object": p,
-            "Columns": event["Columns"],
-            "RoleArn": event.get("RoleArn", None),
-            "DeleteOldVersions": event.get("DeleteOldVersions", True),
-            "IgnoreObjectNotFoundExceptions": event.get(
-                "IgnoreObjectNotFoundExceptions", False
-            ),
-            "Format": event.get("Format"),
-            "Manifest": event.get("Manifest"),
-        }
-        messages.append({k: v for k, v in msg.items() if v is not None})
+    msg_count = 0
+    path_field_index = None
+    for result in results:
+        is_header_row = path_field_index is None
+        if is_header_row:
+            path_field_index = next(
+                (
+                    index
+                    for (index, d) in enumerate(result["Data"])
+                    if d["VarCharValue"] == "$path"
+                ),
+                None,
+            )
+        else:
+            msg_count += 1
+            path = result["Data"][path_field_index]["VarCharValue"]
+            msg = {
+                "JobId": event["JobId"],
+                "Object": path,
+                "Columns": event["Columns"],
+                "RoleArn": event.get("RoleArn", None),
+                "DeleteOldVersions": event.get("DeleteOldVersions", True),
+                "IgnoreObjectNotFoundExceptions": event.get(
+                    "IgnoreObjectNotFoundExceptions", False
+                ),
+                "Format": event.get("Format"),
+                "Manifest": event.get("Manifest"),
+            }
+            messages.append({k: v for k, v in msg.items() if v is not None})
 
-    batch_sqs_msgs(queue, messages)
+        if len(messages) >= MSG_BATCH_SIZE:
+            batch_sqs_msgs(queue, messages)
+            messages = []
 
-    return len(paths)
+    if len(messages) > 0:
+        batch_sqs_msgs(queue, messages)
+
+    return msg_count

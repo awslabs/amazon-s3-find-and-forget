@@ -3,7 +3,7 @@ from botocore.exceptions import ClientError
 
 
 def remove_none(d: dict):
-    return {k: v for k, v in d.items() if v is not None and v is not ""}
+    return {k: v for k, v in d.items() if v is not None and v != ""}
 
 
 def retry_wrapper(fn, retry_wait_seconds=2, retry_factor=2, max_retries=5):
