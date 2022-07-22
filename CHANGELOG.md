@@ -1,5 +1,10 @@
 # Change Log
 
+## v0.53 (unreleased)
+
+- [#327](https://github.com/awslabs/amazon-s3-find-and-forget/pull/327): Improve
+  performance of Athena results handler
+
 ## v0.52
 
 - [#318](https://github.com/awslabs/amazon-s3-find-and-forget/pull/318): Added
