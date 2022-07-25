@@ -1,7 +1,9 @@
 # Change Log
 
-## v0.53 (unreleased)
+## v0.53
 
+- [#330](https://github.com/awslabs/amazon-s3-find-and-forget/pull/330): Upgrade
+  backend dependencies
 - [#327](https://github.com/awslabs/amazon-s3-find-and-forget/pull/327): Improve
   performance of Athena results handler
 - [#329](https://github.com/awslabs/amazon-s3-find-and-forget/pull/329): Upgrade
