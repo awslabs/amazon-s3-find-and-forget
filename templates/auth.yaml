@@ -59,7 +59,7 @@ Resources:
     Type: AWS::IAM::Role
     Properties:
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AmazonAPIGatewayInvokeFullAccess
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonAPIGatewayInvokeFullAccess
       AssumeRolePolicyDocument:
         Statement:
           - Effect: Allow

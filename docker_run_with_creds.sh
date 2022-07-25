@@ -17,10 +17,11 @@ DLQ_URL=$(aws cloudformation describe-stacks \
   --query 'Stacks[0].Outputs[?OutputKey==`DLQUrl`].OutputValue' \
   --output text)
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+PARTITION=$(aws sts get-caller-identity --query Arn --output text | cut -d':' -f2)
 # Assume IAM Role to be passed to container
 SESSION_DATA=$(aws sts assume-role \
   --role-session-name s3f2-local \
-  --role-arn arn:aws:iam::"${ACCOUNT_ID}":role/"${ROLE_NAME}" \
+  --role-arn arn:"${PARTITION}":iam::"${ACCOUNT_ID}":role/"${ROLE_NAME}" \
   --query Credentials \
   --output json)
 AWS_ACCESS_KEY_ID=$(echo "${SESSION_DATA}" | jq -r ".AccessKeyId")

@@ -1,7 +1,16 @@
 # Change Log
 
-## v0.52 (unreleased)
+## v0.53 (unreleased)
 
+- [#327](https://github.com/awslabs/amazon-s3-find-and-forget/pull/327): Improve
+  performance of Athena results handler
+- [#329](https://github.com/awslabs/amazon-s3-find-and-forget/pull/329): Upgrade
+  frontend dependencies
+
+## v0.52
+
+- [#318](https://github.com/awslabs/amazon-s3-find-and-forget/pull/318): Added
+  support for AWS China
 - [#324](https://github.com/awslabs/amazon-s3-find-and-forget/pull/324): Upgrade
   frontend dependencies
 

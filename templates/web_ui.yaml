@@ -54,8 +54,8 @@ Resources:
             Action: '*'
             Effect: Deny
             Resource:
-              - !Sub arn:aws:s3:::${WebUIBucket}
-              - !Sub arn:aws:s3:::${WebUIBucket}/*
+              - !Sub arn:${AWS::Partition}:s3:::${WebUIBucket}
+              - !Sub arn:${AWS::Partition}:s3:::${WebUIBucket}/*
             Principal: '*'
             Condition:
               Bool:
@@ -65,7 +65,7 @@ Resources:
             - Sid: CloudFrontOriginOnly
               Action: s3:GetObject
               Effect: Allow
-              Resource: !Sub arn:aws:s3:::${WebUIBucket}/*
+              Resource: !Sub arn:${AWS::Partition}:s3:::${WebUIBucket}/*
               Principal:
                 CanonicalUser: !GetAtt CloudFrontOriginAccessIdentity.S3CanonicalUserId
             - !Ref AWS::NoValue
@@ -107,7 +107,7 @@ Resources:
           CloudFrontDefaultCertificate: true
         Logging: !If
           - WithAccessLogs
-          - Bucket: !Sub ${AccessLogsBucket}.s3.amazonaws.com
+          - Bucket: !Sub ${AccessLogsBucket}.s3.${AWS::URLSuffix}
             IncludeCookies: false
             Prefix: !Sub ${ResourcePrefix}/
           - !Ref AWS::NoValue
