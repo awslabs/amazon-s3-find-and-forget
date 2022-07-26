@@ -7,7 +7,7 @@ changes from the command line.
 
 The following dependencies must be installed:
 
-- AWS CLI
+- AWS CLI (v1)
 - Python >=3.9 and pip
 - node.js >= v16.11 and npm >= 8
 - virtualenv
@@ -15,6 +15,8 @@ The following dependencies must be installed:
 - libsnappy-dev/snappy-devel (debian/centos)
 - docker
 - jq
+- Java JRE
+- cfn-lint
 
 Once you have installed all pre-requisites, you must run the following command
 to create a `virtualenv` and install all frontend/backend dependencies before
