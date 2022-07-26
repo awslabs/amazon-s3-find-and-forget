@@ -16,7 +16,6 @@ The following dependencies must be installed:
 - docker
 - jq
 - Java JRE
-- cfn-lint
 
 Once you have installed all pre-requisites, you must run the following command
 to create a `virtualenv` and install all frontend/backend dependencies before
