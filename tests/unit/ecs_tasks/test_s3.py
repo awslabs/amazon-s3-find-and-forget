@@ -280,8 +280,6 @@ def test_it_gets_grantees_by_type():
 def test_it_applies_settings_when_saving(
     mock_grantees, mock_acl, mock_tagging, mock_standard, mock_requester
 ):
-    mock_s3 = MagicMock()
-    mock_s3.S3FileSystem.return_value = mock_s3
     mock_client = MagicMock()
     mock_requester.return_value = {"RequestPayer": "requester"}, {"Payer": "Requester"}
     mock_standard.return_value = ({"Expires": "123", "Metadata": {}}, {})
@@ -310,11 +308,21 @@ def test_it_applies_settings_when_saving(
     )
     mock_grantees.return_value = ""
     buf = BytesIO()
-    mock_file = MagicMock(version_id="abc123")
-    mock_s3.open.return_value = mock_s3
-    mock_s3.__enter__.return_value = mock_file
-    resp = save(mock_s3, mock_client, buf, "bucket", "key", {}, "abc123")
-    mock_file.write.assert_called_with(b"")
+    mock_client.upload_fileobj.return_value = {"VersionId": "abc123"}
+    resp = save(mock_client, buf, "bucket", "key", {}, "abc123")
+    mock_client.upload_fileobj.assert_called_with(
+        buf,
+        "bucket",
+        "key",
+        ExtraArgs={
+            "RequestPayer": "requester",
+            "Expires": "123",
+            "Metadata": {},
+            "Tagging": "a=b",
+            "GrantFullControl": "id=abc",
+            "GrantRead": "id=123",
+        },
+    )
     assert "abc123" == resp
     mock_client.put_object_acl.assert_not_called()
 
@@ -327,7 +335,6 @@ def test_it_applies_settings_when_saving(
 def test_it_passes_through_version(
     mock_grantees, mock_acl, mock_tagging, mock_standard, mock_requester
 ):
-    mock_s3 = MagicMock()
     mock_client = MagicMock()
     mock_requester.return_value = {}, {}
     mock_standard.return_value = ({}, {})
@@ -335,7 +342,7 @@ def test_it_passes_through_version(
     mock_acl.return_value = ({}, {})
     mock_grantees.return_value = ""
     buf = BytesIO()
-    save(mock_s3, mock_client, buf, "bucket", "key", {}, "abc123")
+    save(mock_client, buf, "bucket", "key", {}, "abc123")
     mock_acl.assert_called_with(mock_client, "bucket", "key", "abc123")
     mock_tagging.assert_called_with(mock_client, "bucket", "key", "abc123")
     mock_standard.assert_called_with(mock_client, "bucket", "key", "abc123")
@@ -349,8 +356,6 @@ def test_it_passes_through_version(
 def test_it_restores_write_permissions(
     mock_grantees, mock_acl, mock_tagging, mock_standard, mock_requester
 ):
-    mock_s3 = MagicMock()
-    mock_s3.S3FileSystem.return_value = mock_s3
     mock_client = MagicMock()
     mock_requester.return_value = {}, {}
     mock_standard.return_value = ({}, {})
@@ -375,9 +380,8 @@ def test_it_restores_write_permissions(
     )
     mock_grantees.return_value = {"id=123"}
     buf = BytesIO()
-    mock_s3.open.return_value = mock_s3
-    mock_s3.__enter__.return_value = MagicMock(version_id="new_version123")
-    save(mock_s3, mock_client, buf, "bucket", "key", "abc123")
+    mock_client.upload_fileobj.return_value = {"VersionId": "new_version123"}
+    save(mock_client, buf, "bucket", "key", "abc123")
     mock_client.put_object_acl.assert_called_with(
         Bucket="bucket",
         Key="key",

@@ -17,58 +17,54 @@ aws-assume-role-lib==2.10.0
     # via
     #   -r ./backend/ecs_tasks/delete_files/requirements.txt
     #   -r ./backend/lambda_layers/aws_sdk/requirements.txt
-aws-sam-translator==1.46.0
+aws-sam-translator==1.48.0
     # via cfn-lint
 black==22.3.0
     # via -r requirements.in
-boto3==1.21.40
+boto3==1.24.38
     # via
     #   -r ./backend/ecs_tasks/delete_files/requirements.txt
     #   -r ./backend/lambda_layers/aws_sdk/requirements.txt
     #   aws-assume-role-lib
     #   aws-sam-translator
-    #   s3fs
-botocore==1.24.46
+botocore==1.27.38
     # via
     #   -r ./backend/ecs_tasks/delete_files/requirements.txt
     #   -r ./backend/lambda_layers/aws_sdk/requirements.txt
     #   boto3
-    #   s3fs
     #   s3transfer
+build==0.8.0
+    # via pip-tools
 certifi==2022.6.15
     # via requests
-cffi==1.15.0
+cffi==1.15.1
     # via
     #   -r ./backend/ecs_tasks/delete_files/requirements.txt
     #   cryptography
 cfgv==3.3.1
     # via pre-commit
-cfn-flip==1.2.3
+cfn-flip==1.3.0
     # via -r requirements.in
-cfn-lint==0.59.0
+cfn-lint==0.61.0
     # via -r requirements.in
-charset-normalizer==2.0.12
+charset-normalizer==2.1.0
     # via requests
 click==8.1.3
     # via
     #   black
     #   cfn-flip
     #   pip-tools
-coverage==6.4.1
+coverage==6.4.2
     # via pytest-cov
 crhelper==2.0.10
     # via -r ./backend/lambda_layers/cr_helper/requirements.txt
 cryptography==3.4.7
     # via -r ./backend/ecs_tasks/delete_files/requirements.txt
-distlib==0.3.4
+distlib==0.3.5
     # via virtualenv
 filelock==3.7.1
     # via virtualenv
-fsspec==2022.5.0
-    # via
-    #   -r ./backend/ecs_tasks/delete_files/requirements.txt
-    #   s3fs
-identify==2.5.1
+identify==2.5.2
     # via pre-commit
 idna==3.3
     # via requests
@@ -99,9 +95,9 @@ mock==4.0.1
     # via -r requirements.in
 mypy-extensions==0.4.3
     # via black
-networkx==2.8.4
+networkx==2.8.5
     # via cfn-lint
-nodeenv==1.6.0
+nodeenv==1.7.0
     # via pre-commit
 numpy==1.22.0
     # via
@@ -109,7 +105,9 @@ numpy==1.22.0
     #   pandas
     #   pyarrow
 packaging==21.3
-    # via pytest
+    # via
+    #   build
+    #   pytest
 pandas==1.4.3
     # via -r ./backend/ecs_tasks/delete_files/requirements.txt
 pathspec==0.9.0
@@ -119,8 +117,8 @@ pbr==5.9.0
     #   jschema-to-python
     #   sarif-om
 pep517==0.12.0
-    # via pip-tools
-pip-tools==6.6.2
+    # via build
+pip-tools==6.8.0
     # via -r requirements.in
 platformdirs==2.5.2
     # via
@@ -134,7 +132,7 @@ py==1.11.0
     # via
     #   -r requirements.in
     #   pytest
-pyarrow==7.0.0
+pyarrow==8.0.0
     # via -r ./backend/ecs_tasks/delete_files/requirements.txt
 pycparser==2.21
     # via
@@ -171,11 +169,9 @@ pyyaml==6.0
     #   cfn-lint
     #   pre-commit
     #   yq
-requests==2.26.0
+requests==2.28.1
     # via -r requirements.in
-s3fs==0.4.0
-    # via -r ./backend/ecs_tasks/delete_files/requirements.txt
-s3transfer==0.5.2
+s3transfer==0.6.0
     # via
     #   -r ./backend/ecs_tasks/delete_files/requirements.txt
     #   -r ./backend/lambda_layers/aws_sdk/requirements.txt
@@ -191,7 +187,6 @@ six==1.16.0
     #   jsonschema
     #   junit-xml
     #   python-dateutil
-    #   virtualenv
 tenacity==8.0.1
     # via -r ./backend/ecs_tasks/delete_files/requirements.txt
 toml==0.10.2
@@ -202,23 +197,23 @@ toml==0.10.2
 tomli==2.0.1
     # via
     #   black
-    #   pep517
-typing-extensions==4.2.0
+    #   build
+typing-extensions==4.3.0
     # via black
-urllib3==1.26.9
+urllib3==1.26.11
     # via
     #   -r ./backend/ecs_tasks/delete_files/requirements.txt
     #   -r ./backend/lambda_layers/aws_sdk/requirements.txt
     #   -r requirements.in
     #   botocore
     #   requests
-virtualenv==20.14.1
+virtualenv==20.16.0
     # via pre-commit
 wheel==0.37.1
     # via pip-tools
 xmltodict==0.13.0
     # via yq
-yq==2.14.0
+yq==3.1.0
     # via -r requirements.in
 
 # The following packages are considered to be unsafe in a requirements file:

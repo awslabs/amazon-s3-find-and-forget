@@ -6,22 +6,18 @@
 #
 aws-assume-role-lib==2.10.0
     # via -r backend/ecs_tasks/delete_files/requirements.in
-boto3==1.21.40
+boto3==1.24.38
     # via
     #   -r backend/ecs_tasks/delete_files/requirements.in
     #   aws-assume-role-lib
-    #   s3fs
-botocore==1.24.46
+botocore==1.27.38
     # via
     #   boto3
-    #   s3fs
     #   s3transfer
-cffi==1.15.0
+cffi==1.15.1
     # via cryptography
 cryptography==3.4.7
     # via -r backend/ecs_tasks/delete_files/requirements.in
-fsspec==2022.5.0
-    # via s3fs
 jmespath==1.0.1
     # via
     #   boto3
@@ -33,7 +29,7 @@ numpy==1.22.0
     #   pyarrow
 pandas==1.4.3
     # via -r backend/ecs_tasks/delete_files/requirements.in
-pyarrow==7.0.0
+pyarrow==8.0.0
     # via -r backend/ecs_tasks/delete_files/requirements.in
 pycparser==2.21
     # via cffi
@@ -45,15 +41,15 @@ python-snappy==0.6.1
     # via -r backend/ecs_tasks/delete_files/requirements.in
 pytz==2022.1
     # via pandas
-s3fs==0.4.0
-    # via -r backend/ecs_tasks/delete_files/requirements.in
-s3transfer==0.5.2
-    # via boto3
+s3transfer==0.6.0
+    # via
+    #   -r backend/ecs_tasks/delete_files/requirements.in
+    #   boto3
 six==1.16.0
     # via python-dateutil
 tenacity==8.0.1
     # via -r backend/ecs_tasks/delete_files/requirements.in
-urllib3==1.26.9
+urllib3==1.26.11
     # via
     #   -r backend/ecs_tasks/delete_files/requirements.in
     #   botocore

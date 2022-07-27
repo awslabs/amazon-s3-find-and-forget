@@ -14,10 +14,44 @@ from botocore.exceptions import ClientError
 
 from utils import remove_none, retry_wrapper
 
+
+# BEGINNING OF s3transfer MONKEY PATCH
+# https://github.com/boto/s3transfer/issues/82#issuecomment-837971614
+
+import s3transfer.upload
+import s3transfer.tasks
+
+
+class PutObjectTask(s3transfer.tasks.Task):
+    # Copied from s3transfer/upload.py, changed to return the result of client.put_object.
+    def _main(self, client, fileobj, bucket, key, extra_args):
+        with fileobj as body:
+            return client.put_object(Bucket=bucket, Key=key, Body=body, **extra_args)
+
+
+class CompleteMultipartUploadTask(s3transfer.tasks.Task):
+    # Copied from s3transfer/tasks.py, changed to return a result.
+    def _main(self, client, bucket, key, upload_id, parts, extra_args):
+        print(f"Multipart upload {upload_id} for {key}.")
+        return client.complete_multipart_upload(
+            Bucket=bucket,
+            Key=key,
+            UploadId=upload_id,
+            MultipartUpload={"Parts": parts},
+            **extra_args,
+        )
+
+
+s3transfer.upload.PutObjectTask = PutObjectTask
+s3transfer.upload.CompleteMultipartUploadTask = CompleteMultipartUploadTask
+
+# END OF s3transfer MONKEY PATCH
+
+
 logger = logging.getLogger(__name__)
 
 
-def save(s3, client, buf, bucket, key, metadata, source_version=None):
+def save(client, buf, bucket, key, metadata, source_version=None):
     """
     Save a buffer to S3, preserving any existing properties on the object
     """
@@ -36,11 +70,8 @@ def save(s3, client, buf, bucket, key, metadata, source_version=None):
     logger.info("Object settings: %s", extra_args)
     # Write Object Back to S3
     logger.info("Saving updated object to s3://%s/%s", bucket, key)
-    contents = buf.read()
-    with s3.open("s3://{}/{}".format(bucket, key), "wb", **extra_args) as f:
-        f.write(contents)
-    s3.invalidate_cache()  # TODO: remove once https://github.com/dask/s3fs/issues/294 is resolved
-    new_version_id = f.version_id
+    resp = client.upload_fileobj(buf, bucket, key, ExtraArgs=extra_args)
+    new_version_id = resp["VersionId"]
     logger.info("Object uploaded to S3")
     # GrantWrite cannot be set whilst uploading therefore ACLs need to be restored separately
     write_grantees = ",".join(get_grantees(acl_resp, "WRITE"))
@@ -54,7 +85,7 @@ def save(s3, client, buf, bucket, key, metadata, source_version=None):
                 **request_payer_args,
                 **acl_args,
                 "GrantWrite": write_grantees,
-            }
+            },
         )
     logger.info("Processing of file s3://%s/%s complete", bucket, key)
     return new_version_id

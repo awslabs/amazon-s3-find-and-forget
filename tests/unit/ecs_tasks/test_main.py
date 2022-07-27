@@ -46,6 +46,7 @@ def get_list_object_versions_error():
     )
 
 
+@pytest.mark.only
 @patch.dict(os.environ, {"JobTable": "test"})
 @patch(
     "backend.ecs_tasks.delete_files.main.validate_bucket_versioning",
@@ -86,9 +87,7 @@ def test_happy_path_when_queue_not_empty(
     )
     mock_s3.open.assert_called_with("s3://bucket/path/basic.parquet", "rb")
     mock_delete.assert_called_with(mock_file, [column], "parquet", False)
-    mock_save.assert_called_with(
-        ANY, ANY, ANY, "bucket", "path/basic.parquet", {}, "abc123"
-    )
+    mock_save.assert_called_with(ANY, ANY, "bucket", "path/basic.parquet", {}, "abc123")
     mock_emit.assert_called()
     mock_session.assert_called_with(None)
     mock_verify_integrity.assert_called_with(
