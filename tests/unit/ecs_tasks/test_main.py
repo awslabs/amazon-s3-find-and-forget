@@ -1,6 +1,8 @@
 import os
 from io import BytesIO
 from argparse import Namespace
+from errno import ENOENT
+from os import strerror
 
 import boto3
 from botocore.exceptions import ClientError
@@ -588,11 +590,12 @@ def test_it_does_not_ignore_not_found_error_by_default(
 @patch("backend.ecs_tasks.delete_files.main.pa.fs")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
 @patch("backend.ecs_tasks.delete_files.main.handle_skip")
-def test_it_ignores_not_found_error_if_param_is_true(
-    mock_skip_handler, mock_error_handler, mock_fs, message_stub
+@patch("backend.ecs_tasks.delete_files.main.get_object_info")
+def test_it_ignores_boto_not_found_error_if_param_is_true(
+    mock_get_object_info, mock_skip_handler, mock_error_handler, mock_fs, message_stub
 ):
     mock_fs.S3FileSystem.return_value = mock_fs
-    mock_fs.open_input_stream.side_effect = ClientError(
+    mock_get_object_info.side_effect = ClientError(
         {"Error": {"Code": "404"}}, "HeadObject"
     )
     # Act
@@ -605,6 +608,62 @@ def test_it_ignores_not_found_error_if_param_is_true(
     mock_error_handler.assert_not_called()
     msg = mock_skip_handler.call_args[0][2]
     assert msg.startswith("Ignored error: ClientError:")
+
+
+@patch.dict(os.environ, {"JobTable": "test"})
+@patch("backend.ecs_tasks.delete_files.main.get_queue", MagicMock())
+@patch("backend.ecs_tasks.delete_files.main.build_matches", MagicMock())
+@patch(
+    "backend.ecs_tasks.delete_files.main.validate_bucket_versioning",
+    MagicMock(return_value=True),
+)
+@patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
+@patch("backend.ecs_tasks.delete_files.main.pa.fs")
+@patch("backend.ecs_tasks.delete_files.main.handle_error")
+@patch("backend.ecs_tasks.delete_files.main.handle_skip")
+def test_it_ignores_arrow_not_found_error_if_param_is_true(
+    mock_skip_handler, mock_error_handler, mock_fs, message_stub
+):
+    mock_fs.S3FileSystem.return_value = mock_fs
+    mock_fs.open_input_stream.side_effect = FileNotFoundError(
+        ENOENT, strerror(ENOENT), "bucket/key"
+    )
+    # Act
+    execute(
+        "https://queue/url",
+        message_stub(IgnoreObjectNotFoundExceptions=True),
+        "receipt_handle",
+    )
+    # Assert
+    mock_error_handler.assert_not_called()
+    msg = mock_skip_handler.call_args[0][2]
+    assert msg.startswith("Ignored error: Apache Arrow S3FileSystem Error:")
+
+
+@patch.dict(os.environ, {"JobTable": "test"})
+@patch("backend.ecs_tasks.delete_files.main.get_queue", MagicMock())
+@patch(
+    "backend.ecs_tasks.delete_files.main.validate_bucket_versioning",
+    MagicMock(return_value=True),
+)
+@patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
+@patch("backend.ecs_tasks.delete_files.main.pa.fs")
+@patch("backend.ecs_tasks.delete_files.main.handle_error")
+@patch("backend.ecs_tasks.delete_files.main.build_matches", MagicMock())
+def test_it_handles_not_found_error(mock_error_handler, mock_fs, message_stub):
+    # Arrange
+    mock_fs.S3FileSystem.return_value = mock_fs
+    mock_fs.open_input_stream.side_effect = FileNotFoundError(
+        ENOENT, strerror(ENOENT), "bucket/key"
+    )
+    # Act
+    execute("https://queue/url", message_stub(), "receipt_handle")
+    # Assert
+    mock_error_handler.assert_called_with(
+        ANY,
+        ANY,
+        "Apache Arrow S3FileSystem Error: [Errno 2] No such file or directory: 'bucket/key'",
+    )
 
 
 @patch.dict(os.environ, {"JobTable": "test"})

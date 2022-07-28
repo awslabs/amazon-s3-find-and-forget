@@ -136,6 +136,7 @@ def execute(queue_url, message_body, receipt_handle):
         validate_message(message_body)
         body = json.loads(message_body)
         session = get_session(body.get("RoleArn"), ROLE_SESSION_NAME)
+        ignore_not_found_exceptions = body.get("IgnoreObjectNotFoundExceptions", False)
         client = session.client("s3")
         kms_client = session.client("kms")
         cols, object_path, job_id, file_format, manifest_object = itemgetter(
@@ -200,6 +201,12 @@ def execute(queue_url, message_body, receipt_handle):
             delete_old_versions(client, input_bucket, input_key, new_version)
         msg.delete()
         emit_deletion_event(body, stats)
+    except FileNotFoundError as e:
+        err_message = "Apache Arrow S3FileSystem Error: {}".format(str(e))
+        if ignore_not_found_exceptions:
+            handle_skip(msg, body, "Ignored error: {}".format(err_message))
+        else:
+            handle_error(msg, message_body, err_message)
     except (KeyError, ArrowException) as e:
         err_message = "Apache Arrow processing error: {}".format(str(e))
         handle_error(msg, message_body, err_message)
@@ -217,7 +224,7 @@ def execute(queue_url, message_body, receipt_handle):
         if e.operation_name == "ListObjectVersions":
             err_message += ". Could not verify redacted object version integrity"
         if e.operation_name == "HeadObject" and e.response["Error"]["Code"] == "404":
-            ignore_error = body.get("IgnoreObjectNotFoundExceptions", False)
+            ignore_error = ignore_not_found_exceptions
         if ignore_error:
             skip_reason = "Ignored error: {}".format(err_message)
             handle_skip(msg, body, skip_reason)
