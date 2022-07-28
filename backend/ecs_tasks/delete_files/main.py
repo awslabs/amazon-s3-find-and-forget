@@ -35,6 +35,8 @@ from s3 import (
     verify_object_versions_integrity,
 )
 
+FIVE_MB = 5 * 2**20
+ROLE_SESSION_NAME = "s3f2"
 
 logger = logging.getLogger(__name__)
 logger.setLevel(os.getenv("LOG_LEVEL", logging.INFO))
@@ -133,7 +135,7 @@ def execute(queue_url, message_body, receipt_handle):
         # Parse and validate incoming message
         validate_message(message_body)
         body = json.loads(message_body)
-        session = get_session(body.get("RoleArn"))
+        session = get_session(body.get("RoleArn"), ROLE_SESSION_NAME)
         client = session.client("s3")
         kms_client = session.client("kms")
         cols, object_path, job_id, file_format, manifest_object = itemgetter(
@@ -144,14 +146,16 @@ def execute(queue_url, message_body, receipt_handle):
         match_ids = build_matches(cols, manifest_object)
         s3 = pa.fs.S3FileSystem(
             region=os.getenv("AWS_DEFAULT_REGION"),
-            session_name="s3f2",
-            external_id="s3f2",
+            session_name=ROLE_SESSION_NAME,
+            external_id=ROLE_SESSION_NAME,
             role_arn=body.get("RoleArn"),
             load_frequency=60 * 60,
         )
         # Download the object in-memory and convert to PyArrow NativeFile
         logger.info("Downloading and opening %s object in-memory", object_path)
-        with s3.open_input_stream("{}/{}".format(input_bucket, input_key)) as f:
+        with s3.open_input_stream(
+            "{}/{}".format(input_bucket, input_key), buffer_size=FIVE_MB
+        ) as f:
             source_version = f.metadata()["VersionId"].decode("utf-8")
             logger.info("Using object version %s as source", source_version)
             # Write new file in-memory
