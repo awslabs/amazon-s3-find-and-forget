@@ -1,7 +1,15 @@
 # Change Log
 
-## v0.53 (unreleased)
+## v0.53
 
+- [#332](https://github.com/awslabs/amazon-s3-find-and-forget/pull/332):
+  - Switch to
+    [Pyarrow's S3FileSystem](https://arrow.apache.org/docs/python/generated/pyarrow.fs.S3FileSystem.html)
+    to read from S3 on the Forget Phase
+  - Switch to
+    [boto3's upload_fileobj](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.upload_fileobj)
+    to write to S3 on the Forget Phase
+  - Upgrade backend dependencies
 - [#327](https://github.com/awslabs/amazon-s3-find-and-forget/pull/327): Improve
   performance of Athena results handler
 - [#329](https://github.com/awslabs/amazon-s3-find-and-forget/pull/329): Upgrade
