@@ -1,6 +1,8 @@
 import os
 from io import BytesIO
 from argparse import Namespace
+from errno import ENOENT
+from os import strerror
 
 import boto3
 from botocore.exceptions import ClientError
@@ -55,46 +57,48 @@ def get_list_object_versions_error():
 @patch("backend.ecs_tasks.delete_files.main.get_queue", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.verify_object_versions_integrity")
 @patch("backend.ecs_tasks.delete_files.main.get_session")
-@patch("backend.ecs_tasks.delete_files.main.s3fs")
+@patch("backend.ecs_tasks.delete_files.main.pa.fs")
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.emit_deletion_event")
 @patch("backend.ecs_tasks.delete_files.main.save")
 @patch("backend.ecs_tasks.delete_files.main.build_matches")
+@patch("backend.ecs_tasks.delete_files.main.get_object_info")
 def test_happy_path_when_queue_not_empty(
+    mock_get_object_info,
     mock_build_matches,
     mock_save,
     mock_emit,
     mock_delete,
-    mock_s3,
+    mock_fs,
     mock_session,
     mock_verify_integrity,
     message_stub,
 ):
     column = {"Column": "customer_id", "MatchIds": ["12345", "23456"]}
     mock_build_matches.return_value = [column]
-    mock_s3.S3FileSystem.return_value = mock_s3
-    mock_file = MagicMock(version_id="abc123")
+    mock_fs.S3FileSystem.return_value = mock_fs
+    mock_file = MagicMock()
+    mock_file.metadata.return_value = {"VersionId": b"abc123"}
+    mock_fs.open_input_stream.return_value.__enter__.return_value = mock_file
+    mock_get_object_info.return_value = {"Metadata": {}}, None
     mock_save.return_value = "new_version123"
-    mock_s3.open.return_value = mock_s3
-    mock_s3.metadata.return_value = {}
-    mock_s3.__enter__.return_value = mock_file
     mock_delete.return_value = pa.BufferOutputStream(), {"DeletedRows": 1}
     execute(
         "https://queue/url",
         message_stub(Object="s3://bucket/path/basic.parquet"),
         "receipt_handle",
     )
-    mock_s3.open.assert_called_with("s3://bucket/path/basic.parquet", "rb")
-    mock_delete.assert_called_with(mock_file, [column], "parquet", False)
-    mock_save.assert_called_with(
-        ANY, ANY, ANY, "bucket", "path/basic.parquet", {}, "abc123"
+    mock_fs.open_input_stream.assert_called_with(
+        "bucket/path/basic.parquet", buffer_size=5 * 2**20
     )
+    mock_delete.assert_called_with(ANY, [column], "parquet", False)
+    mock_save.assert_called_with(ANY, ANY, "bucket", "path/basic.parquet", {}, "abc123")
     mock_emit.assert_called()
-    mock_session.assert_called_with(None)
+    mock_session.assert_called_with(None, "s3f2")
     mock_verify_integrity.assert_called_with(
         ANY, "bucket", "path/basic.parquet", "abc123", "new_version123"
     )
-    buf = mock_save.call_args[0][2]
+    buf = mock_save.call_args[0][1]
     assert buf.read
     assert isinstance(buf, pa.BufferReader)  # must be BufferReader for zero-copy
 
@@ -108,46 +112,48 @@ def test_happy_path_when_queue_not_empty(
 @patch("backend.ecs_tasks.delete_files.main.get_queue", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.verify_object_versions_integrity")
 @patch("backend.ecs_tasks.delete_files.main.get_session")
-@patch("backend.ecs_tasks.delete_files.main.s3fs")
+@patch("backend.ecs_tasks.delete_files.main.pa.fs")
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.emit_deletion_event")
 @patch("backend.ecs_tasks.delete_files.main.save")
 @patch("backend.ecs_tasks.delete_files.main.build_matches")
+@patch("backend.ecs_tasks.delete_files.main.get_object_info")
 def test_happy_path_when_queue_not_empty_for_compressed_json(
+    mock_get_object_info,
     mock_build_matches,
     mock_save,
     mock_emit,
     mock_delete,
-    mock_s3,
+    mock_fs,
     mock_session,
     mock_verify_integrity,
     message_stub,
 ):
     column = {"Column": "customer_id", "MatchIds": ["12345", "23456"]}
     mock_build_matches.return_value = [column]
-    mock_s3.S3FileSystem.return_value = mock_s3
-    mock_file = MagicMock(version_id="abc123")
+    mock_fs.S3FileSystem.return_value = mock_fs
+    mock_file = MagicMock()
+    mock_file.metadata.return_value = {"VersionId": b"abc123"}
+    mock_fs.open_input_stream.return_value.__enter__.return_value = mock_file
+    mock_get_object_info.return_value = {"Metadata": {}}, None
     mock_save.return_value = "new_version123"
-    mock_s3.open.return_value = mock_s3
-    mock_s3.metadata.return_value = {}
-    mock_s3.__enter__.return_value = mock_file
     mock_delete.return_value = pa.BufferOutputStream(), {"DeletedRows": 1}
     execute(
         "https://queue/url",
         message_stub(Object="s3://bucket/path/basic.json.gz", Format="json"),
         "receipt_handle",
     )
-    mock_s3.open.assert_called_with("s3://bucket/path/basic.json.gz", "rb")
-    mock_delete.assert_called_with(mock_file, [column], "json", True)
-    mock_save.assert_called_with(
-        ANY, ANY, ANY, "bucket", "path/basic.json.gz", {}, "abc123"
+    mock_fs.open_input_stream.assert_called_with(
+        "bucket/path/basic.json.gz", buffer_size=5 * 2**20
     )
+    mock_delete.assert_called_with(ANY, [column], "json", True)
+    mock_save.assert_called_with(ANY, ANY, "bucket", "path/basic.json.gz", {}, "abc123")
     mock_emit.assert_called()
-    mock_session.assert_called_with(None)
+    mock_session.assert_called_with(None, "s3f2")
     mock_verify_integrity.assert_called_with(
         ANY, "bucket", "path/basic.json.gz", "abc123", "new_version123"
     )
-    buf = mock_save.call_args[0][2]
+    buf = mock_save.call_args[0][1]
     assert buf.read
     assert isinstance(buf, pa.BufferReader)  # must be BufferReader for zero-copy
 
@@ -161,7 +167,7 @@ def test_happy_path_when_queue_not_empty_for_compressed_json(
 @patch("backend.ecs_tasks.delete_files.main.get_queue", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.verify_object_versions_integrity")
 @patch("backend.ecs_tasks.delete_files.main.get_session")
-@patch("backend.ecs_tasks.delete_files.main.s3fs")
+@patch("backend.ecs_tasks.delete_files.main.pa.fs")
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.emit_deletion_event")
 @patch("backend.ecs_tasks.delete_files.main.save")
@@ -169,7 +175,9 @@ def test_happy_path_when_queue_not_empty_for_compressed_json(
 @patch("backend.ecs_tasks.delete_files.main.is_kms_cse_encrypted")
 @patch("backend.ecs_tasks.delete_files.main.encrypt")
 @patch("backend.ecs_tasks.delete_files.main.decrypt")
+@patch("backend.ecs_tasks.delete_files.main.get_object_info")
 def test_cse_kms_encrypted(
+    mock_get_object_info,
     mock_decrypt,
     mock_encrypt,
     mock_is_encrypted,
@@ -177,7 +185,7 @@ def test_cse_kms_encrypted(
     mock_save,
     mock_emit,
     mock_delete,
-    mock_s3,
+    mock_fs,
     mock_session,
     mock_verify_integrity,
     message_stub,
@@ -185,14 +193,14 @@ def test_cse_kms_encrypted(
     column = {"Column": "customer_id", "MatchIds": ["12345", "23456"]}
     metadata = {"x-amz-wrap-alg": "kms", "x-amz-key-v2": "key123"}
     mock_build_matches.return_value = [column]
-    mock_s3.S3FileSystem.return_value = mock_s3
-    mock_file = MagicMock(version_id="abc123")
-    mock_file_decrypted = BytesIO(b"")
+    mock_fs.S3FileSystem.return_value = mock_fs
+    mock_file = MagicMock()
+    mock_file.metadata.return_value = {"VersionId": b"abc123"}
+    mock_fs.open_input_stream.return_value.__enter__.return_value = mock_file
+    mock_get_object_info.return_value = {"Metadata": metadata}, None
     mock_save.return_value = "new_version123"
-    mock_s3.open.return_value = mock_s3
+    mock_file_decrypted = BytesIO(b"")
     mock_is_encrypted.return_value = True
-    mock_s3.metadata.return_value = metadata
-    mock_s3.__enter__.return_value = mock_file
     redacted = pa.BufferOutputStream()
     redacted_encrypted = BytesIO(b"")
     mock_delete.return_value = redacted, {"DeletedRows": 1}
@@ -205,11 +213,12 @@ def test_cse_kms_encrypted(
     )
     mock_is_encrypted.assert_called_with(metadata)
     mock_decrypt.assert_called_with(mock_file, metadata, ANY)
-    mock_s3.open.assert_called_with("s3://bucket/path/basic.parquet", "rb")
+    mock_fs.open_input_stream.assert_called_with(
+        "bucket/path/basic.parquet", buffer_size=5 * 2**20
+    )
     mock_delete.assert_called_with(mock_file_decrypted, [column], "parquet", False)
     mock_encrypt.assert_called_with(ANY, metadata, ANY)
     mock_save.assert_called_with(
-        mock_s3,
         ANY,
         redacted_encrypted,
         "bucket",
@@ -218,7 +227,7 @@ def test_cse_kms_encrypted(
         "abc123",
     )
     mock_emit.assert_called()
-    mock_session.assert_called_with(None)
+    mock_session.assert_called_with(None, "s3f2")
     mock_verify_integrity.assert_called_with(
         ANY, "bucket", "path/basic.parquet", "abc123", "new_version123"
     )
@@ -239,12 +248,17 @@ def test_cse_kms_encrypted(
 @patch("backend.ecs_tasks.delete_files.main.save", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.build_matches", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.get_session")
-@patch("backend.ecs_tasks.delete_files.main.s3fs")
+@patch("backend.ecs_tasks.delete_files.main.pa.fs")
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
-def test_it_assumes_role(mock_delete, mock_s3, mock_session, message_stub):
-    mock_s3.S3FileSystem.return_value = mock_s3
-    mock_s3.open.return_value = mock_s3
-    mock_s3.__enter__.return_value = MagicMock(version_id="abc123")
+@patch("backend.ecs_tasks.delete_files.main.get_object_info")
+def test_it_assumes_role(
+    mock_get_object_info, mock_delete, mock_fs, mock_session, message_stub
+):
+    mock_fs.S3FileSystem.return_value = mock_fs
+    mock_file = MagicMock()
+    mock_file.metadata.return_value = {"VersionId": b"abc123"}
+    mock_fs.open_input_stream.return_value.__enter__.return_value = mock_file
+    mock_get_object_info.return_value = {"Metadata": {}}, None
     mock_delete.return_value = pa.BufferOutputStream(), {"DeletedRows": 1}
     execute(
         "https://queue/url",
@@ -254,7 +268,7 @@ def test_it_assumes_role(mock_delete, mock_s3, mock_session, message_stub):
         ),
         "receipt_handle",
     )
-    mock_session.assert_called_with("arn:aws:iam:account_id:role/rolename")
+    mock_session.assert_called_with("arn:aws:iam:account_id:role/rolename", "s3f2")
 
 
 @patch.dict(os.environ, {"JobTable": "test"})
@@ -272,19 +286,23 @@ def test_it_assumes_role(mock_delete, mock_s3, mock_session, message_stub):
 @patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.save")
 @patch("backend.ecs_tasks.delete_files.main.delete_old_versions")
-@patch("backend.ecs_tasks.delete_files.main.s3fs")
+@patch("backend.ecs_tasks.delete_files.main.pa.fs")
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.build_matches", MagicMock())
+@patch("backend.ecs_tasks.delete_files.main.get_object_info")
 def test_it_removes_old_versions(
+    mock_get_object_info,
     mock_delete,
-    mock_s3,
+    mock_fs,
     mock_delete_versions,
     mock_save,
     message_stub,
 ):
-    mock_s3.S3FileSystem.return_value = mock_s3
-    mock_s3.open.return_value = mock_s3
-    mock_s3.__enter__.return_value = MagicMock(version_id="abc123")
+    mock_fs.S3FileSystem.return_value = mock_fs
+    mock_file = MagicMock()
+    mock_file.metadata.return_value = {"VersionId": b"abc123"}
+    mock_fs.open_input_stream.return_value.__enter__.return_value = mock_file
+    mock_get_object_info.return_value = {"Metadata": {}}, None
     mock_save.return_value = "new_version123"
     mock_delete.return_value = pa.BufferOutputStream(), {"DeletedRows": 1}
     execute(
@@ -314,21 +332,25 @@ def test_it_removes_old_versions(
 @patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.save")
 @patch("backend.ecs_tasks.delete_files.main.delete_old_versions")
-@patch("backend.ecs_tasks.delete_files.main.s3fs")
+@patch("backend.ecs_tasks.delete_files.main.pa.fs")
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
 @patch("backend.ecs_tasks.delete_files.main.build_matches", MagicMock())
+@patch("backend.ecs_tasks.delete_files.main.get_object_info")
 def test_it_handles_old_version_delete_failures(
+    mock_get_object_info,
     mock_handle,
     mock_delete,
-    mock_s3,
+    mock_fs,
     mock_delete_versions,
     mock_save,
     message_stub,
 ):
-    mock_s3.S3FileSystem.return_value = mock_s3
-    mock_s3.open.return_value = mock_s3
-    mock_s3.__enter__.return_value = MagicMock(version_id="abc123")
+    mock_fs.S3FileSystem.return_value = mock_fs
+    mock_file = MagicMock()
+    mock_file.metadata.return_value = {"VersionId": b"abc123"}
+    mock_fs.open_input_stream.return_value.__enter__.return_value = mock_file
+    mock_get_object_info.return_value = {"Metadata": {}}, None
     mock_save.return_value = "new_version123"
     mock_delete.return_value = pa.BufferOutputStream(), {"DeletedRows": 1}
     mock_delete_versions.side_effect = DeleteOldVersionsError(errors=["access denied"])
@@ -354,28 +376,36 @@ def test_it_handles_old_version_delete_failures(
 @patch("backend.ecs_tasks.delete_files.main.validate_message", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.get_queue", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
-@patch("backend.ecs_tasks.delete_files.main.s3fs")
+@patch("backend.ecs_tasks.delete_files.main.pa.fs")
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.emit_deletion_event")
 @patch("backend.ecs_tasks.delete_files.main.save")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
 @patch("backend.ecs_tasks.delete_files.main.build_matches", MagicMock())
+@patch("backend.ecs_tasks.delete_files.main.get_object_info")
 def test_it_handles_no_deletions(
+    mock_get_object_info,
     mock_handle,
     mock_save,
     mock_emit,
     mock_delete,
-    mock_s3,
+    mock_fs,
     message_stub,
 ):
-    mock_s3.S3FileSystem.return_value = mock_s3
+    mock_fs.S3FileSystem.return_value = mock_fs
+    mock_file = MagicMock()
+    mock_file.metadata.return_value = {"VersionId": b"abc123"}
+    mock_fs.open_input_stream.return_value.__enter__.return_value = mock_file
+    mock_get_object_info.return_value = {"Metadata": {}}, None
     mock_delete.return_value = pa.BufferOutputStream(), {"DeletedRows": 0}
     execute(
         "https://queue/url",
         message_stub(Object="s3://bucket/path/basic.parquet"),
         "receipt_handle",
     )
-    mock_s3.open.assert_called_with("s3://bucket/path/basic.parquet", "rb")
+    mock_fs.open_input_stream.assert_called_with(
+        "bucket/path/basic.parquet", buffer_size=5 * 2**20
+    )
     mock_save.assert_not_called()
     mock_emit.assert_not_called()
     mock_handle.assert_called_with(
@@ -393,7 +423,7 @@ def test_it_handles_no_deletions(
     MagicMock(return_value=True),
 )
 @patch("backend.ecs_tasks.delete_files.main.validate_message", MagicMock())
-@patch("backend.ecs_tasks.delete_files.main.s3fs", MagicMock())
+@patch("backend.ecs_tasks.delete_files.main.pa.fs", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
@@ -418,7 +448,7 @@ def test_it_handles_missing_col_exceptions(
     MagicMock(return_value=True),
 )
 @patch("backend.ecs_tasks.delete_files.main.validate_message", MagicMock())
-@patch("backend.ecs_tasks.delete_files.main.s3fs", MagicMock())
+@patch("backend.ecs_tasks.delete_files.main.pa.fs", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
@@ -469,11 +499,11 @@ def test_it_validates_messages_with_invalid_body(mock_error_handler):
     MagicMock(return_value=True),
 )
 @patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
-@patch("backend.ecs_tasks.delete_files.main.s3fs")
+@patch("backend.ecs_tasks.delete_files.main.pa.fs")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
-def test_it_handles_s3_permission_issues(mock_error_handler, mock_s3, message_stub):
-    mock_s3.S3FileSystem.return_value = mock_s3
-    mock_s3.open.side_effect = ClientError({}, "GetObject")
+def test_it_handles_s3_permission_issues(mock_error_handler, mock_fs, message_stub):
+    mock_fs.S3FileSystem.return_value = mock_fs
+    mock_fs.open_input_stream.side_effect = ClientError({}, "GetObject")
     # Act
     execute("https://queue/url", message_stub(), "receipt_handle")
     # Assert
@@ -488,13 +518,13 @@ def test_it_handles_s3_permission_issues(mock_error_handler, mock_s3, message_st
     MagicMock(return_value=True),
 )
 @patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
-@patch("backend.ecs_tasks.delete_files.main.s3fs")
+@patch("backend.ecs_tasks.delete_files.main.pa.fs")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
 @patch("backend.ecs_tasks.delete_files.main.build_matches", MagicMock())
-def test_it_handles_io_errors(mock_error_handler, mock_s3, message_stub):
+def test_it_handles_io_errors(mock_error_handler, mock_fs, message_stub):
     # Arrange
-    mock_s3.S3FileSystem.return_value = mock_s3
-    mock_s3.open.side_effect = IOError("an error")
+    mock_fs.S3FileSystem.return_value = mock_fs
+    mock_fs.open_input_stream.side_effect = IOError("an error")
     # Act
     execute("https://queue/url", message_stub(), "receipt_handle")
     # Assert
@@ -510,13 +540,13 @@ def test_it_handles_io_errors(mock_error_handler, mock_s3, message_stub):
     MagicMock(return_value=True),
 )
 @patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
-@patch("backend.ecs_tasks.delete_files.main.s3fs")
+@patch("backend.ecs_tasks.delete_files.main.pa.fs")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
 @patch("backend.ecs_tasks.delete_files.main.build_matches", MagicMock())
-def test_it_handles_file_too_big(mock_error_handler, mock_s3, message_stub):
+def test_it_handles_file_too_big(mock_error_handler, mock_fs, message_stub):
     # Arrange
-    mock_s3.S3FileSystem.return_value = mock_s3
-    mock_s3.open.side_effect = MemoryError("Too big")
+    mock_fs.S3FileSystem.return_value = mock_fs
+    mock_fs.open_input_stream.side_effect = MemoryError("Too big")
     # Act
     execute("https://queue/url", message_stub(), "receipt_handle")
     # Assert
@@ -533,13 +563,15 @@ def test_it_handles_file_too_big(mock_error_handler, mock_s3, message_stub):
     MagicMock(return_value=True),
 )
 @patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
-@patch("backend.ecs_tasks.delete_files.main.s3fs")
+@patch("backend.ecs_tasks.delete_files.main.pa.fs")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
 def test_it_does_not_ignore_not_found_error_by_default(
-    mock_error_handler, mock_s3, message_stub
+    mock_error_handler, mock_fs, message_stub
 ):
-    mock_s3.S3FileSystem.return_value = mock_s3
-    mock_s3.open.side_effect = ClientError({"Error": {"Code": "404"}}, "HeadObject")
+    mock_fs.S3FileSystem.return_value = mock_fs
+    mock_fs.open_input_stream.side_effect = ClientError(
+        {"Error": {"Code": "404"}}, "HeadObject"
+    )
     # Act
     execute("https://queue/url", message_stub(), "receipt_handle")
     # Assert
@@ -555,14 +587,17 @@ def test_it_does_not_ignore_not_found_error_by_default(
     MagicMock(return_value=True),
 )
 @patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
-@patch("backend.ecs_tasks.delete_files.main.s3fs")
+@patch("backend.ecs_tasks.delete_files.main.pa.fs")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
 @patch("backend.ecs_tasks.delete_files.main.handle_skip")
-def test_it_ignores_not_found_error_if_param_is_true(
-    mock_skip_handler, mock_error_handler, mock_s3, message_stub
+@patch("backend.ecs_tasks.delete_files.main.get_object_info")
+def test_it_ignores_boto_not_found_error_if_param_is_true(
+    mock_get_object_info, mock_skip_handler, mock_error_handler, mock_fs, message_stub
 ):
-    mock_s3.S3FileSystem.return_value = mock_s3
-    mock_s3.open.side_effect = ClientError({"Error": {"Code": "404"}}, "HeadObject")
+    mock_fs.S3FileSystem.return_value = mock_fs
+    mock_get_object_info.side_effect = ClientError(
+        {"Error": {"Code": "404"}}, "HeadObject"
+    )
     # Act
     execute(
         "https://queue/url",
@@ -577,18 +612,74 @@ def test_it_ignores_not_found_error_if_param_is_true(
 
 @patch.dict(os.environ, {"JobTable": "test"})
 @patch("backend.ecs_tasks.delete_files.main.get_queue", MagicMock())
+@patch("backend.ecs_tasks.delete_files.main.build_matches", MagicMock())
 @patch(
     "backend.ecs_tasks.delete_files.main.validate_bucket_versioning",
     MagicMock(return_value=True),
 )
 @patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
-@patch("backend.ecs_tasks.delete_files.main.s3fs")
+@patch("backend.ecs_tasks.delete_files.main.pa.fs")
+@patch("backend.ecs_tasks.delete_files.main.handle_error")
+@patch("backend.ecs_tasks.delete_files.main.handle_skip")
+def test_it_ignores_arrow_not_found_error_if_param_is_true(
+    mock_skip_handler, mock_error_handler, mock_fs, message_stub
+):
+    mock_fs.S3FileSystem.return_value = mock_fs
+    mock_fs.open_input_stream.side_effect = FileNotFoundError(
+        ENOENT, strerror(ENOENT), "bucket/key"
+    )
+    # Act
+    execute(
+        "https://queue/url",
+        message_stub(IgnoreObjectNotFoundExceptions=True),
+        "receipt_handle",
+    )
+    # Assert
+    mock_error_handler.assert_not_called()
+    msg = mock_skip_handler.call_args[0][2]
+    assert msg.startswith("Ignored error: Apache Arrow S3FileSystem Error:")
+
+
+@patch.dict(os.environ, {"JobTable": "test"})
+@patch("backend.ecs_tasks.delete_files.main.get_queue", MagicMock())
+@patch(
+    "backend.ecs_tasks.delete_files.main.validate_bucket_versioning",
+    MagicMock(return_value=True),
+)
+@patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
+@patch("backend.ecs_tasks.delete_files.main.pa.fs")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
 @patch("backend.ecs_tasks.delete_files.main.build_matches", MagicMock())
-def test_it_handles_generic_error(mock_error_handler, mock_s3, message_stub):
+def test_it_handles_not_found_error(mock_error_handler, mock_fs, message_stub):
     # Arrange
-    mock_s3.S3FileSystem.return_value = mock_s3
-    mock_s3.open.side_effect = RuntimeError("Some Error")
+    mock_fs.S3FileSystem.return_value = mock_fs
+    mock_fs.open_input_stream.side_effect = FileNotFoundError(
+        ENOENT, strerror(ENOENT), "bucket/key"
+    )
+    # Act
+    execute("https://queue/url", message_stub(), "receipt_handle")
+    # Assert
+    mock_error_handler.assert_called_with(
+        ANY,
+        ANY,
+        "Apache Arrow S3FileSystem Error: [Errno 2] No such file or directory: 'bucket/key'",
+    )
+
+
+@patch.dict(os.environ, {"JobTable": "test"})
+@patch("backend.ecs_tasks.delete_files.main.get_queue", MagicMock())
+@patch(
+    "backend.ecs_tasks.delete_files.main.validate_bucket_versioning",
+    MagicMock(return_value=True),
+)
+@patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
+@patch("backend.ecs_tasks.delete_files.main.pa.fs")
+@patch("backend.ecs_tasks.delete_files.main.handle_error")
+@patch("backend.ecs_tasks.delete_files.main.build_matches", MagicMock())
+def test_it_handles_generic_error(mock_error_handler, mock_fs, message_stub):
+    # Arrange
+    mock_fs.S3FileSystem.return_value = mock_fs
+    mock_fs.open_input_stream.side_effect = RuntimeError("Some Error")
     # Act
     execute("https://queue/url", message_stub(), "receipt_handle")
     # Assert
@@ -599,13 +690,13 @@ def test_it_handles_generic_error(mock_error_handler, mock_s3, message_stub):
 
 @patch("backend.ecs_tasks.delete_files.main.get_queue", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.validate_bucket_versioning")
-@patch("backend.ecs_tasks.delete_files.main.s3fs")
+@patch("backend.ecs_tasks.delete_files.main.pa.fs")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
 def test_it_handles_unversioned_buckets(
-    mock_error_handler, mock_s3, mock_versioning, message_stub
+    mock_error_handler, mock_fs, mock_versioning, message_stub
 ):
     # Arrange
-    mock_s3.S3FileSystem.return_value = mock_s3
+    mock_fs.S3FileSystem.return_value = mock_fs
     mock_versioning.side_effect = ValueError("Versioning validation Error")
     # Act
     execute("https://queue/url", message_stub(), "receipt_handle")
@@ -623,7 +714,7 @@ def test_it_handles_unversioned_buckets(
 )
 @patch("backend.ecs_tasks.delete_files.main.validate_message", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.get_queue", MagicMock())
-@patch("backend.ecs_tasks.delete_files.main.s3fs", MagicMock())
+@patch("backend.ecs_tasks.delete_files.main.pa.fs", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
 @patch("backend.ecs_tasks.delete_files.main.handle_error")
@@ -655,7 +746,7 @@ def test_it_provides_logs_for_acl_fail(
 )
 @patch("backend.ecs_tasks.delete_files.main.validate_message", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.get_queue", MagicMock())
-@patch("backend.ecs_tasks.delete_files.main.s3fs", MagicMock())
+@patch("backend.ecs_tasks.delete_files.main.pa.fs", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.rollback_object_version")
 @patch("backend.ecs_tasks.delete_files.main.verify_object_versions_integrity")
@@ -694,7 +785,7 @@ def test_it_provides_logs_for_failed_version_integrity_check_and_performs_rollba
 )
 @patch("backend.ecs_tasks.delete_files.main.validate_message", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.get_queue", MagicMock())
-@patch("backend.ecs_tasks.delete_files.main.s3fs", MagicMock())
+@patch("backend.ecs_tasks.delete_files.main.pa.fs", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.verify_object_versions_integrity")
 @patch("backend.ecs_tasks.delete_files.main.delete_matches_from_file")
@@ -725,7 +816,7 @@ def test_it_provides_logs_for_get_latest_version_fail(
     "backend.ecs_tasks.delete_files.main.save", MagicMock(return_value="new_version")
 )
 @patch("backend.ecs_tasks.delete_files.main.validate_message", MagicMock())
-@patch("backend.ecs_tasks.delete_files.main.s3fs", MagicMock())
+@patch("backend.ecs_tasks.delete_files.main.pa.fs", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.get_queue", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.verify_object_versions_integrity")
@@ -765,7 +856,7 @@ def test_it_provides_logs_for_failed_rollback_client_error(
     "backend.ecs_tasks.delete_files.main.save", MagicMock(return_value="new_version")
 )
 @patch("backend.ecs_tasks.delete_files.main.validate_message", MagicMock())
-@patch("backend.ecs_tasks.delete_files.main.s3fs", MagicMock())
+@patch("backend.ecs_tasks.delete_files.main.pa.fs", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.get_session", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.get_queue", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.verify_object_versions_integrity")

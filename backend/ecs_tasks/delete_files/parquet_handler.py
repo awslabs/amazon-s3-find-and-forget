@@ -3,6 +3,7 @@ import logging
 import os
 import sys
 from collections import Counter
+from io import BytesIO
 
 import numpy as np
 import pyarrow as pa
@@ -17,7 +18,7 @@ logger.addHandler(handler)
 
 
 def load_parquet(f):
-    return pq.ParquetFile(f, memory_map=False)
+    return pq.ParquetFile(BytesIO(f.read()), memory_map=False)
 
 
 def case_insensitive_getter(from_array, value):

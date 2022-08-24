@@ -10,7 +10,6 @@ from operator import itemgetter
 
 import boto3
 import pyarrow as pa
-import s3fs
 from boto_utils import get_session, json_lines_iterator, parse_s3_url
 from botocore.exceptions import ClientError
 from pyarrow.lib import ArrowException
@@ -28,12 +27,16 @@ from s3 import (
     delete_old_versions,
     DeleteOldVersionsError,
     fetch_manifest,
+    get_object_info,
     IntegrityCheckFailedError,
     rollback_object_version,
     save,
     validate_bucket_versioning,
     verify_object_versions_integrity,
 )
+
+FIVE_MB = 5 * 2**20
+ROLE_SESSION_NAME = "s3f2"
 
 logger = logging.getLogger(__name__)
 logger.setLevel(os.getenv("LOG_LEVEL", logging.INFO))
@@ -132,7 +135,8 @@ def execute(queue_url, message_body, receipt_handle):
         # Parse and validate incoming message
         validate_message(message_body)
         body = json.loads(message_body)
-        session = get_session(body.get("RoleArn"))
+        session = get_session(body.get("RoleArn"), ROLE_SESSION_NAME)
+        ignore_not_found_exceptions = body.get("IgnoreObjectNotFoundExceptions", False)
         client = session.client("s3")
         kms_client = session.client("kms")
         cols, object_path, job_id, file_format, manifest_object = itemgetter(
@@ -141,21 +145,26 @@ def execute(queue_url, message_body, receipt_handle):
         input_bucket, input_key = parse_s3_url(object_path)
         validate_bucket_versioning(client, input_bucket)
         match_ids = build_matches(cols, manifest_object)
-        s3 = s3fs.S3FileSystem(
-            session=session,
-            default_cache_type="none",
-            requester_pays=True,
-            default_fill_cache=False,
-            version_aware=True,
+        s3 = pa.fs.S3FileSystem(
+            region=os.getenv("AWS_DEFAULT_REGION"),
+            session_name=ROLE_SESSION_NAME,
+            external_id=ROLE_SESSION_NAME,
+            role_arn=body.get("RoleArn"),
+            load_frequency=60 * 60,
         )
         # Download the object in-memory and convert to PyArrow NativeFile
         logger.info("Downloading and opening %s object in-memory", object_path)
-        metadata = s3.metadata(object_path, refresh=True)
-        with s3.open(object_path, "rb") as f:
-            source_version = f.version_id
+        with s3.open_input_stream(
+            "{}/{}".format(input_bucket, input_key), buffer_size=FIVE_MB
+        ) as f:
+            source_version = f.metadata()["VersionId"].decode("utf-8")
             logger.info("Using object version %s as source", source_version)
             # Write new file in-memory
             compressed = object_path.endswith(".gz")
+            object_info, _ = get_object_info(
+                client, input_bucket, input_key, source_version
+            )
+            metadata = object_info["Metadata"]
             is_encrypted = is_kms_cse_encrypted(metadata)
             input_file = decrypt(f, metadata, kms_client) if is_encrypted else f
             out_sink, stats = delete_matches_from_file(
@@ -172,7 +181,6 @@ def execute(queue_url, message_body, receipt_handle):
                 output_buf, metadata = encrypt(output_buf, metadata, kms_client)
             logger.info("Uploading new object version to S3")
             new_version = save(
-                s3,
                 client,
                 output_buf,
                 input_bucket,
@@ -193,6 +201,12 @@ def execute(queue_url, message_body, receipt_handle):
             delete_old_versions(client, input_bucket, input_key, new_version)
         msg.delete()
         emit_deletion_event(body, stats)
+    except FileNotFoundError as e:
+        err_message = "Apache Arrow S3FileSystem Error: {}".format(str(e))
+        if ignore_not_found_exceptions:
+            handle_skip(msg, body, "Ignored error: {}".format(err_message))
+        else:
+            handle_error(msg, message_body, err_message)
     except (KeyError, ArrowException) as e:
         err_message = "Apache Arrow processing error: {}".format(str(e))
         handle_error(msg, message_body, err_message)
@@ -210,7 +224,7 @@ def execute(queue_url, message_body, receipt_handle):
         if e.operation_name == "ListObjectVersions":
             err_message += ". Could not verify redacted object version integrity"
         if e.operation_name == "HeadObject" and e.response["Error"]["Code"] == "404":
-            ignore_error = body.get("IgnoreObjectNotFoundExceptions", False)
+            ignore_error = ignore_not_found_exceptions
         if ignore_error:
             skip_reason = "Ignored error: {}".format(err_message)
             handle_skip(msg, body, skip_reason)

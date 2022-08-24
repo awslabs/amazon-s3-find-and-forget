@@ -292,7 +292,9 @@ def test_it_loads_parquet_files():
     df = pd.DataFrame(data)
     buf = BytesIO()
     df.to_parquet(buf, compression="snappy")
-    resp = load_parquet(buf)
+    resp = load_parquet(
+        pa.BufferReader(buf.getvalue())
+    )  # BufferReader inherits from NativeFile
     assert 2 == resp.read().num_rows
 
 

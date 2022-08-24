@@ -20,6 +20,7 @@ from backend.ecs_tasks.delete_files.s3 import (
     IntegrityCheckFailedError,
     rollback_object_version,
     save,
+    s3transfer,
     validate_bucket_versioning,
     verify_object_versions_integrity,
 )
@@ -280,8 +281,6 @@ def test_it_gets_grantees_by_type():
 def test_it_applies_settings_when_saving(
     mock_grantees, mock_acl, mock_tagging, mock_standard, mock_requester
 ):
-    mock_s3 = MagicMock()
-    mock_s3.S3FileSystem.return_value = mock_s3
     mock_client = MagicMock()
     mock_requester.return_value = {"RequestPayer": "requester"}, {"Payer": "Requester"}
     mock_standard.return_value = ({"Expires": "123", "Metadata": {}}, {})
@@ -310,11 +309,21 @@ def test_it_applies_settings_when_saving(
     )
     mock_grantees.return_value = ""
     buf = BytesIO()
-    mock_file = MagicMock(version_id="abc123")
-    mock_s3.open.return_value = mock_s3
-    mock_s3.__enter__.return_value = mock_file
-    resp = save(mock_s3, mock_client, buf, "bucket", "key", {}, "abc123")
-    mock_file.write.assert_called_with(b"")
+    mock_client.upload_fileobj.return_value = {"VersionId": "abc123"}
+    resp = save(mock_client, buf, "bucket", "key", {}, "abc123")
+    mock_client.upload_fileobj.assert_called_with(
+        buf,
+        "bucket",
+        "key",
+        ExtraArgs={
+            "RequestPayer": "requester",
+            "Expires": "123",
+            "Metadata": {},
+            "Tagging": "a=b",
+            "GrantFullControl": "id=abc",
+            "GrantRead": "id=123",
+        },
+    )
     assert "abc123" == resp
     mock_client.put_object_acl.assert_not_called()
 
@@ -327,7 +336,6 @@ def test_it_applies_settings_when_saving(
 def test_it_passes_through_version(
     mock_grantees, mock_acl, mock_tagging, mock_standard, mock_requester
 ):
-    mock_s3 = MagicMock()
     mock_client = MagicMock()
     mock_requester.return_value = {}, {}
     mock_standard.return_value = ({}, {})
@@ -335,7 +343,7 @@ def test_it_passes_through_version(
     mock_acl.return_value = ({}, {})
     mock_grantees.return_value = ""
     buf = BytesIO()
-    save(mock_s3, mock_client, buf, "bucket", "key", {}, "abc123")
+    save(mock_client, buf, "bucket", "key", {}, "abc123")
     mock_acl.assert_called_with(mock_client, "bucket", "key", "abc123")
     mock_tagging.assert_called_with(mock_client, "bucket", "key", "abc123")
     mock_standard.assert_called_with(mock_client, "bucket", "key", "abc123")
@@ -349,8 +357,6 @@ def test_it_passes_through_version(
 def test_it_restores_write_permissions(
     mock_grantees, mock_acl, mock_tagging, mock_standard, mock_requester
 ):
-    mock_s3 = MagicMock()
-    mock_s3.S3FileSystem.return_value = mock_s3
     mock_client = MagicMock()
     mock_requester.return_value = {}, {}
     mock_standard.return_value = ({}, {})
@@ -375,9 +381,8 @@ def test_it_restores_write_permissions(
     )
     mock_grantees.return_value = {"id=123"}
     buf = BytesIO()
-    mock_s3.open.return_value = mock_s3
-    mock_s3.__enter__.return_value = MagicMock(version_id="new_version123")
-    save(mock_s3, mock_client, buf, "bucket", "key", "abc123")
+    mock_client.upload_fileobj.return_value = {"VersionId": "new_version123"}
+    save(mock_client, buf, "bucket", "key", "abc123")
     mock_client.put_object_acl.assert_called_with(
         Bucket="bucket",
         Key="key",
@@ -725,3 +730,46 @@ def test_it_caches_manifests(mock_fetch):
         [call("s3://path/to/manifest1.json"), call("s3://path/to/manifest2.json")],
         any_order=True,
     )
+
+
+def test_s3transfer_locked_version():
+    """
+    https://github.com/boto/s3transfer/issues/82#issuecomment-837971614
+
+    We have a monkey patch in place to allow us using boto3's upload_fileobj
+    when we write back to S3. The issue is that while the method offers a nice
+    wrapper around file operations, such as implementing multipart upload only
+    when needed, we don't get the VersionId back as we would by using
+    put_object. This monkey patch is in place while we wait some pull requests
+    to be merged. In the meanwhile, here is a test that allow us to notice
+    any change on the version we use on s3transfer, in order to add extra
+    protection against automated library upgrade PRs that may silently introduce
+    issues.
+    """
+    assert s3transfer.__version__ == "0.6.0"
+
+
+def test_s3transfer_put_object_monkeypatch_returns_response():
+    put_object_task = s3transfer.upload.PutObjectTask(MagicMock())
+    client_mock = MagicMock()
+    client_mock.put_object.return_value = "result"
+    file_mock = MagicMock()
+    file_mock.__enter__.return_value = b"123"
+
+    resp = put_object_task._main(client_mock, file_mock, "bucket", "key", {})
+
+    client_mock.put_object.assert_called_with(Bucket="bucket", Key="key", Body=b"123")
+    assert resp == "result"
+
+
+def test_s3transfer_complete_multipart_monkeypatch_returns_response():
+    cmpu_task = s3transfer.upload.CompleteMultipartUploadTask(MagicMock())
+    client_mock = MagicMock()
+    client_mock.complete_multipart_upload.return_value = "cmpu_result"
+
+    resp = cmpu_task._main(client_mock, "bucket", "key", "id", [{}], {})
+
+    client_mock.complete_multipart_upload.assert_called_with(
+        Bucket="bucket", Key="key", UploadId="id", MultipartUpload={"Parts": [{}]}
+    )
+    assert resp == "cmpu_result"
