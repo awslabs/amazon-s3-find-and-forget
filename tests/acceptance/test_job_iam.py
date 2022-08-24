@@ -1155,3 +1155,87 @@ def test_it_handles_forget_invalid_role(
         == job_table.get_item(Key={"Id": job_id, "Sk": job_id})["Item"]["JobStatus"]
     )
     assert 1 == len(list(bucket.object_versions.filter(Prefix=object_key)))
+
+
+def test_it_handles_json_all_rows_deleted(
+    del_queue_factory,
+    job_factory,
+    dummy_lake,
+    glue_data_mapper_factory,
+    data_loader,
+    job_complete_waiter,
+    job_table,
+):
+    # Arrange
+    glue_data_mapper_factory(
+        "test",
+        partition_keys=["year", "month", "day"],
+        partitions=[["2019", "08", "20"]],
+        fmt="json",
+    )
+    item = del_queue_factory("12345", "id1")
+    item2 = del_queue_factory("23456", "id2")
+    item3 = del_queue_factory("34567", "id3")
+    object_key = "test/2019/08/20/test.json"
+    data_loader("basic.json", object_key, Metadata={"foo": "bar"}, CacheControl="cache")
+    bucket = dummy_lake["bucket"]
+    job_id = job_factory(del_queue_items=[item, item2, item3])["Id"]
+    # Act
+    job_complete_waiter.wait(
+        TableName=job_table.name, Key={"Id": {"S": job_id}, "Sk": {"S": job_id}}
+    )
+    # Assert
+    tmp = tempfile.NamedTemporaryFile()
+    bucket.download_file(object_key, tmp.name)
+    assert (
+        "COMPLETED"
+        == job_table.get_item(Key={"Id": job_id, "Sk": job_id})["Item"]["JobStatus"]
+    )
+    content = open(tmp.name, "rb").read()
+    assert content == b""  # JSON is empty
+    assert 2 == len(list(bucket.object_versions.filter(Prefix=object_key)))
+    assert {"foo": "bar"} == bucket.Object(object_key).metadata
+    assert "cache" == bucket.Object(object_key).cache_control
+
+
+def test_it_handles_parquet_all_rows_deleted(
+    del_queue_factory,
+    job_factory,
+    dummy_lake,
+    glue_data_mapper_factory,
+    data_loader,
+    job_complete_waiter,
+    job_table,
+):
+    # Arrange
+    glue_data_mapper_factory(
+        "test",
+        partition_keys=["year", "month", "day"],
+        partitions=[["2019", "08", "20"]],
+    )
+    item = del_queue_factory("12345", "id1")
+    item2 = del_queue_factory("23456", "id2")
+    item3 = del_queue_factory("34567", "id3")
+    object_key = "test/2019/08/20/test.parquet"
+    data_loader(
+        "basic.parquet", object_key, Metadata={"foo": "bar"}, CacheControl="cache"
+    )
+    bucket = dummy_lake["bucket"]
+    job_id = job_factory(del_queue_items=[item, item2, item3])["Id"]
+    # Act
+    job_complete_waiter.wait(
+        TableName=job_table.name, Key={"Id": {"S": job_id}, "Sk": {"S": job_id}}
+    )
+    # Assert
+    tmp = tempfile.NamedTemporaryFile()
+    bucket.download_fileobj(object_key, tmp)
+    assert (
+        "COMPLETED"
+        == job_table.get_item(Key={"Id": job_id, "Sk": job_id})["Item"]["JobStatus"]
+    )
+    assert 0 == len(query_parquet_file(tmp, "customer_id", "12345"))
+    assert 0 == len(query_parquet_file(tmp, "customer_id", "23456"))
+    assert 0 == len(query_parquet_file(tmp, "customer_id", "34567"))
+    assert 2 == len(list(bucket.object_versions.filter(Prefix=object_key)))
+    assert {"foo": "bar"} == bucket.Object(object_key).metadata
+    assert "cache" == bucket.Object(object_key).cache_control
