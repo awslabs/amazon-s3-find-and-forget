@@ -1,5 +1,10 @@
 # Change Log
 
+## v0.54
+
+- [#336](https://github.com/awslabs/amazon-s3-find-and-forget/pull/336): Add
+  Mumbai (ap-south-1) deploy link
+
 ## v0.53
 
 - [#332](https://github.com/awslabs/amazon-s3-find-and-forget/pull/332):
