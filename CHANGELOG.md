@@ -2,6 +2,8 @@
 
 ## v0.55 (unreleased)
 
+- [#341](https://github.com/awslabs/amazon-s3-find-and-forget/pull/341): Upgrade
+  build dependencies
 - [#340](https://github.com/awslabs/amazon-s3-find-and-forget/pull/340): Upgrade
   frontend dependencies
 
