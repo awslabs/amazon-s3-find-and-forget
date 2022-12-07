@@ -11,7 +11,7 @@ import pyarrow.parquet as pq
 
 logger = logging.getLogger(__name__)
 logger.setLevel(os.getenv("LOG_LEVEL", logging.INFO))
-formatter = logging.Formatter("[%(levelname)s] %(message)s")
+formatter = logging.Formatter("[%(levelname)s] PID:%(process)d> %(message)s")
 handler = logging.StreamHandler(stream=sys.stdout)
 handler.setFormatter(formatter)
 logger.addHandler(handler)

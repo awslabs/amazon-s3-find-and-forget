@@ -5,7 +5,7 @@ import sys
 import signal
 import time
 import logging
-from multiprocessing import Pool, cpu_count
+from multiprocessing import cpu_count, get_context
 from operator import itemgetter
 
 import boto3
@@ -40,7 +40,7 @@ ROLE_SESSION_NAME = "s3f2"
 
 logger = logging.getLogger(__name__)
 logger.setLevel(os.getenv("LOG_LEVEL", logging.INFO))
-formatter = logging.Formatter("[%(levelname)s] %(message)s")
+formatter = logging.Formatter("[%(levelname)s] PID:%(process)d> %(message)s")
 handler = logging.StreamHandler(stream=sys.stdout)
 handler.setFormatter(formatter)
 logger.addHandler(handler)
@@ -280,7 +280,7 @@ def main(queue_url, max_messages, wait_time, sleep_time):
     logger.info("CPU count for system: %s", cpu_count())
     messages = []
     queue = get_queue(queue_url)
-    with Pool(maxtasksperchild=1) as pool:
+    with get_context("spawn").Pool(maxtasksperchild=1) as pool:
         signal.signal(signal.SIGINT, lambda *_: kill_handler(messages, pool))
         signal.signal(signal.SIGTERM, lambda *_: kill_handler(messages, pool))
         while 1:

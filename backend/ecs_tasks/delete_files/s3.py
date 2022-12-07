@@ -1,4 +1,6 @@
 import logging
+import os
+import sys
 from functools import lru_cache
 from urllib.parse import urlencode, quote_plus
 from tenacity import (
@@ -49,6 +51,11 @@ s3transfer.upload.CompleteMultipartUploadTask = CompleteMultipartUploadTask
 
 
 logger = logging.getLogger(__name__)
+logger.setLevel(os.getenv("LOG_LEVEL", logging.INFO))
+formatter = logging.Formatter("[%(levelname)s] PID:%(process)d> %(message)s")
+handler = logging.StreamHandler(stream=sys.stdout)
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 
 def save(client, buf, bucket, key, metadata, source_version=None):
