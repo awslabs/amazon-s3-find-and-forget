@@ -1,7 +1,12 @@
 # Change Log
 
-## v0.55 (unreleased)
+## v0.55
 
+- [#342](https://github.com/awslabs/amazon-s3-find-and-forget/pull/342): Fix for
+  an issue affecting jobs terminating with FORGET_PARTIALLY_FAILED despite
+  correctly processing all the objects, caused by ECS running multi-processing
+  in fork mode. It includes improvement on multi-processing handling, as well as
+  enhanced logging to include PIDs when running on ECS during the Forget phase
 - [#341](https://github.com/awslabs/amazon-s3-find-and-forget/pull/341): Upgrade
   build dependencies
 - [#340](https://github.com/awslabs/amazon-s3-find-and-forget/pull/340): Upgrade

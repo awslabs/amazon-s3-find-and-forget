@@ -1,6 +1,7 @@
 import json
 import os
 import logging
+import sys
 import urllib.request
 import urllib.error
 from collections.abc import Iterable
@@ -9,6 +10,11 @@ from functools import lru_cache
 from boto_utils import emit_event
 
 logger = logging.getLogger(__name__)
+logger.setLevel(os.getenv("LOG_LEVEL", logging.INFO))
+formatter = logging.Formatter("[%(levelname)s] PID:%(process)d> %(message)s")
+handler = logging.StreamHandler(stream=sys.stdout)
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 
 def emit_deletion_event(message_body, stats):

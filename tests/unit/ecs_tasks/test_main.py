@@ -1047,19 +1047,24 @@ def test_it_does_not_override_user_supplied_endpoint_url(mock_boto):
 
 
 @patch("backend.ecs_tasks.delete_files.main.signal", MagicMock())
-@patch("backend.ecs_tasks.delete_files.main.Pool")
+@patch("backend.ecs_tasks.delete_files.main.get_context")
 @patch("backend.ecs_tasks.delete_files.main.get_queue")
-def test_it_starts_subprocesses(mock_queue, mock_pool):
+def test_it_starts_subprocesses(mock_queue, mock_context):
     mock_queue.return_value = mock_queue
     mock_message = MagicMock()
     mock_queue.receive_messages.return_value = [mock_message]
     # Break out of while loop
+    mock_pool = MagicMock()
+    mock_context.return_value = mock_context
+    mock_context.__enter__.return_value = mock_context
+    mock_context.Pool = mock_pool
     mock_pool.return_value = mock_pool
     mock_pool.__enter__.return_value = mock_pool
     mock_pool.starmap.side_effect = RuntimeError("Break loop")
     with pytest.raises(RuntimeError):
         main("https://queue/url", 1, 1, 1)
     mock_pool.assert_called_with(maxtasksperchild=1)
+    mock_context.assert_called_with("spawn")
     mock_pool.starmap.assert_called_with(
         ANY, [("https://queue/url", mock_message.body, mock_message.receipt_handle)]
     )
@@ -1068,7 +1073,7 @@ def test_it_starts_subprocesses(mock_queue, mock_pool):
     )
 
 
-@patch("backend.ecs_tasks.delete_files.main.Pool", MagicMock())
+@patch("backend.ecs_tasks.delete_files.main.get_context", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.signal", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.get_queue")
 @patch("backend.ecs_tasks.delete_files.main.time")
@@ -1082,7 +1087,7 @@ def test_it_sleeps_where_no_messages(mock_time, mock_queue):
     mock_time.sleep.assert_called_with(1)
 
 
-@patch("backend.ecs_tasks.delete_files.main.Pool", MagicMock())
+@patch("backend.ecs_tasks.delete_files.main.get_context", MagicMock())
 @patch("backend.ecs_tasks.delete_files.main.signal")
 @patch("backend.ecs_tasks.delete_files.main.get_queue")
 def test_it_sets_kill_handlers(mock_queue, mock_signal):
