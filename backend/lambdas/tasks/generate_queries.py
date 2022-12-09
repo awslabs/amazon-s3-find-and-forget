@@ -180,37 +180,45 @@ def generate_athena_queries(data_mapper, deletion_items, job_id):
             "MatchId", "DeletionQueueItemId", "CreatedAt"
         )(item)
         is_simple = not isinstance(mid, list)
-        if is_simple:
-            for column in msg["Columns"]:
-                casted = cast_to_type(mid, column, table_name, columns_tree)
-                if column not in columns_with_matches:
-                    columns_with_matches[column] = {
-                        "Column": column,
-                        "Type": "Simple",
+        try:
+            if is_simple:
+                for column in msg["Columns"]:
+                    casted = cast_to_type(mid, column, table_name, columns_tree)
+                    if column not in columns_with_matches:
+                        columns_with_matches[column] = {
+                            "Column": column,
+                            "Type": "Simple",
+                        }
+                    manifest += build_manifest_row(
+                        [column], casted, item_id, item_createdat, False
+                    )
+            else:
+                sorted_mid = sorted(mid, key=lambda x: x["Column"])
+                query_columns = list(map(lambda x: x["Column"], sorted_mid))
+                column_key = COMPOSITE_JOIN_TOKEN.join(query_columns)
+                composite_match = list(
+                    map(
+                        lambda x: cast_to_type(
+                            x["Value"], x["Column"], table_name, columns_tree
+                        ),
+                        sorted_mid,
+                    )
+                )
+                if column_key not in columns_with_matches:
+                    columns_with_matches[column_key] = {
+                        "Columns": query_columns,
+                        "Type": "Composite",
                     }
                 manifest += build_manifest_row(
-                    [column], casted, item_id, item_createdat, False
+                    query_columns, composite_match, item_id, item_createdat, True
                 )
-        else:
-            sorted_mid = sorted(mid, key=lambda x: x["Column"])
-            query_columns = list(map(lambda x: x["Column"], sorted_mid))
-            column_key = COMPOSITE_JOIN_TOKEN.join(query_columns)
-            composite_match = list(
-                map(
-                    lambda x: cast_to_type(
-                        x["Value"], x["Column"], table_name, columns_tree
-                    ),
-                    sorted_mid,
-                )
+        except MatchIdCastingError as e:
+            col, col_type = e.args
+            err_message = "Invalid match ID (DeletionQueueItemId:'{}') on Data Mapper '{}'. Casting failed: expected type for column '{}': '{}'".format(
+                item_id, data_mapper["DataMapperId"], col, col_type
             )
-            if column_key not in columns_with_matches:
-                columns_with_matches[column_key] = {
-                    "Columns": query_columns,
-                    "Type": "Composite",
-                }
-            manifest += build_manifest_row(
-                query_columns, composite_match, item_id, item_createdat, True
-            )
+            raise ValueError(err_message)
+
     s3.Bucket(manifests_bucket_name).put_object(Body=manifest, Key=manifest_key)
     msg["Columns"] = list(columns_with_matches.values())
     msg["Manifest"] = "s3://{}/{}".format(manifests_bucket_name, manifest_key)
@@ -491,9 +499,18 @@ def cast_to_type(val, col, table_name, columns_tree):
                 col, table_name
             )
         )
-    if col_type in ("bigint", "int", "smallint", "tinyint"):
-        return int(val)
-    if col_type in ("double", "float"):
-        return float(val)
+    try:
+        if col_type in ("bigint", "int", "smallint", "tinyint"):
+            return int(val)
+        if col_type in ("double", "float"):
+            return float(val)
 
-    return str(val)
+        return str(val)
+    except ValueError as e:
+        raise MatchIdCastingError(col, col_type)
+
+
+class MatchIdCastingError(Exception):
+    def __init__(self, col, col_type):
+        self.col = col
+        self.col_type = col_type
