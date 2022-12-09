@@ -1,5 +1,13 @@
 # Change Log
 
+## v0.56 (unreleased)
+
+- [#343](https://github.com/awslabs/amazon-s3-find-and-forget/pull/343): Upgrade
+  frontend dependencies
+- [#345](https://github.com/awslabs/amazon-s3-find-and-forget/pull/345):
+  Improved error handling when processing invalid match IDs during the Query
+  Planning phase
+
 ## v0.55
 
 - [#342](https://github.com/awslabs/amazon-s3-find-and-forget/pull/342): Fix for
