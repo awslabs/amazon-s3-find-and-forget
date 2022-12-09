@@ -35,7 +35,7 @@ botocore==1.27.38
     #   s3transfer
 build==0.8.0
     # via pip-tools
-certifi==2022.6.15
+certifi==2022.12.7
     # via requests
 cffi==1.15.1
     # via
@@ -62,8 +62,6 @@ cryptography==3.4.7
     # via -r ./backend/ecs_tasks/delete_files/requirements.txt
 distlib==0.3.5
     # via virtualenv
-exceptiongroup==1.0.4
-    # via pytest
 filelock==3.7.1
     # via virtualenv
 identify==2.5.2
@@ -192,13 +190,7 @@ toml==0.10.2
     #   pre-commit
     #   yq
 tomli==2.0.1
-    # via
-    #   black
-    #   build
-    #   coverage
-    #   pytest
-typing-extensions==4.3.0
-    # via black
+    # via pep517
 urllib3==1.26.11
     # via
     #   -r ./backend/ecs_tasks/delete_files/requirements.txt
