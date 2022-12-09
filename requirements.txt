@@ -35,8 +35,10 @@ botocore==1.27.38
     #   s3transfer
 build==0.8.0
     # via pip-tools
-certifi==2022.6.15
-    # via requests
+certifi==2022.12.7
+    # via
+    #   -r requirements.in
+    #   requests
 cffi==1.15.1
     # via
     #   -r ./backend/ecs_tasks/delete_files/requirements.txt
