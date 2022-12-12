@@ -4,6 +4,9 @@
 
 - [#343](https://github.com/awslabs/amazon-s3-find-and-forget/pull/343): Upgrade
   frontend dependencies
+- [#345](https://github.com/awslabs/amazon-s3-find-and-forget/pull/345):
+  Improved error handling when processing invalid match IDs during the Query
+  Planning phase
 - [#346](https://github.com/awslabs/amazon-s3-find-and-forget/pull/346): Upgrade
   build dependencies
 

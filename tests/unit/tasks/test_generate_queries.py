@@ -19,6 +19,7 @@ with patch.dict(os.environ, {"QueryQueue": "test"}):
         get_table,
         handler,
         write_partitions,
+        MatchIdCastingError,
     )
 
 pytestmark = [pytest.mark.unit, pytest.mark.task]
@@ -180,6 +181,50 @@ class TestAthenaQueries:
             )
             + "\n",
         )
+
+    @patch("backend.lambdas.tasks.generate_queries.s3.Bucket")
+    @patch("backend.lambdas.tasks.generate_queries.get_table")
+    @patch("backend.lambdas.tasks.generate_queries.get_partitions")
+    def test_it_handles_invalid_match(
+        self, get_partitions_mock, get_table_mock, bucket_mock
+    ):
+        put_object_mock = MagicMock()
+        bucket_mock.return_value = put_object_mock
+        columns = [{"Name": "customer_id", "Type": "int"}]
+        partition_keys = ["product_category"]
+        partitions = [["Books"]]
+        get_table_mock.return_value = table_stub(columns, partition_keys)
+        get_partitions_mock.return_value = [
+            partition_stub(p, columns) for p in partitions
+        ]
+
+        with pytest.raises(ValueError) as e:
+            generate_athena_queries(
+                {
+                    "DataMapperId": "a",
+                    "QueryExecutor": "athena",
+                    "Columns": [col["Name"] for col in columns],
+                    "Format": "parquet",
+                    "QueryExecutorParameters": {
+                        "DataCatalogProvider": "glue",
+                        "Database": "test_db",
+                        "Table": "test_table",
+                    },
+                },
+                [
+                    {
+                        "MatchId": "a_string",
+                        "CreatedAt": 1614698440,
+                        "DeletionQueueItemId": "id-01",
+                    }
+                ],
+                "job_1234567890",
+            )
+        assert (
+            e.value.args[0]
+            == "Invalid match ID (DeletionQueueItemId:'id-01') on Data Mapper 'a'. Casting failed: expected type for column 'customer_id': 'int'"
+        )
+        put_object_mock.put_object.assert_not_called()
 
     @patch("backend.lambdas.tasks.generate_queries.s3.Bucket")
     @patch("backend.lambdas.tasks.generate_queries.get_table")
@@ -1624,13 +1669,14 @@ class TestAthenaQueries:
         )
 
     def test_it_throws_for_unconvertable_matches(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(MatchIdCastingError) as e:
             cast_to_type(
                 "mystr",
                 "test_col",
                 "TableName",
                 list(map(column_mapper, [{"Name": "test_col", "Type": "int"}])),
             )
+        assert e.value.args == ("test_col", "int")
 
     def test_it_throws_for_invalid_schema_for_inner_children(self):
         with pytest.raises(ValueError) as e:
