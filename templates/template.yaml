@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
-Description: Amazon S3 Find and Forget (uksb-1q2j8beb0) (version:v0.55)
+Description: Amazon S3 Find and Forget (uksb-1q2j8beb0) (version:v0.56)
 
 Parameters:
   AccessControlAllowOriginOverride:
@@ -118,6 +118,18 @@ Parameters:
     Description: Comma-delimited list of KMS Key Arns used for client-side Encryption. Leave empty if data is not client-side encrypted with KMS
     Type: String
     Default: ""
+  LambdaAPIMemorySize:
+    Description: The memory allocated to Lambda API handlers
+    Type: Number
+    Default: 128
+    MinValue: 128
+    MaxValue: 10240
+  LambdaJobsMemorySize:
+    Description: The memory allocated to Lambda Deletion Jobs tasks
+    Type: Number
+    Default: 512
+    MinValue: 128
+    MaxValue: 10240
   PreBuiltArtefactsBucketOverride:
     Description: Overrides the default Bucket containing Front-end and Back-end pre-built artefacts. When false, the default is used for the given region (for example solution-builders-us-west-1)
     Type: String
@@ -194,7 +206,7 @@ Conditions:
 Mappings:
   Solution:
     Constants:
-      Version: 'v0.55'
+      Version: 'v0.56'
 
 Resources:
   TempBucket:
@@ -288,6 +300,7 @@ Resources:
         EnableAccessLogging: !Ref EnableAPIAccessLogging
         JobTableDateGSI: !GetAtt DDBStack.Outputs.JobTableDateGSI
         JobTableName: !GetAtt DDBStack.Outputs.JobTable
+        LambdaAPIMemorySize: !Ref LambdaAPIMemorySize
         WebUIOrigin: !If [ShouldDeployWebUI, !GetAtt WebUIStack.Outputs.Origin, "none"]
         DeployCognito: !If [ShouldDeployCognito, "true", "false"]
   AuthStack:
@@ -379,6 +392,7 @@ Resources:
         GlueDatabase: !GetAtt ManifestsStack.Outputs.GlueDatabase
         JobManifestsGlueTable: !GetAtt ManifestsStack.Outputs.JobManifestsGlueTable
         JobTableName: !GetAtt DDBStack.Outputs.JobTable
+        LambdaJobsMemorySize: !Ref LambdaJobsMemorySize
         ManifestsBucket: !GetAtt ManifestsStack.Outputs.ManifestsBucket
         ResultBucket: !Ref TempBucket
         StateMachinePrefix: !Ref ResourcePrefix
@@ -398,6 +412,7 @@ Resources:
         JobTableDateGSI: !GetAtt DDBStack.Outputs.JobTableDateGSI
         JobTableName: !GetAtt DDBStack.Outputs.JobTable
         JobTableStreamArn: !GetAtt DDBStack.Outputs.JobTableStreamArn
+        LambdaJobsMemorySize: !Ref LambdaJobsMemorySize
         ManifestsBucket: !GetAtt ManifestsStack.Outputs.ManifestsBucket
         StateMachineArn: !GetAtt StateMachineStack.Outputs.StateMachineArn
   VpcStack:
@@ -522,6 +537,8 @@ Metadata:
           - DeletionTasksMaxNumber
           - DeletionTaskCPU
           - DeletionTaskMemory
+          - LambdaAPIMemorySize
+          - LambdaJobsMemorySize
       - Label:
           default: "Waiter Configuration"
         Parameters:
