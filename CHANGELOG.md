@@ -1,6 +1,6 @@
 # Change Log
 
-## v0.56 (unreleased)
+## v0.56
 
 - [#343](https://github.com/awslabs/amazon-s3-find-and-forget/pull/343): Upgrade
   frontend dependencies
@@ -9,6 +9,9 @@
   Planning phase
 - [#346](https://github.com/awslabs/amazon-s3-find-and-forget/pull/346): Upgrade
   build dependencies
+- [#347](https://github.com/awslabs/amazon-s3-find-and-forget/pull/347): Add
+  settings to allocate AWS Lambda memory size for API handlers and Deletion Job
+  tasks
 
 ## v0.55
 
