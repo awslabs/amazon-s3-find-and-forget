@@ -216,6 +216,10 @@ resources.
      see [Fargate Configuration]
    - **DeletionTaskMemory:** (Default: 30720) Fargate task memory limit. For
      more info see [Fargate Configuration]
+   - **LambdaAPIMemorySize:** (Default: 128) The memory allocated to API
+     handler Lambda functions. For more info see [Lambda Configuration]
+   - **LambdaJobsMemorySize:** (Default: 512) The memory allocated to
+     Deletion Job Lambda functions. For more info see [Lambda Configuration]
    - **QueryExecutionWaitSeconds:** (Default: 3) How long to wait when checking
      if an Athena Query has completed.
    - **QueryQueueWaitSeconds:** (Default: 3) How long to wait when checking if
@@ -941,3 +945,5 @@ To delete a stack via the AWS CLI
   https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-stack-exports.html
 [s3 lifecycle policies]:
   https://docs.aws.amazon.com/AmazonS3/latest/userguide/intro-lifecycle-rules.html
+[lambda configuration]:
+  https://docs.aws.amazon.com/lambda/latest/operatorguide/computing-power.html

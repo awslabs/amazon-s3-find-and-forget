@@ -47,6 +47,38 @@ events from the Jobs table<sup>\*</sup>.
 <sup>\*</sup> **WARNING:** You should manually intervene only when there as been
 a fatal error from which the system cannot recover.
 
+### Job appears stuck in FORGET_COMPLETED_CLEANUP_IN_PROGRESS
+
+If you are running a job with a very large queue of matches (more than 100K
+entries), the Lambda function that removes the processed matches from the queue after a
+successful job may need to use a large amount of memory to process the deletions
+efficiently within the 15 minutes timeout. If you notice that the job status
+doesn't update after an hour, the queue size doesn't decrease, and a spike in
+memory usage for the Stream Processor Lambda function, it is likely that the system is
+stuck and you won't be able to run any other job.
+
+To troubleshoot this scenario:
+
+1. Edit the DynamoDB item for the given JobID and change
+   the Status to `COMPLETED_CLEANUP_FAILED` in order to be able to start a new
+   job.
+   - Using the DynamoDB AWS Console, choose the JobTable (the name will be
+     something like
+     `<stackName>-DDBStack-XXXXXXXXXXXXX-JobTableXXXXXX-XXXXXXXXXXXX`) and
+     choose `Explore table Items`.
+   - Insert the Job ID in the `ID (Partition Key)` field.
+   - In the `Sk (Sort Key)` choose `Equal to` and insert the Job ID in the text
+     field, then select `Run`.
+   - Select the item in the results table, and choose `Edit item`.
+   - Deselect `View DynamoDB JSON` and then modify the `JobStatus` value to
+     `COMPLETED_CLEANUP_FAILED`.
+   - Choose `Save changes`.
+2. Update the solution CloudFormation stack and specify a larger
+   `LambdaJobsMemorySize` parameter value. See the 
+   [AWS Lambda Operator Guide](https://docs.aws.amazon.com/lambda/latest/operatorguide/computing-power.html) for valid values.
+3. Run a new Job and monitor the Stream Processor Lambda memory usage during the
+   next jobs.
+
 ### Job status: COMPLETED_CLEANUP_FAILED
 
 A `COMPLETED_CLEANUP_FAILED` status indicates that the job has completed, but an

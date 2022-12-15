@@ -12,6 +12,7 @@ Globals:
   Function:
     Runtime: python3.9
     Timeout: 900
+    MemorySize: !Ref LambdaJobsMemorySize
     Layers: !Ref CommonLayers
     Environment:
       Variables:
@@ -44,6 +45,10 @@ Parameters:
   JobTableStreamArn:
     Description: Stream ARN for Jobs Table
     Type: String
+  LambdaJobsMemorySize:
+    Type: Number
+    MinValue: 128
+    MaxValue: 10240
   LogLevel:
     Type: String
     Default: INFO
@@ -67,7 +72,6 @@ Resources:
     Properties:
       Handler: stream_processor.handler
       CodeUri: ../backend/lambdas/jobs/
-      MemorySize: 512
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref JobTableName

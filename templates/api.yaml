@@ -6,6 +6,7 @@ Globals:
   Function:
     Runtime: python3.9
     Timeout: 180
+    MemorySize: !Ref LambdaAPIMemorySize
     Layers: !Ref CommonLayers
     Environment:
       Variables:
@@ -52,6 +53,10 @@ Parameters:
   JobTableName:
     Description: Table name for Jobs Table
     Type: String
+  LambdaAPIMemorySize:
+    Type: Number
+    MinValue: 128
+    MaxValue: 10240
   LogLevel:
     Type: String
     Default: INFO
@@ -1098,7 +1103,6 @@ Resources:
     Properties:
       Handler: handlers.process_handler
       CodeUri: ../backend/lambdas/queue/
-      MemorySize: 512
       Events:
         Get:
           Type: Api

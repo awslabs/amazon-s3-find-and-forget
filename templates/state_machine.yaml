@@ -6,6 +6,7 @@ Globals:
   Function:
     Runtime: python3.9
     Timeout: 900
+    MemorySize: !Ref LambdaJobsMemorySize
     Tracing: Active
     Layers: !Ref CommonLayers
     Environment:
@@ -43,6 +44,10 @@ Parameters:
   JobTableName:
     Description: Table name for Jobs Table
     Type: String
+  LambdaJobsMemorySize:
+    Type: Number
+    MinValue: 128
+    MaxValue: 10240
   LogLevel:
     Type: String
     Default: INFO
@@ -827,7 +832,6 @@ Resources:
     Properties:
       Handler: submit_query_results.handler
       CodeUri: ../backend/lambdas/tasks/
-      MemorySize: 512
       Environment:
         Variables:
           QueueUrl: !Ref DeleteQueueUrl
@@ -854,7 +858,6 @@ Resources:
     Properties:
       Handler: generate_queries.handler
       CodeUri: ../backend/lambdas/tasks/
-      MemorySize: 512
       Environment:
         Variables:
           QueryQueue: !Ref QueryQueue
