@@ -216,10 +216,10 @@ resources.
      see [Fargate Configuration]
    - **DeletionTaskMemory:** (Default: 30720) Fargate task memory limit. For
      more info see [Fargate Configuration]
-   - **LambdaAPIMemorySize:** (Default: 128) The memory allocated to API
-     handler Lambda functions. For more info see [Lambda Configuration]
-   - **LambdaJobsMemorySize:** (Default: 512) The memory allocated to
-     Deletion Job Lambda functions. For more info see [Lambda Configuration]
+   - **LambdaAPIMemorySize:** (Default: 128) The memory allocated to API handler
+     Lambda functions. For more info see [Lambda Configuration]
+   - **LambdaJobsMemorySize:** (Default: 512) The memory allocated to Deletion
+     Job Lambda functions. For more info see [Lambda Configuration]
    - **QueryExecutionWaitSeconds:** (Default: 3) How long to wait when checking
      if an Athena Query has completed.
    - **QueryQueueWaitSeconds:** (Default: 3) How long to wait when checking if
