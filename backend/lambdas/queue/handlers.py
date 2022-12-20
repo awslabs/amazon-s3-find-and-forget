@@ -48,7 +48,6 @@ def enqueue_handler(event, context):
     validate_queue_items([body])
     user_info = get_user_info(event)
     item = enqueue_items([body], user_info)[0]
-    deletion_queue_table.put_item(Item=item)
     return {"statusCode": 201, "body": json.dumps(item, cls=DecimalEncoder)}
 
 
