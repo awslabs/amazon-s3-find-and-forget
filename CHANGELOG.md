@@ -1,5 +1,10 @@
 # Change Log
 
+## v0.57 (unreleased)
+
+- [#348](https://github.com/awslabs/amazon-s3-find-and-forget/pull/348): Cost
+  and performance improvement for Queue API
+
 ## v0.56
 
 - [#343](https://github.com/awslabs/amazon-s3-find-and-forget/pull/343): Upgrade
