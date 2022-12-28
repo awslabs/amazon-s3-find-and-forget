@@ -4,6 +4,8 @@
 
 - [#348](https://github.com/awslabs/amazon-s3-find-and-forget/pull/348): Cost
   and performance improvement for Queue API
+- [#350](https://github.com/awslabs/amazon-s3-find-and-forget/pull/350): Upgrade
+  build dependencies
 
 ## v0.56
 
