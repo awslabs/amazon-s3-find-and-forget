@@ -11,7 +11,9 @@
     "autoprefixer": "10.4.5",
     "nth-check": "2.0.1"
   },
-  "workspaces": ["frontend"],
+  "workspaces": [
+    "frontend"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/awslabs/amazon-s3-find-and-forget.git"
