@@ -60,7 +60,7 @@ coverage[toml]==6.4.2
     # via pytest-cov
 crhelper==2.0.10
     # via -r ./backend/lambda_layers/cr_helper/requirements.txt
-cryptography==3.4.7
+cryptography==39.0.1
     # via -r ./backend/ecs_tasks/delete_files/requirements.txt
 distlib==0.3.5
     # via virtualenv
