@@ -40,7 +40,7 @@ def test_delete_correct_rows_when_missing_newline_at_the_end():
     )
     out_stream = to_json_file(data)
     # Act
-    out, stats = delete_matches_from_json_file(out_stream, to_delete, [])
+    out, stats = delete_matches_from_json_file(out_stream, to_delete)
     assert isinstance(out, pa.BufferOutputStream)
     assert {"ProcessedRows": 3, "DeletedRows": 1} == stats
     assert to_json_string(out) == (
@@ -60,7 +60,7 @@ def test_delete_correct_rows_containing_newlines_as_content():
     )
     out_stream = to_json_file(data)
     # Act
-    out, stats = delete_matches_from_json_file(out_stream, to_delete, [])
+    out, stats = delete_matches_from_json_file(out_stream, to_delete)
     assert isinstance(out, pa.BufferOutputStream)
     assert {"ProcessedRows": 3, "DeletedRows": 1} == stats
     assert to_json_string(out) == (
@@ -79,7 +79,7 @@ def test_delete_correct_rows_from_json_file_with_complex_types():
     )
     out_stream = to_json_file(data)
     # Act
-    out, stats = delete_matches_from_json_file(out_stream, to_delete, [])
+    out, stats = delete_matches_from_json_file(out_stream, to_delete)
     assert isinstance(out, pa.BufferOutputStream)
     assert {"ProcessedRows": 3, "DeletedRows": 1} == stats
     assert to_json_string(out) == (
