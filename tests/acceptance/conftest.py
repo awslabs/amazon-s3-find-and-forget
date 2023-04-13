@@ -330,6 +330,7 @@ def glue_table_factory(dummy_lake, glue_client, glue_columns):
         partitions=[],
         partition_key_types="string",
         encrypted=False,
+        compressed=False,
     ):
         glue_client.create_database(DatabaseInput={"Name": database})
         input_format = (
@@ -358,7 +359,7 @@ def glue_table_factory(dummy_lake, glue_client, glue_columns):
                     ),
                     "InputFormat": input_format,
                     "OutputFormat": output_format,
-                    "Compressed": False,
+                    "Compressed": compressed,
                     "SerdeInfo": {
                         "SerializationLibrary": ser_library,
                         "Parameters": {"serialization.format": "1"},
@@ -433,6 +434,7 @@ def glue_data_mapper_factory(
         column_identifiers=["customer_id"],
         partition_key_types="string",
         encrypted=False,
+        compressed=False,
     ):
         item = {
             "DataMapperId": data_mapper_id,
@@ -444,6 +446,7 @@ def glue_data_mapper_factory(
                 "Table": table,
             },
             "Format": fmt,
+            "Compressed": compressed,
             "DeleteOldVersions": delete_old_versions,
             "IgnoreObjectNotFoundExceptions": ignore_object_not_found_exceptions,
         }
@@ -460,6 +463,7 @@ def glue_data_mapper_factory(
             partitions=partitions,
             partition_key_types=partition_key_types,
             encrypted=encrypted,
+            compressed=compressed,
         )
 
         items.append(item)
