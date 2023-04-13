@@ -155,7 +155,8 @@ def execute(queue_url, message_body, receipt_handle):
         # Download the object in-memory and convert to PyArrow NativeFile
         logger.info("Downloading and opening %s object in-memory", object_path)
         with s3.open_input_stream(
-            "{}/{}".format(input_bucket, input_key), buffer_size=FIVE_MB
+            "{}/{}".format(input_bucket, input_key),
+            buffer_size=FIVE_MB,
         ) as f:
             source_version = f.metadata()["VersionId"].decode("utf-8")
             logger.info("Using object version %s as source", source_version)
