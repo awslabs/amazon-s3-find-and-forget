@@ -1,5 +1,10 @@
 # Change Log
 
+## v0.58
+
+- [#358](https://github.com/awslabs/amazon-s3-find-and-forget/pull/358): Fix for
+  bug that caused failure when opening gzipped files due to pyarrow unzipping
+
 ## v0.57
 
 - [#348](https://github.com/awslabs/amazon-s3-find-and-forget/pull/348): Cost

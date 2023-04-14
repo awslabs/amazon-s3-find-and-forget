@@ -494,6 +494,49 @@ def test_it_runs_for_json_happy_path(
     assert "cache" == bucket.Object(object_key).cache_control
 
 
+def test_it_runs_for_gzip_json_happy_path(
+    del_queue_factory,
+    job_factory,
+    dummy_lake,
+    glue_data_mapper_factory,
+    data_loader,
+    job_complete_waiter,
+    job_table,
+):
+    # Arrange
+    glue_data_mapper_factory(
+        "test",
+        partition_keys=["year", "month", "day"],
+        partitions=[["2019", "08", "20"]],
+        fmt="json",
+        compressed=True,
+    )
+    item = del_queue_factory("12345")
+    object_key = "test/2019/08/20/test.json.gz"
+    data_loader(
+        "basic.json.gz", object_key, Metadata={"foo": "bar"}, CacheControl="cache"
+    )
+    bucket = dummy_lake["bucket"]
+    job_id = job_factory(del_queue_items=[item])["Id"]
+    # Act
+    job_complete_waiter.wait(
+        TableName=job_table.name, Key={"Id": {"S": job_id}, "Sk": {"S": job_id}}
+    )
+    # Assert
+    tmp = tempfile.NamedTemporaryFile()
+    bucket.download_file(object_key, tmp.name)
+    assert (
+        "COMPLETED"
+        == job_table.get_item(Key={"Id": job_id, "Sk": job_id})["Item"]["JobStatus"]
+    )
+    assert 0 == len(query_json_file(tmp.name, "customer_id", "12345"))
+    assert 1 == len(query_json_file(tmp.name, "customer_id", "23456"))
+    assert 1 == len(query_json_file(tmp.name, "customer_id", "34567"))
+    assert 2 == len(list(bucket.object_versions.filter(Prefix=object_key)))
+    assert {"foo": "bar"} == bucket.Object(object_key).metadata
+    assert "cache" == bucket.Object(object_key).cache_control
+
+
 def test_it_runs_for_json_cse_kms(
     del_queue_factory,
     job_factory,

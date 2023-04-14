@@ -8,15 +8,6 @@ from boto_utils import json_lines_iterator
 from pyarrow import BufferOutputStream, CompressedOutputStream
 
 
-def initialize(input_file, out_stream, compressed):
-    if compressed:
-        bytestream = BytesIO(input_file.read())
-        input_file = GzipFile(None, "rb", fileobj=bytestream)
-    gzip_stream = CompressedOutputStream(out_stream, "gzip") if compressed else None
-    writer = gzip_stream if compressed else out_stream
-    return input_file, writer
-
-
 def find_key(key, obj):
     """
     Athena openx SerDe is case insensitive, and converts by default each object's key
@@ -47,10 +38,9 @@ def get_value(key, obj):
     return obj
 
 
-def delete_matches_from_json_file(input_file, to_delete, compressed=False):
+def delete_matches_from_json_file(input_file, to_delete):
     deleted_rows = 0
     with BufferOutputStream() as out_stream:
-        input_file, writer = initialize(input_file, out_stream, compressed)
         content = input_file.read().decode("utf-8")
         total_rows = 0
         for parsed, line in json_lines_iterator(content, include_unparsed=True):
@@ -74,8 +64,6 @@ def delete_matches_from_json_file(input_file, to_delete, compressed=False):
             if should_delete:
                 deleted_rows += 1
             else:
-                writer.write(bytes(line + "\n", "utf-8"))
-        if compressed:
-            writer.close()
+                out_stream.write(bytes(line + "\n", "utf-8"))
         stats = Counter({"ProcessedRows": total_rows, "DeletedRows": deleted_rows})
         return out_stream, stats

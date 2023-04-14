@@ -33,7 +33,7 @@ deploy-vpc:
 deploy-cfn:
 	aws cloudformation package --template-file templates/template.yaml --s3-bucket $(TEMP_BUCKET) --output-template-file packaged.yaml
 	aws cloudformation deploy --template-file ./packaged.yaml --stack-name S3F2 --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND \
-		--parameter-overrides CreateCloudFrontDistribution=false EnableContainerInsights=true AdminEmail=$(ADMIN_EMAIL) \
+		--parameter-overrides CreateCloudFrontDistribution=true EnableContainerInsights=true AdminEmail=$(ADMIN_EMAIL) \
 		AccessControlAllowOriginOverride=* PreBuiltArtefactsBucketOverride=$(TEMP_BUCKET) KMSKeyArns=$(KMS_KEYARNS)
 
 deploy-artefacts:
@@ -104,7 +104,7 @@ package-artefacts: backend/ecs_tasks/python_3.9-slim.tar
 		-x '**/__pycache*' '*settings.js' @
 
 backend/ecs_tasks/python_3.9-slim.tar:
-	docker pull python:3.9-slim
+	docker pull --platform linux/amd64 python:3.9-slim
 	docker save python:3.9-slim -o "$@"
 
 redeploy-containers:
@@ -114,7 +114,7 @@ redeploy-containers:
 	$(eval ECR_REPOSITORY := $(shell aws cloudformation describe-stacks --stack-name S3F2 --query 'Stacks[0].Outputs[?OutputKey==`ECRRepository`].OutputValue' --output text))
 	$(eval REPOSITORY_URI := $(shell aws ecr describe-repositories --repository-names $(ECR_REPOSITORY) --query 'repositories[0].repositoryUri' --output text))
 	$(shell aws ecr get-login --no-include-email --region $(REGION))
-	docker build -t $(ECR_REPOSITORY) -f backend/ecs_tasks/delete_files/Dockerfile .
+	docker build --platform linux/amd64 -t $(ECR_REPOSITORY) -f backend/ecs_tasks/delete_files/Dockerfile .
 	docker tag $(ECR_REPOSITORY):latest $(REPOSITORY_URI):latest
 	docker push $(REPOSITORY_URI):latest
 
@@ -175,6 +175,9 @@ start-frontend-remote:
 	$(eval WEBUI_URL := $(shell aws cloudformation describe-stacks --stack-name S3F2 --query 'Stacks[0].Outputs[?OutputKey==`WebUIUrl`].OutputValue' --output text))
 	$(if $(filter none, $(WEBUI_URL)), @echo "WebUI not deployed.", open $(WEBUI_URL))
 
+tests/acceptance/data/basic.json.gz:
+	gzip -k tests/acceptance/data/basic.json
+
 test-cfn:
 	cfn_nag templates/*.yaml --blacklist-path ci/cfn_nag_blacklist.yaml
 
@@ -187,10 +190,10 @@ test-unit: | $(VENV)
 test-ci: | $(VENV)
 	$(VENV)/bin/pytest -m unit --log-cli-level info --cov=backend.lambdas --cov=decorators --cov=boto_utils --cov=backend.ecs_tasks --cov-report xml
 
-test-acceptance-cognito: | $(VENV)
+test-acceptance-cognito: | $(VENV) tests/acceptance/data/basic.json.gz
 	$(VENV)/bin/pytest -m acceptance_cognito --log-cli-level info
 
-test-acceptance-iam: | $(VENV)
+test-acceptance-iam: | $(VENV) tests/acceptance/data/basic.json.gz
 	$(VENV)/bin/pytest -m acceptance_iam --log-cli-level info
 
 test-no-state-machine: | $(VENV)

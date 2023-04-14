@@ -51,6 +51,9 @@ coverage.xml
 .pytest_cache/
 coverage/
 
+# Test data
+tests/acceptance/data/basic.json.gz
+
 # Translations
 *.mo
 *.pot
