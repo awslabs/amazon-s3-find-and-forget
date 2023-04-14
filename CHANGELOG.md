@@ -2,6 +2,8 @@
 
 ## v0.58
 
+- [#359](https://github.com/awslabs/amazon-s3-find-and-forget/pull/359): Fix UI
+  Links to documentation
 - [#358](https://github.com/awslabs/amazon-s3-find-and-forget/pull/358): Fix for
   bug that caused failure when opening gzipped files due to pyarrow unzipping
 
