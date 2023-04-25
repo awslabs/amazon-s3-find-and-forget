@@ -24,6 +24,20 @@ Resources:
   WebUIBucket:
     Type: AWS::S3::Bucket
     Properties:
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: True
+        IgnorePublicAcls: True
+        BlockPublicPolicy: !If
+          - WithCloudFront
+          - True
+          - False
+        RestrictPublicBuckets: !If
+          - WithCloudFront
+          - True
+          - False
       VersioningConfiguration:
         Status: Enabled
       BucketEncryption: 
@@ -68,7 +82,11 @@ Resources:
               Resource: !Sub arn:${AWS::Partition}:s3:::${WebUIBucket}/*
               Principal:
                 CanonicalUser: !GetAtt CloudFrontOriginAccessIdentity.S3CanonicalUserId
-            - !Ref AWS::NoValue
+            - Sid: AllowDirectAccess
+              Action: s3:GetObject
+              Effect: Allow
+              Resource: !Sub arn:${AWS::Partition}:s3:::${WebUIBucket}/*
+              Principal: "*"
 
   CloudFrontOriginAccessIdentity:
     Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
