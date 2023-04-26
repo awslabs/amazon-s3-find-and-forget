@@ -121,7 +121,7 @@ redeploy-containers:
 redeploy-frontend:
 	$(eval WEBUI_BUCKET := $(shell aws cloudformation describe-stacks --stack-name S3F2 --query 'Stacks[0].Outputs[?OutputKey==`WebUIBucket`].OutputValue' --output text))
 	make build-frontend
-	cd frontend/build && aws s3 cp --recursive . s3://$(WEBUI_BUCKET) --acl public-read --exclude *settings.js
+	cd frontend/build && aws s3 cp --recursive . s3://$(WEBUI_BUCKET) --exclude *settings.js
 
 run-local-container:
 	make pre-run

@@ -187,16 +187,11 @@ Resources:
             pre_build:
               commands:
                 - BUCKET="${WEB_UI_BUCKET}"
-                - ACL="private"
-                - |
-                  if [ "${CLOUDFRONT_DISTRIBUTION}" = "none" ]; then
-                    ACL="public-read"
-                  fi
                 - echo "${WEB_SETTINGS}" > frontend/build/settings.js
             build:
               commands:
                 - cd frontend/build
-                - aws s3 cp . s3://$BUCKET --acl $ACL --recursive
+                - aws s3 cp . s3://$BUCKET --recursive
             post_build:
               commands:
                 - |
