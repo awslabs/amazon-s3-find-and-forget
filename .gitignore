@@ -158,7 +158,6 @@ build.zip
 packaged.zip
 frontend/public/settings.js
 *.sentinel
-backend/ecs_tasks/*.tar
 
 # docs
 .openapi-generator/

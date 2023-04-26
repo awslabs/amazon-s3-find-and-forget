@@ -152,10 +152,8 @@ Resources:
             pre_build:
               commands:
                 - $(aws ecr get-login --no-include-email)
-                - IMAGE_URI="${REPOSITORY_URI}"
             build:
               commands:
-                - docker load -i backend/ecs_tasks/python_3.9-slim.tar
                 - docker build --tag "$IMAGE_URI" -f backend/ecs_tasks/delete_files/Dockerfile .
             post_build:
               commands:
@@ -168,7 +166,7 @@ Resources:
         EnvironmentVariables:
           - Name: AWS_DEFAULT_REGION
             Value: !Ref AWS::Region
-          - Name: REPOSITORY_URI
+          - Name: IMAGE_URI
             Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.${AWS::URLSuffix}/${ECRRepository}
       Name: !Sub ${ResourcePrefix}BackendBuild
       ServiceRole: !Ref CodeBuildBackendServiceRole

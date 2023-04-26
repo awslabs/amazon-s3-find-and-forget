@@ -1,9 +1,9 @@
 ARG src_path=backend/ecs_tasks/delete_files
 ARG layers_path=backend/lambda_layers
 
-FROM python:3.9-slim as base
+FROM public.ecr.aws/docker/library/python:3.9-slim-bullseye as base
 
-RUN apt-get update --fix-missing
+RUN apt-get update --fix-missing && apt-get -y upgrade
 RUN apt-get -y install g++ gcc libsnappy-dev
 
 FROM base as builder
