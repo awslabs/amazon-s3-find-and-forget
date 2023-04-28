@@ -83,7 +83,7 @@ generate-pip-requirements: $(patsubst %.in,%.txt,$(shell find . -type f -name re
 
 .PHONY: lint-cfn
 lint-cfn:
-	$(VENV)/bin/cfn-lint templates/*
+	$(VENV)/bin/cfn-lint -i W3002 templates/*
 
 package:
 	make package-artefacts
