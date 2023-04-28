@@ -1,6 +1,6 @@
 # Change Log
 
-## v0.59 (unreleased)
+## v0.59
 
 - [#360](https://github.com/awslabs/amazon-s3-find-and-forget/pull/360):
   Refactor of Web UI S3 bucket access control mechanisms
