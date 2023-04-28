@@ -2,6 +2,8 @@
 
 ## v0.59 (unreleased)
 
+- [#363](https://github.com/awslabs/amazon-s3-find-and-forget/pull/363): Bump
+  cfn-lint version, update CloudFront to use OAC instead of OAI
 - [#360](https://github.com/awslabs/amazon-s3-find-and-forget/pull/360):
   Refactor of Web UI S3 bucket access control mechanisms
 
