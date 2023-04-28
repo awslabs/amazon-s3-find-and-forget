@@ -81,19 +81,26 @@ Resources:
               Effect: Allow
               Resource: !Sub arn:${AWS::Partition}:s3:::${WebUIBucket}/*
               Principal:
-                CanonicalUser: !GetAtt CloudFrontOriginAccessIdentity.S3CanonicalUserId
+                Service: cloudfront.amazonaws.com
+              Condition:
+                StringEquals:
+                  "AWS:SourceArn": !Sub "arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution.Id}"
             - Sid: AllowDirectAccess
               Action: s3:GetObject
               Effect: Allow
               Resource: !Sub arn:${AWS::Partition}:s3:::${WebUIBucket}/*
               Principal: "*"
 
-  CloudFrontOriginAccessIdentity:
-    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+  CloudFrontOAC:
+    Type: AWS::CloudFront::OriginAccessControl
     Condition: WithCloudFront
     Properties:
-      CloudFrontOriginAccessIdentityConfig:
-        Comment: !Ref WebUIBucket
+      OriginAccessControlConfig:
+        Description: S3F2 Web UI
+        Name: !Sub "${ResourcePrefix}-WebUI-OAC"
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
 
   CloudFrontDistribution:
     Type: AWS::CloudFront::Distribution
@@ -103,8 +110,8 @@ Resources:
         Origins:
           - DomainName: !GetAtt WebUIBucket.RegionalDomainName
             Id: !Sub ${ResourcePrefix}-myS3Origin
-            S3OriginConfig:
-              OriginAccessIdentity: !Sub origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}
+            OriginAccessControlId: !Ref CloudFrontOAC
+            S3OriginConfig: {}
         Enabled: true
         HttpVersion: http2
         Comment: The Distribution for Amazon S3 Find and Forget
