@@ -95,17 +95,13 @@ package:
 		templates \
 		-x '**/__pycache*' '*settings.js' @
 
-package-artefacts: backend/ecs_tasks/python_3.9-slim.tar
+package-artefacts:
 	make build-frontend
 	zip -r build.zip \
 		backend/ecs_tasks/ \
 		backend/lambda_layers/boto_utils/ \
 		frontend/build \
 		-x '**/__pycache*' '*settings.js' @
-
-backend/ecs_tasks/python_3.9-slim.tar:
-	docker pull --platform linux/amd64 python:3.9-slim
-	docker save python:3.9-slim -o "$@"
 
 redeploy-containers:
 	$(eval ACCOUNT_ID := $(shell aws sts get-caller-identity --query Account --output text))
