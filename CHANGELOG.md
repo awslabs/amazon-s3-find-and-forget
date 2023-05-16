@@ -1,6 +1,6 @@
 # Change Log
 
-## v0.59 (unreleased)
+## v0.59
 
 - [#363](https://github.com/awslabs/amazon-s3-find-and-forget/pull/363): Bump
   cfn-lint version, update CloudFront to use OAC instead of OAI
