@@ -64,8 +64,6 @@ cryptography==39.0.1
     # via -r ./backend/ecs_tasks/delete_files/requirements.txt
 distlib==0.3.5
     # via virtualenv
-exceptiongroup==1.0.4
-    # via pytest
 filelock==3.7.1
     # via virtualenv
 identify==2.5.2
@@ -175,7 +173,7 @@ pyyaml==6.0
     #   yq
 regex==2023.3.23
     # via cfn-lint
-requests==2.28.1
+requests==2.31.0
     # via -r requirements.in
 s3transfer==0.6.0
     # via
@@ -202,16 +200,10 @@ toml==0.10.2
     #   pre-commit
     #   yq
 tomli==2.0.1
-    # via
-    #   black
-    #   build
-    #   coverage
-    #   pep517
-    #   pytest
+    # via pep517
 typing-extensions==4.5.0
     # via
     #   aws-sam-translator
-    #   black
     #   pydantic
 urllib3==1.26.11
     # via
