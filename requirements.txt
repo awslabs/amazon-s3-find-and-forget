@@ -4,7 +4,7 @@
 #
 #    pip-compile --output-file=requirements.txt requirements.in
 #
-argcomplete==2.0.0
+argcomplete==3.0.8
     # via yq
 attrs==21.4.0
     # via
@@ -17,7 +17,7 @@ aws-assume-role-lib==2.10.0
     # via
     #   -r ./backend/ecs_tasks/delete_files/requirements.txt
     #   -r ./backend/lambda_layers/aws_sdk/requirements.txt
-aws-sam-translator==1.66.0
+aws-sam-translator==1.67.0
     # via cfn-lint
 black==22.3.0
     # via -r requirements.in
@@ -33,9 +33,9 @@ botocore==1.27.38
     #   -r ./backend/lambda_layers/aws_sdk/requirements.txt
     #   boto3
     #   s3transfer
-build==0.8.0
+build==0.10.0
     # via pip-tools
-certifi==2022.12.7
+certifi==2023.5.7
     # via
     #   -r requirements.in
     #   requests
@@ -49,30 +49,30 @@ cfn-flip==1.3.0
     # via -r requirements.in
 cfn-lint==0.77.3
     # via -r requirements.in
-charset-normalizer==2.1.0
+charset-normalizer==3.1.0
     # via requests
 click==8.1.3
     # via
     #   black
     #   cfn-flip
     #   pip-tools
-coverage[toml]==6.4.2
+coverage[toml]==7.2.5
     # via pytest-cov
 crhelper==2.0.10
     # via -r ./backend/lambda_layers/cr_helper/requirements.txt
-cryptography==39.0.1
+cryptography==41.0.0
     # via -r ./backend/ecs_tasks/delete_files/requirements.txt
-distlib==0.3.5
+distlib==0.3.6
     # via virtualenv
-exceptiongroup==1.0.4
+exceptiongroup==1.1.1
     # via pytest
-filelock==3.7.1
+filelock==3.12.0
     # via virtualenv
-identify==2.5.2
+identify==2.5.24
     # via pre-commit
-idna==3.3
+idna==3.4
     # via requests
-iniconfig==1.1.1
+iniconfig==2.0.0
     # via pytest
 jmespath==1.0.1
     # via
@@ -84,7 +84,7 @@ jschema-to-python==1.2.3
     # via cfn-lint
 jsonpatch==1.32
     # via cfn-lint
-jsonpickle==2.2.0
+jsonpickle==3.0.1
     # via jschema-to-python
 jsonpointer==2.3
     # via jsonpatch
@@ -99,38 +99,36 @@ mock==4.0.1
     # via -r requirements.in
 mpmath==1.3.0
     # via sympy
-mypy-extensions==0.4.3
+mypy-extensions==1.0.0
     # via black
-networkx==2.8.5
+networkx==3.1
     # via cfn-lint
-nodeenv==1.7.0
+nodeenv==1.8.0
     # via pre-commit
 numpy==1.22.0
     # via
     #   -r ./backend/ecs_tasks/delete_files/requirements.txt
     #   pandas
     #   pyarrow
-packaging==21.3
+packaging==23.1
     # via
     #   build
     #   pytest
 pandas==1.4.3
     # via -r ./backend/ecs_tasks/delete_files/requirements.txt
-pathspec==0.9.0
+pathspec==0.11.1
     # via black
-pbr==5.9.0
+pbr==5.11.1
     # via
     #   jschema-to-python
     #   sarif-om
-pep517==0.12.0
-    # via build
-pip-tools==6.12.1
+pip-tools==6.13.0
     # via -r requirements.in
-platformdirs==2.5.2
+platformdirs==3.5.1
     # via
     #   black
     #   virtualenv
-pluggy==0.13.1
+pluggy==1.0.0
     # via pytest
 pre-commit==2.12.1
     # via -r requirements.in
@@ -142,8 +140,8 @@ pycparser==2.21
     #   cffi
 pydantic==1.10.7
     # via aws-sam-translator
-pyparsing==3.0.9
-    # via packaging
+pyproject-hooks==1.0.0
+    # via build
 pyrsistent==0.18.1
     # via
     #   -r ./backend/lambda_layers/decorators/requirements.txt
@@ -173,9 +171,9 @@ pyyaml==6.0
     #   cfn-lint
     #   pre-commit
     #   yq
-regex==2023.3.23
+regex==2023.5.5
     # via cfn-lint
-requests==2.28.1
+requests==2.31.0
     # via -r requirements.in
 s3transfer==0.6.0
     # via
@@ -193,22 +191,22 @@ six==1.16.0
     #   jsonschema
     #   junit-xml
     #   python-dateutil
-sympy==1.11.1
+sympy==1.12
     # via cfn-lint
 tenacity==8.0.1
     # via -r ./backend/ecs_tasks/delete_files/requirements.txt
 toml==0.10.2
-    # via
-    #   pre-commit
-    #   yq
+    # via pre-commit
 tomli==2.0.1
     # via
     #   black
     #   build
     #   coverage
-    #   pep517
+    #   pyproject-hooks
     #   pytest
-typing-extensions==4.5.0
+tomlkit==0.11.8
+    # via yq
+typing-extensions==4.6.0
     # via
     #   aws-sam-translator
     #   black
@@ -220,15 +218,15 @@ urllib3==1.26.11
     #   -r requirements.in
     #   botocore
     #   requests
-virtualenv==20.16.0
+virtualenv==20.23.0
     # via pre-commit
-wheel==0.38.4
+wheel==0.40.0
     # via
     #   -r requirements.in
     #   pip-tools
 xmltodict==0.13.0
     # via yq
-yq==3.1.0
+yq==3.2.2
     # via -r requirements.in
 
 # The following packages are considered to be unsafe in a requirements file:
