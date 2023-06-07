@@ -224,148 +224,6 @@ Resources:
       Name: !Sub ${ResourcePrefix}FrontendBuild
       ServiceRole: !Ref CodeBuildFrontendServiceRole
 
-  CodePipelineServiceRole:
-    Type: AWS::IAM::Role
-    Properties:
-      Path: /
-      AssumeRolePolicyDocument:
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: codepipeline.amazonaws.com
-            Action: sts:AssumeRole
-      Policies:
-        - PolicyName: root
-          PolicyDocument:
-            Statement:
-              - Effect: Allow
-                Resource: "*"
-                Action:
-                  - ecs:DescribeServices
-                  - ecs:DescribeTaskDefinition
-                  - ecs:DescribeTasks
-                  - ecs:ListTasks
-                  - ecs:RegisterTaskDefinition
-                  - ecs:UpdateService
-              - Effect: Allow
-                Resource:
-                  - !Sub arn:${AWS::Partition}:codebuild:${AWS::Region}:${AWS::AccountId}:project/${CodeBuildBackend}
-                Action:
-                  - codebuild:BatchGetBuilds
-                  - codebuild:StartBuild
-              - !If
-                - ShouldDeployWebUI
-                - Effect: Allow
-                  Resource:
-                    - !Sub arn:${AWS::Partition}:codebuild:${AWS::Region}:${AWS::AccountId}:project/${CodeBuildFrontend}
-                  Action:
-                    - codebuild:BatchGetBuilds
-                    - codebuild:StartBuild
-                - !Ref AWS::NoValue
-              - Effect: Allow
-                Resource: !Sub arn:${AWS::Partition}:s3:::${CodeBuildArtefactBucket}
-                Action:
-                  - s3:GetBucket*
-                  - s3:List*
-              - Effect: Allow
-                Resource: !Sub arn:${AWS::Partition}:s3:::${CodeBuildArtefactBucket}/*
-                Action:
-                  - s3:GetObject
-                  - s3:GetObjectVersion
-                  - s3:PutObject
-
-  AmazonCloudWatchEventRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: events.amazonaws.com
-            Action: sts:AssumeRole
-      Path: /
-      Policies:
-        - PolicyName: cwe-pipeline-execution
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action: codepipeline:StartPipelineExecution
-                Resource: !Sub arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${CodePipeline}
-
-  AmazonCloudWatchEventRule:
-    Type: AWS::Events::Rule
-    Properties:
-      EventPattern:
-        source:
-          - aws.s3
-        detail-type:
-          - 'AWS API Call via CloudTrail'
-        detail:
-          eventSource:
-            - s3.amazonaws.com
-          eventName:
-            - CopyObject
-            - PutObject
-            - CompleteMultipartUpload
-          requestParameters:
-            bucketName:
-              - !Ref CodeBuildArtefactBucket
-            key:
-              - !Ref ArtefactName
-      Targets:
-        - Arn: !Sub arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${CodePipeline}
-          RoleArn: !GetAtt AmazonCloudWatchEventRole.Arn
-          Id: codepipeline-AppPipeline
-
-  AWSCloudTrailBucketPolicy:
-    Type: AWS::S3::BucketPolicy
-    Properties:
-      Bucket: !Ref AWSCloudTrailBucket
-      PolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Sid: AWSCloudTrailAclCheck
-            Effect: Allow
-            Principal:
-              Service:
-                - cloudtrail.amazonaws.com
-            Action: s3:GetBucketAcl
-            Resource: !GetAtt AWSCloudTrailBucket.Arn
-          - Sid: AWSCloudTrailWrite
-            Effect: Allow
-            Principal:
-              Service:
-                - cloudtrail.amazonaws.com
-            Action: s3:PutObject
-            Resource: !Sub ${AWSCloudTrailBucket.Arn}/AWSLogs/${AWS::AccountId}/*
-            Condition: 
-              StringEquals:
-                s3:x-amz-acl: bucket-owner-full-control
-
-  AWSCloudTrailBucket:
-    Type: AWS::S3::Bucket
-    DeletionPolicy: Retain #TODO
-    #TODO
-
-  AwsCloudTrail:
-    DependsOn:
-      - AWSCloudTrailBucketPolicy
-    Type: AWS::CloudTrail::Trail
-    Properties:
-      S3BucketName: !Ref AWSCloudTrailBucket
-      EventSelectors:
-        - DataResources:
-            - Type: AWS::S3::Object
-              Values:
-                - !Sub ${CodeBuildArtefactBucket}/${ArtefactName}
-          ReadWriteType: WriteOnly
-          IncludeManagementEvents: false
-      IncludeGlobalServiceEvents: true
-      IsLogging: true
-      IsMultiRegionTrail: true
-
   CodePipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
@@ -566,7 +424,7 @@ Resources:
 
   WaitForContainerBuild:
     Type: Custom::Setup
-    DependsOn: CopyBuildArtefact
+    DependsOn: RerunPipeline
     Properties:
       ServiceToken: !GetAtt WaitForContainerBuildFunction.Arn
       ArtefactName: !Ref ArtefactName
@@ -588,6 +446,7 @@ Resources:
 
   RerunPipeline:
     Type: Custom::Setup
+    DependsOn: CopyBuildArtefact
     Properties:
       ServiceToken: !GetAtt RerunPipelineFunction.Arn
       LogLevel: !Ref LogLevel

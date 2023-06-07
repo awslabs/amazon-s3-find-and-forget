@@ -19,9 +19,7 @@ def create(event, context):
 @helper.update
 def update(event, context):
     props = event["ResourceProperties"]
-    props_old = event["OldResourceProperties"]
-    if props_old["DeployWebUI"] == "false" and props["DeployWebUI"] == "true":
-        pipe_client.start_pipeline_execution(name=props["PipelineName"])
+    pipe_client.start_pipeline_execution(name=props["PipelineName"])
     return None
 
 
