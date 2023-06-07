@@ -294,6 +294,31 @@ Resources:
                 Action: codepipeline:StartPipelineExecution
                 Resource: !Sub arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${CodePipeline}
 
+  AmazonCloudWatchEventRule:
+    Type: AWS::Events::Rule
+    Properties:
+      EventPattern:
+        source:
+          - aws.s3
+        detail-type:
+          - 'AWS API Call via CloudTrail'
+        detail:
+          eventSource:
+            - s3.amazonaws.com
+          eventName:
+            - CopyObject
+            - PutObject
+            - CompleteMultipartUpload
+          requestParameters:
+            bucketName:
+              - !Ref CodeBuildArtefactBucket
+            key:
+              - !Ref ArtefactName
+      Targets:
+        - Arn: !Sub arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${CodePipeline}
+          RoleArn: !GetAtt AmazonCloudWatchEventRole.Arn
+          Id: codepipeline-AppPipeline
+
   CodePipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
@@ -313,6 +338,7 @@ Resources:
               Configuration:
                 S3Bucket: !Ref CodeBuildArtefactBucket
                 S3ObjectKey: !Ref ArtefactName
+                PollForSourceChanges: false
               OutputArtifacts:
                 - Name: S3F2
               RunOrder: 1
