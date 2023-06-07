@@ -473,7 +473,7 @@ Resources:
 
   WaitForContainerBuild:
     Type: Custom::Setup
-    DependsOn: CopyBuildArtefact
+    DependsOn: RerunPipeline
     Properties:
       ServiceToken: !GetAtt WaitForContainerBuildFunction.Arn
       ArtefactName: !Ref ArtefactName
