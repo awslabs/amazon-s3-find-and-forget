@@ -30,7 +30,7 @@ def test_it_triggers_execution_if_new_version(mock_client):
         "ResourceProperties": {
             "DeployWebUI": "true",
             "PipelineName": "pipeline",
-            "Version": "v0.60",
+            "Version": "v0.62",
         },
         "OldResourceProperties": {"DeployWebUI": "true", "Version": "v0.61"},
     }
@@ -53,6 +53,44 @@ def test_it_triggers_execution_if_new_version_old_signature(mock_client):
         "OldResourceProperties": {
             "DeployWebUI": "true"
         },  # Prior to 0.59, the Version parameter wasn't sent to the CR payload
+    }
+
+    resp = update(event, MagicMock())
+
+    mock_client.start_pipeline_execution.assert_called_with(name="pipeline")
+
+    assert not resp
+
+
+@patch("backend.lambdas.custom_resources.rerun_pipeline.pipe_client")
+def test_it_triggers_execution_if_rollback_to_old_signature(mock_client):
+    event = {
+        "ResourceProperties": {
+            "DeployWebUI": "true",
+            "PipelineName": "pipeline",
+            # Prior to 0.59, the Version parameter wasn't sent to the CR payload
+        },
+        "OldResourceProperties": {
+            "DeployWebUI": "true",
+            "Version": "v0.60",
+        },
+    }
+
+    resp = update(event, MagicMock())
+
+    mock_client.start_pipeline_execution.assert_called_with(name="pipeline")
+
+    assert not resp
+
+
+@patch("backend.lambdas.custom_resources.rerun_pipeline.pipe_client")
+def test_it_triggers_execution_if_new_stack(mock_client):
+    event = {
+        "ResourceProperties": {
+            "DeployWebUI": "true",
+            "PipelineName": "pipeline",
+            "Version": "v0.60",
+        }
     }
 
     resp = update(event, MagicMock())

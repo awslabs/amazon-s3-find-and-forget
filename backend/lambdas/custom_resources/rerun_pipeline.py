@@ -19,12 +19,19 @@ def delete(event, context):
 @helper.update
 def update(event, context):
     props = event["ResourceProperties"]
-    props_old = event["OldResourceProperties"]
+    props_old = event.get("OldResourceProperties", {})
 
     deploy_ui_changed = (
-        props_old["DeployWebUI"] == "false" and props["DeployWebUI"] == "true"
+        "DeployWebUI" in props_old
+        and props_old["DeployWebUI"] == "false"
+        and props["DeployWebUI"] == "true"
     )
-    new_version = not "Version" in props_old or props_old["Version"] != props["Version"]
+
+    new_version = (
+        (not "Version" in props_old or props_old["Version"] != props["Version"])
+        if "Version" in props
+        else "Version" in props_old
+    )
 
     if deploy_ui_changed or new_version:
         pipe_client.start_pipeline_execution(name=props["PipelineName"])
