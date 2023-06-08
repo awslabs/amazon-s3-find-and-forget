@@ -499,3 +499,4 @@ Resources:
       LogLevel: !Ref LogLevel
       PipelineName: !Ref CodePipeline
       DeployWebUI: !Ref DeployWebUI
+      Version: !Ref Version
