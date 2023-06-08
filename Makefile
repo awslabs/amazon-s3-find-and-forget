@@ -32,9 +32,9 @@ deploy-vpc:
 
 deploy-cfn:
 	aws cloudformation package --template-file templates/template.yaml --s3-bucket $(TEMP_BUCKET) --output-template-file packaged.yaml
-	aws cloudformation deploy --template-file ./packaged.yaml --stack-name S3F22 --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND \
+	aws cloudformation deploy --template-file ./packaged.yaml --stack-name S3F2 --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND \
 		--parameter-overrides CreateCloudFrontDistribution=true EnableContainerInsights=true AdminEmail=$(ADMIN_EMAIL) \
-		AccessControlAllowOriginOverride=* PreBuiltArtefactsBucketOverride=$(TEMP_BUCKET) KMSKeyArns=$(KMS_KEYARNS) ResourcePrefix=S3F22
+		AccessControlAllowOriginOverride=* PreBuiltArtefactsBucketOverride=$(TEMP_BUCKET) KMSKeyArns=$(KMS_KEYARNS)
 
 deploy-artefacts:
 	$(eval VERSION := $(shell $(MAKE) -s version))
