@@ -1,7 +1,10 @@
 # Change Log
 
-## v0.60 (unreleased)
+## v0.60
 
+- [#367](https://github.com/awslabs/amazon-s3-find-and-forget/pull/367): Fix
+  deployment issue caused by deprecation of polling-based S3 sources in AWS
+  CodePipeline
 - [#366](https://github.com/awslabs/amazon-s3-find-and-forget/pull/366): Upgrade
   backend and frontend dependencies
 

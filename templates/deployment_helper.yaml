@@ -223,7 +223,7 @@ Resources:
             Value: !Ref WebUIBucket
       Name: !Sub ${ResourcePrefix}FrontendBuild
       ServiceRole: !Ref CodeBuildFrontendServiceRole
-
+  
   CodePipelineServiceRole:
     Type: AWS::IAM::Role
     Properties:
@@ -293,6 +293,7 @@ Resources:
               Configuration:
                 S3Bucket: !Ref CodeBuildArtefactBucket
                 S3ObjectKey: !Ref ArtefactName
+                PollForSourceChanges: false
               OutputArtifacts:
                 - Name: S3F2
               RunOrder: 1
@@ -435,7 +436,6 @@ Resources:
             Resource:
               - !Sub arn:${AWS::Partition}:codepipeline:${AWS::Region}:${AWS::AccountId}:${CodePipeline}
 
-
   CleanupCodeBuildArtefactBucket:
     Type: Custom::Setup
     Properties:
@@ -473,7 +473,7 @@ Resources:
 
   WaitForContainerBuild:
     Type: Custom::Setup
-    DependsOn: CopyBuildArtefact
+    DependsOn: RerunPipeline
     Properties:
       ServiceToken: !GetAtt WaitForContainerBuildFunction.Arn
       ArtefactName: !Ref ArtefactName
@@ -481,7 +481,6 @@ Resources:
       ECRRepository: !Ref ECRRepository
       LogLevel: !Ref LogLevel
       Version: !Ref Version
-
 
   RedeployApi:
     Type: Custom::Setup
@@ -492,11 +491,12 @@ Resources:
       ApiStage: !Select [3, !Split ["/", !Ref ApiUrl]]
       DeployCognito: !Ref DeployCognito
 
-
   RerunPipeline:
     Type: Custom::Setup
+    DependsOn: CopyBuildArtefact
     Properties:
       ServiceToken: !GetAtt RerunPipelineFunction.Arn
       LogLevel: !Ref LogLevel
       PipelineName: !Ref CodePipeline
       DeployWebUI: !Ref DeployWebUI
+      Version: !Ref Version

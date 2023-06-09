@@ -9,19 +9,33 @@ pipe_client = boto3.client("codepipeline")
 
 
 @with_logging
-@helper.create
 @helper.delete
-def create(event, context):
+def delete(event, context):
     return None
 
 
 @with_logging
+@helper.create
 @helper.update
 def update(event, context):
     props = event["ResourceProperties"]
-    props_old = event["OldResourceProperties"]
-    if props_old["DeployWebUI"] == "false" and props["DeployWebUI"] == "true":
+    props_old = event.get("OldResourceProperties", {})
+
+    deploy_ui_changed = (
+        "DeployWebUI" in props_old
+        and props_old["DeployWebUI"] == "false"
+        and props["DeployWebUI"] == "true"
+    )
+
+    new_version = (
+        (not "Version" in props_old or props_old["Version"] != props["Version"])
+        if "Version" in props
+        else "Version" in props_old
+    )
+
+    if deploy_ui_changed or new_version:
         pipe_client.start_pipeline_execution(name=props["PipelineName"])
+
     return None
 
 
