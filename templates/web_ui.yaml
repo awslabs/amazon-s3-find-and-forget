@@ -97,7 +97,7 @@ Resources:
     Properties:
       OriginAccessControlConfig:
         Description: S3F2 Web UI
-        Name: !Sub "${ResourcePrefix}-WebUI-OAC"
+        Name: !Sub "${ResourcePrefix}-${AWS::Region}-WebUI-OAC"
         OriginAccessControlOriginType: s3
         SigningBehavior: always
         SigningProtocol: sigv4

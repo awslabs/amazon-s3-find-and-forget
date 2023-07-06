@@ -1,5 +1,12 @@
 # Change Log
 
+## v0.61
+
+- [#368](https://github.com/awslabs/amazon-s3-find-and-forget/issues/368): Fix
+  an issue that prevented deployments for users who have multiple S3F2 instances
+  deployed within the same AWS account, using the same ResourcePrefix parameter,
+  but in different regions.
+
 ## v0.60
 
 - [#367](https://github.com/awslabs/amazon-s3-find-and-forget/pull/367): Fix
