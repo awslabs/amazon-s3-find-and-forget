@@ -261,7 +261,8 @@ resources.
      Bucket containing Front-end and Back-end pre-built artefacts. Use this if
      you are using a customised version of these artefacts.
    - **ResourcePrefix:** (Default: S3F2) Resource prefix to apply to resource
-     names when creating statically named resources.
+     names when creating statically named resources. Change this when deploying
+     multiple instances of the solution within an AWS account.
    - **KMSKeyArns** (Default: "") Comma-delimited list of KMS Key Arns used for
      Client-side Encryption. Leave empty if data is not client-side encrypted
      with KMS.
