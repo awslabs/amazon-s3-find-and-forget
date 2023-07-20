@@ -45,7 +45,7 @@ deploy-artefacts:
 format-cfn:
 	$(eval VERSION := $(shell $(MAKE) -s version))
 	TEMP_FILE="$$(mktemp)" ; \
-		sed  -e '3s/.*/Description: Amazon S3 Find and Forget \(uksb-1q2j8beb0\) \(version:$(VERSION)\)/' templates/template.yaml > "$$TEMP_FILE" ; \
+		sed  -e '3s/.*/Description: Amazon S3 Find and Forget \(uksb-1q2j8beb0\) \(version:$(VERSION)\) \(tag:main\)/' templates/template.yaml > "$$TEMP_FILE" ; \
 		mv "$$TEMP_FILE" templates/template.yaml 
 	git add templates/template.yaml
 
