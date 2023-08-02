@@ -4,6 +4,8 @@
 
 - [#376](https://github.com/awslabs/amazon-s3-find-and-forget/issues/376):
   Upgrade backend dependencies
+- [#377](https://github.com/awslabs/amazon-s3-find-and-forget/issues/377):
+  Upgrade backend dependencies
 
 ## v0.62
 
