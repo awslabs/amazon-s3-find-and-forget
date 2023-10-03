@@ -4,7 +4,7 @@ pandas==1.4.3
 boto3==1.24.38
 s3transfer==0.6.0
 numpy==1.22.0
-cryptography==41.0.3
-urllib3>=1.26.5
+cryptography==41.0.4
+urllib3>=1.26.17
 aws-assume-role-lib>=2.10.0
 tenacity==8.0.1
