@@ -6,7 +6,12 @@ import mock
 import pytest
 from decimal import Decimal
 
-from tests.acceptance import query_json_file, query_parquet_file, download_and_decrypt
+from tests.acceptance import (
+    query_json_file,
+    query_compressed_json_file,
+    query_parquet_file,
+    download_and_decrypt,
+)
 
 pytestmark = [
     pytest.mark.acceptance_cognito,
@@ -539,9 +544,10 @@ def test_it_runs_for_gzip_json_happy_path(
         "COMPLETED"
         == job_table.get_item(Key={"Id": job_id, "Sk": job_id})["Item"]["JobStatus"]
     )
-    assert 0 == len(query_json_file(tmp.name, "customer_id", "12345"))
-    assert 1 == len(query_json_file(tmp.name, "customer_id", "23456"))
-    assert 1 == len(query_json_file(tmp.name, "customer_id", "34567"))
+
+    assert 0 == len(query_compressed_json_file(tmp.name, "customer_id", "12345"))
+    assert 1 == len(query_compressed_json_file(tmp.name, "customer_id", "23456"))
+    assert 1 == len(query_compressed_json_file(tmp.name, "customer_id", "34567"))
     assert 2 == len(list(bucket.object_versions.filter(Prefix=object_key)))
     assert {"foo": "bar"} == bucket.Object(object_key).metadata
     assert "cache" == bucket.Object(object_key).cache_control

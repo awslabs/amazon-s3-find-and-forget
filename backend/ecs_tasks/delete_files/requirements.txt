@@ -29,7 +29,7 @@ numpy==1.22.0
     #   pyarrow
 pandas==1.4.3
     # via -r backend/ecs_tasks/delete_files/requirements.in
-pyarrow==8.0.0
+pyarrow==13.0.0
     # via -r backend/ecs_tasks/delete_files/requirements.in
 pycparser==2.21
     # via cffi

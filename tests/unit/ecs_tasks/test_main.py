@@ -91,7 +91,7 @@ def test_happy_path_when_queue_not_empty(
     mock_fs.open_input_stream.assert_called_with(
         "bucket/path/basic.parquet", buffer_size=5 * 2**20
     )
-    mock_delete.assert_called_with(ANY, [column], "parquet")
+    mock_delete.assert_called_with(ANY, [column], "parquet", False)
     mock_save.assert_called_with(ANY, ANY, "bucket", "path/basic.parquet", {}, "abc123")
     mock_emit.assert_called()
     mock_session.assert_called_with(None, "s3f2")
@@ -146,7 +146,7 @@ def test_happy_path_when_queue_not_empty_for_compressed_json(
     mock_fs.open_input_stream.assert_called_with(
         "bucket/path/basic.json.gz", buffer_size=5 * 2**20
     )
-    mock_delete.assert_called_with(ANY, [column], "json")
+    mock_delete.assert_called_with(ANY, [column], "json", True)
     mock_save.assert_called_with(ANY, ANY, "bucket", "path/basic.json.gz", {}, "abc123")
     mock_emit.assert_called()
     mock_session.assert_called_with(None, "s3f2")
@@ -216,7 +216,7 @@ def test_cse_kms_encrypted(
     mock_fs.open_input_stream.assert_called_with(
         "bucket/path/basic.parquet", buffer_size=5 * 2**20
     )
-    mock_delete.assert_called_with(mock_file_decrypted, [column], "parquet")
+    mock_delete.assert_called_with(mock_file_decrypted, [column], "parquet", False)
     mock_encrypt.assert_called_with(ANY, metadata, ANY)
     mock_save.assert_called_with(
         ANY,
@@ -1105,8 +1105,8 @@ def test_it_sets_kill_handlers(mock_queue, mock_signal):
 def test_it_deletes_from_json_file(mock_parquet, mock_json):
     f = MagicMock()
     cols = MagicMock()
-    delete_matches_from_file(f, cols, "json")
-    mock_json.assert_called_with(f, cols)
+    delete_matches_from_file(f, cols, "json", False)
+    mock_json.assert_called_with(f, cols, False)
     mock_parquet.assert_not_called()
 
 

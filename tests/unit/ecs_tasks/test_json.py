@@ -30,6 +30,25 @@ def test_it_generates_new_json_file_without_matches():
     )
 
 
+def test_it_handles_json_with_gzip_compression():
+    # Arrange
+    to_delete = [{"Column": "customer_id", "MatchIds": ["23456"], "Type": "Simple"}]
+    data = (
+        '{"customer_id": "12345", "x": 7, "d":"2001-01-01"}\n'
+        '{"customer_id": "23456", "x": 8, "d":"2001-01-03"}\n'
+        '{"customer_id": "34567", "x": 9, "d":"2001-01-05"}\n'
+    )
+    out_stream = to_json_file(data)
+    # Act
+    out, stats = delete_matches_from_json_file(out_stream, to_delete, True)
+    assert isinstance(out, pa.BufferOutputStream)
+    assert {"ProcessedRows": 3, "DeletedRows": 1} == stats
+    assert to_decompressed_json_string(out) == (
+        '{"customer_id": "12345", "x": 7, "d":"2001-01-01"}\n'
+        '{"customer_id": "34567", "x": 9, "d":"2001-01-05"}\n'
+    )
+
+
 def test_delete_correct_rows_when_missing_newline_at_the_end():
     # Arrange
     to_delete = [{"Column": "customer_id", "MatchIds": ["23456"], "Type": "Simple"}]
@@ -40,7 +59,7 @@ def test_delete_correct_rows_when_missing_newline_at_the_end():
     )
     out_stream = to_json_file(data)
     # Act
-    out, stats = delete_matches_from_json_file(out_stream, to_delete)
+    out, stats = delete_matches_from_json_file(out_stream, to_delete, False)
     assert isinstance(out, pa.BufferOutputStream)
     assert {"ProcessedRows": 3, "DeletedRows": 1} == stats
     assert to_json_string(out) == (
@@ -60,7 +79,7 @@ def test_delete_correct_rows_containing_newlines_as_content():
     )
     out_stream = to_json_file(data)
     # Act
-    out, stats = delete_matches_from_json_file(out_stream, to_delete)
+    out, stats = delete_matches_from_json_file(out_stream, to_delete, False)
     assert isinstance(out, pa.BufferOutputStream)
     assert {"ProcessedRows": 3, "DeletedRows": 1} == stats
     assert to_json_string(out) == (
@@ -79,7 +98,7 @@ def test_delete_correct_rows_from_json_file_with_complex_types():
     )
     out_stream = to_json_file(data)
     # Act
-    out, stats = delete_matches_from_json_file(out_stream, to_delete)
+    out, stats = delete_matches_from_json_file(out_stream, to_delete, False)
     assert isinstance(out, pa.BufferOutputStream)
     assert {"ProcessedRows": 3, "DeletedRows": 1} == stats
     assert to_json_string(out) == (
