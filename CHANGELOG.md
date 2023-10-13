@@ -1,6 +1,6 @@
 # Change Log
 
-## v0.63 (unreleased)
+## v0.63
 
 - [#376](https://github.com/awslabs/amazon-s3-find-and-forget/issues/376):
   Upgrade backend dependencies
@@ -8,6 +8,10 @@
   Upgrade backend dependencies
 - [#383](https://github.com/awslabs/amazon-s3-find-and-forget/issues/383):
   Upgrade backend dependencies
+- [#384](https://github.com/awslabs/amazon-s3-find-and-forget/issues/384):
+  - Fix an issue impacting JSON Gzipped S3 objects being written uncompressed
+    after a deletion Job
+  - Upgrade backend dependencies
 
 ## v0.62
 

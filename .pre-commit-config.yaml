@@ -1,3 +1,4 @@
+fail_fast: true
 repos:
 -   repo: local
     hooks:
@@ -5,30 +6,35 @@ repos:
         name: Format CloudFormation
         entry: make format-cfn
         language: system
+        files: ^templates/
 -   repo: local
     hooks:
     -   id: format-js
         name: Format Javascript
         entry: make format-js
         language: system
+        files: ^frontend/
 -   repo: local
     hooks:
     -   id: format-python
         name: Format Python Code
         entry: make format-python
         language: system
+        files: ^backend/
 -   repo: local
     hooks:
     -   id: format-docs
         name: Format Markdown docs
         entry: make format-docs
         language: system
+        files: .*\.md
 -   repo: local
     hooks:
     -   id: generate-api-docs
         name: Generate API Docs
         entry: make generate-api-docs
         language: system
+        files: ^templates/api.yaml
 -   repo: https://github.com/awslabs/git-secrets
     rev: 5e28df337746db4f070c84f7069d365bfd0d72a8
     hooks:
@@ -39,3 +45,4 @@ repos:
         name: Lint CloudFormation templates
         entry: make lint-cfn
         language: system
+        files: ^templates/

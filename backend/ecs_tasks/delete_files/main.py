@@ -87,10 +87,10 @@ def validate_message(message):
             raise ValueError("Malformed message. Missing key: %s", k)
 
 
-def delete_matches_from_file(input_file, to_delete, file_format):
+def delete_matches_from_file(input_file, to_delete, file_format, compressed=False):
     logger.info("Generating new file without matches")
     if file_format == "json":
-        return delete_matches_from_json_file(input_file, to_delete)
+        return delete_matches_from_json_file(input_file, to_delete, compressed)
     return delete_matches_from_parquet_file(input_file, to_delete)
 
 
@@ -161,6 +161,7 @@ def execute(queue_url, message_body, receipt_handle):
             source_version = f.metadata()["VersionId"].decode("utf-8")
             logger.info("Using object version %s as source", source_version)
             # Write new file in-memory
+            compressed = object_path.endswith(".gz")
             object_info, _ = get_object_info(
                 client, input_bucket, input_key, source_version
             )
@@ -168,7 +169,7 @@ def execute(queue_url, message_body, receipt_handle):
             is_encrypted = is_kms_cse_encrypted(metadata)
             input_file = decrypt(f, metadata, kms_client) if is_encrypted else f
             out_sink, stats = delete_matches_from_file(
-                input_file, match_ids, file_format
+                input_file, match_ids, file_format, compressed
             )
         if stats["DeletedRows"] == 0:
             raise ValueError(

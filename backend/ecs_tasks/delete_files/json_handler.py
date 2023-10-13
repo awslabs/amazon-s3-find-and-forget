@@ -38,9 +38,12 @@ def get_value(key, obj):
     return obj
 
 
-def delete_matches_from_json_file(input_file, to_delete):
+def delete_matches_from_json_file(input_file, to_delete, compressed=False):
     deleted_rows = 0
     with BufferOutputStream() as out_stream:
+        writer = (
+            CompressedOutputStream(out_stream, "gzip") if compressed else out_stream
+        )
         content = input_file.read().decode("utf-8")
         total_rows = 0
         for parsed, line in json_lines_iterator(content, include_unparsed=True):
@@ -64,6 +67,8 @@ def delete_matches_from_json_file(input_file, to_delete):
             if should_delete:
                 deleted_rows += 1
             else:
-                out_stream.write(bytes(line + "\n", "utf-8"))
+                writer.write(bytes(line + "\n", "utf-8"))
+        if compressed:
+            writer.close()
         stats = Counter({"ProcessedRows": total_rows, "DeletedRows": deleted_rows})
         return out_stream, stats

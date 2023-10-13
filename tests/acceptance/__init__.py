@@ -1,3 +1,4 @@
+import gzip
 import logging
 import tempfile
 from pathlib import Path
@@ -48,6 +49,11 @@ def generate_parquet_file(items, columns):
 def query_parquet_file(f, column, val):
     table = pq.read_table(f)
     return [i for i in table.column(column) if i.as_py() == val]
+
+
+def query_compressed_json_file(f, column, val):
+    f_gz = gzip.open(f, "rb")
+    return query_json_file(f_gz, column, val)
 
 
 def query_json_file(f, column, val):
