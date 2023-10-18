@@ -49,7 +49,7 @@ six==1.16.0
     # via python-dateutil
 tenacity==8.0.1
     # via -r backend/ecs_tasks/delete_files/requirements.in
-urllib3==1.26.17
+urllib3==1.26.18
     # via
     #   -r backend/ecs_tasks/delete_files/requirements.in
     #   botocore

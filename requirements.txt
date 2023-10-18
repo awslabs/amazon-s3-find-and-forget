@@ -211,7 +211,7 @@ typing-extensions==4.6.0
     #   aws-sam-translator
     #   black
     #   pydantic
-urllib3==1.26.17
+urllib3==1.26.18
     # via
     #   -r ./backend/ecs_tasks/delete_files/requirements.txt
     #   -r ./backend/lambda_layers/aws_sdk/requirements.txt

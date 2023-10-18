@@ -1,3 +1,3 @@
 boto3==1.24.38
-urllib3>=1.26.17
+urllib3>=1.26.18
 aws-assume-role-lib>=2.10.0
