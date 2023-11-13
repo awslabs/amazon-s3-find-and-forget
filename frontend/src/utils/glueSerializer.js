@@ -178,7 +178,7 @@ export const glueSerializer = tables => {
   tables.forEach(table => {
     const supportedTables = table.TableList.filter(x =>
       [JSON_HIVE_SERDE, JSON_OPENX_SERDE, PARQUET_SERDE].includes(
-        x.StorageDescriptor.SerdeInfo.SerializationLibrary
+        x.StorageDescriptor?.SerdeInfo.SerializationLibrary
       )
     );
 

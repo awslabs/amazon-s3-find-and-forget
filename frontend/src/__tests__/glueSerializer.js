@@ -95,6 +95,25 @@ const jsonTable = tableMaker({
   }
 });
 
+const crossAccountTable = {
+  Name: "cross-account-table",
+  DatabaseName: "cross-account-db",
+  Description: "",
+  Owner: "",
+  Retention: 0,
+  ViewOriginalText: "",
+  ViewExpandedText: "",
+  TableType: "",
+  CreatedBy: "",
+  IsRegisteredWithLakeFormation: false,
+  TargetTable: {
+    CatalogId: "1234567890",
+    DatabaseName: "linkedDB",
+    Name: "linkedTable"
+  },
+  CatalogId: "9876543210"
+};
+
 const complexColumnsTable = tableMaker({
   dbname: "db4",
   tablename: "complex",
@@ -123,7 +142,8 @@ test("it should serialize dbs and tables", () => {
       { TableList: [] },
       { TableList: [table1, table2] },
       { TableList: [table3, jsonTable] },
-      { TableList: [complexColumnsTable] }
+      { TableList: [complexColumnsTable] },
+      { TableList: [crossAccountTable] }
     ])
   ).toMatchSnapshot();
 });

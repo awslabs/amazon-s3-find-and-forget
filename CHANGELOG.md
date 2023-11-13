@@ -1,7 +1,12 @@
 # Change Log
 
-## v0.64 (unreleased)
+## v0.64
 
+- [#390](https://github.com/awslabs/amazon-s3-find-and-forget/issues/390):
+  Upgrade frontend dependencies and fix bug affecting Create Data Mapper UI with
+  manually created Glue Tables
+- [#389](https://github.com/awslabs/amazon-s3-find-and-forget/issues/389):
+  Upgrade backend dependencies
 - [#387](https://github.com/awslabs/amazon-s3-find-and-forget/issues/387):
   Upgrade frontend dependencies
 - [#386](https://github.com/awslabs/amazon-s3-find-and-forget/issues/386):
