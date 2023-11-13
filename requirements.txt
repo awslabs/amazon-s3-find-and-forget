@@ -132,7 +132,7 @@ pluggy==1.0.0
     # via pytest
 pre-commit==2.12.1
     # via -r requirements.in
-pyarrow==13.0.0
+pyarrow==14.0.1
     # via -r ./backend/ecs_tasks/delete_files/requirements.txt
 pycparser==2.21
     # via
