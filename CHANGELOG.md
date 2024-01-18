@@ -2,7 +2,7 @@
 
 ## v0.65
 
-- [#TODO](https://github.com/awslabs/amazon-s3-find-and-forget/issues/TODO): Fix
+- [#393](https://github.com/awslabs/amazon-s3-find-and-forget/issues/393): Fix
   for a bug affecting Create Data Mapper API with manually created Glue Tables
   that don't contain SerdeInfo Parameters metadata
 
