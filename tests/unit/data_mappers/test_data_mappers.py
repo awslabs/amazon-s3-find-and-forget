@@ -566,17 +566,11 @@ def test_it_gets_glue_table_parametersless():
                 "Location": "s3://bucket/",
                 "InputFormat": "org.apache.hadoop.mapred.TextInputFormat",
                 "OutputFormat": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
-                "SerdeInfo": {
-                    "SerializationLibrary": "org.openx.data.jsonserde.JsonSerDe"
-                },
-            },
-            "PartitionKeys": [],
+            }
         }
     }
 
-    assert ("org.openx.data.jsonserde.JsonSerDe", {}) == handlers.get_glue_table_format(
-        table
-    )
+    assert ("", {}) == handlers.get_glue_table_format(table)
 
 
 @patch("backend.lambdas.data_mappers.handlers.glue_client")
