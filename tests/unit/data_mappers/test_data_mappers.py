@@ -559,6 +559,20 @@ def test_it_gets_glue_table_format_info():
     ) == handlers.get_glue_table_format(get_table_stub())
 
 
+def test_it_gets_glue_table_parametersless():
+    table = {
+        "Table": {
+            "StorageDescriptor": {
+                "Location": "s3://bucket/",
+                "InputFormat": "org.apache.hadoop.mapred.TextInputFormat",
+                "OutputFormat": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
+            }
+        }
+    }
+
+    assert ("", {}) == handlers.get_glue_table_format(table)
+
+
 @patch("backend.lambdas.data_mappers.handlers.glue_client")
 def test_it_gets_details_for_table(mock_client):
     mock_client.get_table.return_value = get_table_stub()

@@ -166,9 +166,10 @@ def get_glue_table_location(t):
 
 
 def get_glue_table_format(t):
+    serde_info = t["Table"].get("StorageDescriptor", {}).get("SerdeInfo", {})
     return (
-        t["Table"]["StorageDescriptor"]["SerdeInfo"]["SerializationLibrary"],
-        t["Table"]["StorageDescriptor"]["SerdeInfo"]["Parameters"],
+        serde_info.get("SerializationLibrary", ""),
+        serde_info.get("Parameters", {}),
     )
 
 
