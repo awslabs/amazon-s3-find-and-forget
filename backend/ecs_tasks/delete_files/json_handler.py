@@ -61,7 +61,7 @@ def delete_matches_from_json_file(input_file, to_delete, compressed=False):
                         record = get_value(col, parsed)
                         if record:
                             matched.append(record)
-                    if matched in column["MatchIds"]:
+                    if tuple(matched) in set(map(tuple, column["MatchIds"])):
                         should_delete = True
                         break
             if should_delete:
