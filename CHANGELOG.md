@@ -1,5 +1,11 @@
 # Change Log
 
+## v0.66
+
+- [#395](https://github.com/awslabs/amazon-s3-find-and-forget/issues/395):
+  Increase the speed of the json_handler by migrating from a list to a set.
+  Move from O(n) to O(1)
+
 ## v0.65
 
 - [#393](https://github.com/awslabs/amazon-s3-find-and-forget/issues/393): Fix
