@@ -23,7 +23,7 @@ def test_it_generates_new_parquet_file_without_matches(mock_delete, mock_load_pa
     # Arrange
     column = {
         "Column": "customer_id",
-        "MatchIds": ["12345", "23456"],
+        "MatchIds": set(["12345", "23456"]),
         "Type": "Simple",
     }
     data = [{"customer_id": "12345"}, {"customer_id": "34567"}]
@@ -53,7 +53,7 @@ def test_it_handles_files_with_multiple_row_groups_and_pandas_indexes(
         {"customer_id": "12345"},
         {"customer_id": "34567"},
     ]
-    columns = [{"Column": "customer_id", "MatchIds": ["12345"], "Type": "Simple"}]
+    columns = [{"Column": "customer_id", "MatchIds": set(["12345"]), "Type": "Simple"}]
     df = pd.DataFrame(data, list("ab"))
     table = pa.Table.from_pandas(df)
     buf = BytesIO()
@@ -81,7 +81,7 @@ def test_delete_correct_rows_from_table():
         {"customer_id": "34567"},
     ]
     columns = [
-        {"Column": "customer_id", "MatchIds": ["12345", "23456"], "Type": "Simple"}
+        {"Column": "customer_id", "MatchIds": set(["12345", "23456"]), "Type": "Simple"}
     ]
     df = pd.DataFrame(data)
     table = pa.Table.from_pandas(df)
@@ -97,8 +97,8 @@ def test_delete_handles_multiple_columns_with_no_rows_left():
         {"customer_id": "12345", "other_customer_id": "23456"},
     ]
     columns = [
-        {"Column": "customer_id", "MatchIds": ["12345"], "Type": "Simple"},
-        {"Column": "other_customer_id", "MatchIds": ["23456"], "Type": "Simple"},
+        {"Column": "customer_id", "MatchIds": set(["12345"]), "Type": "Simple"},
+        {"Column": "other_customer_id", "MatchIds": set(["23456"]), "Type": "Simple"},
     ]
     df = pd.DataFrame(data)
     table = pa.Table.from_pandas(df)
@@ -117,7 +117,7 @@ def test_handles_lower_cased_column_names():
     columns = [
         {
             "Column": "userdata.customerid",
-            "MatchIds": ["12345", "23456"],
+            "MatchIds": set(["12345", "23456"]),
             "Type": "Simple",
         }
     ]
@@ -137,7 +137,7 @@ def test_it_handles_data_with_pandas_indexes():
         {"customer_id": "34567"},
     ]
     columns = [
-        {"Column": "customer_id", "MatchIds": ["12345", "23456"], "Type": "Simple"}
+        {"Column": "customer_id", "MatchIds": set(["12345", "23456"]), "Type": "Simple"}
     ]
     df = pd.DataFrame(data, list("abc"))
     table = pa.Table.from_pandas(df)
@@ -160,7 +160,7 @@ def test_delete_correct_rows_from_parquet_table_with_complex_types():
     columns = [
         {
             "Column": "user_info.personal_information.name",
-            "MatchIds": ["matteo", "chris"],
+            "MatchIds": set(["matteo", "chris"]),
             "Type": "Simple",
         }
     ]
@@ -186,7 +186,13 @@ def test_delete_correct_rows_from_parquet_table_with_composite_types_tuple_col()
     columns = [
         {
             "Columns": ["first_name", "last_name"],
-            "MatchIds": [["john", "doe"], ["jane", "doe"], ["matteo", "doe"]],
+            "MatchIds": set(
+                [
+                    tuple(["john", "doe"]),
+                    tuple(["jane", "doe"]),
+                    tuple(["matteo", "doe"]),
+                ]
+            ),
             "Type": "Composite",
         }
     ]
@@ -205,7 +211,13 @@ def test_delete_correct_rows_from_parquet_table_with_composite_types_single_col(
         "first_name": ["john", "jane", "matteo"],
         "last_name": ["doe", "doe", "hey"],
     }
-    columns = [{"Columns": ["last_name"], "MatchIds": [["doe"]], "Type": "Composite"}]
+    columns = [
+        {
+            "Columns": ["last_name"],
+            "MatchIds": set([tuple(["doe"])]),
+            "Type": "Composite",
+        }
+    ]
     df = pd.DataFrame(data)
     table = pa.Table.from_pandas(df)
     table, deleted_rows = delete_from_table(table, columns)
@@ -225,7 +237,7 @@ def test_delete_correct_rows_from_parquet_table_with_composite_types_multiple_ty
     columns = [
         {
             "Columns": ["age", "last_name"],
-            "MatchIds": [[12, "doe"]],
+            "MatchIds": set([tuple([12, "doe"])]),
             "Type": "Composite",
         }
     ]
@@ -251,7 +263,13 @@ def test_delete_correct_rows_from_parquet_table_with_complex_composite_types():
     columns = [
         {
             "Columns": ["details.first_name", "details.last_name"],
-            "MatchIds": [["John", "Doe"], ["Jane", "Doe"], ["Matteo", "Doe"]],
+            "MatchIds": set(
+                [
+                    tuple(["John", "Doe"]),
+                    tuple(["Jane", "Doe"]),
+                    tuple(["Matteo", "Doe"]),
+                ]
+            ),
             "Type": "Composite",
         }
     ]
@@ -271,10 +289,10 @@ def test_delete_correct_rows_from_parquet_table_with_both_simple_and_composite_t
         "last_name": ["doe", "doe", "hey"],
     }
     columns = [
-        {"Column": "customer_id", "MatchIds": [12345], "Type": "Simple"},
+        {"Column": "customer_id", "MatchIds": set([12345]), "Type": "Simple"},
         {
             "Columns": ["first_name", "last_name"],
-            "MatchIds": [["jane", "doe"]],
+            "MatchIds": set([tuple(["jane", "doe"])]),
             "Type": "Composite",
         },
     ]
@@ -309,7 +327,7 @@ def test_delete_correct_rows_from_parquet_table_with_decimal_types():
     columns = [
         {
             "Column": "customer_id_decimal",
-            "MatchIds": ["123.450", "234.560"],
+            "MatchIds": set(["123.450", "234.560"]),
             "Type": "Simple",
         },
     ]
@@ -334,7 +352,7 @@ def test_delete_correct_rows_from_parquet_table_with_decimal_complex_types():
     columns = [
         {
             "Column": "user_info.personal_information.decimal",
-            "MatchIds": ["12.34", "34.56"],
+            "MatchIds": set(["12.34", "34.56"]),
             "Type": "Simple",
         }
     ]
@@ -366,7 +384,13 @@ def test_delete_correct_rows_from_parquet_table_with_decimal_complex_composite_t
                 "user_info.personal_information.name",
                 "user_info.personal_information.decimal",
             ],
-            "MatchIds": [["matteo", "12.34"], ["chris", "34.56"], ["nick", "11.22"]],
+            "MatchIds": set(
+                [
+                    tuple(["matteo", "12.34"]),
+                    tuple(["chris", "34.56"]),
+                    tuple(["nick", "11.22"]),
+                ]
+            ),
             "Type": "Composite",
         }
     ]
@@ -389,7 +413,7 @@ def test_it_throws_for_invalid_schema_column_not_found():
         columns = [
             {
                 "Column": "user_info.personal_information.name",
-                "MatchIds": ["matteo"],
+                "MatchIds": set(["matteo"]),
                 "Type": "Simple",
             }
         ]
