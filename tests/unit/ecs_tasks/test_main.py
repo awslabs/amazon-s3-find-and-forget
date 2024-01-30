@@ -265,7 +265,10 @@ def test_it_assumes_role(
 ):
     mock_fs.S3FileSystem.return_value = mock_fs
     mock_file = MagicMock()
-    mock_file.metadata.return_value = {"VersionId": b"abc123"}
+    mock_file.metadata.return_value = {
+        "VersionId": b"abc123",
+        "Content-Length": b"5558",
+    }
     mock_fs.open_input_stream.return_value.__enter__.return_value = mock_file
     mock_get_object_info.return_value = {"Metadata": {}}, None
     mock_delete.return_value = pa.BufferOutputStream(), {"DeletedRows": 1}
