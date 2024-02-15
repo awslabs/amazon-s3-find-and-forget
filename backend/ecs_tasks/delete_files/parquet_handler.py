@@ -112,7 +112,7 @@ def cast_column_values(column, schema):
     """
     if column["Type"] == "Simple":
         if is_column_type_decimal(schema, column["Column"]):
-            column["MatchIds"] = set([Decimal(m) for m in column["MatchIds"]])
+            column["MatchIds"] = set(Decimal(m) for m in column["MatchIds"])
     else:
         for i in range(0, len(column["Columns"])):
             if is_column_type_decimal(schema, column["Columns"][i]):
