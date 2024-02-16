@@ -114,19 +114,19 @@ def cast_column_values(column, schema):
         if is_column_type_decimal(schema, column["Column"]):
             column["MatchIds"] = set(Decimal(m) for m in column["MatchIds"])
     else:
-        decimal_columns = [
+        decimal_columns = set(
             i
-            for i in range(0, len(column["Columns"]))
-            if is_column_type_decimal(schema, column["Columns"][i])
-        ]
-        if len(decimal_columns):
-            columns_copy = set()
-            for composite_match_tuple in column["MatchIds"]:
-                match_array = [x for x in composite_match_tuple]
-                for i in decimal_columns:
-                    match_array[i] = Decimal(match_array[i])
-                columns_copy.add(tuple(match_array))
-            column["MatchIds"] = columns_copy
+            for i, col in enumerate(column["Columns"])
+            if is_column_type_decimal(schema, col)
+        )
+        if decimal_columns:
+            column["MatchIds"] = set(
+                tuple(
+                    Decimal(m) if i in decimal_columns else m
+                    for i, m in enumerate(composite_match_tuple)
+                )
+                for composite_match_tuple in column["MatchIds"]
+            )
     return column
 
 
