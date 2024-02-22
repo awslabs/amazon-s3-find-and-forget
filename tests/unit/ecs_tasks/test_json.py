@@ -13,7 +13,9 @@ pytestmark = [pytest.mark.unit, pytest.mark.ecs_tasks]
 
 def test_it_generates_new_json_file_without_matches():
     # Arrange
-    to_delete = [{"Column": "customer_id", "MatchIds": ["23456"], "Type": "Simple"}]
+    to_delete = [
+        {"Column": "customer_id", "MatchIds": set(["23456"]), "Type": "Simple"}
+    ]
     data = (
         '{"customer_id": "12345", "x": 1.2, "d":"2001-01-01"}\n'
         '{"customer_id": "23456", "x": 2.3, "d":"2001-01-03"}\n'
@@ -32,7 +34,9 @@ def test_it_generates_new_json_file_without_matches():
 
 def test_it_handles_json_with_gzip_compression():
     # Arrange
-    to_delete = [{"Column": "customer_id", "MatchIds": ["23456"], "Type": "Simple"}]
+    to_delete = [
+        {"Column": "customer_id", "MatchIds": set(["23456"]), "Type": "Simple"}
+    ]
     data = (
         '{"customer_id": "12345", "x": 7, "d":"2001-01-01"}\n'
         '{"customer_id": "23456", "x": 8, "d":"2001-01-03"}\n'
@@ -51,7 +55,9 @@ def test_it_handles_json_with_gzip_compression():
 
 def test_delete_correct_rows_when_missing_newline_at_the_end():
     # Arrange
-    to_delete = [{"Column": "customer_id", "MatchIds": ["23456"], "Type": "Simple"}]
+    to_delete = [
+        {"Column": "customer_id", "MatchIds": set(["23456"]), "Type": "Simple"}
+    ]
     data = (
         '{"customer_id": "12345", "x": 1.2, "d":"2001-01-01"}\n'
         '{"customer_id": "23456", "x": 2.3, "d":"2001-01-03"}\n'
@@ -71,7 +77,9 @@ def test_delete_correct_rows_when_missing_newline_at_the_end():
 def test_delete_correct_rows_containing_newlines_as_content():
     # UNICODE_NEWLINE_SEP = '\u2028'
     # Arrange
-    to_delete = [{"Column": "customer_id", "MatchIds": ["12345"], "Type": "Simple"}]
+    to_delete = [
+        {"Column": "customer_id", "MatchIds": set(["12345"]), "Type": "Simple"}
+    ]
     data = (
         '{"customer_id": "12345", "d": "foo"}\n'
         '{"customer_id": "23456", "d": "foo\u2028\\nbar"}\n'
@@ -90,7 +98,7 @@ def test_delete_correct_rows_containing_newlines_as_content():
 
 def test_delete_correct_rows_from_json_file_with_complex_types():
     # Arrange
-    to_delete = [{"Column": "user.id", "MatchIds": ["23456"], "Type": "Simple"}]
+    to_delete = [{"Column": "user.id", "MatchIds": set(["23456"]), "Type": "Simple"}]
     data = (
         '{"user": {"id": "12345", "name": "John"}, "d":["2001-01-01"]}\n'
         '{"user": {"id": "23456", "name": "Jane"}, "d":[]}\n'
@@ -112,7 +120,9 @@ def test_delete_correct_rows_from_json_file_with_composite_types_tuple_col():
     to_delete = [
         {
             "Columns": ["first_name", "last_name"],
-            "MatchIds": [["John", "Doe"], ["Jane", "Doe"], ["Mary", "Doe"]],
+            "MatchIds": set(
+                [tuple(["John", "Doe"]), tuple(["Jane", "Doe"]), tuple(["Mary", "Doe"])]
+            ),
             "Type": "Composite",
         }
     ]
@@ -136,7 +146,7 @@ def test_delete_correct_rows_from_json_file_with_composite_types_single_col():
     to_delete = [
         {
             "Columns": ["last_name"],
-            "MatchIds": [["Doe"]],
+            "MatchIds": set([tuple(["Doe"])]),
             "Type": "Composite",
         }
     ]
@@ -160,7 +170,7 @@ def test_delete_correct_rows_from_json_file_with_composite_types_with_nullable_o
     to_delete = [
         {
             "Columns": ["user.name", "parents.mother"],
-            "MatchIds": [["John", "23456"]],
+            "MatchIds": set([tuple(["John", "23456"])]),
             "Type": "Composite",
         }
     ]
@@ -189,7 +199,7 @@ def test_delete_correct_rows_from_json_file_with_composite_types_multiple_types(
     to_delete = [
         {
             "Columns": ["age", "last_name"],
-            "MatchIds": [[12, "Doe"]],
+            "MatchIds": set([tuple([12, "Doe"])]),
             "Type": "Composite",
         }
     ]
@@ -212,10 +222,10 @@ def test_delete_correct_rows_from_json_file_with_composite_types_multiple_types(
 def test_delete_correct_rows_from_json_file_with_both_simple_and_composite_types():
     # Arrange
     to_delete = [
-        {"Column": "customer_id", "MatchIds": [12345], "Type": "Simple"},
+        {"Column": "customer_id", "MatchIds": set([12345]), "Type": "Simple"},
         {
             "Columns": ["first_name", "last_name"],
-            "MatchIds": [["Jane", "Doe"]],
+            "MatchIds": set([tuple(["Jane", "Doe"])]),
             "Type": "Composite",
         },
     ]
@@ -236,7 +246,9 @@ def test_delete_correct_rows_from_json_file_with_both_simple_and_composite_types
 
 def test_delete_correct_rows_from_json_file_with_nullable_or_undefined_identifiers():
     # Arrange
-    to_delete = [{"Column": "parents.mother", "MatchIds": ["23456"], "Type": "Simple"}]
+    to_delete = [
+        {"Column": "parents.mother", "MatchIds": set(["23456"]), "Type": "Simple"}
+    ]
     data = (
         '{"user": {"id": "12345", "name": "John"}, "parents": {"mother": "23456"}}\n'
         '{"user": {"id": "23456", "name": "Jane"}, "parents": {"mother": null}}\n'
@@ -259,7 +271,7 @@ def test_delete_correct_rows_from_json_file_with_nullable_or_undefined_identifie
 
 def test_delete_correct_rows_from_json_file_with_lower_cased_column_id():
     # Arrange
-    to_delete = [{"Column": "userid", "MatchIds": ["23456"], "Type": "Simple"}]
+    to_delete = [{"Column": "userid", "MatchIds": set(["23456"]), "Type": "Simple"}]
     data = (
         '{"userId": "12345", "fullName": "JohnDoe"}\n'
         '{"userId": "23456", "fullName": "JaneDoe"}\n'
@@ -279,8 +291,8 @@ def test_delete_correct_rows_from_json_file_with_lower_cased_column_id():
 def test_delete_correct_rows_from_json_file_with_multiple_identifiers():
     # Arrange
     to_delete = [
-        {"Column": "user.id", "MatchIds": ["23456"], "Type": "Simple"},
-        {"Column": "mother", "MatchIds": ["23456"], "Type": "Simple"},
+        {"Column": "user.id", "MatchIds": set(["23456"]), "Type": "Simple"},
+        {"Column": "mother", "MatchIds": set(["23456"]), "Type": "Simple"},
     ]
     data = (
         '{"user": {"id": "12345", "name": "John"}, "mother": "23456"}\n'
@@ -297,7 +309,9 @@ def test_delete_correct_rows_from_json_file_with_multiple_identifiers():
 
 def test_it_throws_meaningful_error_for_serialization_issues():
     # Arrange
-    to_delete = [{"Column": "customer_id", "MatchIds": ["23456"], "Type": "Simple"}]
+    to_delete = [
+        {"Column": "customer_id", "MatchIds": set(["23456"]), "Type": "Simple"}
+    ]
     data = (
         '{"customer_id": "12345", "x": 1.2, "d":"2001-01-01"}\n'
         '{"customer_id": "23456", "x": 2.3, "d":"invalid\n'
