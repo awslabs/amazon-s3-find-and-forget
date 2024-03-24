@@ -19,7 +19,7 @@ aws-assume-role-lib==2.10.0
     #   -r ./backend/lambda_layers/aws_sdk/requirements.txt
 aws-sam-translator==1.67.0
     # via cfn-lint
-black==22.3.0
+black==24.3.0
     # via -r requirements.in
 boto3==1.24.38
     # via
@@ -112,6 +112,7 @@ numpy==1.22.0
     #   pyarrow
 packaging==23.1
     # via
+    #   black
     #   build
     #   pytest
 pandas==1.4.3
