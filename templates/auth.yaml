@@ -58,8 +58,6 @@ Resources:
   ServiceInvokeRole:
     Type: AWS::IAM::Role
     Properties:
-      ManagedPolicyArns:
-        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonAPIGatewayInvokeFullAccess
       AssumeRolePolicyDocument:
         Statement:
           - Effect: Allow
@@ -93,6 +91,16 @@ Resources:
                   - !Sub "arn:${AWS::Partition}:glue:*:${AWS::AccountId}:database*"
                   - !Sub "arn:${AWS::Partition}:glue:*:${AWS::AccountId}:table*"
                   - !Sub "arn:${AWS::Partition}:glue:*:${AWS::AccountId}:partition*"
+        - PolicyName: APIGateway
+          PolicyDocument: 
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "execute-api:Invoke"
+                  - "execute-api:ManageConnections"
+                Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:*
+         
 
 Outputs:
   CognitoIdentityPoolId:
