@@ -1,10 +1,15 @@
 # Change Log
 
+## v0.67
+
+- [#405](https://github.com/awslabs/amazon-s3-find-and-forget/pull/405) Replace
+  AmazonAPIGatewayInvokeFullAccess managed policy with inline policy
+
 ## v0.66
 
 - [#395](https://github.com/awslabs/amazon-s3-find-and-forget/issues/395):
-  Increase the speed of the json_handler by migrating from a list to a set.
-  Move from O(n) to O(1)
+  Increase the speed of the json_handler by migrating from a list to a set. Move
+  from O(n) to O(1)
 
 ## v0.65
 
