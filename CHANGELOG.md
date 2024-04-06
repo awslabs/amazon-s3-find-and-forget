@@ -1,5 +1,9 @@
 # Change Log
 
+## v0.68
+- [#408](https://github.com/awslabs/amazon-s3-find-and-forget/pull/408) Enable 
+  Scan On Push for the ECR Repository
+
 ## v0.67
 
 - [#405](https://github.com/awslabs/amazon-s3-find-and-forget/pull/405) Replace
