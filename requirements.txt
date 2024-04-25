@@ -139,7 +139,7 @@ pycparser==2.21
     # via
     #   -r ./backend/ecs_tasks/delete_files/requirements.txt
     #   cffi
-pydantic==1.10.7
+pydantic==1.10.13
     # via aws-sam-translator
 pyproject-hooks==1.0.0
     # via build
