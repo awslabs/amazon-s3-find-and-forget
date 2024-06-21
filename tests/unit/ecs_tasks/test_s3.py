@@ -178,7 +178,9 @@ def test_it_gets_tagging_args():
     client.get_object_tagging.return_value = {
         "TagSet": [{"Key": "a", "Value": "b"}, {"Key": "c", "Value": "d"}]
     }
-    assert {"Tagging": "a=b&c=d",} == get_object_tags(
+    assert {
+        "Tagging": "a=b&c=d",
+    } == get_object_tags(
         client, "bucket", "key"
     )[0]
 

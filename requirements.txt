@@ -70,7 +70,7 @@ filelock==3.12.0
     # via virtualenv
 identify==2.5.24
     # via pre-commit
-idna==3.4
+idna==3.7
     # via requests
 iniconfig==2.0.0
     # via pytest
@@ -139,7 +139,7 @@ pycparser==2.21
     # via
     #   -r ./backend/ecs_tasks/delete_files/requirements.txt
     #   cffi
-pydantic==1.10.7
+pydantic==1.10.13
     # via aws-sam-translator
 pyproject-hooks==1.0.0
     # via build
@@ -174,7 +174,7 @@ pyyaml==6.0
     #   yq
 regex==2023.5.5
     # via cfn-lint
-requests==2.31.0
+requests==2.32.0
     # via -r requirements.in
 s3transfer==0.6.0
     # via
@@ -212,7 +212,7 @@ typing-extensions==4.6.0
     #   aws-sam-translator
     #   black
     #   pydantic
-urllib3==1.26.18
+urllib3==1.26.19
     # via
     #   -r ./backend/ecs_tasks/delete_files/requirements.txt
     #   -r ./backend/lambda_layers/aws_sdk/requirements.txt
