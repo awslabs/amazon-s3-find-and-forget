@@ -67,6 +67,9 @@ Resources:
 
   ECRRepository:
     Type: AWS::ECR::Repository
+    Properties:
+      ImageScanningConfiguration:
+        ScanOnPush: true
 
   ECSTaskExecutionRole:
     Type: AWS::IAM::Role
