@@ -36,10 +36,10 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: 3.9
-      - name: Set up Nodejs 16
+      - name: Set up Nodejs 20
         uses: actions/setup-node@v1
         with:
-          node-version: 16
+          node-version: 20
       - name: Set up ruby 2.6
         uses: ruby/setup-ruby@v1
         with:
