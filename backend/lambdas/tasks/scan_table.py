@@ -1,6 +1,7 @@
 """
 Task to scan a DynamoDB table
 """
+
 import boto3
 from boto3.dynamodb.types import TypeDeserializer
 

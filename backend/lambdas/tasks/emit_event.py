@@ -1,6 +1,7 @@
 """
 Task to emit events
 """
+
 from uuid import uuid4
 
 from boto_utils import emit_event

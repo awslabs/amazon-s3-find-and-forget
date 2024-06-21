@@ -255,7 +255,7 @@ def json_lines_iterator(content, include_unparsed=False):
     for i, line in enumerate(lines):
         try:
             parsed = json.loads(line)
-        except (json.JSONDecodeError) as e:
+        except json.JSONDecodeError as e:
             raise ValueError(
                 "Serialization error when parsing JSON lines: {}".format(
                     str(e).replace("line 1", "line {}".format(i + 1)),
