@@ -1,6 +1,7 @@
 """
 Job Stats Updater
 """
+
 import json
 import logging
 
@@ -33,9 +34,9 @@ def _aggregate_stats(events):
             stats += Counter(
                 {
                     "TotalQueryCount": 1,
-                    "TotalQuerySucceededCount": 1
-                    if event_name == "QuerySucceeded"
-                    else 0,
+                    "TotalQuerySucceededCount": (
+                        1 if event_name == "QuerySucceeded" else 0
+                    ),
                     "TotalQueryFailedCount": 1 if event_name == "QueryFailed" else 0,
                     "TotalQueryScannedInBytes": event_data.get("Statistics", {}).get(
                         "DataScannedInBytes", 0
@@ -53,18 +54,18 @@ def _aggregate_stats(events):
         ]:
             stats += Counter(
                 {
-                    "TotalObjectUpdatedCount": 1
-                    if event_name == "ObjectUpdated"
-                    else 0,
-                    "TotalObjectUpdateSkippedCount": 1
-                    if event_name == "ObjectUpdateSkipped"
-                    else 0,
-                    "TotalObjectUpdateFailedCount": 1
-                    if event_name == "ObjectUpdateFailed"
-                    else 0,
-                    "TotalObjectRollbackFailedCount": 1
-                    if event_name == "ObjectRollbackFailed"
-                    else 0,
+                    "TotalObjectUpdatedCount": (
+                        1 if event_name == "ObjectUpdated" else 0
+                    ),
+                    "TotalObjectUpdateSkippedCount": (
+                        1 if event_name == "ObjectUpdateSkipped" else 0
+                    ),
+                    "TotalObjectUpdateFailedCount": (
+                        1 if event_name == "ObjectUpdateFailed" else 0
+                    ),
+                    "TotalObjectRollbackFailedCount": (
+                        1 if event_name == "ObjectRollbackFailed" else 0
+                    ),
                 }
             )
 

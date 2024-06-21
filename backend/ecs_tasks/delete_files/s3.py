@@ -109,9 +109,9 @@ def get_requester_payment(client, bucket):
     return (
         remove_none(
             {
-                "RequestPayer": "requester"
-                if request_payer["Payer"] == "Requester"
-                else None,
+                "RequestPayer": (
+                    "requester" if request_payer["Payer"] == "Requester" else None
+                ),
             }
         ),
         request_payer,
