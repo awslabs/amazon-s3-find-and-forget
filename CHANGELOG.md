@@ -16,8 +16,10 @@
   Upgrade frontend dependencies
 - [#414](https://github.com/awslabs/amazon-s3-find-and-forget/issues/414):
   Upgrade frontend dependencies
+- [#416](https://github.com/awslabs/amazon-s3-find-and-forget/issues/416):
+  Upgrade backend dependencies
 - [#415](https://github.com/awslabs/amazon-s3-find-and-forget/issues/415):
-  Upgrade frontend dependencies and move to node18
+  Upgrade frontend dependencies and move to node20
 
 ## v0.67
 
