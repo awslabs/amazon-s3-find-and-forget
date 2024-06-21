@@ -1,6 +1,7 @@
 """
 Task to purge an SQS queue
 """
+
 import boto3
 
 from decorators import with_logging

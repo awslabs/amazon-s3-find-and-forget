@@ -1,6 +1,7 @@
 """
 Task to orchestrate scaling for a ECS Service
 """
+
 import boto3
 
 from decorators import with_logging

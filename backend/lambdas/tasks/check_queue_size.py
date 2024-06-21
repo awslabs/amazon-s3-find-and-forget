@@ -1,6 +1,7 @@
 """
 Task to check the SQS Queue Size
 """
+
 import boto3
 
 from decorators import with_logging

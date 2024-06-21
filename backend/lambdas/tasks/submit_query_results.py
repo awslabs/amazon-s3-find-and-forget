@@ -1,6 +1,7 @@
 """
 Submits results from Athena queries to the Fargate deletion queue
 """
+
 import os
 
 import boto3

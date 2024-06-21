@@ -110,11 +110,13 @@ def make_query(query_data):
         queryable_matches = (
             cast_as_str.format(escape_column(col["Column"]))
             if is_simple
-            else cast_as_str.format(escape_column(col["Columns"][0]))
-            if len(col["Columns"]) == 1
-            else "concat({})".format(
-                columns_composite_join_token.join(
-                    "t.{0}".format(escape_column(c)) for c in col["Columns"]
+            else (
+                cast_as_str.format(escape_column(col["Columns"][0]))
+                if len(col["Columns"]) == 1
+                else "concat({})".format(
+                    columns_composite_join_token.join(
+                        "t.{0}".format(escape_column(c)) for c in col["Columns"]
+                    )
                 )
             )
         )
