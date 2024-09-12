@@ -2,7 +2,7 @@
 
 ## v0.69 (unreleased)
 
-- [TODO](https://github.com/awslabs/amazon-s3-find-and-forget/issues/TODO):
+- [#418](https://github.com/awslabs/amazon-s3-find-and-forget/issues/418):
   Upgrade frontend dependencies
 
 ## v0.68
