@@ -5,10 +5,10 @@
 #    pip-compile --output-file=backend/ecs_tasks/delete_files/requirements.txt backend/ecs_tasks/delete_files/requirements.in
 #
 aws-assume-role-lib==2.10.0
-    # via -r backend/ecs_tasks/delete_files/requirements.in
+    # via -r requirements.in
 boto3==1.24.38
     # via
-    #   -r backend/ecs_tasks/delete_files/requirements.in
+    #   -r requirements.in
     #   aws-assume-role-lib
 botocore==1.27.38
     # via
@@ -16,21 +16,21 @@ botocore==1.27.38
     #   s3transfer
 cffi==1.16.0
     # via cryptography
-cryptography==42.0.4
-    # via -r backend/ecs_tasks/delete_files/requirements.in
+cryptography==43.0.1
+    # via -r requirements.in
 jmespath==1.0.1
     # via
     #   boto3
     #   botocore
 numpy==1.22.0
     # via
-    #   -r backend/ecs_tasks/delete_files/requirements.in
+    #   -r requirements.in
     #   pandas
     #   pyarrow
 pandas==1.4.3
-    # via -r backend/ecs_tasks/delete_files/requirements.in
+    # via -r requirements.in
 pyarrow==14.0.1
-    # via -r backend/ecs_tasks/delete_files/requirements.in
+    # via -r requirements.in
 pycparser==2.21
     # via cffi
 python-dateutil==2.8.2
@@ -38,18 +38,18 @@ python-dateutil==2.8.2
     #   botocore
     #   pandas
 python-snappy==0.6.1
-    # via -r backend/ecs_tasks/delete_files/requirements.in
+    # via -r requirements.in
 pytz==2023.3.post1
     # via pandas
 s3transfer==0.6.0
     # via
-    #   -r backend/ecs_tasks/delete_files/requirements.in
+    #   -r requirements.in
     #   boto3
 six==1.16.0
     # via python-dateutil
 tenacity==8.0.1
-    # via -r backend/ecs_tasks/delete_files/requirements.in
+    # via -r requirements.in
 urllib3==1.26.19
     # via
-    #   -r backend/ecs_tasks/delete_files/requirements.in
+    #   -r requirements.in
     #   botocore
