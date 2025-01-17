@@ -124,7 +124,7 @@ run-local-container:
 	./docker_run_with_creds.sh
 
 setup: | $(VENV) lambda-layer-deps
-	(! [[ -d .git ]] || $(VENV)/bin/pre-commit install)
+	(! [[ -d .git ]] || GIT_CONFIG=/dev/null $(VENV)/bin/pre-commit install)
 	npm i
 	gem install cfn-nag
 

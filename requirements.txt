@@ -62,11 +62,11 @@ crhelper==2.0.10
     # via -r ./backend/lambda_layers/cr_helper/requirements.txt
 cryptography==43.0.1
     # via -r ./backend/ecs_tasks/delete_files/requirements.txt
-distlib==0.3.6
+distlib==0.3.9
     # via virtualenv
 exceptiongroup==1.1.1
     # via pytest
-filelock==3.12.0
+filelock==3.16.1
     # via virtualenv
 identify==2.5.24
     # via pre-commit
@@ -125,7 +125,7 @@ pbr==5.11.1
     #   sarif-om
 pip-tools==6.13.0
     # via -r requirements.in
-platformdirs==3.5.1
+platformdirs==4.3.6
     # via
     #   black
     #   virtualenv
@@ -219,7 +219,7 @@ urllib3==1.26.19
     #   -r requirements.in
     #   botocore
     #   requests
-virtualenv==20.23.0
+virtualenv==20.26.6
     # via pre-commit
 wheel==0.40.0
     # via
