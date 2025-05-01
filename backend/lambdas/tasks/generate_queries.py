@@ -1,6 +1,7 @@
 """
 Task for generating Athena queries from glue catalog aka Query Planning
 """
+
 import json
 import os
 import boto3
@@ -434,9 +435,11 @@ def column_mapper(col):
     result = {
         "Name": col["Name"],
         "Type": result_type,
-        "CanBeIdentifier": col["CanBeIdentifier"]
-        if "CanBeIdentifier" in col
-        else result_type in ALLOWED_TYPES or type_is_decimal_with_precision,
+        "CanBeIdentifier": (
+            col["CanBeIdentifier"]
+            if "CanBeIdentifier" in col
+            else result_type in ALLOWED_TYPES or type_is_decimal_with_precision
+        ),
     }
 
     if has_children:

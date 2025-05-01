@@ -116,9 +116,11 @@ def build_matches(cols, manifest_object):
         map(
             lambda c: {
                 "MatchIds": matches[
-                    COMPOSITE_MATCH_TOKEN.join(c["Columns"])
-                    if "Columns" in c
-                    else c["Column"]
+                    (
+                        COMPOSITE_MATCH_TOKEN.join(c["Columns"])
+                        if "Columns" in c
+                        else c["Column"]
+                    )
                 ],
                 **c,
             },

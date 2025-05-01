@@ -1,6 +1,7 @@
 """
 Task to check the number of running and pending tasks
 """
+
 import logging
 import boto3
 

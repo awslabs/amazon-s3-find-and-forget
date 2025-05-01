@@ -1,9 +1,43 @@
 # Change Log
 
-## v0.67
+## v0.69 (unreleased)
 
+- [#418](https://github.com/awslabs/amazon-s3-find-and-forget/issues/418):
+  Upgrade frontend dependencies
+- [#420](https://github.com/awslabs/amazon-s3-find-and-forget/issues/420):
+  Upgrade backend dependencies
+- [#422](https://github.com/awslabs/amazon-s3-find-and-forget/issues/422):
+  Upgrade frontend dependencies
 - [#396](https://github.com/awslabs/amazon-s3-find-and-forget/issues/396):
   Performance increase for JSON processing and log object size
+
+## v0.68
+
+- [#408](https://github.com/awslabs/amazon-s3-find-and-forget/pull/408) Enable
+  Scan On Push for the ECR Repository
+- [#407](https://github.com/awslabs/amazon-s3-find-and-forget/issues/407):
+  Upgrade frontend dependencies
+- [#409](https://github.com/awslabs/amazon-s3-find-and-forget/issues/409):
+  Upgrade frontend dependencies
+- [#410](https://github.com/awslabs/amazon-s3-find-and-forget/issues/410):
+  Upgrade backend dependencies
+- [#411](https://github.com/awslabs/amazon-s3-find-and-forget/issues/411):
+  Upgrade frontend dependencies
+- [#412](https://github.com/awslabs/amazon-s3-find-and-forget/issues/412):
+  Upgrade backend dependencies
+- [#413](https://github.com/awslabs/amazon-s3-find-and-forget/issues/413):
+  Upgrade frontend dependencies
+- [#414](https://github.com/awslabs/amazon-s3-find-and-forget/issues/414):
+  Upgrade frontend dependencies
+- [#416](https://github.com/awslabs/amazon-s3-find-and-forget/issues/416):
+  Upgrade backend dependencies
+- [#415](https://github.com/awslabs/amazon-s3-find-and-forget/issues/415):
+  Upgrade frontend dependencies and move to node20
+
+## v0.67
+
+- [#405](https://github.com/awslabs/amazon-s3-find-and-forget/pull/405) Replace
+  AmazonAPIGatewayInvokeFullAccess managed policy with inline policy
 
 ## v0.66
 

@@ -1,6 +1,7 @@
 """
 Settings handlers
 """
+
 import json
 
 import boto3
