@@ -4,7 +4,7 @@ Description: Amazon S3 Find and Forget API
 
 Globals:
   Function:
-    Runtime: python3.9
+    Runtime: python3.12
     Timeout: 180
     MemorySize: !Ref LambdaAPIMemorySize
     Layers: !Ref CommonLayers
