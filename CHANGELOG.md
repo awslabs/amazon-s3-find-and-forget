@@ -1,6 +1,6 @@
 # Change Log
 
-## v0.69 (unreleased)
+## v0.69
 
 - [#418](https://github.com/awslabs/amazon-s3-find-and-forget/issues/418):
   Upgrade frontend dependencies
@@ -8,8 +8,8 @@
   Upgrade backend dependencies
 - [#422](https://github.com/awslabs/amazon-s3-find-and-forget/issues/422):
   Upgrade frontend dependencies
-- [#424](https://github.com/awslabs/amazon-s3-find-and-forget/issues/424):
-  Bump Docker base image to 3.9-slim-bullseye
+- [#424](https://github.com/awslabs/amazon-s3-find-and-forget/issues/424): Bump
+  Docker base image to 3.9-slim-bullseye
 
 ## v0.68
 
