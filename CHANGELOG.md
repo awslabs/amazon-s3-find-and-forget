@@ -1,7 +1,9 @@
 # Change Log
 
-## v0.69 (unreleased)
+## v0.69
 
+- [#TODO](https://github.com/awslabs/amazon-s3-find-and-forget/issues/TODO):
+  Move to Python 3.12
 - [#418](https://github.com/awslabs/amazon-s3-find-and-forget/issues/418):
   Upgrade frontend dependencies
 - [#420](https://github.com/awslabs/amazon-s3-find-and-forget/issues/420):
