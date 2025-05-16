@@ -1,9 +1,9 @@
 pyarrow==14.0.1
-python-snappy==0.6.1
+python-snappy==0.7.3
 pandas==1.4.3
 boto3==1.24.38
 s3transfer==0.6.0
-numpy==1.22.0
+numpy==1.26.4
 cryptography==44.0.1
 urllib3>=1.26.19
 aws-assume-role-lib>=2.10.0

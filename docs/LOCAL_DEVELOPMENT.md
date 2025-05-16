@@ -8,7 +8,7 @@ changes from the command line.
 The following dependencies must be installed:
 
 - AWS CLI (v1)
-- Python >=3.9 and pip
+- Python >=3.12 and pip
 - node.js >= v20 and npm >= 10
 - virtualenv
 - Ruby >= 2.6
