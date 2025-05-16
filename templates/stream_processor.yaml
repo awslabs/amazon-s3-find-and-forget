@@ -10,7 +10,7 @@ Metadata:
 
 Globals:
   Function:
-    Runtime: python3.9
+    Runtime: python3.12
     Timeout: 900
     MemorySize: !Ref LambdaJobsMemorySize
     Layers: !Ref CommonLayers
