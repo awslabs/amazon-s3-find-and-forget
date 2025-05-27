@@ -74,11 +74,14 @@ def test_happy_path_when_queue_not_empty(
     mock_verify_integrity,
     message_stub,
 ):
-    column = {"Column": "customer_id", "MatchIds": ["12345", "23456"]}
+    column = {"Column": "customer_id", "MatchIds": set(["12345", "23456"])}
     mock_build_matches.return_value = [column]
     mock_fs.S3FileSystem.return_value = mock_fs
     mock_file = MagicMock()
-    mock_file.metadata.return_value = {"VersionId": b"abc123"}
+    mock_file.metadata.return_value = {
+        "VersionId": b"abc123",
+        "Content-Length": b"5558",
+    }
     mock_fs.open_input_stream.return_value.__enter__.return_value = mock_file
     mock_get_object_info.return_value = {"Metadata": {}}, None
     mock_save.return_value = "new_version123"
@@ -129,11 +132,14 @@ def test_happy_path_when_queue_not_empty_for_compressed_json(
     mock_verify_integrity,
     message_stub,
 ):
-    column = {"Column": "customer_id", "MatchIds": ["12345", "23456"]}
+    column = {"Column": "customer_id", "MatchIds": set(["12345", "23456"])}
     mock_build_matches.return_value = [column]
     mock_fs.S3FileSystem.return_value = mock_fs
     mock_file = MagicMock()
-    mock_file.metadata.return_value = {"VersionId": b"abc123"}
+    mock_file.metadata.return_value = {
+        "VersionId": b"abc123",
+        "Content-Length": b"5558",
+    }
     mock_fs.open_input_stream.return_value.__enter__.return_value = mock_file
     mock_get_object_info.return_value = {"Metadata": {}}, None
     mock_save.return_value = "new_version123"
@@ -190,12 +196,15 @@ def test_cse_kms_encrypted(
     mock_verify_integrity,
     message_stub,
 ):
-    column = {"Column": "customer_id", "MatchIds": ["12345", "23456"]}
+    column = {"Column": "customer_id", "MatchIds": set(["12345", "23456"])}
     metadata = {"x-amz-wrap-alg": "kms", "x-amz-key-v2": "key123"}
     mock_build_matches.return_value = [column]
     mock_fs.S3FileSystem.return_value = mock_fs
     mock_file = MagicMock()
-    mock_file.metadata.return_value = {"VersionId": b"abc123"}
+    mock_file.metadata.return_value = {
+        "VersionId": b"abc123",
+        "Content-Length": b"5558",
+    }
     mock_fs.open_input_stream.return_value.__enter__.return_value = mock_file
     mock_get_object_info.return_value = {"Metadata": metadata}, None
     mock_save.return_value = "new_version123"
@@ -256,7 +265,10 @@ def test_it_assumes_role(
 ):
     mock_fs.S3FileSystem.return_value = mock_fs
     mock_file = MagicMock()
-    mock_file.metadata.return_value = {"VersionId": b"abc123"}
+    mock_file.metadata.return_value = {
+        "VersionId": b"abc123",
+        "Content-Length": b"5558",
+    }
     mock_fs.open_input_stream.return_value.__enter__.return_value = mock_file
     mock_get_object_info.return_value = {"Metadata": {}}, None
     mock_delete.return_value = pa.BufferOutputStream(), {"DeletedRows": 1}
@@ -300,7 +312,10 @@ def test_it_removes_old_versions(
 ):
     mock_fs.S3FileSystem.return_value = mock_fs
     mock_file = MagicMock()
-    mock_file.metadata.return_value = {"VersionId": b"abc123"}
+    mock_file.metadata.return_value = {
+        "VersionId": b"abc123",
+        "Content-Length": b"5558",
+    }
     mock_fs.open_input_stream.return_value.__enter__.return_value = mock_file
     mock_get_object_info.return_value = {"Metadata": {}}, None
     mock_save.return_value = "new_version123"
@@ -348,7 +363,10 @@ def test_it_handles_old_version_delete_failures(
 ):
     mock_fs.S3FileSystem.return_value = mock_fs
     mock_file = MagicMock()
-    mock_file.metadata.return_value = {"VersionId": b"abc123"}
+    mock_file.metadata.return_value = {
+        "VersionId": b"abc123",
+        "Content-Length": b"5558",
+    }
     mock_fs.open_input_stream.return_value.__enter__.return_value = mock_file
     mock_get_object_info.return_value = {"Metadata": {}}, None
     mock_save.return_value = "new_version123"
@@ -394,7 +412,10 @@ def test_it_handles_no_deletions(
 ):
     mock_fs.S3FileSystem.return_value = mock_fs
     mock_file = MagicMock()
-    mock_file.metadata.return_value = {"VersionId": b"abc123"}
+    mock_file.metadata.return_value = {
+        "VersionId": b"abc123",
+        "Content-Length": b"5558",
+    }
     mock_fs.open_input_stream.return_value.__enter__.return_value = mock_file
     mock_get_object_info.return_value = {"Metadata": {}}, None
     mock_delete.return_value = pa.BufferOutputStream(), {"DeletedRows": 0}
@@ -1130,7 +1151,7 @@ def test_it_builds_matches_grouped_by_column_simple(mock_fetch):
 
     matches = build_matches(cols, "s3://path-to-manifest.json")
     assert matches == [
-        {"Column": "customer_id", "MatchIds": ["12345", "23456"]},
+        {"Column": "customer_id", "MatchIds": set(["12345", "23456"])},
     ]
 
 
@@ -1148,7 +1169,7 @@ def test_it_builds_matches_grouped_by_column_composite(mock_fetch):
     assert matches == [
         {
             "Columns": ["first_name", "last_name"],
-            "MatchIds": [["john", "doe"], ["jane", "doe"]],
+            "MatchIds": set([tuple(["john", "doe"]), tuple(["jane", "doe"])]),
         },
     ]
 
@@ -1174,8 +1195,8 @@ def test_it_builds_matches_grouped_by_column_mixed(mock_fetch):
     assert matches == [
         {
             "Columns": ["first_name", "last_name"],
-            "MatchIds": [["john", "doe"], ["jane", "doe"]],
+            "MatchIds": set([tuple(["john", "doe"]), tuple(["jane", "doe"])]),
         },
-        {"Column": "first_name", "MatchIds": ["smith"]},
-        {"Column": "last_name", "MatchIds": ["smith", "parker"]},
+        {"Column": "first_name", "MatchIds": set(["smith"])},
+        {"Column": "last_name", "MatchIds": set(["smith", "parker"])},
     ]

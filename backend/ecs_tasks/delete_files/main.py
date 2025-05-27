@@ -101,17 +101,17 @@ def build_matches(cols, manifest_object):
     Input example:
     [{"Column":"customer_id", "Type":"Simple"}]
     Output example:
-    [{"Column":"customer_id", "Type":"Simple", "MatchIds":[123, 234]}]
+    [{"Column":"customer_id", "Type":"Simple", "MatchIds": {123, 234}}]
     """
     COMPOSITE_MATCH_TOKEN = "_S3F2COMP_"
     manifest = fetch_manifest(manifest_object)
     matches = {}
     for line in json_lines_iterator(manifest):
         if not line["QueryableColumns"] in matches:
-            matches[line["QueryableColumns"]] = []
+            matches[line["QueryableColumns"]] = set()
         is_simple = len(line["Columns"]) == 1
-        match = line["MatchId"][0] if is_simple else line["MatchId"]
-        matches[line["QueryableColumns"]].append(match)
+        match = line["MatchId"][0] if is_simple else tuple(line["MatchId"])
+        matches[line["QueryableColumns"]].add(match)
     return list(
         map(
             lambda c: {
@@ -160,8 +160,14 @@ def execute(queue_url, message_body, receipt_handle):
             "{}/{}".format(input_bucket, input_key),
             buffer_size=FIVE_MB,
         ) as f:
-            source_version = f.metadata()["VersionId"].decode("utf-8")
-            logger.info("Using object version %s as source", source_version)
+            source_metadata = f.metadata()
+            source_version = source_metadata["VersionId"].decode("utf-8")
+            source_size = source_metadata["Content-Length"].decode("utf-8")
+            logger.info(
+                "Download Complete. Using object version %s as source (object size: %s)",
+                source_version,
+                source_size,
+            )
             # Write new file in-memory
             compressed = object_path.endswith(".gz")
             object_info, _ = get_object_info(

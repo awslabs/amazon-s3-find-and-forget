@@ -10,6 +10,8 @@
   Upgrade backend dependencies
 - [#422](https://github.com/awslabs/amazon-s3-find-and-forget/issues/422):
   Upgrade frontend dependencies
+- [#396](https://github.com/awslabs/amazon-s3-find-and-forget/issues/396):
+  Performance increase for JSON processing and log object size
 
 ## v0.68
 
