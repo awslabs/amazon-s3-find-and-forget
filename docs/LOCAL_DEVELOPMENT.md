@@ -11,7 +11,7 @@ The following dependencies must be installed:
 - Python >=3.12 and pip
 - node.js >= v20 and npm >= 10
 - virtualenv
-- Ruby >= 2.6
+- Ruby >= 3.3
 - libsnappy-dev/snappy-devel (debian/centos)
 - docker
 - jq
