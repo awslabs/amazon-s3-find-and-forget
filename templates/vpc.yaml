@@ -55,8 +55,6 @@ Mappings:
       HasThreeAZs: true
     eu-west-3:
       HasThreeAZs: true
-    eu-south-2:
-      HasThreeAZs: true
     sa-east-1:
       HasThreeAZs: true
     us-east-1:
