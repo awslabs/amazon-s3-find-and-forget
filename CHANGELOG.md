@@ -1,9 +1,14 @@
 # Change Log
 
+## v0.71
+
+- [#429](https://github.com/awslabs/amazon-s3-find-and-forget/pull/429):
+  Reverted the `eu-south-2` region enablement
+
 ## v0.70
 
 - [#428](https://github.com/awslabs/amazon-s3-find-and-forget/pull/428): Enabled
-  the `eu-south-2` region
+  the `eu-south-2` region, Updated the docker images used for CodeBuild
 
 ## v0.69
 
