@@ -1,5 +1,10 @@
 # Change Log
 
+## v0.70
+
+- [#428](https://github.com/awslabs/amazon-s3-find-and-forget/pull/428): Enabled
+  the `eu-south-2` region
+
 ## v0.69
 
 - [#425](https://github.com/awslabs/amazon-s3-find-and-forget/issues/425): Move
