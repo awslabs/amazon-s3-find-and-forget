@@ -4,6 +4,9 @@ name: Publish Version
 on:
   release:
     types: [created, edited]
+permissions:
+  contents: read
+
 jobs:
   publish:
     name: Publish Version
