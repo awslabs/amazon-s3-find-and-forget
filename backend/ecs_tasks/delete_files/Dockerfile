@@ -1,10 +1,14 @@
 ARG src_path=backend/ecs_tasks/delete_files
 ARG layers_path=backend/lambda_layers
 
-FROM public.ecr.aws/docker/library/python:3.12.10-slim-bullseye AS base
+FROM public.ecr.aws/docker/library/python:3.12.11-slim-bullseye AS base
 
 RUN apt-get update --fix-missing && apt-get -y upgrade
 RUN apt-get -y install g++ gcc libsnappy-dev
+RUN apt-get remove -y sqlite3 libsqlite3-0 libsqlite3-dev && \
+    apt-get autoremove -y && \
+    apt-get autoclean && \
+    rm -rf /var/lib/apt/lists/*
 
 FROM base AS builder
 
