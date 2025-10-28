@@ -1,5 +1,10 @@
 # Change Log
 
+## v0.72
+
+- [#431](https://github.com/awslabs/amazon-s3-find-and-forget/pull/431): Upgrade
+  Python Base Image and remove sqllite dependency
+
 ## v0.71
 
 - [#429](https://github.com/awslabs/amazon-s3-find-and-forget/pull/429):
