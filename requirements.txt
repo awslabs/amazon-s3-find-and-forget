@@ -23,13 +23,13 @@ aws-sam-translator==1.95.0
     # via cfn-lint
 black==24.3.0
     # via -r requirements.in
-boto3==1.24.38
+boto3==1.40.63
     # via
     #   -r ./backend/ecs_tasks/delete_files/requirements.txt
     #   -r ./backend/lambda_layers/aws_sdk/requirements.txt
     #   aws-assume-role-lib
     #   aws-sam-translator
-botocore==1.27.38
+botocore==1.40.63
     # via
     #   -r ./backend/ecs_tasks/delete_files/requirements.txt
     #   -r ./backend/lambda_layers/aws_sdk/requirements.txt
@@ -113,7 +113,6 @@ numpy==1.26.4
     # via
     #   -r ./backend/ecs_tasks/delete_files/requirements.txt
     #   pandas
-    #   pyarrow
 packaging==24.2
     # via
     #   black
@@ -137,7 +136,7 @@ pluggy==1.5.0
     # via pytest
 pre-commit==2.12.1
     # via -r requirements.in
-pyarrow==14.0.1
+pyarrow==22.0.0
     # via -r ./backend/ecs_tasks/delete_files/requirements.txt
 pycparser==2.21
     # via
@@ -182,9 +181,9 @@ pyyaml==6.0.2
     #   yq
 regex==2024.11.6
     # via cfn-lint
-requests==2.32.4
+requests==2.32.5
     # via -r requirements.in
-s3transfer==0.6.0
+s3transfer==0.14.0
     # via
     #   -r ./backend/ecs_tasks/delete_files/requirements.txt
     #   -r ./backend/lambda_layers/aws_sdk/requirements.txt
@@ -213,7 +212,7 @@ typing-extensions==4.12.2
     #   aws-sam-translator
     #   pydantic
     #   pydantic-core
-urllib3==1.26.19
+urllib3==2.5.0
     # via
     #   -r ./backend/ecs_tasks/delete_files/requirements.txt
     #   -r ./backend/lambda_layers/aws_sdk/requirements.txt

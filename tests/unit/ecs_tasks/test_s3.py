@@ -748,7 +748,7 @@ def test_s3transfer_locked_version():
     protection against automated library upgrade PRs that may silently introduce
     issues.
     """
-    assert s3transfer.__version__ == "0.6.0"
+    assert s3transfer.__version__ == "0.14.0"
 
 
 def test_s3transfer_put_object_monkeypatch_returns_response():
