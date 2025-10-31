@@ -27,6 +27,9 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: 3.12
+      - name: Setup pip 25.1.1
+        # py 3.12 comes with 25.3.0 which fails to complete the build
+        run: python -m pip install pip==25.1.1 --upgrade
       - name: Install virtualenv
         run: pip install virtualenv
       - name: Install dependencies
