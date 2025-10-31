@@ -41,7 +41,7 @@ jobs:
           python-version: 3.12
       - name: Setup pip 25.1.1
         # py 3.12 comes with 25.3.0 which fails to complete the build
-        run: python -m pip install pip==25.1.1 --upgrade
+        run: python -m pip install pip==25.1.1 --upgrade && pip --version
       - name: Set up Nodejs 20
         uses: actions/setup-node@v1
         with:
