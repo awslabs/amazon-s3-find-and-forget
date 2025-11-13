@@ -10,29 +10,29 @@ argcomplete==3.5.3
     # via yq
 attrs==21.4.0
     # via
-    #   -r ./backend/lambda_layers/decorators/requirements.txt
+    #   -r backend/lambda_layers/decorators/requirements.txt
     #   jschema-to-python
     #   jsonschema
     #   pytest
     #   sarif-om
 aws-assume-role-lib==2.10.0
     # via
-    #   -r ./backend/ecs_tasks/delete_files/requirements.txt
-    #   -r ./backend/lambda_layers/aws_sdk/requirements.txt
+    #   -r backend/ecs_tasks/delete_files/requirements.txt
+    #   -r backend/lambda_layers/aws_sdk/requirements.txt
 aws-sam-translator==1.95.0
     # via cfn-lint
 black==24.3.0
     # via -r requirements.in
-boto3==1.24.38
+boto3==1.40.63
     # via
-    #   -r ./backend/ecs_tasks/delete_files/requirements.txt
-    #   -r ./backend/lambda_layers/aws_sdk/requirements.txt
+    #   -r backend/ecs_tasks/delete_files/requirements.txt
+    #   -r backend/lambda_layers/aws_sdk/requirements.txt
     #   aws-assume-role-lib
     #   aws-sam-translator
-botocore==1.27.38
+botocore==1.40.63
     # via
-    #   -r ./backend/ecs_tasks/delete_files/requirements.txt
-    #   -r ./backend/lambda_layers/aws_sdk/requirements.txt
+    #   -r backend/ecs_tasks/delete_files/requirements.txt
+    #   -r backend/lambda_layers/aws_sdk/requirements.txt
     #   boto3
     #   s3transfer
 build==1.2.2.post1
@@ -43,7 +43,7 @@ certifi==2025.1.31
     #   requests
 cffi==1.16.0
     # via
-    #   -r ./backend/ecs_tasks/delete_files/requirements.txt
+    #   -r backend/ecs_tasks/delete_files/requirements.txt
     #   cryptography
 cfgv==3.4.0
     # via pre-commit
@@ -62,12 +62,12 @@ coverage[toml]==7.6.12
     # via pytest-cov
 cramjam==2.10.0
     # via
-    #   -r ./backend/ecs_tasks/delete_files/requirements.txt
+    #   -r backend/ecs_tasks/delete_files/requirements.txt
     #   python-snappy
 crhelper==2.0.10
-    # via -r ./backend/lambda_layers/cr_helper/requirements.txt
+    # via -r backend/lambda_layers/cr_helper/requirements.txt
 cryptography==44.0.1
-    # via -r ./backend/ecs_tasks/delete_files/requirements.txt
+    # via -r backend/ecs_tasks/delete_files/requirements.txt
 distlib==0.3.9
     # via virtualenv
 filelock==3.17.0
@@ -80,8 +80,8 @@ iniconfig==2.0.0
     # via pytest
 jmespath==1.0.1
     # via
-    #   -r ./backend/ecs_tasks/delete_files/requirements.txt
-    #   -r ./backend/lambda_layers/aws_sdk/requirements.txt
+    #   -r backend/ecs_tasks/delete_files/requirements.txt
+    #   -r backend/lambda_layers/aws_sdk/requirements.txt
     #   boto3
     #   botocore
 jschema-to-python==1.2.3
@@ -94,7 +94,7 @@ jsonpointer==3.0.0
     # via jsonpatch
 jsonschema==3.2.0
     # via
-    #   -r ./backend/lambda_layers/decorators/requirements.txt
+    #   -r backend/lambda_layers/decorators/requirements.txt
     #   aws-sam-translator
     #   cfn-lint
 junit-xml==1.9
@@ -111,23 +111,22 @@ nodeenv==1.9.1
     # via pre-commit
 numpy==1.26.4
     # via
-    #   -r ./backend/ecs_tasks/delete_files/requirements.txt
+    #   -r backend/ecs_tasks/delete_files/requirements.txt
     #   pandas
-    #   pyarrow
 packaging==24.2
     # via
     #   black
     #   build
     #   pytest
 pandas==1.4.3
-    # via -r ./backend/ecs_tasks/delete_files/requirements.txt
+    # via -r backend/ecs_tasks/delete_files/requirements.txt
 pathspec==0.12.1
     # via black
 pbr==6.1.1
     # via
     #   jschema-to-python
     #   sarif-om
-pip-tools==7.4.1
+pip-tools==7.5.2
     # via -r requirements.in
 platformdirs==4.3.6
     # via
@@ -137,11 +136,11 @@ pluggy==1.5.0
     # via pytest
 pre-commit==2.12.1
     # via -r requirements.in
-pyarrow==14.0.1
-    # via -r ./backend/ecs_tasks/delete_files/requirements.txt
+pyarrow==22.0.0
+    # via -r backend/ecs_tasks/delete_files/requirements.txt
 pycparser==2.21
     # via
-    #   -r ./backend/ecs_tasks/delete_files/requirements.txt
+    #   -r backend/ecs_tasks/delete_files/requirements.txt
     #   cffi
 pydantic==2.10.6
     # via aws-sam-translator
@@ -153,7 +152,7 @@ pyproject-hooks==1.2.0
     #   pip-tools
 pyrsistent==0.18.1
     # via
-    #   -r ./backend/lambda_layers/decorators/requirements.txt
+    #   -r backend/lambda_layers/decorators/requirements.txt
     #   jsonschema
 pytest==7.2.0
     # via
@@ -163,15 +162,15 @@ pytest-cov==4.0.0
     # via -r requirements.in
 python-dateutil==2.8.2
     # via
-    #   -r ./backend/ecs_tasks/delete_files/requirements.txt
-    #   -r ./backend/lambda_layers/aws_sdk/requirements.txt
+    #   -r backend/ecs_tasks/delete_files/requirements.txt
+    #   -r backend/lambda_layers/aws_sdk/requirements.txt
     #   botocore
     #   pandas
 python-snappy==0.7.3
-    # via -r ./backend/ecs_tasks/delete_files/requirements.txt
+    # via -r backend/ecs_tasks/delete_files/requirements.txt
 pytz==2023.3.post1
     # via
-    #   -r ./backend/ecs_tasks/delete_files/requirements.txt
+    #   -r backend/ecs_tasks/delete_files/requirements.txt
     #   pandas
 pyyaml==6.0.2
     # via
@@ -182,20 +181,20 @@ pyyaml==6.0.2
     #   yq
 regex==2024.11.6
     # via cfn-lint
-requests==2.32.4
+requests==2.32.5
     # via -r requirements.in
-s3transfer==0.6.0
+s3transfer==0.14.0
     # via
-    #   -r ./backend/ecs_tasks/delete_files/requirements.txt
-    #   -r ./backend/lambda_layers/aws_sdk/requirements.txt
+    #   -r backend/ecs_tasks/delete_files/requirements.txt
+    #   -r backend/lambda_layers/aws_sdk/requirements.txt
     #   boto3
 sarif-om==1.0.4
     # via cfn-lint
 six==1.16.0
     # via
-    #   -r ./backend/ecs_tasks/delete_files/requirements.txt
-    #   -r ./backend/lambda_layers/aws_sdk/requirements.txt
-    #   -r ./backend/lambda_layers/decorators/requirements.txt
+    #   -r backend/ecs_tasks/delete_files/requirements.txt
+    #   -r backend/lambda_layers/aws_sdk/requirements.txt
+    #   -r backend/lambda_layers/decorators/requirements.txt
     #   cfn-flip
     #   jsonschema
     #   junit-xml
@@ -203,7 +202,7 @@ six==1.16.0
 sympy==1.13.3
     # via cfn-lint
 tenacity==8.0.1
-    # via -r ./backend/ecs_tasks/delete_files/requirements.txt
+    # via -r backend/ecs_tasks/delete_files/requirements.txt
 toml==0.10.2
     # via pre-commit
 tomlkit==0.13.2
@@ -213,10 +212,10 @@ typing-extensions==4.12.2
     #   aws-sam-translator
     #   pydantic
     #   pydantic-core
-urllib3==1.26.19
+urllib3==2.5.0
     # via
-    #   -r ./backend/ecs_tasks/delete_files/requirements.txt
-    #   -r ./backend/lambda_layers/aws_sdk/requirements.txt
+    #   -r backend/ecs_tasks/delete_files/requirements.txt
+    #   -r backend/lambda_layers/aws_sdk/requirements.txt
     #   -r requirements.in
     #   botocore
     #   requests
