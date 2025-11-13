@@ -1,4 +1,4 @@
-pip-tools>=7.5.1
+pip-tools>=7.5.2
 pytest==7.2.0
 certifi>=2023.7.22
 cfn-lint==0.77.3
