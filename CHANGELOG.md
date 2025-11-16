@@ -1,9 +1,10 @@
 # Change Log
 
-## v0.73 (unreleased)
+## v0.73
 
 - [#432](https://github.com/awslabs/amazon-s3-find-and-forget/pull/432): Upgrade
-  Backend and frontend dependencies
+  Backend and frontend dependencies, and move base Docker Python image from
+  bullseye to bookworm
 
 ## v0.72
 
