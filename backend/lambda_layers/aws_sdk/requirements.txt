@@ -24,7 +24,7 @@ s3transfer==0.14.0
     # via boto3
 six==1.16.0
     # via python-dateutil
-urllib3==2.5.0
+urllib3==2.6.0
     # via
     #   -r backend/lambda_layers/aws_sdk/requirements.in
     #   botocore
