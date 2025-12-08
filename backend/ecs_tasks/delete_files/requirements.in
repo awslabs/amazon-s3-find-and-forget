@@ -5,6 +5,6 @@ boto3==1.40.63
 s3transfer==0.14.0
 numpy==1.26.4
 cryptography==44.0.1
-urllib3>=2.5.0
+urllib3>=2.6.0
 aws-assume-role-lib>=2.10.0
 tenacity==8.0.1
