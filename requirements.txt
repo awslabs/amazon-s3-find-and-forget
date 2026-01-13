@@ -219,7 +219,7 @@ urllib3==2.6.0
     #   -r requirements.in
     #   botocore
     #   requests
-virtualenv==20.29.2
+virtualenv==20.36.1
     # via pre-commit
 wheel==0.45.1
     # via
