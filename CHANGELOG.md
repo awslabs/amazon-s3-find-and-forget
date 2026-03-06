@@ -4,6 +4,8 @@
 
 - [#434](https://github.com/awslabs/amazon-s3-find-and-forget/pull/434): Upgrade
   Backend and frontend dependencies
+- Upgrade pandas 1.4.3 to 2.2.3 and recompile all requirements to fix
+  pip-compile version conflicts
 
 ## v0.73
 
