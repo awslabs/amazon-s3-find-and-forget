@@ -6,10 +6,10 @@
 #
 
 aws-assume-role-lib==2.10.0
-    # via -r backend/lambda_layers/aws_sdk/requirements.in
+    # via -r requirements.in
 boto3==1.40.63
     # via
-    #   -r backend/lambda_layers/aws_sdk/requirements.in
+    #   -r requirements.in
     #   aws-assume-role-lib
 botocore==1.40.76
     # via
@@ -27,5 +27,5 @@ six==1.17.0
     # via python-dateutil
 urllib3==2.6.3
     # via
-    #   -r backend/lambda_layers/aws_sdk/requirements.in
+    #   -r requirements.in
     #   botocore
