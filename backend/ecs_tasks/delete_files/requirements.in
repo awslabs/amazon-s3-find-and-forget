@@ -1,6 +1,6 @@
 pyarrow==22.0.0
 python-snappy==0.7.3
-pandas==1.4.3
+pandas==2.2.3
 boto3==1.40.63
 s3transfer==0.14.0
 numpy==1.26.4
