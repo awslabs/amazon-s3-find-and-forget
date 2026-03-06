@@ -118,6 +118,7 @@ packaging==24.2
     #   black
     #   build
     #   pytest
+    #   wheel
 pandas==1.4.3
     # via -r ./backend/ecs_tasks/delete_files/requirements.txt
 pathspec==0.12.1
@@ -221,7 +222,7 @@ urllib3==2.6.0
     #   requests
 virtualenv==20.29.2
     # via pre-commit
-wheel==0.45.1
+wheel==0.46.2
     # via
     #   -r requirements.in
     #   pip-tools
