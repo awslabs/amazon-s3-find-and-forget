@@ -1,11 +1,16 @@
 # Change Log
 
-## v0.74 (unreleased)
+## v0.74 (2026-03-11)
 
-- [#434](https://github.com/awslabs/amazon-s3-find-and-forget/pull/434): Upgrade
-  Backend and frontend dependencies
-- Upgrade pandas 1.4.3 to 2.2.3 and recompile all requirements to fix
-  pip-compile version conflicts
+- [#443](https://github.com/awslabs/amazon-s3-find-and-forget/pull/443): Upgrade
+  pandas 1.4.3 to 2.2.3 and recompile all requirements to fix pip-compile
+  version conflicts
+- [#436](https://github.com/awslabs/amazon-s3-find-and-forget/pull/436): Bump
+  urllib3 from 2.6.0 to 2.6.3 in /backend/ecs_tasks/delete_files
+- [#435](https://github.com/awslabs/amazon-s3-find-and-forget/pull/435): Bump
+  filelock from 3.17.0 to 3.20.1
+- [#434](https://github.com/awslabs/amazon-s3-find-and-forget/pull/434): Bump
+  urllib3 from 2.5.0 to 2.6.0 in /backend/lambda_layers/aws_sdk
 
 ## v0.73
 
