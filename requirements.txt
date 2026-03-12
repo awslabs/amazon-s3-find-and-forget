@@ -4,7 +4,6 @@
 #
 #    pip-compile --output-file=requirements.txt requirements.in
 #
-
 annotated-types==0.7.0
     # via pydantic
 argcomplete==3.6.3
@@ -22,7 +21,7 @@ aws-assume-role-lib==2.10.0
     #   -r backend/lambda_layers/aws_sdk/requirements.txt
 aws-sam-translator==1.106.0
     # via cfn-lint
-black==24.3.0
+black==26.3.1
     # via -r requirements.in
 boto3==1.40.63
     # via
@@ -175,6 +174,8 @@ python-discovery==1.1.0
     # via virtualenv
 python-snappy==0.7.3
     # via -r backend/ecs_tasks/delete_files/requirements.txt
+pytokens==0.4.1
+    # via black
 pytz==2026.1.post1
     # via
     #   -r backend/ecs_tasks/delete_files/requirements.txt
