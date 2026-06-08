@@ -327,6 +327,88 @@ def test_it_throws_meaningful_error_for_serialization_issues():
     )
 
 
+def test_delete_correct_rows_from_json_file_with_falsy_integer_identifier():
+    # Arrange
+    to_delete = [{"Column": "customer_id", "MatchIds": set([0]), "Type": "Simple"}]
+    data = (
+        '{"customer_id": 0, "x": 1.2, "d":"2001-01-01"}\n'
+        '{"customer_id": 1, "x": 2.3, "d":"2001-01-03"}\n'
+        '{"customer_id": 2, "x": 3.4, "d":"2001-01-05"}\n'
+    )
+    out_stream = to_json_file(data)
+    # Act
+    out, stats = delete_matches_from_json_file(out_stream, to_delete)
+    assert isinstance(out, pa.BufferOutputStream)
+    assert {"ProcessedRows": 3, "DeletedRows": 1} == stats
+    assert to_json_string(out) == (
+        '{"customer_id": 1, "x": 2.3, "d":"2001-01-03"}\n'
+        '{"customer_id": 2, "x": 3.4, "d":"2001-01-05"}\n'
+    )
+
+
+def test_delete_correct_rows_from_json_file_with_falsy_empty_string_identifier():
+    # Arrange
+    to_delete = [{"Column": "customer_id", "MatchIds": set([""]), "Type": "Simple"}]
+    data = (
+        '{"customer_id": "", "x": 1.2, "d":"2001-01-01"}\n'
+        '{"customer_id": "23456", "x": 2.3, "d":"2001-01-03"}\n'
+        '{"customer_id": "34567", "x": 3.4, "d":"2001-01-05"}\n'
+    )
+    out_stream = to_json_file(data)
+    # Act
+    out, stats = delete_matches_from_json_file(out_stream, to_delete)
+    assert isinstance(out, pa.BufferOutputStream)
+    assert {"ProcessedRows": 3, "DeletedRows": 1} == stats
+    assert to_json_string(out) == (
+        '{"customer_id": "23456", "x": 2.3, "d":"2001-01-03"}\n'
+        '{"customer_id": "34567", "x": 3.4, "d":"2001-01-05"}\n'
+    )
+
+
+def test_delete_correct_rows_from_json_file_with_falsy_boolean_identifier():
+    # Arrange
+    to_delete = [{"Column": "opted_in", "MatchIds": set([False]), "Type": "Simple"}]
+    data = (
+        '{"customer_id": "12345", "opted_in": false}\n'
+        '{"customer_id": "23456", "opted_in": true}\n'
+        '{"customer_id": "34567", "opted_in": true}\n'
+    )
+    out_stream = to_json_file(data)
+    # Act
+    out, stats = delete_matches_from_json_file(out_stream, to_delete)
+    assert isinstance(out, pa.BufferOutputStream)
+    assert {"ProcessedRows": 3, "DeletedRows": 1} == stats
+    assert to_json_string(out) == (
+        '{"customer_id": "23456", "opted_in": true}\n'
+        '{"customer_id": "34567", "opted_in": true}\n'
+    )
+
+
+def test_delete_correct_rows_from_json_file_with_composite_types_falsy_component():
+    # Arrange
+    to_delete = [
+        {
+            "Columns": ["age", "last_name"],
+            "MatchIds": set([tuple([0, "Doe"])]),
+            "Type": "Composite",
+        }
+    ]
+    data = (
+        '{"customer_id": 12345, "last_name": "Doe", "age": 0}\n'
+        '{"customer_id": 23456, "last_name": "Doe", "age": 12}\n'
+        '{"customer_id": 34567, "last_name": "Hey", "age": 0}\n'
+    )
+    out_stream = to_json_file(data)
+    # Act
+    out, stats = delete_matches_from_json_file(out_stream, to_delete)
+    assert isinstance(out, pa.BufferOutputStream)
+    assert {"ProcessedRows": 3, "DeletedRows": 1} == stats
+    assert to_json_string(out) == (
+        '{"customer_id": 23456, "last_name": "Doe", "age": 12}\n'
+        '{"customer_id": 34567, "last_name": "Hey", "age": 0}\n'
+    )
+
+
 def to_json_file(data, compressed=False):
     mode = "wb" if compressed else "w+t"
     tmp = tempfile.NamedTemporaryFile(mode=mode)
