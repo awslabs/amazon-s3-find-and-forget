@@ -52,14 +52,14 @@ def delete_matches_from_json_file(input_file, to_delete, compressed=False):
             for column in to_delete:
                 if column["Type"] == "Simple":
                     record = get_value(column["Column"], parsed)
-                    if record and record in column["MatchIds"]:
+                    if record is not None and record in column["MatchIds"]:
                         should_delete = True
                         break
                 else:
                     matched = []
                     for col in column["Columns"]:
                         record = get_value(col, parsed)
-                        if record:
+                        if record is not None:
                             matched.append(record)
                     if tuple(matched) in column["MatchIds"]:
                         should_delete = True
