@@ -4,7 +4,6 @@
 #
 #    pip-compile --output-file=backend/ecs_tasks/delete_files/requirements.txt backend/ecs_tasks/delete_files/requirements.in
 #
-
 aws-assume-role-lib==2.10.0
     # via -r backend/ecs_tasks/delete_files/requirements.in
 boto3==1.40.63
@@ -53,7 +52,7 @@ tenacity==8.0.1
     # via -r backend/ecs_tasks/delete_files/requirements.in
 tzdata==2025.3
     # via pandas
-urllib3==2.6.3
+urllib3==2.7.0
     # via
     #   -r backend/ecs_tasks/delete_files/requirements.in
     #   botocore
