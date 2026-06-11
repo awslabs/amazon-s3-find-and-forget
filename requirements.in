@@ -1,5 +1,5 @@
 pip-tools>=7.5.2
-pytest==7.2.0
+pytest==9.0.3
 certifi>=2023.7.22
 cfn-lint==0.77.3
 cfn-flip==1.3.0
