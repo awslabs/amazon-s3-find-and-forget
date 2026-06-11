@@ -228,7 +228,7 @@ tzdata==2025.3
     # via
     #   -r backend/ecs_tasks/delete_files/requirements.txt
     #   pandas
-urllib3==2.6.3
+urllib3==2.7.0
     # via
     #   -r backend/ecs_tasks/delete_files/requirements.txt
     #   -r backend/lambda_layers/aws_sdk/requirements.txt

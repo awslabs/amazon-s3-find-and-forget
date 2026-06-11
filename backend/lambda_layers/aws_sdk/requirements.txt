@@ -4,7 +4,6 @@
 #
 #    pip-compile --output-file=backend/lambda_layers/aws_sdk/requirements.txt backend/lambda_layers/aws_sdk/requirements.in
 #
-
 aws-assume-role-lib==2.10.0
     # via -r backend/lambda_layers/aws_sdk/requirements.in
 boto3==1.40.63
@@ -25,7 +24,7 @@ s3transfer==0.14.0
     # via boto3
 six==1.17.0
     # via python-dateutil
-urllib3==2.6.3
+urllib3==2.7.0
     # via
     #   -r backend/lambda_layers/aws_sdk/requirements.in
     #   botocore
