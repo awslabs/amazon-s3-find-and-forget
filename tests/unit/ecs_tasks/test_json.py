@@ -366,6 +366,12 @@ def test_delete_correct_rows_from_json_file_with_falsy_empty_string_identifier()
 
 
 def test_delete_correct_rows_from_json_file_with_falsy_boolean_identifier():
+    # Defensive coverage only: `boolean` is not in ALLOWED_TYPES
+    # (generate_queries.py), so a boolean column can never be selected as a
+    # Match ID identifier and cast_to_type would reject it upstream. This test
+    # pins the handler's falsy-value behavior directly, independent of that
+    # guard, so the `is not None` semantics stay correct if the type rules
+    # ever change.
     # Arrange
     to_delete = [{"Column": "opted_in", "MatchIds": set([False]), "Type": "Simple"}]
     data = (

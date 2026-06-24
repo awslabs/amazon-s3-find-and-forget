@@ -2,12 +2,10 @@
 
 ## Unreleased
 
-- Fix the JSON Forget-phase handler so that records whose match identifier is a
-  legitimate falsy JSON value (integer `0`, float `0.0`, empty string `""`, or
-  boolean `false`) are correctly deleted. Previously a truthiness guard
-  short-circuited on these values and silently skipped matching records, which
-  is a GDPR right-to-be-forgotten correctness defect. The guard now uses
-  `is not None` to distinguish an absent key from a falsy-but-present value.
+- [#453](https://github.com/awslabs/amazon-s3-find-and-forget/pull/453): Fix the
+  JSON Forget-phase handler so that Composite match components (and Simple match
+  IDs) with a falsy value such as `0` or `""` are no longer skipped by the
+  truthiness guard; the comparison now uses `is not None`.
 
 ## v0.76 (2026-07-07)
 
