@@ -5,7 +5,7 @@ FROM public.ecr.aws/docker/library/python:3.12.12-slim-bookworm AS base
 
 RUN apt-get update --fix-missing && apt-get -y upgrade
 RUN apt-get -y install g++ gcc libsnappy-dev
-RUN apt-get remove -y sqlite3 libsqlite3-0 libsqlite3-dev && \
+RUN apt-get remove -y sqlite3 libsqlite3-0 libsqlite3-dev libaom3 && \
     apt-get autoremove -y && \
     apt-get autoclean && \
     rm -rf /var/lib/apt/lists/*
