@@ -1,5 +1,22 @@
 # Change Log
 
+## v0.75 (2026-07-07)
+
+- [#455](https://github.com/awslabs/amazon-s3-find-and-forget/pull/455): Remove
+  libaom3 to address CVE-2026-56209
+- [#454](https://github.com/awslabs/amazon-s3-find-and-forget/pull/454): Bump
+  cryptography in /backend/ecs_tasks/delete_files
+- [#452](https://github.com/awslabs/amazon-s3-find-and-forget/pull/452): Bump
+  idna from 3.11 to 3.15
+- [#450](https://github.com/awslabs/amazon-s3-find-and-forget/pull/450): Bump
+  urllib3 from 2.6.3 to 2.7.0 in /backend/ecs_tasks/delete_files
+- [#449](https://github.com/awslabs/amazon-s3-find-and-forget/pull/449): Bump
+  pytest from 7.2.0 to 9.0.3
+- [#448](https://github.com/awslabs/amazon-s3-find-and-forget/pull/448): Bump
+  requests from 2.32.5 to 2.33.0
+- [#447](https://github.com/awslabs/amazon-s3-find-and-forget/pull/447): Bump
+  black from 24.3.0 to 26.3.1
+
 ## v0.74 (2026-03-11)
 
 - [#443](https://github.com/awslabs/amazon-s3-find-and-forget/pull/443): Upgrade
