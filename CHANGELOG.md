@@ -1,5 +1,10 @@
 # Change Log
 
+## v0.76 (2026-07-07)
+
+- [#457](https://github.com/awslabs/amazon-s3-find-and-forget/pull/457): Bump
+  bootstrap from 4.6.1 to 4.6.2 to fix the frontend build
+
 ## v0.75 (2026-07-07)
 
 - [#455](https://github.com/awslabs/amazon-s3-find-and-forget/pull/455): Remove
