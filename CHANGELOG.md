@@ -1,5 +1,12 @@
 # Change Log
 
+## Unreleased
+
+- [#453](https://github.com/awslabs/amazon-s3-find-and-forget/pull/453): Fix the
+  JSON Forget-phase handler so that Composite match components (and Simple match
+  IDs) with a falsy value such as `0` or `""` are no longer skipped by the
+  truthiness guard; the comparison now uses `is not None`.
+
 ## v0.76 (2026-07-07)
 
 - [#457](https://github.com/awslabs/amazon-s3-find-and-forget/pull/457): Bump
