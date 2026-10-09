@@ -65,7 +65,7 @@ cramjam==2.11.0
     #   python-snappy
 crhelper==2.0.10
     # via -r backend/lambda_layers/cr_helper/requirements.txt
-cryptography==44.0.1
+cryptography==50.0.0
     # via -r backend/ecs_tasks/delete_files/requirements.txt
 distlib==0.4.0
     # via virtualenv
@@ -228,7 +228,7 @@ tzdata==2025.3
     # via
     #   -r backend/ecs_tasks/delete_files/requirements.txt
     #   pandas
-urllib3==2.7.0
+urllib3==2.8.0
     # via
     #   -r backend/ecs_tasks/delete_files/requirements.txt
     #   -r backend/lambda_layers/aws_sdk/requirements.txt

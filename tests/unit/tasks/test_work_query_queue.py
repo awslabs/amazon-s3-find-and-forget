@@ -5,7 +5,6 @@ from types import SimpleNamespace
 import pytest
 from mock import patch, ANY, MagicMock
 
-
 with patch.dict(os.environ, {"QueueUrl": "someurl"}):
     from backend.lambdas.tasks.work_query_queue import (
         handler,

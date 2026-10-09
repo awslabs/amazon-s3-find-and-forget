@@ -4,7 +4,6 @@ from mock import patch, ANY
 import pytest
 from backend.lambdas.tasks.emit_event import handler
 
-
 pytestmark = [pytest.mark.unit, pytest.mark.task]
 
 
