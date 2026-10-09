@@ -3,7 +3,6 @@ from crhelper import CfnResource
 from boto_utils import convert_iso8601_to_epoch
 from decorators import with_logging
 
-
 helper = CfnResource(json_logging=False, log_level="DEBUG", boto_level="CRITICAL")
 
 ecr_client = boto3.client("ecr")

@@ -66,8 +66,7 @@ def test_it_generates_query_with_partition():
             "JobId": "job_1234567890",
         }
     )
-    assert escape_resp(resp) == escape_resp(
-        """
+    assert escape_resp(resp) == escape_resp("""
             SELECT DISTINCT "$path" FROM (
                 SELECT t."$path"
                 FROM "amazonreviews"."amazon_reviews_parquet" t,
@@ -78,8 +77,7 @@ def test_it_generates_query_with_partition():
                     cast(t."customer_id" as varchar)=m."queryablematchid" AND m."queryablecolumns"='customer_id'
                     AND "product_category" = 'Books'
             )
-        """
-    )
+        """)
 
 
 def test_it_generates_query_with_int_partition():
@@ -98,8 +96,7 @@ def test_it_generates_query_with_int_partition():
             "JobId": "job_1234567890",
         }
     )
-    assert escape_resp(resp) == escape_resp(
-        """
+    assert escape_resp(resp) == escape_resp("""
             SELECT DISTINCT "$path" FROM (
                 SELECT t."$path"
                 FROM "amazonreviews"."amazon_reviews_parquet" t,
@@ -110,8 +107,7 @@ def test_it_generates_query_with_int_partition():
                     cast(t."customer_id" as varchar)=m."queryablematchid" AND m."queryablecolumns"='customer_id'
                     AND "year" = 2010
             )
-        """
-    )
+        """)
 
 
 def test_it_generates_query_with_multiple_partitions():
@@ -133,8 +129,7 @@ def test_it_generates_query_with_multiple_partitions():
             "JobId": "job_1234567890",
         }
     )
-    assert escape_resp(resp) == escape_resp(
-        """
+    assert escape_resp(resp) == escape_resp("""
             SELECT DISTINCT "$path" FROM (
                 SELECT t."$path"
                 FROM "amazonreviews"."amazon_reviews_parquet" t,
@@ -145,8 +140,7 @@ def test_it_generates_query_with_multiple_partitions():
                     cast(t."customer_id" as varchar)=m."queryablematchid" AND m."queryablecolumns"='customer_id'
                     AND "product_category" = 'Books'  AND "published" = '2019'
             )
-        """
-    )
+        """)
 
 
 def test_it_generates_query_without_partition():
@@ -164,8 +158,7 @@ def test_it_generates_query_without_partition():
             "JobId": "job_1234567890",
         }
     )
-    assert escape_resp(resp) == escape_resp(
-        """
+    assert escape_resp(resp) == escape_resp("""
             SELECT DISTINCT "$path" FROM (
                 SELECT t."$path"
                 FROM "amazonreviews"."amazon_reviews_parquet" t,
@@ -175,8 +168,7 @@ def test_it_generates_query_without_partition():
                     m."datamapperid"='dm_1234' AND
                     cast(t."customer_id" as varchar)=m."queryablematchid" AND m."queryablecolumns"='customer_id'
             )
-        """
-    )
+        """)
 
 
 def test_it_generates_query_with_multiple_columns():
@@ -192,8 +184,7 @@ def test_it_generates_query_with_multiple_columns():
             "JobId": "job_1234567890",
         }
     )
-    assert escape_resp(resp) == escape_resp(
-        """
+    assert escape_resp(resp) == escape_resp("""
             SELECT DISTINCT "$path" FROM (
                 SELECT t."$path"
                 FROM "amazonreviews"."amazon_reviews_parquet" t,
@@ -213,8 +204,7 @@ def test_it_generates_query_with_multiple_columns():
                     m."datamapperid"='dm_1234' AND
                     cast(t."b" as varchar)=m."queryablematchid" AND m."queryablecolumns"='b'
             )
-        """
-    )
+        """)
 
 
 def test_it_generates_query_with_columns_of_complex_type():
@@ -227,8 +217,7 @@ def test_it_generates_query_with_columns_of_complex_type():
             "JobId": "job_1234567890",
         }
     )
-    assert escape_resp(resp) == escape_resp(
-        """
+    assert escape_resp(resp) == escape_resp("""
             SELECT DISTINCT "$path" FROM (
                 SELECT t."$path"
                 FROM "amazonreviews"."amazon_reviews_parquet" t,
@@ -238,8 +227,7 @@ def test_it_generates_query_with_columns_of_complex_type():
                     m."datamapperid"='dm_1234' AND
                     cast(t."a"."b"."c" as varchar)=m."queryablematchid" AND m."queryablecolumns"='a.b.c'
             )
-        """
-    )
+        """)
 
 
 def test_it_generates_query_with_composite_matches():
@@ -265,8 +253,7 @@ def test_it_generates_query_with_composite_matches():
             "JobId": "job_1234567890",
         }
     )
-    assert escape_resp(resp) == escape_resp(
-        """
+    assert escape_resp(resp) == escape_resp("""
             SELECT DISTINCT "$path" FROM (
                 SELECT t."$path"
                 FROM "amazonreviews"."amazon_reviews_parquet" t,
@@ -298,8 +285,7 @@ def test_it_generates_query_with_composite_matches():
                     m."datamapperid"='dm_1234' AND
                     cast(t."user"."userid" as varchar)=m."queryablematchid" AND m."queryablecolumns"='user.userid'
             )
-        """
-    )
+        """)
 
 
 def test_it_generates_query_with_simple_and_composite_matches():
@@ -321,8 +307,7 @@ def test_it_generates_query_with_simple_and_composite_matches():
             "JobId": "job_1234567890",
         },
     )
-    assert escape_resp(resp) == escape_resp(
-        """
+    assert escape_resp(resp) == escape_resp("""
             SELECT DISTINCT "$path" FROM (
                 SELECT t."$path"
                 FROM "amazonreviews"."amazon_reviews_parquet" t,
@@ -343,8 +328,7 @@ def test_it_generates_query_with_simple_and_composite_matches():
                     concat(t."user"."first_name", '_S3F2COMP_', t."user"."last_name")=m."queryablematchid" AND
                     m."queryablecolumns"='user.first_name_S3F2COMP_user.last_name'
             )
-        """
-    )
+        """)
 
 
 def test_it_escapes_strings():

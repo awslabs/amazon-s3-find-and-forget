@@ -2,7 +2,6 @@ import boto3
 from crhelper import CfnResource
 from decorators import with_logging
 
-
 helper = CfnResource(json_logging=False, log_level="DEBUG", boto_level="CRITICAL")
 
 api_client = boto3.client("apigateway")

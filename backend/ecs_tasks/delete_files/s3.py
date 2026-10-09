@@ -16,7 +16,6 @@ from botocore.exceptions import ClientError
 
 from utils import remove_none, retry_wrapper
 
-
 # BEGINNING OF s3transfer MONKEY PATCH
 # https://github.com/boto/s3transfer/issues/82#issuecomment-837971614
 
