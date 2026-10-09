@@ -133,7 +133,6 @@ pip-tools==7.5.3
 platformdirs==4.9.4
     # via
     #   black
-    #   python-discovery
     #   virtualenv
 pluggy==1.6.0
     # via pytest
@@ -171,7 +170,7 @@ python-dateutil==2.9.0.post0
     #   -r backend/lambda_layers/aws_sdk/requirements.txt
     #   botocore
     #   pandas
-python-discovery==1.1.0
+python-discovery==1.6.1
     # via virtualenv
 python-snappy==0.7.3
     # via -r backend/ecs_tasks/delete_files/requirements.txt
@@ -235,7 +234,7 @@ urllib3==2.8.0
     #   -r requirements.in
     #   botocore
     #   requests
-virtualenv==21.1.0
+virtualenv==21.7.13
     # via pre-commit
 wheel==0.46.3
     # via
