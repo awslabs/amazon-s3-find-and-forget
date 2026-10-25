@@ -1,6 +1,6 @@
 pip-tools>=7.5.2
 pytest==9.0.3
-certifi>=2023.7.22
+certifi>=2026.10.19
 cfn-lint==0.77.3
 cfn-flip==1.3.0
 mock==4.0.1
