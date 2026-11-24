@@ -20,7 +20,7 @@ aws-assume-role-lib==2.10.0
     #   -r backend/lambda_layers/aws_sdk/requirements.txt
 aws-sam-translator==1.106.0
     # via cfn-lint
-black==26.3.1
+black==26.10.1
     # via -r requirements.in
 boto3==1.40.63
     # via
